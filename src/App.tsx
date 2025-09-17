@@ -2972,7 +2972,7 @@ function PageBuilder() {
                           onSectionClick={handleSectionClick}
                           onWidgetClick={handleWidgetClick}
                           activeSectionToolbar={activeSectionToolbar}
-                          setActiveSectionToolbar={setActiveSectionToolbar}
+                          setActiveSectionToolbar={debugSetActiveSectionToolbar}
                           activeWidgetToolbar={activeWidgetToolbar}
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
                           instanceId={instanceId}
