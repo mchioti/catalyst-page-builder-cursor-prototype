@@ -3050,6 +3050,10 @@ function SortableItem({
             onWidgetClick={onWidgetClick}
             dragAttributes={attributes}
             dragListeners={listeners}
+            activeSectionToolbar={activeSectionToolbar}
+            setActiveSectionToolbar={setActiveSectionToolbar}
+            activeWidgetToolbar={activeWidgetToolbar}
+            setActiveWidgetToolbar={setActiveWidgetToolbar}
           />
         </div>
       ) : (
@@ -3125,19 +3129,25 @@ function SectionRenderer({
   section, 
   onWidgetClick,
   dragAttributes,
-  dragListeners
+  dragListeners,
+  activeSectionToolbar,
+  setActiveSectionToolbar,
+  activeWidgetToolbar,
+  setActiveWidgetToolbar
 }: { 
   section: WidgetSection
   onWidgetClick: (id: string, e: React.MouseEvent) => void
   dragAttributes?: any
   dragListeners?: any
+  activeSectionToolbar: string | null
+  setActiveSectionToolbar: (value: string | null) => void
+  activeWidgetToolbar: string | null
+  setActiveWidgetToolbar: (value: string | null) => void
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
   const [showToolbar, setShowToolbar] = useState(false)
-  const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
-  const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
