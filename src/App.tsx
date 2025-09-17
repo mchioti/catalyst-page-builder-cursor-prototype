@@ -3264,62 +3264,63 @@ function SectionRenderer({
               >
                 {/* Widget Action Toolbar - appears on click */}
                 {activeWidgetToolbar === widget.id && (
-                    <div className="absolute -top-2 -right-2 transition-opacity z-20">
-                  <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-                    <div 
-                      className="p-1 text-gray-500 hover:text-gray-700 cursor-grab rounded hover:bg-gray-100 transition-colors"
-                      title="Drag handle (visual only)"
-                    >
-                      <GripVertical className="w-3 h-3" />
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Duplicate widget logic
-                        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                        const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
-                        
-                        const updatedCanvasItems = canvasItems.map(canvasItem => {
-                          if (isSection(canvasItem)) {
-                            return {
-                              ...canvasItem,
-                              areas: canvasItem.areas.map(area => 
-                                area.widgets.some(w => w.id === widget.id)
-                                  ? { ...area, widgets: [...area.widgets, duplicatedWidget] }
-                                  : area
-                              )
+                  <div className="absolute -top-2 -right-2 transition-opacity z-20">
+                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+                      <div 
+                        className="p-1 text-gray-500 hover:text-gray-700 cursor-grab rounded hover:bg-gray-100 transition-colors"
+                        title="Drag handle (visual only)"
+                      >
+                        <GripVertical className="w-3 h-3" />
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Duplicate widget logic
+                          const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                          const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
+                          
+                          const updatedCanvasItems = canvasItems.map(canvasItem => {
+                            if (isSection(canvasItem)) {
+                              return {
+                                ...canvasItem,
+                                areas: canvasItem.areas.map(area => 
+                                  area.widgets.some(w => w.id === widget.id)
+                                    ? { ...area, widgets: [...area.widgets, duplicatedWidget] }
+                                    : area
+                                )
+                              }
                             }
-                          }
-                          return canvasItem
-                        })
-                        replaceCanvasItems(updatedCanvasItems)
-                      }}
-                      className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                      title="Duplicate widget"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onWidgetClick(widget.id, e)
-                      }}
-                      className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
-                      title="Properties"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const { deleteWidget } = usePageStore.getState()
-                        deleteWidget(widget.id)
-                      }}
-                      className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                      title="Delete widget"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                            return canvasItem
+                          })
+                          replaceCanvasItems(updatedCanvasItems)
+                        }}
+                        className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                        title="Duplicate widget"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onWidgetClick(widget.id, e)
+                        }}
+                        className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+                        title="Properties"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const { deleteWidget } = usePageStore.getState()
+                          deleteWidget(widget.id)
+                        }}
+                        className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                        title="Delete widget"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 )}
                 <WidgetRenderer 
