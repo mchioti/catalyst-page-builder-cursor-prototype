@@ -2807,22 +2807,10 @@ function PageBuilder() {
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   
-  // Debug: Track state with ref to see if useState is working at all
-  const stateRef = useRef({ activeSectionToolbar, activeWidgetToolbar })
-  stateRef.current = { activeSectionToolbar, activeWidgetToolbar }
   
-  const debugSetActiveSectionToolbar = (value: string | null) => {
-    console.log(`[${instanceId}] About to call setState with:`, value)
-    console.log(`[${instanceId}] Current ref state:`, stateRef.current)
+  const handleSetActiveSectionToolbar = (value: string | null) => {
     setActiveSectionToolbar(value)
-    console.log(`[${instanceId}] setState called, ref still shows:`, stateRef.current)
   }
-  
-  console.log(`PageBuilder[${instanceId}] render - activeSectionToolbar:`, activeSectionToolbar)
-  
-  useEffect(() => {
-    console.log(`PageBuilder[${instanceId}] activeSectionToolbar state changed to:`, activeSectionToolbar)
-  }, [activeSectionToolbar, instanceId])
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -2860,14 +2848,36 @@ function PageBuilder() {
     e.stopPropagation()
     // Close any widget toolbar and toggle section toolbar
     setActiveWidgetToolbar(null)
-    setActiveSectionToolbar(activeSectionToolbar === sectionId ? null : sectionId)
+    handleSetActiveSectionToolbar(activeSectionToolbar === sectionId ? null : sectionId)
     selectWidget(sectionId)
   }
 
   const handleWidgetClick = (widgetId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    // Close any section toolbar and toggle widget toolbar
-    setActiveSectionToolbar(null)
+    
+    // Find the widget to check its sectionId
+    let widget: Widget | undefined
+    for (const item of canvasItems) {
+      if (item.type === 'widget' && item.id === widgetId) {
+        widget = item
+        break
+      } else if (item.type === 'content-block') {
+        for (const area of item.areas) {
+          const foundWidget = area.widgets.find(w => w.id === widgetId)
+          if (foundWidget) {
+            widget = foundWidget
+            break
+          }
+        }
+        if (widget) break
+      }
+    }
+    
+    // Only close section toolbar if widget is not part of the currently active section
+    if (!widget?.sectionId || activeSectionToolbar !== widget.sectionId) {
+      handleSetActiveSectionToolbar(null)
+    }
+    
     setActiveWidgetToolbar(activeWidgetToolbar === widgetId ? null : widgetId)
     selectWidget(widgetId)
   }
@@ -2878,8 +2888,7 @@ function PageBuilder() {
       onClick={(e) => {
         // Only close toolbars if clicking directly on this div, not on children
         if (e.target === e.currentTarget) {
-          console.log('Global click handler: closing toolbars')
-          setActiveSectionToolbar(null)
+          handleSetActiveSectionToolbar(null)
           setActiveWidgetToolbar(null)
         }
       }}
@@ -2972,7 +2981,7 @@ function PageBuilder() {
                           onSectionClick={handleSectionClick}
                           onWidgetClick={handleWidgetClick}
                           activeSectionToolbar={activeSectionToolbar}
-                          setActiveSectionToolbar={debugSetActiveSectionToolbar}
+                          setActiveSectionToolbar={handleSetActiveSectionToolbar}
                           activeWidgetToolbar={activeWidgetToolbar}
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
                           instanceId={instanceId}
@@ -3096,7 +3105,7 @@ function SortableItem({
             dragAttributes={attributes}
             dragListeners={listeners}
             activeSectionToolbar={activeSectionToolbar}
-            setActiveSectionToolbar={debugSetActiveSectionToolbar}
+            setActiveSectionToolbar={setActiveSectionToolbar}
             activeWidgetToolbar={activeWidgetToolbar}
             setActiveWidgetToolbar={setActiveWidgetToolbar}
             instanceId={instanceId}
@@ -3278,27 +3287,18 @@ function SectionRenderer({
         className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200' : 'border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100'} transition-all relative cursor-pointer`}
         onClick={(e) => {
           e.stopPropagation()
-          console.log(`Section clicked on PageBuilder[${instanceId}]:`, section.id, section.name, 'isSpecial:', isSpecialSection)
-          console.log('Current activeSectionToolbar:', activeSectionToolbar)
           const newValue = activeSectionToolbar === section.id ? null : section.id
-          console.log('About to set activeSectionToolbar to:', newValue)
           // Close any widget toolbar and toggle section toolbar
           setActiveWidgetToolbar(null)
           setActiveSectionToolbar(newValue)
-          console.log('setActiveSectionToolbar called with:', newValue)
-          
-          // Direct test - force set to a test value
-          console.log('Testing direct setState call...')
-          setActiveSectionToolbar('test-value')
-          console.log('Direct setState called with test-value')
-          // Also select the section for properties panel
-          onWidgetClick(section.id, e)
+          // Select the section for properties panel (use selectWidget directly)
+          const { selectWidget } = usePageStore.getState()
+          selectWidget(section.id)
         }}
       >
         {/* Section Action Toolbar - appears on click */}
         {activeSectionToolbar === section.id && (
-          <div className="absolute -top-2 -right-2 transition-opacity z-20 bg-red-500">
-            <div className="text-white px-2 py-1 mb-1">DEBUG: TOOLBAR ACTIVE</div>
+          <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
                 {...dragAttributes}
@@ -3332,6 +3332,18 @@ function SectionRenderer({
               >
                 <Edit className="w-3 h-3" />
               </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                  const newCanvasItems = canvasItems.filter(item => item.id !== section.id)
+                  replaceCanvasItems(newCanvasItems)
+                }}
+                className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                title="Delete section"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
             </div>
           </div>
         )}
@@ -3341,9 +3353,6 @@ function SectionRenderer({
             <span className="text-xs font-medium text-purple-700">Content Block</span>
             <span className="text-xs text-purple-600">{section.layout}</span>
             <span className="text-xs text-gray-500">(Click section to show toolbar)</span>
-            {activeSectionToolbar === section.id && (
-              <span className="text-xs bg-green-200 px-1 rounded">ACTIVE</span>
-            )}
           </div>
         )}
       
@@ -3370,8 +3379,10 @@ function SectionRenderer({
                 key={widget.id}
                 onClick={(e) => {
                   e.stopPropagation()
-                  // Close any section toolbar and toggle widget toolbar
-                  setActiveSectionToolbar?.(null)
+                  // Only close section toolbar if it's not for the current widget's section
+                  if (activeSectionToolbar !== widget.sectionId) {
+                    setActiveSectionToolbar?.(null)
+                  }
                   setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
                   onWidgetClick(widget.id, e)
                 }}
