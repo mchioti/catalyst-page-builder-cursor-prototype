@@ -3320,14 +3320,14 @@ function SectionRenderer({
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
-                    </div>
-                  )}
-                  <WidgetRenderer 
-                    widget={widget} 
-                    onWidgetClick={onWidgetClick}
-                  />
-                </div>
-              ))}
+                  </div>
+                )}
+                <WidgetRenderer 
+                  widget={widget} 
+                  onWidgetClick={onWidgetClick}
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
