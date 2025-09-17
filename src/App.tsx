@@ -3247,7 +3247,7 @@ function SectionRenderer({
   return (
     <>
       <div 
-        className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300'} transition-colors relative cursor-pointer`}
+        className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200' : 'border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100'} transition-all relative cursor-pointer`}
         onClick={(e) => {
           e.stopPropagation()
           console.log('Section clicked:', section.id, section.name, 'isSpecial:', isSpecialSection)
