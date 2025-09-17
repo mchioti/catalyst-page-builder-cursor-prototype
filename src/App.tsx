@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import React from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
@@ -3031,7 +3031,7 @@ function SortableItem({
           onClick={(e) => onWidgetClick(item.id, e)}
           className="cursor-pointer group relative"
         >
-          {/* Standalone Widget Action Toolbar */}
+          {/* Standalone Widget Action Toolbar - TODO: Add click activation */}
           <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
@@ -3109,6 +3109,8 @@ function SectionRenderer({
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
+  const [showToolbar, setShowToolbar] = useState(false)
+  const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
@@ -3176,10 +3178,18 @@ function SectionRenderer({
 
   return (
     <>
-      <div className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'} relative`}>
-        {/* Section Action Toolbar - appears on hover */}
-        {!isSpecialSection && (
-          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+      <div 
+        className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'} relative`}
+        onClick={(e) => {
+          if (!isSpecialSection) {
+            e.stopPropagation()
+            setShowToolbar(!showToolbar)
+          }
+        }}
+      >
+        {/* Section Action Toolbar - appears on click */}
+        {!isSpecialSection && showToolbar && (
+          <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
                 {...dragAttributes}
@@ -3245,17 +3255,20 @@ function SectionRenderer({
             {area.widgets.map((widget) => (
               <div 
                 key={widget.id}
-                onClick={(e) => onWidgetClick(widget.id, e)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+                  onWidgetClick(widget.id, e)
+                }}
                 className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
               >
-                {/* Widget Action Toolbar - appears on hover */}
-                <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                {/* Widget Action Toolbar - appears on click */}
+                {activeWidgetToolbar === widget.id && (
+                    <div className="absolute -top-2 -right-2 transition-opacity z-20">
                   <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
                     <div 
-                      {...attributes}
-                      {...listeners}
-                      className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
-                      title="Drag to reorder"
+                      className="p-1 text-gray-500 hover:text-gray-700 cursor-grab rounded hover:bg-gray-100 transition-colors"
+                      title="Drag handle (visual only)"
                     >
                       <GripVertical className="w-3 h-3" />
                     </div>
@@ -3307,12 +3320,12 @@ function SectionRenderer({
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
-                  </div>
-                </div>
-                <WidgetRenderer 
-                  widget={widget} 
-                  onWidgetClick={onWidgetClick}
-                />
+                    </div>
+                  )}
+                  <WidgetRenderer 
+                    widget={widget} 
+                    onWidgetClick={onWidgetClick}
+                  />
               </div>
             ))}
           </div>
@@ -3382,6 +3395,16 @@ function SectionRenderer({
 
 export default function App() {
   const { currentView } = usePageStore()
+  
+  // Global click handler to close toolbars
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      // This will be handled by individual components
+    }
+    
+    document.addEventListener('click', handleGlobalClick)
+    return () => document.removeEventListener('click', handleGlobalClick)
+  }, [])
   
   if (currentView === 'site-manager') {
     return <SiteManager />
