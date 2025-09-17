@@ -3147,7 +3147,6 @@ function SectionRenderer({
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
-  const [showToolbar, setShowToolbar] = useState(false)
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
@@ -3220,12 +3219,14 @@ function SectionRenderer({
         onClick={(e) => {
           if (!isSpecialSection) {
             e.stopPropagation()
-            setShowToolbar(!showToolbar)
+            // Close any widget toolbar and toggle section toolbar
+            setActiveWidgetToolbar(null)
+            setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
           }
         }}
       >
         {/* Section Action Toolbar - appears on click */}
-        {!isSpecialSection && showToolbar && (
+        {!isSpecialSection && activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
