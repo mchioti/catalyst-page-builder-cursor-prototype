@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import React from 'react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
+import { DndContext, closestCenter, closestCorners, rectIntersection, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit } from 'lucide-react'
@@ -1860,17 +1860,76 @@ function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: Co
   )
 }
 
-// Library component to show widgets and sections with collapsible categories
-function WidgetLibrary() {
+// Draggable Library Widget Component
+function DraggableLibraryWidget({ item }: { item: SpecItem }) {
   const { addWidget } = usePageStore()
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['core', 'publishing']) // Expand core and publishing categories by default
-  )
+  const [dragStarted, setDragStarted] = useState(false)
   
-  const handleAddWidget = (item: SpecItem) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `library-${item.id}`,
+    data: {
+      type: 'library-widget',
+      item: item
+    }
+  })
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent click if drag was started
+    if (dragStarted) {
+      e.preventDefault()
+      setDragStarted(false)
+      return
+    }
+    
     const newWidget = buildWidget(item)
     addWidget(newWidget)
   }
+
+  const handlePointerDown = () => {
+    setDragStarted(false)
+  }
+
+  const handleDragStart = () => {
+    setDragStarted(true)
+    console.log('📦 Library widget drag started:', item.label)
+  }
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      {...attributes}
+      {...listeners}
+      className={`block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+      title="Click to add to canvas, or drag to drop into a section"
+    >
+      {item.label}
+      {item.status === 'planned' && (
+        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+      )}
+    </button>
+  )
+}
+
+// Library component to show widgets and sections with collapsible categories
+function WidgetLibrary() {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(['core', 'publishing']) // Expand core and publishing categories by default
+  )
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => {
@@ -1914,32 +1973,14 @@ function WidgetLibrary() {
                       <h5 className="text-sm font-medium text-gray-700 mb-2">{group.name}</h5>
                       <div className="space-y-1">
                         {group.items?.map((item: any) => (
-                          <button
-                            key={item.id}
-                            onClick={() => handleAddWidget(item)}
-                            className="block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors"
-                          >
-                            {item.label}
-                            {item.status === 'planned' && (
-                              <span className="ml-2 text-xs text-orange-600">(Planned)</span>
-                            )}
-                          </button>
+                          <DraggableLibraryWidget key={item.id} item={item} />
                         ))}
                       </div>
                     </div>
                   )) || (
                     // Handle categories with direct items (no groups)
                     category.items?.map((item: any) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleAddWidget(item)}
-                        className="block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors"
-                      >
-                        {item.label}
-                        {item.status === 'planned' && (
-                          <span className="ml-2 text-xs text-orange-600">(Planned)</span>
-                        )}
-                      </button>
+                      <DraggableLibraryWidget key={item.id} item={item} />
                     ))
                   )}
                 </div>
@@ -2526,9 +2567,33 @@ function PropertiesPanel() {
     )
   }
   
-  // Find selected widget/section
-  const selectedItem = canvasItems.find(item => item.id === selectedWidget)
+  // Find selected widget/section - check both canvas items and widgets within sections
+  let selectedItem: CanvasItem | Widget | undefined = canvasItems.find(item => item.id === selectedWidget)
+  
+  // If not found at canvas level, search within section areas
   if (!selectedItem) {
+    for (const canvasItem of canvasItems) {
+      if (isSection(canvasItem)) {
+        for (const area of canvasItem.areas) {
+          const foundWidget = area.widgets.find(w => w.id === selectedWidget)
+          if (foundWidget) {
+            selectedItem = foundWidget
+            break
+          }
+        }
+        if (selectedItem) break
+      }
+    }
+  }
+  
+  if (!selectedItem) {
+    console.log('🔍 Properties Panel - Selected item not found:', { 
+      selectedWidget, 
+      canvasItemIds: canvasItems.map(item => item.id),
+      sectionWidgetIds: canvasItems.flatMap(item => 
+        isSection(item) ? item.areas.flatMap(area => area.widgets.map(w => w.id)) : []
+      )
+    })
     return (
       <div className="p-4">
         <div className="text-center py-12">
@@ -2537,6 +2602,12 @@ function PropertiesPanel() {
       </div>
     )
   }
+  
+  console.log('🎯 Properties Panel - Found selected item:', { 
+    id: selectedItem.id, 
+    type: selectedItem.type,
+    isSection: isSection(selectedItem)
+  })
   
   const updateWidget = (updates: Partial<Widget>) => {
     const updatedCanvasItems = canvasItems.map(item => {
@@ -2806,6 +2877,7 @@ function PageBuilder() {
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
+  const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
   
   
   const handleSetActiveSectionToolbar = (value: string | null) => {
@@ -2815,21 +2887,334 @@ function PageBuilder() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3,
       },
     })
   )
+  
+  // Custom collision detection that prioritizes section-area drop zones
+  const customCollisionDetection = (args: any) => {
+    // First try to find section-area collisions
+    const sectionAreaCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter((container: any) => 
+        container.data?.current?.type === 'section-area'
+      )
+    })
+    
+    if (sectionAreaCollisions.length > 0) {
+      return sectionAreaCollisions
+    }
+    
+    // Fall back to default collision detection
+    return closestCenter(args)
+  }
+  
+  const handleDragStart = (event: DragStartEvent) => {
+    console.log('🚀 Drag Start:', {
+      activeId: event.active.id,
+      activeType: event.active.data?.current?.type,
+      activeData: event.active.data?.current
+    })
+    
+    // Log all available drop zones for debugging
+    const dropZones = document.querySelectorAll('[data-droppable="true"]')
+    console.log('📍 Available drop zones:', Array.from(dropZones).map(zone => ({
+      id: zone.getAttribute('data-droppable-id') || zone.id,
+      classes: zone.className,
+      rect: zone.getBoundingClientRect()
+    })))
+  }
+  
+  const handleDragOver = (event: DragOverEvent) => {
+    if (event.over) {
+      // Highlight section-area drop zones
+      if (event.over.data?.current?.type === 'section-area') {
+        const dropZoneId = event.over.id as string
+        if (activeDropZone !== dropZoneId) {
+          setActiveDropZone(dropZoneId)
+          console.log('🎯 Drop zone detected:', {
+            activeId: event.active.id,
+            activeType: event.active.data?.current?.type,
+            dropZone: dropZoneId,
+            sectionId: event.over.data?.current?.sectionId,
+            areaId: event.over.data?.current?.areaId
+          })
+        }
+      } else {
+        // Clear highlight when not over a section-area
+        if (activeDropZone) {
+          setActiveDropZone(null)
+        }
+      }
+    } else {
+      // Clear highlight when not over anything
+      if (activeDropZone) {
+        setActiveDropZone(null)
+      }
+    }
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    
+    // Clear drop zone highlighting
+    setActiveDropZone(null)
+    
+    console.log('🎯 Drag End Event:', {
+      activeId: active.id,
+      activeType: active.data?.current?.type,
+      overId: over?.id,
+      overType: over?.data?.current?.type,
+      hasOver: !!over,
+      isLibraryWidget: active.data?.current?.type === 'library-widget',
+      isSortableItem: !active.data?.current?.type || active.data?.current?.type === 'sortable'
+    })
 
-    if (over && active.id !== over.id) {
-      const { moveItem } = usePageStore.getState()
-      const oldIndex = canvasItems.findIndex((item) => item.id === active.id)
-      const newIndex = canvasItems.findIndex((item) => item.id === over.id)
+    if (!over) {
+      console.log('❌ No drop target found')
+      return
+    }
+
+    // Handle library widget drop into section area
+    if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'section-area') {
+      console.log('✅ Library widget dropped into section area!')
+      const libraryItem = active.data.current.item
+      const sectionId = over.data.current.sectionId
+      const areaId = over.data.current.areaId
       
-      if (oldIndex !== -1 && newIndex !== -1) {
-        moveItem(oldIndex, newIndex)
+      // Create new widget from library item
+      const newWidget = buildWidget(libraryItem)
+      newWidget.sectionId = sectionId
+      
+      // Add widget to the specific section area
+      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+      const updatedCanvasItems = canvasItems.map(canvasItem => {
+        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
+          return {
+            ...canvasItem,
+            areas: canvasItem.areas.map(area => 
+              area.id === areaId 
+                ? { ...area, widgets: [...area.widgets, newWidget] }
+                : area
+            )
+          }
+        }
+        return canvasItem
+      })
+      replaceCanvasItems(updatedCanvasItems)
+      return
+    }
+    
+    // Handle library widget drop onto main canvas (as standalone widget)
+    if (active.data?.current?.type === 'library-widget' && over?.id && !over.data?.current?.type) {
+      console.log('✅ Library widget dropped onto main canvas!')
+      const libraryItem = active.data.current.item
+      const targetId = over.id
+      
+      // Create new widget from library item (no sectionId - standalone widget)
+      const newWidget = buildWidget(libraryItem)
+      
+      // Add widget to canvas at specific position
+      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+      const targetIndex = canvasItems.findIndex(item => item.id === targetId)
+      
+      if (targetIndex !== -1) {
+        // Insert after target item
+        const newCanvasItems = [...canvasItems]
+        newCanvasItems.splice(targetIndex + 1, 0, newWidget)
+        replaceCanvasItems(newCanvasItems)
+      } else {
+        // Add to end if target not found
+        replaceCanvasItems([...canvasItems, newWidget])
+      }
+      return
+    }
+    
+    // Handle standalone widget drop into section area (the missing scenario!)
+    if ((active.data?.current?.type === 'standalone-widget' || 
+         !active.data?.current?.type || 
+         active.data?.current?.type === 'sortable') && 
+        over.data?.current?.type === 'section-area') {
+      console.log('✅ Standalone widget dropped into section area!')
+      
+      // Get widget from drag data if available, otherwise find by ID
+      let widget: Widget
+      if (active.data?.current?.type === 'standalone-widget') {
+        widget = active.data.current.widget
+      } else {
+        const widgetId = active.id as string
+        const { canvasItems } = usePageStore.getState()
+        const foundWidget = canvasItems.find(item => item.id === widgetId && !isSection(item))
+        if (!foundWidget) {
+          console.log('❌ Standalone widget not found')
+          return
+        }
+        widget = foundWidget as Widget
+      }
+      
+      const sectionId = over.data.current.sectionId
+      const areaId = over.data.current.areaId
+      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+      
+      // Remove widget from canvas and add to section area
+      const newCanvasItems = canvasItems.filter(item => item.id !== widget.id)
+      const updatedCanvasItems = newCanvasItems.map(canvasItem => {
+        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
+          const updatedWidget = { ...widget, sectionId: sectionId }
+          return {
+            ...canvasItem,
+            areas: canvasItem.areas.map(area => 
+              area.id === areaId 
+                ? { ...area, widgets: [...area.widgets, updatedWidget] }
+                : area
+            )
+          }
+        }
+        return canvasItem
+      })
+      replaceCanvasItems(updatedCanvasItems)
+      return
+    }
+    
+    // Handle section widget movement - PRIORITY: section-widget drags should never go to canvas reordering
+    if (active.data?.current?.type === 'section-widget') {
+      console.log('🚀 Section widget detected, checking drop location...', { 
+        overId: over?.id, 
+        overType: over?.data?.current?.type,
+        overData: over?.data?.current 
+      })
+      
+      // Case 1: Dropped on specific section area (preferred)
+      if (over?.data?.current?.type === 'section-area') {
+        console.log('✅ Moving widget to specific section area!')
+        const draggedWidget = active.data.current.widget
+        const fromSectionId = active.data.current.fromSectionId
+        const fromAreaId = active.data.current.fromAreaId
+        const toSectionId = over.data.current.sectionId
+        const toAreaId = over.data.current.areaId
+        
+        // Don't do anything if dropping in the same area
+        if (fromAreaId === toAreaId) {
+          console.log('⚠️ Same area, no action needed')
+          return
+        }
+        
+        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+        const updatedCanvasItems = canvasItems.map(canvasItem => {
+          if (canvasItem.type === 'content-block') {
+            return {
+              ...canvasItem,
+              areas: canvasItem.areas.map(area => {
+                // Remove from source area
+                if (area.id === fromAreaId) {
+                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
+                }
+                // Add to target area with updated sectionId
+                if (area.id === toAreaId) {
+                  const updatedWidget = { ...draggedWidget, sectionId: toSectionId }
+                  return { ...area, widgets: [...area.widgets, updatedWidget] }
+                }
+                return area
+              })
+            }
+          }
+          return canvasItem
+        })
+        replaceCanvasItems(updatedCanvasItems)
+        console.log('✅ Widget moved between sections!')
+        return
+      }
+      
+      // Case 2: Dropped on section itself (find first available area)
+      if (over?.id && typeof over.id === 'string' && over.id.endsWith('-section')) {
+        console.log('✅ Moving widget to section (first available area)!', { targetSectionId: over.id })
+        const draggedWidget = active.data.current.widget
+        const fromSectionId = active.data.current.fromSectionId
+        const fromAreaId = active.data.current.fromAreaId
+        const targetSectionId = over.id
+        
+        console.log('🎯 Cross-section move details:', {
+          widgetId: draggedWidget.id,
+          fromSectionId,
+          fromAreaId,
+          targetSectionId,
+          isSameSection: fromSectionId === targetSectionId
+        })
+        
+        // If dropping in the same section, don't do anything
+        if (fromSectionId === targetSectionId) {
+          console.log('⚠️ Same section, no action needed')
+          return
+        }
+        
+        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+        
+        // Find the target section and its first area
+        const targetSection = canvasItems.find(item => item.id === targetSectionId && item.type === 'content-block') as WidgetSection
+        if (!targetSection || !targetSection.areas.length) {
+          console.log('❌ Target section not found or has no areas')
+          return
+        }
+        
+        const firstAreaId = targetSection.areas[0].id
+        console.log('🎯 Target section found, first area:', firstAreaId)
+        
+        const updatedCanvasItems = canvasItems.map(canvasItem => {
+          if (canvasItem.type === 'content-block') {
+            return {
+              ...canvasItem,
+              areas: canvasItem.areas.map(area => {
+                // Remove from source area
+                if (area.id === fromAreaId) {
+                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
+                }
+                // Add to target area (first area of target section)
+                if (area.id === firstAreaId) {
+                  const updatedWidget = { ...draggedWidget, sectionId: targetSectionId }
+                  return { ...area, widgets: [...area.widgets, updatedWidget] }
+                }
+                return area
+              })
+            }
+          }
+          return canvasItem
+        })
+        replaceCanvasItems(updatedCanvasItems)
+        console.log('✅ Widget moved to section first area!')
+        return
+      }
+      
+      // Case 3: Section widget dropped somewhere invalid - just return without doing anything
+      console.log('⚠️ Section widget dropped in invalid location, ignoring')
+      return
+    }
+
+    // Handle existing canvas item reordering (sections and standalone widgets) - EXCLUDE section-widgets!
+    if (!active.data?.current?.type || 
+        (active.data?.current?.type !== 'library-widget' && 
+         active.data?.current?.type !== 'section-widget') ||
+        active.data?.current?.type === 'standalone-widget') {
+      console.log('🔄 Attempting canvas item reordering for canvas items')
+      
+      // For standalone-widget type, use the original sortable ID for comparison
+      const activeItemId = active.data?.current?.type === 'standalone-widget' 
+        ? active.data.current.originalSortableId 
+        : active.id
+      
+      if (activeItemId !== over?.id) {
+        const { moveItem } = usePageStore.getState()
+        const oldIndex = canvasItems.findIndex((item) => item.id === activeItemId)
+        const newIndex = canvasItems.findIndex((item) => item.id === over.id)
+        
+        console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, overId: over.id })
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          console.log('✅ Canvas item reordered!')
+          moveItem(oldIndex, newIndex)
+        } else {
+          console.log('❌ Canvas item reorder failed - items not found')
+        }
       }
     }
   }
@@ -2855,22 +3240,35 @@ function PageBuilder() {
   const handleWidgetClick = (widgetId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    // Find the widget to check its sectionId
-    let widget: Widget | undefined
-    for (const item of canvasItems) {
-      if (item.type === 'widget' && item.id === widgetId) {
-        widget = item
-        break
-      } else if (item.type === 'content-block') {
-        for (const area of item.areas) {
-          const foundWidget = area.widgets.find(w => w.id === widgetId)
-          if (foundWidget) {
-            widget = foundWidget
-            break
+    console.log('🖱️ Widget clicked for properties:', { widgetId })
+    
+    // Find the widget to check its sectionId - use same logic as Properties Panel
+    let widget: Widget | undefined = canvasItems.find(item => item.id === widgetId && !isSection(item)) as Widget
+    
+    // If not found at canvas level, search within section areas
+    if (!widget) {
+      for (const canvasItem of canvasItems) {
+        if (isSection(canvasItem)) {
+          for (const area of canvasItem.areas) {
+            const foundWidget = area.widgets.find(w => w.id === widgetId)
+            if (foundWidget) {
+              widget = foundWidget
+              break
+            }
           }
+          if (widget) break
         }
-        if (widget) break
       }
+    }
+    
+    if (widget) {
+      console.log('📋 Widget found for properties:', { 
+        id: widget.id, 
+        type: widget.type,
+        sectionId: widget.sectionId || 'standalone'
+      })
+    } else {
+      console.log('❌ Widget not found for properties:', { widgetId })
     }
     
     // Only close section toolbar if widget is not part of the currently active section
@@ -2883,73 +3281,75 @@ function PageBuilder() {
   }
 
   return (
-    <div 
-      className="min-h-screen bg-gray-50 flex"
-      onClick={(e) => {
-        // Only close toolbars if clicking directly on this div, not on children
-        if (e.target === e.currentTarget) {
-          handleSetActiveSectionToolbar(null)
-          setActiveWidgetToolbar(null)
-        }
-      }}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={customCollisionDetection}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
     >
-      {/* Left Sidebar */}
-      <div className="w-80 bg-white shadow-sm border-r flex flex-col">
-        {/* Tabs */}
-        <div className="border-b">
-          <div className="flex">
-            {[
-              { id: 'library', label: 'Library', icon: BookOpen },
-              { id: 'sections', label: 'Sections', icon: Plus },
-              { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb },
-              { id: 'publication-cards', label: 'Publication Cards', icon: Building2 }
-            ].map((tab) => (
+      <div 
+        className="min-h-screen bg-gray-50 flex"
+        onClick={(e) => {
+          // Only close toolbars if clicking directly on this div, not on children
+          if (e.target === e.currentTarget) {
+            handleSetActiveSectionToolbar(null)
+            setActiveWidgetToolbar(null)
+          }
+        }}
+      >
+        {/* Left Sidebar */}
+        <div className="w-80 bg-white shadow-sm border-r flex flex-col">
+          {/* Tabs */}
+          <div className="border-b">
+            <div className="flex">
+              {[
+                { id: 'library', label: 'Library', icon: BookOpen },
+                { id: 'sections', label: 'Sections', icon: Plus },
+                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb },
+                { id: 'publication-cards', label: 'Publication Cards', icon: Building2 }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setLeftSidebarTab(tab.id as LeftSidebarTab)}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    leftSidebarTab === tab.id
+                      ? 'border-blue-500 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {leftSidebarTab === 'library' && <WidgetLibrary />}
+            {leftSidebarTab === 'sections' && <SectionsContent />}
+            {leftSidebarTab === 'diy-zone' && <DIYZoneContent />}
+            {leftSidebarTab === 'publication-cards' && <PublicationCardsContent />}
+          </div>
+        </div>
+
+        {/* Main Canvas Area */}
+        <div className="flex-1 flex flex-col">
+          <div className="border-b bg-white px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
               <button
-                key={tab.id}
-                onClick={() => setLeftSidebarTab(tab.id as LeftSidebarTab)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  leftSidebarTab === tab.id
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                onClick={() => setCurrentView('site-manager')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
               >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
+                <Settings className="w-4 h-4" />
+                Site Manager
               </button>
-            ))}
+            </div>
           </div>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {leftSidebarTab === 'library' && <WidgetLibrary />}
-          {leftSidebarTab === 'sections' && <SectionsContent />}
-          {leftSidebarTab === 'diy-zone' && <DIYZoneContent />}
-          {leftSidebarTab === 'publication-cards' && <PublicationCardsContent />}
-        </div>
-      </div>
 
-      {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col">
-        <div className="border-b bg-white px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
-            <button
-              onClick={() => setCurrentView('site-manager')}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              Site Manager
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
+          <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
             <div className="bg-white border border-gray-200 rounded-lg min-h-96 relative">
               {canvasItems.length === 0 ? (
                 <div className="flex items-center justify-center h-96">
@@ -2984,6 +3384,7 @@ function PageBuilder() {
                           setActiveSectionToolbar={handleSetActiveSectionToolbar}
                           activeWidgetToolbar={activeWidgetToolbar}
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          activeDropZone={activeDropZone}
                           instanceId={instanceId}
                         />
                         
@@ -3004,9 +3405,8 @@ function PageBuilder() {
                 </SortableContext>
               )}
             </div>
-          </DndContext>
+          </div>
         </div>
-      </div>
 
       {/* Right Sidebar - Properties Panel */}
       <div className="w-80 bg-white shadow-sm border-l flex flex-col">
@@ -3025,7 +3425,8 @@ function PageBuilder() {
           onClose={() => setShowLayoutPicker(false)}
         />
       )}
-    </div>
+      </div>
+    </DndContext>
   )
 }
 
@@ -3038,6 +3439,7 @@ function SortableItem({
   setActiveSectionToolbar,
   activeWidgetToolbar,
   setActiveWidgetToolbar,
+  activeDropZone,
   instanceId
 }: { 
   item: CanvasItem
@@ -3048,6 +3450,7 @@ function SortableItem({
   setActiveSectionToolbar: (value: string | null) => void
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
+  activeDropZone: string | null
   instanceId: string
 }) {
   const {
@@ -3108,32 +3511,37 @@ function SortableItem({
             setActiveSectionToolbar={setActiveSectionToolbar}
             activeWidgetToolbar={activeWidgetToolbar}
             setActiveWidgetToolbar={setActiveWidgetToolbar}
+            activeDropZone={activeDropZone}
             instanceId={instanceId}
           />
         </div>
       ) : (
-        <div 
-          onClick={(e) => {
-            e.stopPropagation()
-            // Close any section toolbar and toggle widget toolbar
-            setActiveSectionToolbar?.(null)
-            setActiveWidgetToolbar(activeWidgetToolbar === item.id ? null : item.id)
-            onWidgetClick(item.id, e)
-          }}
-          className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all relative"
-        >
+        <div className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all relative">
+          {/* Overlay to capture clicks on interactive widgets */}
+          <div 
+            className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
+            style={{ pointerEvents: 'auto' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              console.log('🎯 Standalone overlay click detected:', { 
+                widgetId: item.id, 
+                widgetType: item.type 
+              })
+              // Close any section toolbar and toggle widget toolbar
+              setActiveSectionToolbar?.(null)
+              setActiveWidgetToolbar(activeWidgetToolbar === item.id ? null : item.id)
+              onWidgetClick(item.id, e)
+            }}
+          />
           {/* Standalone Widget Action Toolbar - appears on click */}
           {activeWidgetToolbar === item.id && (
-            <div className="absolute -top-2 -right-2 transition-opacity z-20">
+            <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-              <div 
-                {...attributes}
-                {...listeners}
-                className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
-                title="Drag to reorder"
-              >
-                <GripVertical className="w-3 h-3" />
-              </div>
+              <StandaloneWidgetDragHandle 
+                widget={item}
+                sortableAttributes={attributes}
+                sortableListeners={listeners}
+              />
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -3176,18 +3584,198 @@ function SortableItem({
             </div>
           </div>
           )}
-          <WidgetRenderer 
-            widget={item}
-            dragAttributes={attributes}
-            dragListeners={listeners}
-            onWidgetClick={onWidgetClick}
-            activeSectionToolbar={activeSectionToolbar}
-            setActiveSectionToolbar={setActiveSectionToolbar}
-            activeWidgetToolbar={activeWidgetToolbar}
-            setActiveWidgetToolbar={setActiveWidgetToolbar}
-          />
+          
+          {/* Make widget content non-interactive in edit mode */}
+          <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
+            <WidgetRenderer 
+              widget={item}
+              dragAttributes={attributes}
+              dragListeners={listeners}
+              onWidgetClick={onWidgetClick}
+              activeSectionToolbar={activeSectionToolbar}
+              setActiveSectionToolbar={setActiveSectionToolbar}
+              activeWidgetToolbar={activeWidgetToolbar}
+              setActiveWidgetToolbar={setActiveWidgetToolbar}
+            />
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Standalone Widget Drag Handle - uses useDraggable for section drops AND canvas reordering
+function StandaloneWidgetDragHandle({ 
+  widget, 
+  sortableAttributes, 
+  sortableListeners 
+}: {
+  widget: Widget
+  sortableAttributes: any
+  sortableListeners: any
+}) {
+  // Use draggable instead of sortable to enable section drops
+  const drag = useDraggable({
+    id: `standalone-widget-${widget.id}`,
+    data: {
+      type: 'standalone-widget',
+      widget: widget,
+      originalSortableId: widget.id // Keep reference for canvas reordering
+    }
+  })
+  
+  return (
+    <div 
+      ref={drag.setNodeRef}
+      style={drag.transform ? {
+        transform: `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0)`,
+      } : undefined}
+      className={`p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors ${
+        drag.isDragging ? 'opacity-50' : ''
+      }`}
+      title="Drag to reorder or move to section"
+      {...drag.attributes}
+      {...drag.listeners}
+    >
+      <GripVertical className="w-3 h-3" />
+    </div>
+  )
+}
+
+// Draggable Widget Within Section Component (fixes hooks rule violation)
+function DraggableWidgetInSection({ 
+  widget, 
+  sectionId, 
+  areaId, 
+  activeSectionToolbar, 
+  setActiveSectionToolbar, 
+  activeWidgetToolbar, 
+  setActiveWidgetToolbar, 
+  onWidgetClick 
+}: {
+  widget: Widget
+  sectionId: string
+  areaId: string
+  activeSectionToolbar?: string | null
+  setActiveSectionToolbar?: (value: string | null) => void
+  activeWidgetToolbar: string | null
+  setActiveWidgetToolbar: (value: string | null) => void
+  onWidgetClick: (id: string, e: React.MouseEvent) => void
+}) {
+  // Each widget gets its own draggable hook - no hooks rule violation
+  const widgetDrag = useDraggable({
+    id: `widget-${widget.id}`,
+    data: {
+      type: 'section-widget',
+      widget: widget,
+      fromSectionId: sectionId,
+      fromAreaId: areaId
+    }
+  })
+  
+  return (
+    <div 
+      ref={widgetDrag.setNodeRef}
+      style={widgetDrag.transform ? {
+        transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
+      } : undefined}
+      className={`cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative ${
+        widgetDrag.isDragging ? 'opacity-50' : ''
+      }`}
+    >
+      {/* Overlay to capture clicks on interactive widgets */}
+      <div 
+        className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
+        style={{ pointerEvents: 'auto' }}
+        onClick={(e) => {
+          e.stopPropagation()
+          console.log('🎯 Overlay click detected:', { 
+            widgetId: widget.id, 
+            widgetType: widget.type 
+          })
+          // Only close section toolbar if it's not for the current widget's section
+          if (activeSectionToolbar !== widget.sectionId) {
+            setActiveSectionToolbar?.(null)
+          }
+          setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+          onWidgetClick(widget.id, e)
+        }}
+      />
+      {/* Widget Action Toolbar - appears on click (outside non-interactive area) */}
+      {activeWidgetToolbar === widget.id && (
+        <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+            <div 
+              {...widgetDrag.attributes}
+              {...widgetDrag.listeners}
+              className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+              title="Drag to move widget between sections"
+            >
+              <GripVertical className="w-3 h-3" />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                // Duplicate widget logic
+                const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
+                
+                const updatedCanvasItems = canvasItems.map(canvasItem => {
+                  if (isSection(canvasItem)) {
+                    return {
+                      ...canvasItem,
+                      areas: canvasItem.areas.map(area => 
+                        area.widgets.some(w => w.id === widget.id)
+                          ? { ...area, widgets: [...area.widgets, duplicatedWidget] }
+                          : area
+                      )
+                    }
+                  }
+                  return canvasItem
+                })
+                replaceCanvasItems(updatedCanvasItems)
+              }}
+              className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+              title="Duplicate widget"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onWidgetClick(widget.id, e)
+              }}
+              className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+              title="Properties"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const { deleteWidget } = usePageStore.getState()
+                deleteWidget(widget.id)
+              }}
+              className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+              title="Delete widget"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Make widget content non-interactive in edit mode */}
+      <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
+        <WidgetRenderer 
+          widget={widget} 
+          onWidgetClick={onWidgetClick}
+          activeSectionToolbar={activeSectionToolbar}
+          setActiveSectionToolbar={setActiveSectionToolbar}
+          activeWidgetToolbar={activeWidgetToolbar}
+          setActiveWidgetToolbar={setActiveWidgetToolbar}
+        />
+      </div>
     </div>
   )
 }
@@ -3201,6 +3789,7 @@ function SectionRenderer({
   setActiveSectionToolbar,
   activeWidgetToolbar,
   setActiveWidgetToolbar,
+  activeDropZone,
   instanceId
 }: { 
   section: WidgetSection
@@ -3211,6 +3800,7 @@ function SectionRenderer({
   setActiveSectionToolbar: (value: string | null) => void
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
+  activeDropZone: string | null
   instanceId: string
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -3357,110 +3947,86 @@ function SectionRenderer({
         )}
       
       <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
-        {section.areas.map((area) => (
+        {section.areas.map((area) => {
+          // Make area droppable for library widgets
+          const { isOver, setNodeRef: setDropRef } = useDroppable({
+            id: `drop-${area.id}`,
+            data: {
+              type: 'section-area',
+              sectionId: section.id,
+              areaId: area.id
+            }
+          })
+          
+          // Debug logging for drop zone
+          React.useEffect(() => {
+            if (isOver) {
+              console.log('🎯 Drop zone active:', area.id, 'in section:', section.id)
+            }
+          }, [isOver, area.id, section.id])
+          
+          return (
           <div 
+            ref={setDropRef}
             key={area.id} 
-            className={`${
+            className={`relative ${
               isSpecialSection 
                 ? '' 
                 : area.widgets.length === 0 
-                  ? 'min-h-20 border-2 border-dashed border-purple-300 rounded p-4 bg-white opacity-60' 
-                  : 'bg-white rounded p-2'
+                  ? `min-h-20 border-2 border-dashed rounded p-4 bg-white transition-all ${
+                      activeDropZone === `drop-${area.id}` 
+                        ? 'border-green-400 bg-green-50 ring-2 ring-green-200' 
+                        : isOver 
+                        ? 'border-blue-400 bg-blue-50' 
+                        : 'border-purple-300 opacity-60'
+                    }` 
+                  : activeDropZone === `drop-${area.id}` 
+                    ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+                    : activeDropZone === `drop-${area.id}` 
+                      ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+                      : 'bg-white rounded p-2'
             }`}
           >
             {!isSpecialSection && area.widgets.length === 0 && (
               <div className="flex items-center justify-center h-full">
-                <span className="text-xs text-purple-400">Drop widgets here</span>
+                <span className={`text-xs transition-colors ${
+                  activeDropZone === `drop-${area.id}` 
+                    ? 'text-green-700 font-bold' 
+                    : isOver 
+                    ? 'text-blue-600 font-medium' 
+                    : 'text-purple-400'
+                }`}>
+                  {activeDropZone === `drop-${area.id}` 
+                    ? 'ACTIVE DROP ZONE' 
+                    : isOver 
+                    ? 'Drop widget here' 
+                    : 'Drop widgets here'}
+                </span>
+              </div>
+            )}
+            
+            {/* Active Drop Zone Indicator for Populated Areas */}
+            {area.widgets.length > 0 && activeDropZone === `drop-${area.id}` && (
+              <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10 shadow-lg">
+                ACTIVE DROP ZONE
               </div>
             )}
             
             {area.widgets.map((widget) => (
-              <div 
+              <DraggableWidgetInSection
                 key={widget.id}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Only close section toolbar if it's not for the current widget's section
-                  if (activeSectionToolbar !== widget.sectionId) {
-                    setActiveSectionToolbar?.(null)
-                  }
-                  setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
-                  onWidgetClick(widget.id, e)
-                }}
-                className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
-              >
-                {/* Widget Action Toolbar - appears on click */}
-                {activeWidgetToolbar === widget.id && (
-                  <div className="absolute -top-2 -right-2 transition-opacity z-20">
-                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-                      <div 
-                        className="p-1 text-gray-500 hover:text-gray-700 cursor-grab rounded hover:bg-gray-100 transition-colors"
-                        title="Drag handle (visual only)"
-                      >
-                        <GripVertical className="w-3 h-3" />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Duplicate widget logic
-                          const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                          const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
-                          
-                          const updatedCanvasItems = canvasItems.map(canvasItem => {
-                            if (isSection(canvasItem)) {
-                              return {
-                                ...canvasItem,
-                                areas: canvasItem.areas.map(area => 
-                                  area.widgets.some(w => w.id === widget.id)
-                                    ? { ...area, widgets: [...area.widgets, duplicatedWidget] }
-                                    : area
-                                )
-                              }
-                            }
-                            return canvasItem
-                          })
-                          replaceCanvasItems(updatedCanvasItems)
-                        }}
-                        className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                        title="Duplicate widget"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onWidgetClick(widget.id, e)
-                        }}
-                        className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
-                        title="Properties"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const { deleteWidget } = usePageStore.getState()
-                          deleteWidget(widget.id)
-                        }}
-                        className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                        title="Delete widget"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <WidgetRenderer 
-                  widget={widget} 
-                  onWidgetClick={onWidgetClick}
-                  activeSectionToolbar={activeSectionToolbar}
-                  setActiveSectionToolbar={setActiveSectionToolbar}
-                  activeWidgetToolbar={activeWidgetToolbar}
-                  setActiveWidgetToolbar={setActiveWidgetToolbar}
-                />
-              </div>
+                widget={widget}
+                sectionId={section.id}
+                areaId={area.id}
+                activeSectionToolbar={activeSectionToolbar}
+                setActiveSectionToolbar={setActiveSectionToolbar}
+                activeWidgetToolbar={activeWidgetToolbar}
+                setActiveWidgetToolbar={setActiveWidgetToolbar}
+                onWidgetClick={onWidgetClick}
+              />
             ))}
           </div>
-        ))}
+        )})}
       </div>
       </div>
       
