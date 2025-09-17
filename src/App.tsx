@@ -3301,6 +3301,7 @@ function SectionRenderer({
           <div className="flex items-center gap-2 mb-2 px-2">
             <span className="text-xs font-medium text-purple-700">Content Block</span>
             <span className="text-xs text-purple-600">{section.layout}</span>
+            <span className="text-xs text-gray-500">(Click section to show toolbar)</span>
           </div>
         )}
       
@@ -3312,7 +3313,7 @@ function SectionRenderer({
               isSpecialSection 
                 ? '' 
                 : area.widgets.length === 0 
-                  ? 'min-h-16 border-2 border-dashed border-purple-300 rounded p-2 bg-white opacity-60' 
+                  ? 'min-h-20 border-2 border-dashed border-purple-300 rounded p-4 bg-white opacity-60' 
                   : 'bg-white rounded p-2'
             }`}
           >
