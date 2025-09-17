@@ -615,9 +615,84 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
   )
 }
 
-function WidgetRenderer({ widget }: { widget: Widget }) {
+function WidgetRenderer({ 
+  widget, 
+  dragAttributes, 
+  dragListeners, 
+  onWidgetClick 
+}: { 
+  widget: Widget
+  dragAttributes?: any
+  dragListeners?: any
+  onWidgetClick?: (id: string, e: React.MouseEvent) => void
+}) {
   const canvasItems = usePageStore((s) => s.canvasItems)
   const replaceCanvasItems = usePageStore((s) => s.replaceCanvasItems)
+  
+  // For standalone widgets, wrap with action toolbar
+  const renderWithToolbar = (content: JSX.Element) => {
+    if (!dragAttributes || !dragListeners || !onWidgetClick) {
+      return content // No toolbar for widgets within sections
+    }
+    
+    return (
+      <div className="group relative">
+        {/* Standalone Widget Action Toolbar */}
+        <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+            <div 
+              {...dragAttributes}
+              {...dragListeners}
+              className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+              title="Drag to reorder"
+            >
+              <GripVertical className="w-3 h-3" />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                // Duplicate standalone widget
+                const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                const itemIndex = canvasItems.findIndex(canvasItem => canvasItem.id === widget.id)
+                if (itemIndex !== -1) {
+                  const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
+                  const newCanvasItems = [...canvasItems]
+                  newCanvasItems.splice(itemIndex + 1, 0, duplicatedWidget)
+                  replaceCanvasItems(newCanvasItems)
+                }
+              }}
+              className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+              title="Duplicate widget"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onWidgetClick(widget.id, e)
+              }}
+              className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+              title="Properties"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const { deleteWidget } = usePageStore.getState()
+                deleteWidget(widget.id)
+              }}
+              className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+              title="Delete widget"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+        {content}
+      </div>
+    )
+  }
   
   switch (widget.type) {
     case 'navbar': {
@@ -2928,17 +3003,6 @@ function SortableItem({
           : 'border-transparent hover:border-gray-200'
       }`}
     >
-      {/* Drag Handle - Positioned at Top Left */}
-      <div className="absolute left-0 top-0 -translate-x-8 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-2 text-gray-500 hover:text-blue-600 cursor-grab active:cursor-grabbing bg-white border border-gray-300 rounded-md shadow-sm hover:shadow-md transition-all"
-          title="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-      </div>
       
       {isSection(item) ? (
         <div 
@@ -2957,7 +3021,9 @@ function SortableItem({
           
           <SectionRenderer 
             section={item} 
-            onWidgetClick={onWidgetClick} 
+            onWidgetClick={onWidgetClick}
+            dragAttributes={attributes}
+            dragListeners={listeners}
           />
         </div>
       ) : (
@@ -2969,6 +3035,8 @@ function SortableItem({
           <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
+                {...dragAttributes}
+                {...dragListeners}
                 className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
                 title="Drag to reorder"
               >
@@ -3015,7 +3083,12 @@ function SortableItem({
               </button>
             </div>
           </div>
-          <WidgetRenderer widget={item} />
+          <WidgetRenderer 
+            widget={item}
+            dragAttributes={attributes}
+            dragListeners={listeners}
+            onWidgetClick={onWidgetClick}
+          />
         </div>
       )}
     </div>
@@ -3024,10 +3097,14 @@ function SortableItem({
 
 function SectionRenderer({ 
   section, 
-  onWidgetClick 
+  onWidgetClick,
+  dragAttributes,
+  dragListeners
 }: { 
   section: WidgetSection
-  onWidgetClick: (id: string, e: React.MouseEvent) => void 
+  onWidgetClick: (id: string, e: React.MouseEvent) => void
+  dragAttributes?: any
+  dragListeners?: any
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
@@ -3105,6 +3182,8 @@ function SectionRenderer({
           <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
+                {...dragAttributes}
+                {...dragListeners}
                 className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
                 title="Drag to reorder section"
               >
@@ -3173,6 +3252,8 @@ function SectionRenderer({
                 <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                   <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
                     <div 
+                      {...attributes}
+                      {...listeners}
                       className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
                       title="Drag to reorder"
                     >
@@ -3228,7 +3309,10 @@ function SectionRenderer({
                     </button>
                   </div>
                 </div>
-                <WidgetRenderer widget={widget} />
+                <WidgetRenderer 
+                  widget={widget} 
+                  onWidgetClick={onWidgetClick}
+                />
               </div>
             ))}
           </div>
