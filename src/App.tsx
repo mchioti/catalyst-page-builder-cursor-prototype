@@ -3261,7 +3261,8 @@ function SectionRenderer({
       >
         {/* Section Action Toolbar - appears on click */}
         {activeSectionToolbar === section.id && (
-          <div className="absolute -top-2 -right-2 transition-opacity z-20">
+          <div className="absolute -top-2 -right-2 transition-opacity z-20 bg-red-500">
+            <div className="text-white px-2 py-1 mb-1">DEBUG: TOOLBAR ACTIVE</div>
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
                 {...dragAttributes}
