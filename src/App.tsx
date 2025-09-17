@@ -3257,6 +3257,8 @@ function SectionRenderer({
                 key={widget.id}
                 onClick={(e) => {
                   e.stopPropagation()
+                  // Close any section toolbar and toggle widget toolbar
+                  setActiveSectionToolbar(null)
                   setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
                   onWidgetClick(widget.id, e)
                 }}
