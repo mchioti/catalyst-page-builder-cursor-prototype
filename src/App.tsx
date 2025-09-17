@@ -2964,6 +2964,7 @@ function PageBuilder() {
                           setActiveSectionToolbar={setActiveSectionToolbar}
                           activeWidgetToolbar={activeWidgetToolbar}
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          instanceId={instanceId}
                         />
                         
                         {/* Add Section Button Below */}
@@ -3016,7 +3017,8 @@ function SortableItem({
   activeSectionToolbar,
   setActiveSectionToolbar,
   activeWidgetToolbar,
-  setActiveWidgetToolbar
+  setActiveWidgetToolbar,
+  instanceId
 }: { 
   item: CanvasItem
   isSelected: boolean
@@ -3026,6 +3028,7 @@ function SortableItem({
   setActiveSectionToolbar: (value: string | null) => void
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
+  instanceId: string
 }) {
   const {
     attributes,
