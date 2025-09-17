@@ -295,6 +295,7 @@ type PageState = {
   moveItem: (fromIndex: number, toIndex: number) => void
   replaceCanvasItems: (items: CanvasItem[]) => void
   selectWidget: (id: string | null) => void
+  deleteWidget: (widgetId: string) => void
   addCustomSection: (section: CustomSection) => void
   removeCustomSection: (id: string) => void
   addPublicationCardVariant: (variant: PublicationCardVariant) => void
@@ -1035,6 +1036,35 @@ const usePageStore = create<PageState>((set, get) => ({
   moveItem: (fromIndex, toIndex) => set((s) => ({ canvasItems: arrayMove(s.canvasItems, fromIndex, toIndex) })),
   replaceCanvasItems: (items) => set({ canvasItems: items }),
   selectWidget: (id) => set({ selectedWidget: id }),
+  deleteWidget: (widgetId) => set((state) => {
+    // First try to find and remove standalone widget
+    const standaloneIndex = state.canvasItems.findIndex(item => !isSection(item) && item.id === widgetId)
+    if (standaloneIndex !== -1) {
+      return {
+        canvasItems: state.canvasItems.filter((_, index) => index !== standaloneIndex),
+        selectedWidget: state.selectedWidget === widgetId ? null : state.selectedWidget
+      }
+    }
+    
+    // If not standalone, look in sections
+    const updatedCanvasItems = state.canvasItems.map(item => {
+      if (isSection(item)) {
+        return {
+          ...item,
+          areas: item.areas.map(area => ({
+            ...area,
+            widgets: area.widgets.filter(widget => widget.id !== widgetId)
+          }))
+        }
+      }
+      return item
+    })
+    
+    return {
+      canvasItems: updatedCanvasItems,
+      selectedWidget: state.selectedWidget === widgetId ? null : state.selectedWidget
+    }
+  }),
   addCustomSection: (section) => set((s) => ({ customSections: [...s.customSections, section] })),
   removeCustomSection: (id) => set((s) => ({ customSections: s.customSections.filter(section => section.id !== id) })),
   addPublicationCardVariant: (variant) => set((s) => ({ publicationCardVariants: [...s.publicationCardVariants, variant] })),
@@ -1736,6 +1766,46 @@ function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: Co
   )
 }
 
+// Draggable library widget component
+function DraggableLibraryWidget({ item }: { item: SpecItem }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+  } = useDraggable({
+    id: `library-widget-${item.id}`,
+    data: {
+      type: 'library-widget',
+      item: item
+    }
+  })
+
+  const handleClick = () => {
+    const newWidget = buildWidget(item)
+    const { addWidget } = usePageStore.getState()
+    addWidget(newWidget)
+  }
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      className={`block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+      title={isDragging ? 'Drop into section area' : 'Click to add to canvas or drag to section drop zone'}
+    >
+      {item.label}
+      {item.status === 'planned' && (
+        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+      )}
+    </button>
+  )
+}
+
 // Library component to show widgets and sections with collapsible categories
 function WidgetLibrary() {
   const { addWidget } = usePageStore()
@@ -1790,32 +1860,14 @@ function WidgetLibrary() {
                       <h5 className="text-sm font-medium text-gray-700 mb-2">{group.name}</h5>
                       <div className="space-y-1">
                         {group.items?.map((item: any) => (
-                          <button
-                            key={item.id}
-                            onClick={() => handleAddWidget(item)}
-                            className="block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors"
-                          >
-                            {item.label}
-                            {item.status === 'planned' && (
-                              <span className="ml-2 text-xs text-orange-600">(Planned)</span>
-                            )}
-                          </button>
+                          <DraggableLibraryWidget key={item.id} item={item} />
                         ))}
                       </div>
                     </div>
                   )) || (
                     // Handle categories with direct items (no groups)
                     category.items?.map((item: any) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleAddWidget(item)}
-                        className="block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors"
-                      >
-                        {item.label}
-                        {item.status === 'planned' && (
-                          <span className="ml-2 text-xs text-orange-600">(Planned)</span>
-                        )}
-                      </button>
+                      <DraggableLibraryWidget key={item.id} item={item} />
                     ))
                   )}
                 </div>
@@ -2690,6 +2742,39 @@ function PageBuilder() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
+    if (!over) return
+
+    // Handle dropping library widgets into section areas
+    if (active.data.current?.type === 'library-widget' && over.data.current?.type === 'section-area') {
+      const { replaceCanvasItems } = usePageStore.getState()
+      const item = active.data.current.item
+      const areaId = over.data.current.areaId
+      const targetSectionId = over.data.current.sectionId
+      
+      // Create new widget from library item
+      const newWidget = buildWidget(item)
+      newWidget.sectionId = targetSectionId
+      
+      // Add widget to the specific section area
+      const updatedCanvasItems = canvasItems.map(canvasItem => {
+        if (isSection(canvasItem) && canvasItem.id === targetSectionId) {
+          return {
+            ...canvasItem,
+            areas: canvasItem.areas.map(area => 
+              area.id === areaId 
+                ? { ...area, widgets: [...area.widgets, newWidget] }
+                : area
+            )
+          }
+        }
+        return canvasItem
+      })
+      
+      replaceCanvasItems(updatedCanvasItems)
+      return
+    }
+
+    // Handle existing sortable functionality for canvas items
     if (over && active.id !== over.id) {
       const { moveItem } = usePageStore.getState()
       const oldIndex = canvasItems.findIndex((item) => item.id === active.id)
@@ -2935,15 +3020,98 @@ function SortableItem({
           onClick={(e) => onWidgetClick(item.id, e)}
           className="cursor-pointer group relative"
         >
-          {/* Standalone Widget Drag Handle */}
-          <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          {/* Standalone Widget Controls */}
+          <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col gap-1">
             <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder widget">
               <GripVertical className="w-3 h-3" />
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const { deleteWidget } = usePageStore.getState()
+                deleteWidget(item.id)
+              }}
+              className="p-1 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 transition-colors"
+              title="Delete widget"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
           <WidgetRenderer widget={item} />
         </div>
       )}
+    </div>
+  )
+}
+
+// Droppable section area component
+function DroppableArea({ 
+  area, 
+  sectionId, 
+  onWidgetClick, 
+  isSpecialSection 
+}: { 
+  area: LayoutArea
+  sectionId: string
+  onWidgetClick: (id: string, e: React.MouseEvent) => void
+  isSpecialSection: boolean
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `droppable-area-${area.id}`,
+    data: {
+      type: 'section-area',
+      areaId: area.id,
+      sectionId: sectionId
+    }
+  })
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`${
+        isSpecialSection 
+          ? '' 
+          : area.widgets.length === 0 
+            ? `min-h-16 border-2 border-dashed rounded p-2 bg-white transition-colors ${
+                isOver ? 'border-blue-400 bg-blue-50' : 'border-purple-300 opacity-60'
+              }` 
+            : 'bg-white rounded p-2'
+      }`}
+    >
+      {!isSpecialSection && area.widgets.length === 0 && (
+        <div className="flex items-center justify-center h-full">
+          <span className={`text-xs transition-colors ${isOver ? 'text-blue-600' : 'text-purple-400'}`}>
+            {isOver ? 'Drop widget here' : 'Drop widgets here'}
+          </span>
+        </div>
+      )}
+      
+      {area.widgets.map((widget) => (
+        <div 
+          key={widget.id}
+          onClick={(e) => onWidgetClick(widget.id, e)}
+          className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
+        >
+          {/* Widget Controls - appears on hover */}
+          <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col gap-1">
+            <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder within section">
+              <GripVertical className="w-3 h-3" />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const { deleteWidget } = usePageStore.getState()
+                deleteWidget(widget.id)
+              }}
+              className="p-1 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 transition-colors"
+              title="Delete widget"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <WidgetRenderer widget={widget} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -3059,38 +3227,13 @@ function SectionRenderer({
       
       <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
         {section.areas.map((area) => (
-          <div 
+          <DroppableArea 
             key={area.id} 
-            className={`${
-              isSpecialSection 
-                ? '' 
-                : area.widgets.length === 0 
-                  ? 'min-h-16 border-2 border-dashed border-purple-300 rounded p-2 bg-white opacity-60' 
-                  : 'bg-white rounded p-2'
-            }`}
-          >
-            {!isSpecialSection && area.widgets.length === 0 && (
-              <div className="flex items-center justify-center h-full">
-                <span className="text-xs text-purple-400">Drop widgets here</span>
-              </div>
-            )}
-            
-            {area.widgets.map((widget) => (
-              <div 
-                key={widget.id}
-                onClick={(e) => onWidgetClick(widget.id, e)}
-                className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
-              >
-                {/* Widget Drag Handle - appears on hover */}
-                <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder within section">
-                    <GripVertical className="w-3 h-3" />
-                  </div>
-                </div>
-                <WidgetRenderer widget={widget} />
-              </div>
-            ))}
-          </div>
+            area={area} 
+            sectionId={section.id} 
+            onWidgetClick={onWidgetClick} 
+            isSpecialSection={isSpecialSection}
+          />
         ))}
       </div>
       </div>
