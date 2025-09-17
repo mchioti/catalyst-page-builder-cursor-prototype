@@ -2795,6 +2795,8 @@ function PageBuilder() {
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout } = usePageStore()
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
+  const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
+  const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -3135,6 +3137,7 @@ function SectionRenderer({
   const [sectionDescription, setSectionDescription] = useState('')
   const [showToolbar, setShowToolbar] = useState(false)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
+  const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
