@@ -3096,7 +3096,7 @@ function SortableItem({
             dragAttributes={attributes}
             dragListeners={listeners}
             activeSectionToolbar={activeSectionToolbar}
-            setActiveSectionToolbar={setActiveSectionToolbar}
+            setActiveSectionToolbar={debugSetActiveSectionToolbar}
             activeWidgetToolbar={activeWidgetToolbar}
             setActiveWidgetToolbar={setActiveWidgetToolbar}
             instanceId={instanceId}
