@@ -3304,6 +3304,9 @@ function SectionRenderer({
             <span className="text-xs font-medium text-purple-700">Content Block</span>
             <span className="text-xs text-purple-600">{section.layout}</span>
             <span className="text-xs text-gray-500">(Click section to show toolbar)</span>
+            {activeSectionToolbar === section.id && (
+              <span className="text-xs bg-green-200 px-1 rounded">ACTIVE</span>
+            )}
           </div>
         )}
       
