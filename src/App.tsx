@@ -2949,6 +2949,10 @@ function PageBuilder() {
                           isSelected={selectedWidget === item.id}
                           onSectionClick={handleSectionClick}
                           onWidgetClick={handleWidgetClick}
+                          activeSectionToolbar={activeSectionToolbar}
+                          setActiveSectionToolbar={setActiveSectionToolbar}
+                          activeWidgetToolbar={activeWidgetToolbar}
+                          setActiveWidgetToolbar={setActiveWidgetToolbar}
                         />
                         
                         {/* Add Section Button Below */}
@@ -2997,12 +3001,20 @@ function SortableItem({
   item, 
   isSelected, 
   onSectionClick, 
-  onWidgetClick 
+  onWidgetClick,
+  activeSectionToolbar,
+  setActiveSectionToolbar,
+  activeWidgetToolbar,
+  setActiveWidgetToolbar
 }: { 
   item: CanvasItem
   isSelected: boolean
   onSectionClick: (id: string, e: React.MouseEvent) => void
   onWidgetClick: (id: string, e: React.MouseEvent) => void
+  activeSectionToolbar: string | null
+  setActiveSectionToolbar: (value: string | null) => void
+  activeWidgetToolbar: string | null
+  setActiveWidgetToolbar: (value: string | null) => void
 }) {
   const {
     attributes,
