@@ -3247,18 +3247,16 @@ function SectionRenderer({
   return (
     <>
       <div 
-        className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'} relative`}
+        className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300'} transition-colors relative cursor-pointer`}
         onClick={(e) => {
-          if (!isSpecialSection) {
-            e.stopPropagation()
-            // Close any widget toolbar and toggle section toolbar
-            setActiveWidgetToolbar(null)
-            setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
-          }
+          e.stopPropagation()
+          // Close any widget toolbar and toggle section toolbar
+          setActiveWidgetToolbar(null)
+          setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
         }}
       >
         {/* Section Action Toolbar - appears on click */}
-        {!isSpecialSection && activeSectionToolbar === section.id && (
+        {activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
