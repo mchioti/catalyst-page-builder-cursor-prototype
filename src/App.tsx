@@ -3085,8 +3085,8 @@ function SortableItem({
           <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
-                {...dragAttributes}
-                {...dragListeners}
+                {...attributes}
+                {...listeners}
                 className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
                 title="Drag to reorder"
               >
