@@ -2805,6 +2805,8 @@ function PageBuilder() {
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
+  
+  console.log('PageBuilder render - activeSectionToolbar:', activeSectionToolbar)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
