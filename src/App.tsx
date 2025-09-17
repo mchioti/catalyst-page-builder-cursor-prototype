@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import React from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
@@ -2807,6 +2807,17 @@ function PageBuilder() {
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   
+  // Debug: Track state with ref to see if useState is working at all
+  const stateRef = useRef({ activeSectionToolbar, activeWidgetToolbar })
+  stateRef.current = { activeSectionToolbar, activeWidgetToolbar }
+  
+  const debugSetActiveSectionToolbar = (value: string | null) => {
+    console.log(`[${instanceId}] About to call setState with:`, value)
+    console.log(`[${instanceId}] Current ref state:`, stateRef.current)
+    setActiveSectionToolbar(value)
+    console.log(`[${instanceId}] setState called, ref still shows:`, stateRef.current)
+  }
+  
   console.log(`PageBuilder[${instanceId}] render - activeSectionToolbar:`, activeSectionToolbar)
   
   useEffect(() => {
@@ -3273,12 +3284,12 @@ function SectionRenderer({
           console.log('About to set activeSectionToolbar to:', newValue)
           // Close any widget toolbar and toggle section toolbar
           setActiveWidgetToolbar(null)
-          setActiveSectionToolbar(newValue)
+          debugSetActiveSectionToolbar(newValue)
           console.log('setActiveSectionToolbar called with:', newValue)
           
           // Direct test - force set to a test value
           console.log('Testing direct setState call...')
-          setActiveSectionToolbar('test-value')
+          debugSetActiveSectionToolbar('test-value')
           console.log('Direct setState called with test-value')
           // Also select the section for properties panel
           onWidgetClick(section.id, e)
