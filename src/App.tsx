@@ -2807,6 +2807,11 @@ function PageBuilder() {
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   
   console.log('PageBuilder render - activeSectionToolbar:', activeSectionToolbar)
+  
+  useEffect(() => {
+    console.log('activeSectionToolbar state changed to:', activeSectionToolbar)
+  }, [activeSectionToolbar])
+  
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
