@@ -619,19 +619,27 @@ function WidgetRenderer({
   widget, 
   dragAttributes, 
   dragListeners, 
-  onWidgetClick 
-}: { 
+  onWidgetClick,
+  activeSectionToolbar,
+  setActiveSectionToolbar,
+  activeWidgetToolbar,
+  setActiveWidgetToolbar
+}: {
   widget: Widget
   dragAttributes?: any
   dragListeners?: any
   onWidgetClick?: (id: string, e: React.MouseEvent) => void
+  activeSectionToolbar?: string | null
+  setActiveSectionToolbar?: (value: string | null) => void
+  activeWidgetToolbar?: string | null
+  setActiveWidgetToolbar?: (value: string | null) => void
 }) {
   const canvasItems = usePageStore((s) => s.canvasItems)
   const replaceCanvasItems = usePageStore((s) => s.replaceCanvasItems)
   
   // For standalone widgets, wrap with action toolbar
   const renderWithToolbar = (content: JSX.Element) => {
-    if (!dragAttributes || !dragListeners || !onWidgetClick) {
+    if (!dragAttributes || !dragListeners || !onWidgetClick || !setActiveSectionToolbar || !setActiveWidgetToolbar) {
       return content // No toolbar for widgets within sections
     }
     
@@ -3118,6 +3126,10 @@ function SortableItem({
             dragAttributes={attributes}
             dragListeners={listeners}
             onWidgetClick={onWidgetClick}
+            activeSectionToolbar={activeSectionToolbar}
+            setActiveSectionToolbar={setActiveSectionToolbar}
+            activeWidgetToolbar={activeWidgetToolbar}
+            setActiveWidgetToolbar={setActiveWidgetToolbar}
           />
         </div>
       )}
@@ -3366,6 +3378,10 @@ function SectionRenderer({
                 <WidgetRenderer 
                   widget={widget} 
                   onWidgetClick={onWidgetClick}
+                  activeSectionToolbar={activeSectionToolbar}
+                  setActiveSectionToolbar={setActiveSectionToolbar}
+                  activeWidgetToolbar={activeWidgetToolbar}
+                  setActiveWidgetToolbar={setActiveWidgetToolbar}
                 />
               </div>
             ))}
