@@ -2844,7 +2844,14 @@ function PageBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div 
+      className="min-h-screen bg-gray-50 flex"
+      onClick={() => {
+        // Close all toolbars when clicking outside elements
+        setActiveSectionToolbar(null)
+        setActiveWidgetToolbar(null)
+      }}
+    >
       {/* Left Sidebar */}
       <div className="w-80 bg-white shadow-sm border-r flex flex-col">
         {/* Tabs */}
