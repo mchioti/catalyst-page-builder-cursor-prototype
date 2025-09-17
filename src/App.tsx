@@ -3107,7 +3107,7 @@ function SortableItem({
           onClick={(e) => {
             e.stopPropagation()
             // Close any section toolbar and toggle widget toolbar
-            setActiveSectionToolbar(null)
+            setActiveSectionToolbar?.(null)
             setActiveWidgetToolbar(activeWidgetToolbar === item.id ? null : item.id)
             onWidgetClick(item.id, e)
           }}
@@ -3371,7 +3371,7 @@ function SectionRenderer({
                 onClick={(e) => {
                   e.stopPropagation()
                   // Close any section toolbar and toggle widget toolbar
-                  setActiveSectionToolbar(null)
+                  setActiveSectionToolbar?.(null)
                   setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
                   onWidgetClick(widget.id, e)
                 }}
