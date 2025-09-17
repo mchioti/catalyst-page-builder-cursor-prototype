@@ -2800,17 +2800,18 @@ function PropertiesPanel() {
 }
 
 function PageBuilder() {
+  const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout } = usePageStore()
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   
-  console.log('PageBuilder render - activeSectionToolbar:', activeSectionToolbar)
+  console.log(`PageBuilder[${instanceId}] render - activeSectionToolbar:`, activeSectionToolbar)
   
   useEffect(() => {
-    console.log('activeSectionToolbar state changed to:', activeSectionToolbar)
-  }, [activeSectionToolbar])
+    console.log(`PageBuilder[${instanceId}] activeSectionToolbar state changed to:`, activeSectionToolbar)
+  }, [activeSectionToolbar, instanceId])
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
