@@ -3253,6 +3253,8 @@ function SectionRenderer({
           // Close any widget toolbar and toggle section toolbar
           setActiveWidgetToolbar(null)
           setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
+          // Also select the section for properties panel
+          onWidgetClick(section.id, e)
         }}
       >
         {/* Section Action Toolbar - appears on click */}
