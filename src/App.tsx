@@ -3250,9 +3250,11 @@ function SectionRenderer({
         className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300'} transition-colors relative cursor-pointer`}
         onClick={(e) => {
           e.stopPropagation()
+          console.log('Section clicked:', section.id, section.name, 'isSpecial:', isSpecialSection)
           // Close any widget toolbar and toggle section toolbar
           setActiveWidgetToolbar(null)
           setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
+          console.log('Setting activeSectionToolbar to:', activeSectionToolbar === section.id ? null : section.id)
           // Also select the section for properties panel
           onWidgetClick(section.id, e)
         }}
