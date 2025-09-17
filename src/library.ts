@@ -1,0 +1,132 @@
+export type LibraryItemStatus = 'supported' | 'planned' | 'deprecated' | 'advanced' | 'publisher'
+
+export type LibraryItem = {
+  id: string
+  label: string
+  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'publication-list' | 'publication-detail' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
+  description?: string
+  skin?: 'modern' | 'classic' | 'minimal' | 'accent'
+  status: LibraryItemStatus
+  legacy?: { axpCategory?: string; internalName?: string }
+}
+
+export type LibrarySubcategory = {
+  id: string
+  name: string
+  items: LibraryItem[]
+}
+
+export type LibraryCategory = {
+  id: string
+  name: string
+  items?: LibraryItem[]
+  groups?: LibrarySubcategory[]
+}
+
+export const LIBRARY_CONFIG: LibraryCategory[] = [
+  {
+    id: 'core',
+    name: 'Core Widgets',
+    groups: [
+      {
+        id: 'core-page-elements',
+        name: 'Page Elements',
+        items: [
+          { id: 'text', label: 'Text', type: 'text', description: 'Paragraph or rich text', skin: 'minimal', status: 'supported' },
+          { id: 'heading', label: 'Heading', type: 'heading', description: 'Structured heading styles', skin: 'minimal', status: 'supported' },
+          { id: 'image', label: 'Image', type: 'image', description: 'Static image', skin: 'minimal', status: 'supported' },
+          { id: 'button', label: 'Button', type: 'button', description: 'Links and actions', status: 'planned' },
+          { id: 'link', label: 'Link', type: 'link', description: 'Simple hyperlink', status: 'planned' },
+          { id: 'divider', label: 'Divider', type: 'divider', description: 'Horizontal rule', status: 'planned' },
+          { id: 'spacer', label: 'Spacer', type: 'spacer', description: 'Vertical space', status: 'planned' },
+        ],
+      },
+      {
+        id: 'core-navigation',
+        name: 'Navigation',
+        items: [
+          { id: 'navbar', label: 'Menu', type: 'navbar', description: 'Primary/secondary navigation', skin: 'minimal', status: 'supported', legacy: { axpCategory: 'Navigation widgets', internalName: 'menu' } },
+          { id: 'breadcrumbs', label: 'Breadcrumbs', type: 'link', description: 'Alternative navigation aid', status: 'planned' },
+          { id: 'social-links', label: 'Social Links', type: 'link', description: 'Icons linking to social profiles', status: 'planned' },
+        ],
+      },
+      {
+        id: 'core-interactive',
+        name: 'Interactive',
+        items: [
+          { id: 'table', label: 'Table', type: 'table', description: 'Responsive data grid', status: 'planned' },
+          { id: 'page-index', label: 'Page Index', type: 'page-index', description: 'Table of contents', status: 'planned' },
+          { id: 'tabs', label: 'Tabs', type: 'tabs', description: 'Tabbed content', status: 'planned' },
+          { id: 'collapse', label: 'Collapse', type: 'collapse', description: 'Expandable content (accordion)', status: 'planned' },
+          { id: 'slideshow', label: 'Slideshow', type: 'slideshow', description: 'Carousel / slideshow', status: 'planned' },
+          { id: 'cta', label: 'Generic CTA', type: 'cta', description: 'Call to action', status: 'planned' },
+          { id: 'feedback-form', label: 'Feedback Form', type: 'feedback-form', description: 'Collect feedback', status: 'planned', legacy: { axpCategory: 'General', internalName: 'literatumFeedbackWidget' } },
+          { id: 'recommend-to-library', label: 'Recommend to Library', type: 'recommend-to-library', description: 'Recommend content', status: 'planned' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'publishing',
+    name: 'Publishing Widgets',
+    groups: [
+      {
+        id: 'publishing-lists',
+        name: 'Publication Lists',
+        items: [
+          { id: 'publication-list', label: 'Publication Lists', type: 'publication-list', description: 'Curated/dynamic lists', status: 'supported' },
+        ],
+      },
+      {
+        id: 'publishing-detail',
+        name: 'Publication Detail',
+        items: [
+          { id: 'publication-detail', label: 'Publication Detail', type: 'publication-detail', description: 'Article/book detail', status: 'planned' },
+        ],
+      },
+      {
+        id: 'publishing-structure',
+        name: 'Content Structure & Discovery',
+        items: [
+          { id: 'saved-searches', label: 'Saved Searches', type: 'saved-searches', description: 'User saved queries', status: 'planned', legacy: { axpCategory: 'Search', internalName: 'literatumSavedSearchesWidget' } },
+          { id: 'cross-publisher-recs', label: 'Cross Publisher Recs', type: 'cross-publisher-recs', description: 'Recommendations', status: 'planned', legacy: { axpCategory: 'Search', internalName: 'crossPublishersRecommendationsWidget' } },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'system',
+    name: 'System Widgets',
+    items: [
+      { id: 'deployment-indicator', label: 'Deployment Indicator', type: 'deployment-indicator', description: 'Environment banner', status: 'planned', legacy: { axpCategory: 'General', internalName: 'deployment-widget' } },
+      { id: 'locale-changer', label: 'Locale Changer', type: 'locale-changer', description: 'Switch locales', status: 'planned', legacy: { axpCategory: 'General', internalName: 'literatumLocaleChanger' } },
+      { id: 'saml-errors', label: 'SAML Errors', type: 'saml-errors', description: 'Auth errors', status: 'planned', legacy: { axpCategory: 'General', internalName: 'samlErrorsWidget' } },
+    ],
+  },
+  {
+    id: 'advanced',
+    name: 'DIY Widgets',
+    items: [
+      { id: 'html-block', label: 'HTML/Code Block', type: 'html-block', description: 'Embed custom HTML/CSS/JS', status: 'planned' },
+    ],
+  },
+  {
+    id: 'sections',
+    name: 'Pre-fab Sections',
+    items: [
+      { id: 'section-header', label: 'Header Section', type: 'section-header', description: 'Site header with logo and navigation', status: 'supported' },
+      { id: 'section-hero', label: 'Hero Section', type: 'section-hero', description: 'Eye-catching banner with image and text', status: 'supported' },
+      { id: 'section-footer', label: 'Footer Section', type: 'section-footer', description: 'Site footer with copyright and links', status: 'supported' },
+      { id: 'section-features', label: 'Features Section', type: 'section-features', description: 'Three-column feature showcase', status: 'supported' },
+    ],
+  },
+  {
+    id: 'deprecated',
+    name: 'Deprecated',
+    items: [
+      { id: 'preview-trials', label: 'Preview Trials', type: 'cta', description: 'Legacy trials widget', status: 'deprecated', legacy: { axpCategory: 'General', internalName: 'previewTrialsWidget' } },
+    ],
+  },
+]
+
+
