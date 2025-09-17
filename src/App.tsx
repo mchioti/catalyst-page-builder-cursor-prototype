@@ -2863,10 +2863,13 @@ function PageBuilder() {
   return (
     <div 
       className="min-h-screen bg-gray-50 flex"
-      onClick={() => {
-        // Close all toolbars when clicking outside elements
-        setActiveSectionToolbar(null)
-        setActiveWidgetToolbar(null)
+      onClick={(e) => {
+        // Only close toolbars if clicking directly on this div, not on children
+        if (e.target === e.currentTarget) {
+          console.log('Global click handler: closing toolbars')
+          setActiveSectionToolbar(null)
+          setActiveWidgetToolbar(null)
+        }
       }}
     >
       {/* Left Sidebar */}
