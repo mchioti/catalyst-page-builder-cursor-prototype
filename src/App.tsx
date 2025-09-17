@@ -3268,6 +3268,11 @@ function SectionRenderer({
           setActiveWidgetToolbar(null)
           setActiveSectionToolbar(newValue)
           console.log('setActiveSectionToolbar called with:', newValue)
+          
+          // Direct test - force set to a test value
+          console.log('Testing direct setState call...')
+          setActiveSectionToolbar('test-value')
+          console.log('Direct setState called with test-value')
           // Also select the section for properties panel
           onWidgetClick(section.id, e)
         }}
