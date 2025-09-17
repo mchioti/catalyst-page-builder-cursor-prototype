@@ -2142,7 +2142,27 @@ function SectionsContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                    <button 
+                      onClick={() => {
+                        const { addSection } = usePageStore.getState()
+                        // Create a copy of the section with new ID
+                        const sectionCopy = {
+                          ...section.section,
+                          id: crypto.randomUUID(),
+                          areas: section.section.areas.map(area => ({
+                            ...area,
+                            id: crypto.randomUUID(),
+                            widgets: area.widgets.map(widget => ({
+                              ...widget,
+                              id: crypto.randomUUID(),
+                              sectionId: section.section.id
+                            }))
+                          }))
+                        }
+                        addSection(sectionCopy)
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
                       Use
                     </button>
                     <button 
@@ -2271,7 +2291,27 @@ function DIYZoneContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                    <button 
+                      onClick={() => {
+                        const { addSection } = usePageStore.getState()
+                        // Create a copy of the section with new ID
+                        const sectionCopy = {
+                          ...section.section,
+                          id: crypto.randomUUID(),
+                          areas: section.section.areas.map(area => ({
+                            ...area,
+                            id: crypto.randomUUID(),
+                            widgets: area.widgets.map(widget => ({
+                              ...widget,
+                              id: crypto.randomUUID(),
+                              sectionId: section.section.id
+                            }))
+                          }))
+                        }
+                        addSection(sectionCopy)
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
                       Use
                     </button>
                     <button 
@@ -2858,11 +2898,13 @@ function SortableItem({
           : 'border-transparent hover:border-gray-200'
       }`}
     >
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      {/* Drag Handle - Positioned at Top Left */}
+      <div className="absolute left-0 top-0 -translate-x-8 opacity-0 group-hover:opacity-100 transition-opacity z-20">
         <button
           {...attributes}
           {...listeners}
-          className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing bg-white border border-gray-200 rounded"
+          className="p-2 text-gray-500 hover:text-blue-600 cursor-grab active:cursor-grabbing bg-white border border-gray-300 rounded-md shadow-sm hover:shadow-md transition-all"
+          title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -2891,8 +2933,14 @@ function SortableItem({
       ) : (
         <div 
           onClick={(e) => onWidgetClick(item.id, e)}
-          className="cursor-pointer"
+          className="cursor-pointer group relative"
         >
+          {/* Standalone Widget Drag Handle */}
+          <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder widget">
+              <GripVertical className="w-3 h-3" />
+            </div>
+          </div>
           <WidgetRenderer widget={item} />
         </div>
       )}
@@ -2907,6 +2955,10 @@ function SectionRenderer({
   section: WidgetSection
   onWidgetClick: (id: string, e: React.MouseEvent) => void 
 }) {
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [sectionName, setSectionName] = useState('')
+  const [sectionDescription, setSectionDescription] = useState('')
+  
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
       case 'one-column':
@@ -2928,14 +2980,82 @@ function SectionRenderer({
 
   const isSpecialSection = ['header-section', 'hero-section', 'footer-section', 'features-section'].includes(section.id)
 
+  const handleSaveSection = () => {
+    if (sectionName.trim()) {
+      const { addCustomSection } = usePageStore.getState()
+      const customSection = {
+        id: crypto.randomUUID(),
+        name: sectionName.trim(),
+        description: sectionDescription.trim() || 'Custom saved section',
+        section: {
+          ...section,
+          id: crypto.randomUUID() // Generate new ID for the saved section
+        }
+      }
+      addCustomSection(customSection)
+      setShowSaveModal(false)
+      setSectionName('')
+      setSectionDescription('')
+    }
+  }
+
+  const handleDuplicateSection = () => {
+    const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+    const sectionIndex = canvasItems.findIndex(item => item.id === section.id)
+    
+    if (sectionIndex !== -1) {
+      const duplicatedSection = JSON.parse(JSON.stringify(section))
+      duplicatedSection.id = crypto.randomUUID()
+      // Update all widget IDs in the duplicated section
+      duplicatedSection.areas = duplicatedSection.areas.map((area: any) => ({
+        ...area,
+        id: crypto.randomUUID(),
+        widgets: area.widgets.map((widget: any) => ({
+          ...widget,
+          id: crypto.randomUUID(),
+          sectionId: duplicatedSection.id
+        }))
+      }))
+      
+      const newCanvasItems = [...canvasItems]
+      newCanvasItems.splice(sectionIndex + 1, 0, duplicatedSection)
+      replaceCanvasItems(newCanvasItems)
+    }
+  }
+
   return (
-    <div className={isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded'}>
-      {!isSpecialSection && (
-        <div className="flex items-center justify-between mb-2 px-2">
-          <span className="text-xs font-medium text-purple-700">Content Block</span>
-          <span className="text-xs text-purple-600">{section.layout}</span>
-        </div>
-      )}
+    <>
+      <div className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'}`}>
+        {!isSpecialSection && (
+          <div className="flex items-center justify-between mb-2 px-2">
+            <div className="flex items-center gap-2">
+              {/* Inline Drag Handle for Sections */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <GripVertical className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-grab" title="Drag to reorder section" />
+              </div>
+              <span className="text-xs font-medium text-purple-700">Content Block</span>
+              <span className="text-xs text-purple-600">{section.layout}</span>
+            </div>
+            
+            {/* Section Actions */}
+            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+              <button
+                onClick={handleDuplicateSection}
+                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                title="Duplicate section"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="p-1 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                title="Save as custom section"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       
       <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
         {section.areas.map((area) => (
@@ -2959,15 +3079,79 @@ function SectionRenderer({
               <div 
                 key={widget.id}
                 onClick={(e) => onWidgetClick(widget.id, e)}
-                className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all"
+                className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
               >
+                {/* Widget Drag Handle - appears on hover */}
+                <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder within section">
+                    <GripVertical className="w-3 h-3" />
+                  </div>
+                </div>
                 <WidgetRenderer widget={widget} />
               </div>
             ))}
           </div>
         ))}
       </div>
-    </div>
+      </div>
+      
+      {/* Save Section Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
+            <h3 className="text-lg font-semibold mb-4">Save Custom Section</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Section Name *
+                </label>
+                <input
+                  type="text"
+                  value={sectionName}
+                  onChange={(e) => setSectionName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Enter section name"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={sectionDescription}
+                  onChange={(e) => setSectionDescription(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md h-20 resize-none"
+                  placeholder="Enter section description"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSaveModal(false)
+                  setSectionName('')
+                  setSectionDescription('')
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSection}
+                disabled={!sectionName.trim()}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Section
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
