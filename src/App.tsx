@@ -2818,11 +2818,17 @@ function PageBuilder() {
 
   const handleSectionClick = (sectionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    // Close any widget toolbar and toggle section toolbar
+    setActiveWidgetToolbar(null)
+    setActiveSectionToolbar(activeSectionToolbar === sectionId ? null : sectionId)
     selectWidget(sectionId)
   }
 
   const handleWidgetClick = (widgetId: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    // Close any section toolbar and toggle widget toolbar
+    setActiveSectionToolbar(null)
+    setActiveWidgetToolbar(activeWidgetToolbar === widgetId ? null : widgetId)
     selectWidget(widgetId)
   }
 
