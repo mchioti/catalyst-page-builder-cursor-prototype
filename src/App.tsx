@@ -3326,8 +3326,8 @@ function SectionRenderer({
                     widget={widget} 
                     onWidgetClick={onWidgetClick}
                   />
-              </div>
-            ))}
+                </div>
+              ))}
           </div>
         ))}
       </div>
