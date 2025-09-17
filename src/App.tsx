@@ -3253,10 +3253,13 @@ function SectionRenderer({
         onClick={(e) => {
           e.stopPropagation()
           console.log('Section clicked:', section.id, section.name, 'isSpecial:', isSpecialSection)
+          console.log('Current activeSectionToolbar:', activeSectionToolbar)
+          const newValue = activeSectionToolbar === section.id ? null : section.id
+          console.log('About to set activeSectionToolbar to:', newValue)
           // Close any widget toolbar and toggle section toolbar
           setActiveWidgetToolbar(null)
-          setActiveSectionToolbar(activeSectionToolbar === section.id ? null : section.id)
-          console.log('Setting activeSectionToolbar to:', activeSectionToolbar === section.id ? null : section.id)
+          setActiveSectionToolbar(newValue)
+          console.log('setActiveSectionToolbar called with:', newValue)
           // Also select the section for properties panel
           onWidgetClick(section.id, e)
         }}
