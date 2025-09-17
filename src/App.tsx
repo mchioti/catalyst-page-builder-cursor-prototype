@@ -5,7 +5,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDro
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft } from 'lucide-react'
+import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit } from 'lucide-react'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
@@ -2965,22 +2965,55 @@ function SortableItem({
           onClick={(e) => onWidgetClick(item.id, e)}
           className="cursor-pointer group relative"
         >
-          {/* Standalone Widget Controls */}
-          <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col gap-1">
-            <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder widget">
-              <GripVertical className="w-3 h-3" />
+          {/* Standalone Widget Action Toolbar */}
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+              <div 
+                className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+                title="Drag to reorder"
+              >
+                <GripVertical className="w-3 h-3" />
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // Duplicate standalone widget
+                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                  const itemIndex = canvasItems.findIndex(canvasItem => canvasItem.id === item.id)
+                  if (itemIndex !== -1) {
+                    const duplicatedWidget = { ...item, id: crypto.randomUUID() }
+                    const newCanvasItems = [...canvasItems]
+                    newCanvasItems.splice(itemIndex + 1, 0, duplicatedWidget)
+                    replaceCanvasItems(newCanvasItems)
+                  }
+                }}
+                className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                title="Duplicate widget"
+              >
+                <Copy className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onWidgetClick(item.id, e)
+                }}
+                className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+                title="Properties"
+              >
+                <Edit className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const { deleteWidget } = usePageStore.getState()
+                  deleteWidget(item.id)
+                }}
+                className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                title="Delete widget"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                const { deleteWidget } = usePageStore.getState()
-                deleteWidget(item.id)
-              }}
-              className="p-1 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 transition-colors"
-              title="Delete widget"
-            >
-              <X className="w-3 h-3" />
-            </button>
           </div>
           <WidgetRenderer widget={item} />
         </div>
@@ -3066,35 +3099,49 @@ function SectionRenderer({
 
   return (
     <>
-      <div className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'}`}>
+      <div className={`group ${isSpecialSection ? '' : 'border border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-300 transition-colors'} relative`}>
+        {/* Section Action Toolbar - appears on hover */}
         {!isSpecialSection && (
-          <div className="flex items-center justify-between mb-2 px-2">
-            <div className="flex items-center gap-2">
-              {/* Inline Drag Handle for Sections */}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <GripVertical className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-grab" title="Drag to reorder section" />
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+              <div 
+                className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+                title="Drag to reorder section"
+              >
+                <GripVertical className="w-3 h-3" />
               </div>
-              <span className="text-xs font-medium text-purple-700">Content Block</span>
-              <span className="text-xs text-purple-600">{section.layout}</span>
-            </div>
-            
-            {/* Section Actions */}
-            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
               <button
                 onClick={handleDuplicateSection}
-                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
                 title="Duplicate section"
               >
-                <Plus className="w-4 h-4" />
+                <Copy className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setShowSaveModal(true)}
-                className="p-1 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                className="p-1 text-gray-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
                 title="Save as custom section"
               >
-                <Settings className="w-4 h-4" />
+                <BookOpen className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // Could add section properties/settings here in the future
+                }}
+                className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+                title="Section properties"
+              >
+                <Edit className="w-3 h-3" />
               </button>
             </div>
+          </div>
+        )}
+        
+        {!isSpecialSection && (
+          <div className="flex items-center gap-2 mb-2 px-2">
+            <span className="text-xs font-medium text-purple-700">Content Block</span>
+            <span className="text-xs text-purple-600">{section.layout}</span>
           </div>
         )}
       
@@ -3122,22 +3169,64 @@ function SectionRenderer({
                 onClick={(e) => onWidgetClick(widget.id, e)}
                 className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative"
               >
-                {/* Widget Controls - appears on hover */}
-                <div className="absolute -left-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col gap-1">
-                  <div className="p-1 text-gray-400 hover:text-gray-600 cursor-grab bg-white border border-gray-200 rounded shadow-sm" title="Drag to reorder within section">
-                    <GripVertical className="w-3 h-3" />
+                {/* Widget Action Toolbar - appears on hover */}
+                <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+                    <div 
+                      className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+                      title="Drag to reorder"
+                    >
+                      <GripVertical className="w-3 h-3" />
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Duplicate widget logic
+                        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                        const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
+                        
+                        const updatedCanvasItems = canvasItems.map(canvasItem => {
+                          if (isSection(canvasItem)) {
+                            return {
+                              ...canvasItem,
+                              areas: canvasItem.areas.map(area => 
+                                area.widgets.some(w => w.id === widget.id)
+                                  ? { ...area, widgets: [...area.widgets, duplicatedWidget] }
+                                  : area
+                              )
+                            }
+                          }
+                          return canvasItem
+                        })
+                        replaceCanvasItems(updatedCanvasItems)
+                      }}
+                      className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                      title="Duplicate widget"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onWidgetClick(widget.id, e)
+                      }}
+                      className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+                      title="Properties"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const { deleteWidget } = usePageStore.getState()
+                        deleteWidget(widget.id)
+                      }}
+                      className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                      title="Delete widget"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const { deleteWidget } = usePageStore.getState()
-                      deleteWidget(widget.id)
-                    }}
-                    className="p-1 text-gray-400 hover:text-red-600 bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 transition-colors"
-                    title="Delete widget"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
                 </div>
                 <WidgetRenderer widget={widget} />
               </div>
