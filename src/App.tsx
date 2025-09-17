@@ -3085,6 +3085,7 @@ function SortableItem({
             setActiveSectionToolbar={setActiveSectionToolbar}
             activeWidgetToolbar={activeWidgetToolbar}
             setActiveWidgetToolbar={setActiveWidgetToolbar}
+            instanceId={instanceId}
           />
         </div>
       ) : (
@@ -3176,7 +3177,8 @@ function SectionRenderer({
   activeSectionToolbar,
   setActiveSectionToolbar,
   activeWidgetToolbar,
-  setActiveWidgetToolbar
+  setActiveWidgetToolbar,
+  instanceId
 }: { 
   section: WidgetSection
   onWidgetClick: (id: string, e: React.MouseEvent) => void
@@ -3186,6 +3188,7 @@ function SectionRenderer({
   setActiveSectionToolbar: (value: string | null) => void
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
+  instanceId: string
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
