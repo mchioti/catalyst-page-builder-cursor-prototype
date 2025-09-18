@@ -3463,13 +3463,12 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(1)
   const [websiteData, setWebsiteData] = useState({
     name: '',
-    domain: '',
     themeId: '',
     branding: {
-      primaryColor: '#0066cc',
-      secondaryColor: '#f8f9fa',
+      primaryColor: '',
+      secondaryColor: '',
       logoUrl: '',
-      fontFamily: 'Inter'
+      fontFamily: ''
     },
     customizations: [] as Array<{path: string, value: string, reason: string}>
   })
@@ -3478,10 +3477,17 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
   const selectedTheme = themes.find(t => t.id === websiteData.themeId)
   
   const handleCreate = () => {
+    const themeBranding = selectedTheme ? {
+      primaryColor: selectedTheme.colors.primary,
+      secondaryColor: selectedTheme.colors.secondary,
+      logoUrl: '',
+      fontFamily: selectedTheme.typography.headingFont
+    } : websiteData.branding
+
     const newWebsite: Website = {
       id: crypto.randomUUID(),
       name: websiteData.name,
-      domain: websiteData.domain,
+      domain: `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com`, // Auto-generate from name
       themeId: websiteData.themeId,
       status: 'staging',
       createdAt: new Date(),
@@ -3496,7 +3502,12 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
         reason: c.reason
       })),
       customSections: [],
-      branding: websiteData.branding,
+      branding: {
+        ...themeBranding,
+        ...Object.fromEntries(
+          Object.entries(websiteData.branding).filter(([_, value]) => value !== '')
+        )
+      },
       deviationScore: calculateInitialDeviation(websiteData.customizations, selectedTheme),
       lastThemeSync: new Date()
     }
@@ -3631,27 +3642,92 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
-                      <input
-                        type="text"
-                        value={websiteData.name}
-                        onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g., Wiley Research Portal"
-                      />
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Branding</h4>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
+                    <input
+                      type="text"
+                      value={websiteData.name}
+                      onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., Wiley Research Portal"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">Domain will be auto-generated: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}</p>
+                  </div>
+                  
+                  {selectedTheme && (
+                    <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-600">Primary Color:</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.primary}}></div>
+                            <span className="text-gray-700">{selectedTheme.colors.primary}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Secondary Color:</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.secondary}}></div>
+                            <span className="text-gray-700">{selectedTheme.colors.secondary}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Heading Font:</span>
+                          <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Body Font:</span>
+                          <span className="text-gray-700 ml-2">{selectedTheme.typography.bodyFont}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Domain *</label>
-                      <input
-                        type="text"
-                        value={websiteData.domain}
-                        onChange={(e) => setWebsiteData({...websiteData, domain: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g., research.wiley.com"
-                      />
+                  )}
+                  
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-3">Custom Overrides (Optional)</h5>
+                    <p className="text-sm text-gray-600 mb-4">Override theme defaults with your own branding. Leave blank to use theme defaults.</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
+                        <input
+                          type="color"
+                          value={websiteData.branding.primaryColor}
+                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, primaryColor: e.target.value}})}
+                          className="w-full h-10 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Secondary Color</label>
+                        <input
+                          type="color"
+                          value={websiteData.branding.secondaryColor}
+                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, secondaryColor: e.target.value}})}
+                          className="w-full h-10 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
+                        <input
+                          type="url"
+                          value={websiteData.branding.logoUrl}
+                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, logoUrl: e.target.value}})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="https://example.com/logo.svg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Font Family</label>
+                        <input
+                          type="text"
+                          value={websiteData.branding.fontFamily}
+                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, fontFamily: e.target.value}})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g., 'Roboto', sans-serif"
+                        />
+                      </div>
                     </div>
                   </div>
                   
@@ -3767,7 +3843,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <span className="font-medium text-gray-600">Name:</span> {websiteData.name || 'Untitled Website'}
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Domain:</span> {websiteData.domain || 'Not specified'}
+                        <span className="font-medium text-gray-600">Domain:</span> {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'Auto-generated from name'}
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Theme:</span> {selectedTheme?.name || 'None selected'}
@@ -3813,7 +3889,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
               {step < totalSteps ? (
                 <button
                   onClick={nextStep}
-                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && (!websiteData.name || !websiteData.domain))}
+                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && !websiteData.name)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
@@ -3821,7 +3897,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
               ) : (
                 <button
                   onClick={handleCreate}
-                  disabled={!websiteData.name || !websiteData.domain || !websiteData.themeId}
+                  disabled={!websiteData.name || !websiteData.themeId}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create Website
