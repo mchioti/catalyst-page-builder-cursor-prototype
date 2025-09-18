@@ -5,13 +5,292 @@ import { DndContext, closestCenter, closestCorners, rectIntersection, PointerSen
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit } from 'lucide-react'
+import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit, GitBranch } from 'lucide-react'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
+// Pre-fabricated sections templates based on AXP 2.0 specifications
+const PREFAB_SECTIONS = {
+  // Global Sections (site-wide persistent elements)
+  'global-header': {
+    id: 'global-header',
+    name: 'Global Header',
+    category: 'global',
+    layout: 'single-column',
+    areas: [{
+      id: 'header-content',
+      maxWidgets: 3,
+      widgets: []
+    }]
+  },
+  
+  // Content Sections (page-specific layout patterns)
+  'header-section': {
+    id: 'header-section', 
+    name: 'Header',
+    category: 'content',
+    layout: 'single-column',
+    areas: [{
+      id: 'header-area',
+      maxWidgets: 5,
+      widgets: [{
+        id: 'nav-widget-1',
+        type: 'navbar',
+        content: 'Main Navigation'
+      }]
+    }]
+  },
+
+  'hero-section': {
+    id: 'hero-section',
+    name: 'Hero',
+    category: 'content', 
+    layout: 'single-column',
+    areas: [{
+      id: 'hero-area',
+      maxWidgets: 3,
+      widgets: [
+        {
+          id: 'hero-heading-1',
+          type: 'heading',
+          content: 'Welcome to Our Platform',
+          level: 1
+        },
+        {
+          id: 'hero-image-1',
+          type: 'image',
+          src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=600&fit=crop',
+          alt: 'Modern office space',
+          ratio: '16:9',
+          objectFit: 'cover'
+        }
+      ]
+    }]
+  },
+
+  'features-section': {
+    id: 'features-section',
+    name: 'Features',
+    category: 'content',
+    layout: 'three-column',
+    areas: [
+      {
+        id: 'feature-1',
+        maxWidgets: 2,
+        widgets: [
+          {
+            id: 'feature-text-1',
+            type: 'text',
+            content: '<h3>Advanced Analytics</h3><p>Comprehensive insights into your publishing metrics and reader engagement patterns.</p>'
+          }
+        ]
+      },
+      {
+        id: 'feature-2', 
+        maxWidgets: 2,
+        widgets: [
+          {
+            id: 'feature-text-2',
+            type: 'text',
+            content: '<h3>Global Distribution</h3><p>Reach readers worldwide through our extensive network of publishing partners and platforms.</p>'
+          }
+        ]
+      },
+      {
+        id: 'feature-3',
+        maxWidgets: 2, 
+        widgets: [
+          {
+            id: 'feature-text-3',
+            type: 'text',
+            content: '<h3>Expert Support</h3><p>24/7 technical support from our team of publishing and technology specialists.</p>'
+          }
+        ]
+      }
+    ]
+  },
+
+  'footer-section': {
+    id: 'footer-section',
+    name: 'Footer', 
+    category: 'content',
+    layout: 'four-column',
+    areas: [
+      {
+        id: 'footer-col-1',
+        maxWidgets: 3,
+        widgets: [
+          {
+            id: 'footer-text-1',
+            type: 'text',
+            content: '<h4>Company</h4><p>Leading the future of academic and professional publishing worldwide.</p>'
+          }
+        ]
+      },
+      {
+        id: 'footer-col-2',
+        maxWidgets: 5,
+        widgets: [
+          {
+            id: 'footer-text-2', 
+            type: 'text',
+            content: '<h4>Quick Links</h4><ul><li><a href="/about">About Us</a></li><li><a href="/contact">Contact</a></li><li><a href="/careers">Careers</a></li></ul>'
+          }
+        ]
+      },
+      {
+        id: 'footer-col-3',
+        maxWidgets: 5,
+        widgets: [
+          {
+            id: 'footer-text-3',
+            type: 'text', 
+            content: '<h4>Resources</h4><ul><li><a href="/help">Help Center</a></li><li><a href="/api">API Docs</a></li><li><a href="/blog">Blog</a></li></ul>'
+          }
+        ]
+      },
+      {
+        id: 'footer-col-4',
+        maxWidgets: 3,
+        widgets: [
+          {
+            id: 'footer-text-4',
+            type: 'text',
+            content: '<h4>Follow Us</h4><p>Stay connected through our social media channels and newsletter.</p>'
+          }
+        ]
+      }
+    ]
+  }
+} as const
+
 // Main app routing types
 type AppView = 'page-builder' | 'site-manager'
-type SiteManagerView = 'overview' | 'themes' | 'templates' | 'websites' | 'users' | 'settings'
+type SiteManagerView = 'overview' | 'themes' | 'templates' | 'inheritance' | 'websites' | 'users' | 'settings'
+
+// Template System Types
+type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
+
+type TemplateStatus = 'active' | 'draft' | 'archived' | 'deprecated'
+
+type Override = {
+  path: string // e.g., "header.logo.src", "footer.styles.backgroundColor"
+  originalValue: any
+  overriddenValue: any
+  overriddenAt: 'website' | 'page'
+  overriddenBy: string // user ID or system
+  timestamp: Date
+  reason?: string
+}
+
+type BaseTemplate = {
+  id: string
+  name: string
+  description: string
+  category: TemplateCategory
+  status: TemplateStatus
+  version: string
+  author: string
+  createdAt: Date
+  updatedAt: Date
+  tags: string[]
+  thumbnail?: string
+  
+  // Template structure
+  sections: WidgetSection[]
+  layout: {
+    header: boolean
+    footer: boolean
+    sidebar: 'none' | 'left' | 'right' | 'both'
+    maxWidth?: string
+    spacing?: string
+  }
+  
+  // Override settings (from spec)
+  allowedOverrides: string[] // paths that can be customized
+  lockedElements: string[] // paths that cannot be modified
+  // Override scope options from the spec
+  defaultOverrideScope: string // Default scope when making changes
+  broadenOverrideOptions: string[] // Available broader scope options
+  narrowOverrideOptions: string[] // Available narrower scope options
+}
+
+type Website = {
+  id: string
+  name: string
+  domain: string
+  themeId: string // References Theme.id (websites inherit from themes, not individual templates)
+  status: 'active' | 'staging' | 'maintenance'
+  createdAt: Date
+  updatedAt: Date
+  
+  // Customizations from base theme
+  overrides: Override[]
+  customSections: WidgetSection[]
+  
+  // Website-specific settings (override theme defaults)
+  branding: {
+    primaryColor?: string
+    secondaryColor?: string
+    logoUrl?: string
+    fontFamily?: string
+  }
+  
+  // Analytics
+  deviationScore: number // 0-100, how much it differs from theme
+  lastThemeSync?: Date
+}
+
+type Theme = {
+  id: string
+  name: string
+  description: string
+  version: string
+  publishingType: 'journals' | 'books' | 'journals-books' | 'blog' | 'corporate' | 'mixed'
+  author: string
+  createdAt: Date
+  updatedAt: Date
+  
+  // Complete template package for this publishing type
+  templates: BaseTemplate[] // All templates included in this theme
+  
+  // Global styling that applies across all templates
+  colors: {
+    primary: string
+    secondary: string
+    accent: string
+    background: string
+    text: string
+    muted: string
+  }
+  
+  typography: {
+    headingFont: string
+    bodyFont: string
+    baseSize: string
+    scale: number
+  }
+  
+  spacing: {
+    base: string
+    scale: number
+  }
+  
+  components: {
+    button: Record<string, any>
+    card: Record<string, any>
+    form: Record<string, any>
+  }
+  
+  // Global sections
+  globalSections: {
+    header: WidgetSection
+    footer: WidgetSection
+  }
+  
+  // Publication card variants for this theme
+  publicationCardVariants: PublicationCardVariant[]
+}
 
 // Widget types
 type Skin = 'minimal' | 'modern' | 'classic' | 'accent'
@@ -284,12 +563,20 @@ type PageState = {
   siteManagerView: SiteManagerView
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: SiteManagerView) => void
+  
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections
   customSections: CustomSection[]
   publicationCardVariants: PublicationCardVariant[]
   selectedWidget: string | null
   insertPosition: { relativeTo: string; position: 'above' | 'below' } | null
+  
+  // Template System
+  templates: BaseTemplate[]
+  websites: Website[]
+  themes: Theme[]
+  
+  // Page Builder Actions
   addWidget: (widget: Widget) => void
   addSection: (section: WidgetSection) => void
   moveItem: (fromIndex: number, toIndex: number) => void
@@ -302,6 +589,27 @@ type PageState = {
   removePublicationCardVariant: (id: string) => void
   setInsertPosition: (position: { relativeTo: string; position: 'above' | 'below' } | null) => void
   createContentBlockWithLayout: (layout: ContentBlockLayout) => void
+  
+  // Template Management
+  addTemplate: (template: BaseTemplate) => void
+  updateTemplate: (id: string, template: Partial<BaseTemplate>) => void
+  removeTemplate: (id: string) => void
+  duplicateTemplate: (id: string) => void
+  
+  // Website Management  
+  addWebsite: (website: Website) => void
+  updateWebsite: (id: string, website: Partial<Website>) => void
+  removeWebsite: (id: string) => void
+  
+  // Override Management
+  addOverride: (websiteId: string, override: Override) => void
+  removeOverride: (websiteId: string, overridePath: string) => void
+  calculateDeviationScore: (websiteId: string) => number
+  
+  // Theme Management
+  addTheme: (theme: Theme) => void
+  updateTheme: (id: string, theme: Partial<Theme>) => void
+  removeTheme: (id: string) => void
 }
 
 // Layout area for drop zones
@@ -1091,6 +1399,340 @@ const usePageStore = create<PageState>((set, get) => ({
   // Page Builder
   canvasItems: INITIAL_CANVAS_ITEMS,
   customSections: [],
+  // Template System Data
+  // Templates are now organized within themes instead of standalone
+  templates: [],
+  
+  websites: [
+    {
+      id: 'wiley-main',
+      name: 'Wiley Main Portal',
+      domain: 'wiley.com',
+      themeId: 'academic-publishing-theme',
+      status: 'active' as const,
+      createdAt: new Date('2024-06-01'),
+      updatedAt: new Date('2024-09-15'),
+      overrides: [
+        {
+          path: 'branding.logo.src',
+          originalValue: '/default-logo.svg',
+          overriddenValue: '/wiley-logo.svg',
+          overriddenAt: 'website',
+          overriddenBy: 'admin',
+          timestamp: new Date('2024-06-01'),
+          reason: 'Brand consistency'
+        },
+        {
+          path: 'colors.primary',
+          originalValue: '#1e40af',
+          overriddenValue: '#0066cc',
+          overriddenAt: 'website',
+          overriddenBy: 'admin',
+          timestamp: new Date('2024-06-15'),
+          reason: 'Match brand guidelines'
+        }
+      ],
+      customSections: [],
+      branding: {
+        primaryColor: '#0066cc',
+        secondaryColor: '#f8f9fa',
+        logoUrl: '/wiley-logo.svg',
+        fontFamily: 'Inter'
+      },
+      deviationScore: 15,
+      lastThemeSync: new Date('2024-08-01')
+    },
+    {
+      id: 'research-hub',
+      name: 'Wiley Research Hub',
+      domain: 'research.wiley.com',
+      themeId: 'corporate-theme',
+      status: 'active' as const,
+      createdAt: new Date('2024-07-10'),
+      updatedAt: new Date('2024-09-20'),
+      overrides: [
+        {
+          path: 'layout.sidebar',
+          originalValue: 'left',
+          overriddenValue: 'right',
+          overriddenAt: 'website',
+          overriddenBy: 'editor',
+          timestamp: new Date('2024-07-20'),
+          reason: 'Better UX for research content'
+        }
+      ],
+      customSections: [],
+      branding: {
+        primaryColor: '#7c3aed',
+        logoUrl: '/research-logo.svg'
+      },
+      deviationScore: 8,
+      lastThemeSync: new Date('2024-09-01')
+    }
+  ] as Website[],
+  
+  themes: [
+    {
+      id: 'academic-publishing-theme',
+      name: 'Academic Publishing Theme',
+      description: 'Complete theme for academic journals with templates for articles, journals, and research content',
+      version: '2.0.0',
+      publishingType: 'journals' as const,
+      author: 'Wiley Design Team',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-09-15'),
+      
+      // Complete template package for academic publishing
+      templates: [
+        {
+          id: 'journal-home',
+          name: 'Journal Home',
+          description: 'Homepage template for individual journals with issue listings and journal information',
+          category: 'publication' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.8.0',
+          author: 'Wiley Publishing Team',
+          createdAt: new Date('2024-02-10'),
+          updatedAt: new Date('2024-09-01'),
+          tags: ['journal', 'homepage', 'issues', 'metadata'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'right',
+            maxWidth: '1200px',
+            spacing: 'comfortable'
+          },
+          allowedOverrides: ['branding.logo', 'colors.primary'],
+          lockedElements: ['structure.main', 'navigation.primary'],
+          defaultOverrideScope: 'Publication (this or all journals)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: ['Publication (this or all journals)', 'Topic (all topics or specific)']
+        },
+        {
+          id: 'article-page',
+          name: 'Article Page',
+          description: 'Individual article display template with full content, metadata, and related articles',
+          category: 'publication' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.9.0',
+          author: 'Wiley Publishing Team',
+          createdAt: new Date('2024-03-15'),
+          updatedAt: new Date('2024-09-18'),
+          tags: ['article', 'content', 'metadata', 'related'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'right',
+            maxWidth: '1000px',
+            spacing: 'comfortable'
+          },
+          allowedOverrides: ['typography.bodyFont'],
+          lockedElements: ['compliance.*', 'structure.*'],
+          defaultOverrideScope: 'Publication (this or all journals)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: ['Publication (this or all journals)', 'Group type (Current, Ahead of Print, Just Accepted)', 'Topic (all topics or specific)']
+        },
+        {
+          id: 'search-results',
+          name: 'Search Results',
+          description: 'Template for displaying search results with filters and pagination',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.3.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2024-02-15'),
+          updatedAt: new Date('2024-08-20'),
+          tags: ['search', 'results', 'filters', 'pagination'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'left',
+            maxWidth: '1400px',
+            spacing: 'comfortable'
+          },
+          allowedOverrides: [],
+          lockedElements: [],
+          defaultOverrideScope: 'Website (this)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: []
+        }
+      ],
+      
+      colors: {
+        primary: '#0066cc',
+        secondary: '#6366f1',
+        accent: '#10b981',
+        background: '#ffffff',
+        text: '#1f2937',
+        muted: '#6b7280'
+      },
+      typography: {
+        headingFont: 'Merriweather, serif',
+        bodyFont: 'Source Sans Pro, sans-serif',
+        baseSize: '16px',
+        scale: 1.25
+      },
+      spacing: {
+        base: '1rem',
+        scale: 1.5
+      },
+      components: {
+        button: {
+          borderRadius: '4px',
+          fontWeight: '500',
+          transition: 'all 0.2s'
+        },
+        card: {
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e5e7eb'
+        },
+        form: {
+          borderRadius: '4px',
+          border: '1px solid #d1d5db',
+          focusColor: '#0066cc'
+        }
+      },
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'],
+        footer: PREFAB_SECTIONS['footer-section']
+      },
+      publicationCardVariants: []
+    },
+    
+    {
+      id: 'corporate-theme',
+      name: 'Corporate Publishing Theme',
+      description: 'Professional theme for corporate websites with clean layouts and business focus',
+      version: '1.5.0',
+      publishingType: 'corporate' as const,
+      author: 'Wiley Design Team',
+      createdAt: new Date('2024-02-01'),
+      updatedAt: new Date('2024-09-10'),
+      
+      // Corporate template package
+      templates: [
+        {
+          id: 'global-home',
+          name: 'Global Home',
+          description: 'Main homepage template with hero section, featured content, and navigation',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.5.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2024-02-01'),
+          updatedAt: new Date('2024-09-10'),
+          tags: ['homepage', 'global', 'hero', 'featured'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1200px',
+            spacing: 'comfortable'
+          },
+          allowedOverrides: ['branding.*', 'sections.hero.*'],
+          lockedElements: ['navigation.structure'],
+          defaultOverrideScope: 'Website (this)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: []
+        },
+        {
+          id: 'about-us',
+          name: 'About Us',
+          description: 'About page template with company information, team, and mission statement',
+          category: 'supporting' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.1.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2024-03-05'),
+          updatedAt: new Date('2024-06-20'),
+          tags: ['about', 'company', 'team', 'mission'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1000px',
+            spacing: 'spacious'
+          },
+          allowedOverrides: ['content.*'],
+          lockedElements: [],
+          defaultOverrideScope: 'Website (this)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: []
+        },
+        {
+          id: 'contact-us',
+          name: 'Contact Us',
+          description: 'Contact page template with contact forms, office locations, and contact information',
+          category: 'supporting' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.3.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2024-02-20'),
+          updatedAt: new Date('2024-07-10'),
+          tags: ['contact', 'forms', 'locations', 'information'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '800px',
+            spacing: 'comfortable'
+          },
+          allowedOverrides: ['contact.*'],
+          lockedElements: [],
+          defaultOverrideScope: 'Website (this)',
+          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowOverrideOptions: []
+        }
+      ],
+      
+      colors: {
+        primary: '#1e40af',
+        secondary: '#f1f5f9',
+        accent: '#0ea5e9',
+        background: '#ffffff',
+        text: '#1e293b',
+        muted: '#64748b'
+      },
+      typography: {
+        headingFont: 'Inter, sans-serif',
+        bodyFont: 'Inter, sans-serif',
+        baseSize: '16px',
+        scale: 1.2
+      },
+      spacing: {
+        base: '1rem',
+        scale: 1.25
+      },
+      components: {
+        button: {
+          borderRadius: '6px',
+          fontWeight: '600'
+        },
+        card: {
+          borderRadius: '12px',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        },
+        form: {
+          borderRadius: '6px',
+          border: '2px solid #e2e8f0'
+        }
+      },
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'],
+        footer: PREFAB_SECTIONS['footer-section']
+      },
+      publicationCardVariants: []
+    }
+  ] as Theme[],
+  
   publicationCardVariants: [
     {
       id: 'compact-variant',
@@ -1164,6 +1806,92 @@ const usePageStore = create<PageState>((set, get) => ({
   addPublicationCardVariant: (variant) => set((s) => ({ publicationCardVariants: [...s.publicationCardVariants, variant] })),
   removePublicationCardVariant: (id) => set((s) => ({ publicationCardVariants: s.publicationCardVariants.filter(variant => variant.id !== id) })),
   setInsertPosition: (position) => set({ insertPosition: position }),
+  
+  // Template Management
+  addTemplate: (template) => set((state) => ({
+    templates: [...state.templates, template]
+  })),
+  updateTemplate: (id, template) => set((state) => ({
+    templates: state.templates.map(t => t.id === id ? { ...t, ...template, updatedAt: new Date() } : t)
+  })),
+  removeTemplate: (id) => set((state) => ({
+    templates: state.templates.filter(t => t.id !== id)
+  })),
+  duplicateTemplate: (id) => set((state) => {
+    const template = state.templates.find(t => t.id === id)
+    if (!template) return state
+    const duplicate = {
+      ...template,
+      id: crypto.randomUUID(),
+      name: `${template.name} (Copy)`,
+      version: '1.0.0',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    return { templates: [...state.templates, duplicate] }
+  }),
+  
+  // Website Management
+  addWebsite: (website) => set((state) => ({
+    websites: [...state.websites, website]
+  })),
+  updateWebsite: (id, website) => set((state) => ({
+    websites: state.websites.map(w => w.id === id ? { ...w, ...website, updatedAt: new Date() } : w)
+  })),
+  removeWebsite: (id) => set((state) => ({
+    websites: state.websites.filter(w => w.id !== id)
+  })),
+  
+  // Override Management
+  addOverride: (websiteId, override) => set((state) => ({
+    websites: state.websites.map(w => 
+      w.id === websiteId 
+        ? { ...w, overrides: [...w.overrides, override], updatedAt: new Date() }
+        : w
+    )
+  })),
+  removeOverride: (websiteId, overridePath) => set((state) => ({
+    websites: state.websites.map(w => 
+      w.id === websiteId 
+        ? { ...w, overrides: w.overrides.filter(o => o.path !== overridePath), updatedAt: new Date() }
+        : w
+    )
+  })),
+  
+  // Deviation Analysis
+  calculateDeviationScore: (websiteId) => {
+    const state = get()
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return 0
+    
+    const template = state.templates.find(t => t.id === website.templateId)
+    if (!template) return 0
+    
+    // Simple scoring: each override adds points based on impact
+    let score = 0
+    website.overrides.forEach(override => {
+      if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
+        score += 20 // High impact for locked elements
+      } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
+        score += 5 // Low impact for allowed overrides  
+      } else {
+        score += 10 // Medium impact for other overrides
+      }
+    })
+    
+    return Math.min(score, 100) // Cap at 100
+  },
+  
+  // Theme Management
+  addTheme: (theme) => set((state) => ({
+    themes: [...state.themes, theme]
+  })),
+  updateTheme: (id, theme) => set((state) => ({
+    themes: state.themes.map(t => t.id === id ? { ...t, ...theme } : t)
+  })),
+  removeTheme: (id) => set((state) => ({
+    themes: state.themes.filter(t => t.id !== id)
+  })),
   createContentBlockWithLayout: (layout) => {
     const { canvasItems, insertPosition } = get()
     
@@ -1704,6 +2432,1406 @@ function SiteManagerPublicationCards() {
   )
 }
 
+// Theme and Template Structure Component
+function TemplateInheritanceTree() {
+  const { themes } = usePageStore()
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Theme Architecture</h2>
+          <p className="text-gray-600 mt-1">Complete themes containing template packages for publishing platforms</p>
+        </div>
+      </div>
+      
+      <div className="space-y-6">
+        {themes.map((theme) => (
+          <div key={theme.id} className="bg-white rounded-lg border border-gray-200">
+            {/* Theme Header */}
+            <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+              <div className="flex items-start gap-4">
+                <div className="w-4 h-4 bg-purple-500 rounded-full mt-1"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900">{theme.name}</h3>
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
+                      {theme.publishingType}
+                    </span>
+                    <span className="text-sm text-gray-500">v{theme.version}</span>
+                  </div>
+                  <p className="text-gray-600 mt-1">{theme.description}</p>
+                  <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                    <span>{theme.templates.length} templates included</span>
+                    <span>Global styles & components</span>
+                    <span>Header & Footer sections</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Theme Templates */}
+            <div className="divide-y divide-gray-100">
+              {theme.templates.map((template) => (
+                <div key={template.id} className="p-4 pl-14">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      template.category === 'website' ? 'bg-blue-500' :
+                      template.category === 'publication' ? 'bg-green-500' :
+                      'bg-orange-500'
+                    }`} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-gray-900">{template.name}</div>
+                        <div className="text-sm text-gray-500">• {template.category}</div>
+                        <div className="text-sm text-gray-500">• v{template.version}</div>
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">{template.description}</div>
+                    </div>
+                    <div className="text-right text-sm text-gray-500">
+                      <div className="font-medium">Override Scope:</div>
+                      <div className="text-xs">{template.defaultOverrideScope}</div>
+                      {template.allowedOverrides.length > 0 && (
+                        <div className="text-xs text-green-600 mt-1">{template.allowedOverrides.length} allowed overrides</div>
+                      )}
+                      {template.lockedElements.length > 0 && (
+                        <div className="text-xs text-red-600">{template.lockedElements.length} locked elements</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Legend */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="text-sm font-medium text-gray-700 mb-3">Template Categories:</div>
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+            <span>Theme (Complete package)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <span>Website Pages</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span>Publication Pages</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+            <span>Supporting Pages</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Site Manager Templates component
+function SiteManagerTemplates() {
+  const { templates, websites, duplicateTemplate, removeTemplate, calculateDeviationScore, addTemplate } = usePageStore()
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all')
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [showCreateWizard, setShowCreateWizard] = useState(false)
+  
+  const filteredTemplates = selectedCategory === 'all' 
+    ? templates 
+    : templates.filter(t => t.category === selectedCategory)
+  
+  const categories: Array<{id: TemplateCategory | 'all', label: string}> = [
+    { id: 'all', label: 'All Templates' },
+    { id: 'theme', label: 'Theme' },
+    { id: 'website', label: 'Website Pages' },
+    { id: 'publication', label: 'Publication Pages' },
+    { id: 'supporting', label: 'Supporting Pages' }
+  ]
+  
+  const getStatusBadge = (status: TemplateStatus) => {
+    const styles = {
+      active: 'bg-green-100 text-green-800',
+      draft: 'bg-yellow-100 text-yellow-800',
+      archived: 'bg-gray-100 text-gray-800',
+      deprecated: 'bg-red-100 text-red-800'
+    }
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status]}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    )
+  }
+  
+  const getWebsitesUsingTemplate = (templateId: string) => {
+    return websites.filter(w => w.templateId === templateId)
+  }
+  
+  const getDeviationColor = (score: number) => {
+    if (score <= 20) return 'text-green-600 bg-green-50'
+    if (score <= 50) return 'text-yellow-600 bg-yellow-50'
+    return 'text-red-600 bg-red-50'
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Templates</h2>
+          <p className="text-gray-600 mt-1">Manage page templates and track customizations across websites</p>
+        </div>
+        <button 
+          onClick={() => setShowCreateWizard(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Create Template
+        </button>
+      </div>
+      
+      {/* Category Filter */}
+      <div className="flex items-center gap-2 pb-4 border-b">
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => setSelectedCategory(category.id)}
+            className={`px-3 py-2 text-sm rounded-md transition-colors ${
+              selectedCategory === category.id
+                ? 'bg-blue-100 text-blue-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
+      
+      {/* Templates Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredTemplates.map((template) => {
+          const websitesUsing = getWebsitesUsingTemplate(template.id)
+          const avgDeviation = websitesUsing.length > 0 
+            ? websitesUsing.reduce((sum, w) => sum + w.deviationScore, 0) / websitesUsing.length
+            : 0
+          
+          return (
+            <div key={template.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+              {/* Template Thumbnail/Preview */}
+              <div className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-lg relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Template Preview</p>
+                  </div>
+                </div>
+                <div className="absolute top-3 right-3">
+                  {getStatusBadge(template.status)}
+                </div>
+              </div>
+              
+              {/* Template Info */}
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-lg">{template.name}</h3>
+                    <p className="text-sm text-gray-500">v{template.version} • {template.author}</p>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{template.description}</p>
+                
+                {/* Template Stats */}
+                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-1">
+                    <Globe className="w-4 h-4" />
+                    <span>{websitesUsing.length} website{websitesUsing.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  {websitesUsing.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <div className={`w-2 h-2 rounded-full ${getDeviationColor(avgDeviation).replace('text-', 'bg-').replace('bg-', 'bg-')}`} />
+                      <span>{Math.round(avgDeviation)}% deviation</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {template.tags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                      {tag}
+                    </span>
+                  ))}
+                  {template.tags.length > 3 && (
+                    <span className="px-2 py-1 text-xs text-gray-500">+{template.tags.length - 3} more</span>
+                  )}
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedTemplate(template.id)}
+                    className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                  >
+                    View Details
+                  </button>
+                  <button 
+                    onClick={() => duplicateTemplate(template.id)}
+                    className="px-3 py-1.5 text-sm bg-gray-50 text-gray-700 rounded hover:bg-gray-100"
+                  >
+                    Duplicate
+                  </button>
+                  <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded">
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      
+      {/* Template Details Modal */}
+      {selectedTemplate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {templates.find(t => t.id === selectedTemplate)?.name}
+                  </h3>
+                  <p className="text-gray-600 mt-1">Template Details & Override Analysis</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedTemplate(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Template Info */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Template Information</h4>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Version:</span>
+                        <span className="text-sm font-medium">{templates.find(t => t.id === selectedTemplate)?.version}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Category:</span>
+                        <span className="text-sm font-medium capitalize">{templates.find(t => t.id === selectedTemplate)?.category}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Created:</span>
+                        <span className="text-sm font-medium">{templates.find(t => t.id === selectedTemplate)?.createdAt.toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Status:</span>
+                        {getStatusBadge(templates.find(t => t.id === selectedTemplate)?.status || 'active')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Websites Using This Template */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Websites Using This Template</h4>
+                    <div className="space-y-2">
+                      {getWebsitesUsingTemplate(selectedTemplate).map((website) => (
+                        <div key={website.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{website.name}</p>
+                            <p className="text-sm text-gray-600">{website.domain}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className={`px-2 py-1 text-xs rounded-full ${getDeviationColor(website.deviationScore)}`}>
+                              {website.deviationScore}% deviation
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{website.overrides.length} override{website.overrides.length !== 1 ? 's' : ''}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {getWebsitesUsingTemplate(selectedTemplate).length === 0 && (
+                        <p className="text-sm text-gray-500 text-center py-4">No websites using this template</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Template Creation Wizard */}
+      {showCreateWizard && <TemplateCreationWizard onClose={() => setShowCreateWizard(false)} />}
+    </div>
+  )
+}
+
+// Template Creation Wizard Component
+function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
+  const { addTemplate, canvasItems } = usePageStore()
+  const [step, setStep] = useState(1)
+  const [templateData, setTemplateData] = useState({
+    name: '',
+    description: '',
+    category: 'website' as TemplateCategory,
+    tags: [] as string[],
+    allowedOverrides: [] as string[],
+    lockedElements: [] as string[],
+    fromCurrentPage: false,
+    includeContent: true
+  })
+  
+  const totalSteps = 4
+  
+  const handleCreate = () => {
+    const newTemplate: BaseTemplate = {
+      id: crypto.randomUUID(),
+      name: templateData.name,
+      description: templateData.description,
+      category: templateData.category,
+      status: 'draft',
+      version: '1.0.0',
+      author: 'Current User',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tags: templateData.tags,
+      sections: templateData.fromCurrentPage ? canvasItems.filter(item => 'layout' in item) : [],
+      globalStyles: {
+        primaryColor: '#1e40af',
+        fontFamily: 'Inter, sans-serif',
+        borderRadius: '8px'
+      },
+      layout: {
+        header: true,
+        footer: true,
+        sidebar: 'none',
+        maxWidth: '1200px',
+        spacing: 'comfortable'
+      },
+      allowedOverrides: templateData.allowedOverrides,
+      lockedElements: templateData.lockedElements,
+      defaultOverrideScope: 'Website (this)',
+      broadenOverrideOptions: [],
+      narrowOverrideOptions: []
+    }
+    
+    addTemplate(newTemplate)
+    onClose()
+  }
+  
+  const nextStep = () => setStep(Math.min(step + 1, totalSteps))
+  const prevStep = () => setStep(Math.max(step - 1, 1))
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">Create New Template</h3>
+              <p className="text-gray-600 mt-1">Step {step} of {totalSteps}</p>
+            </div>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center">
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <div key={i} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {i + 1}
+                  </div>
+                  {i < totalSteps - 1 && (
+                    <div className={`h-1 w-16 mx-2 ${
+                      i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex mt-2">
+              <div className="text-xs text-gray-600 w-8 text-center">Basic</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Source</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Rules</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Review</div>
+            </div>
+          </div>
+          
+          {/* Step Content */}
+          <div className="min-h-[400px]">
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                      <input
+                        type="text"
+                        value={templateData.name}
+                        onChange={(e) => setTemplateData({...templateData, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g., Academic Journal Template"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                      <select
+                        value={templateData.category}
+                        onChange={(e) => setTemplateData({...templateData, category: e.target.value as TemplateCategory})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="theme">Theme</option>
+                        <option value="website">Website Pages</option>
+                        <option value="publication">Publication Pages</option>
+                        <option value="supporting">Supporting Pages</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={templateData.description}
+                      onChange={(e) => setTemplateData({...templateData, description: e.target.value})}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="Describe the purpose and features of this template..."
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma separated)</label>
+                    <input
+                      type="text"
+                      onChange={(e) => setTemplateData({...templateData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., journal, academic, research, publications"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Template Source</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        id="blank"
+                        name="source"
+                        checked={!templateData.fromCurrentPage}
+                        onChange={() => setTemplateData({...templateData, fromCurrentPage: false})}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <label htmlFor="blank" className="flex-1">
+                        <div className="font-medium text-gray-900">Start from Blank Template</div>
+                        <div className="text-sm text-gray-500">Create a new template with standard sections (header, hero, footer)</div>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        id="current"
+                        name="source"
+                        checked={templateData.fromCurrentPage}
+                        onChange={() => setTemplateData({...templateData, fromCurrentPage: true})}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <label htmlFor="current" className="flex-1">
+                        <div className="font-medium text-gray-900">Use Current Page as Base</div>
+                        <div className="text-sm text-gray-500">Convert the current page design into a reusable template</div>
+                        <div className="text-xs text-blue-600 mt-1">{canvasItems.length} sections will be included</div>
+                      </label>
+                    </div>
+                    
+                    {templateData.fromCurrentPage && (
+                      <div className="ml-7 space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="includeContent"
+                            checked={templateData.includeContent}
+                            onChange={(e) => setTemplateData({...templateData, includeContent: e.target.checked})}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <label htmlFor="includeContent" className="text-sm text-gray-700">
+                            Include actual content (recommended: uncheck to create placeholder content)
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Customization Rules</h4>
+                  <p className="text-gray-600 mb-6">Define what can be customized when websites use this template</p>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          Allowed Customizations
+                        </span>
+                      </label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                        {[
+                          'branding.logo',
+                          'branding.colors',
+                          'typography.headingFont',
+                          'typography.bodyFont',
+                          'sections.hero.title',
+                          'sections.hero.subtitle',
+                          'sections.footer.content'
+                        ].map((path) => (
+                          <label key={path} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={templateData.allowedOverrides.includes(path)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTemplateData({
+                                    ...templateData, 
+                                    allowedOverrides: [...templateData.allowedOverrides, path]
+                                  })
+                                } else {
+                                  setTemplateData({
+                                    ...templateData, 
+                                    allowedOverrides: templateData.allowedOverrides.filter(p => p !== path)
+                                  })
+                                }
+                              }}
+                              className="w-4 h-4 text-green-600"
+                            />
+                            <span className="text-sm font-mono text-gray-700">{path}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          Locked Elements
+                        </span>
+                      </label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                        {[
+                          'layout.structure',
+                          'navigation.main',
+                          'compliance.elements',
+                          'structure.main',
+                          'navigation.primary',
+                          'footer.copyright',
+                          'header.navigation'
+                        ].map((path) => (
+                          <label key={path} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={templateData.lockedElements.includes(path)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTemplateData({
+                                    ...templateData, 
+                                    lockedElements: [...templateData.lockedElements, path]
+                                  })
+                                } else {
+                                  setTemplateData({
+                                    ...templateData, 
+                                    lockedElements: templateData.lockedElements.filter(p => p !== path)
+                                  })
+                                }
+                              }}
+                              className="w-4 h-4 text-red-600"
+                            />
+                            <span className="text-sm font-mono text-gray-700">{path}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-yellow-600 mt-0.5" />
+                      <div>
+                        <h5 className="font-medium text-yellow-800">Customization Rules</h5>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          <strong>Allowed:</strong> Low-risk customizations (5 points each)<br />
+                          <strong>Locked:</strong> High-risk if overridden (20 points each)<br />
+                          <strong>Other:</strong> Medium-risk customizations (10 points each)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {step === 4 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Review & Create</h4>
+                  
+                  <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Template Name</label>
+                        <p className="font-medium text-gray-900">{templateData.name || 'Untitled Template'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Category</label>
+                        <p className="font-medium text-gray-900 capitalize">{templateData.category}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-sm font-medium text-gray-500">Description</label>
+                        <p className="text-gray-900">{templateData.description || 'No description provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Source</label>
+                        <p className="text-gray-900">
+                          {templateData.fromCurrentPage ? `Current Page (${canvasItems.length} sections)` : 'Blank Template'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Tags</label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {templateData.tags.map((tag) => (
+                            <span key={tag} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                              {tag}
+                            </span>
+                          ))}
+                          {templateData.tags.length === 0 && <span className="text-gray-500 text-sm">No tags</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Allowed Customizations</label>
+                        <p className="text-gray-900">{templateData.allowedOverrides.length} elements</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Locked Elements</label>
+                        <p className="text-gray-900">{templateData.lockedElements.length} elements</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-8 pt-6 border-t">
+            <div className="flex gap-2">
+              {step > 1 && (
+                <button
+                  onClick={prevStep}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              {step < totalSteps ? (
+                <button
+                  onClick={nextStep}
+                  disabled={step === 1 && !templateData.name}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreate}
+                  disabled={!templateData.name}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create Template
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Site Manager Websites component  
+function SiteManagerWebsites() {
+  const { websites, templates, addOverride, removeOverride, updateWebsite, addWebsite } = usePageStore()
+  const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null)
+  const [showOverrideAnalysis, setShowOverrideAnalysis] = useState<string | null>(null)
+  const [showCreateWebsite, setShowCreateWebsite] = useState(false)
+  
+  const getTemplateForWebsite = (websiteId: string) => {
+    const website = websites.find(w => w.id === websiteId)
+    if (!website) return null
+    return templates.find(t => t.id === website.templateId)
+  }
+  
+  const getDeviationColor = (score: number) => {
+    if (score <= 20) return 'text-green-600 bg-green-50 border-green-200'
+    if (score <= 50) return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    return 'text-red-600 bg-red-50 border-red-200'
+  }
+  
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      active: 'bg-green-100 text-green-800',
+      staging: 'bg-blue-100 text-blue-800', 
+      maintenance: 'bg-red-100 text-red-800'
+    }
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    )
+  }
+  
+  const getOverrideImpact = (override: Override, template: BaseTemplate | null) => {
+    if (!template) return 'unknown'
+    
+    if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
+      return 'high' // Locked element override = high risk
+    } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
+      return 'low' // Allowed override = low risk
+    }
+    return 'medium' // Other override = medium risk
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Websites</h2>
+          <p className="text-gray-600 mt-1">Manage websites and track template customizations</p>
+        </div>
+        <button 
+          onClick={() => setShowCreateWebsite(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Add Website
+        </button>
+      </div>
+      
+      {/* Websites Table */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">All Websites</h3>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Website</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Template</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deviation</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overrides</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {websites.map((website) => {
+                const template = getTemplateForWebsite(website.id)
+                return (
+                  <tr key={website.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium text-gray-900">{website.name}</div>
+                        <div className="text-sm text-gray-500">{website.domain}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium text-gray-900">{template?.name || 'Unknown'}</div>
+                        <div className="text-sm text-gray-500">v{template?.version}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(website.status)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className={`inline-flex items-center px-2 py-1 text-sm rounded-full border ${getDeviationColor(website.deviationScore)}`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${getDeviationColor(website.deviationScore).replace('text-', 'bg-').replace('border-', '').replace('bg-gray-50', '')}`} />
+                        {website.deviationScore}%
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-900">{website.overrides.length}</span>
+                        {website.overrides.length > 0 && (
+                          <button 
+                            onClick={() => setShowOverrideAnalysis(website.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            View Details
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {website.updatedAt.toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => setSelectedWebsite(website.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <Settings className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      {/* Override Analysis Modal */}
+      {showOverrideAnalysis && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Override Analysis
+                  </h3>
+                  <p className="text-gray-600 mt-1">
+                    {websites.find(w => w.id === showOverrideAnalysis)?.name} - Template Customizations
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowOverrideAnalysis(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {(() => {
+                const website = websites.find(w => w.id === showOverrideAnalysis)
+                const template = website ? getTemplateForWebsite(website.id) : null
+                
+                if (!website) return <div>Website not found</div>
+                
+                const overridesByImpact = website.overrides.reduce((acc, override) => {
+                  const impact = getOverrideImpact(override, template)
+                  if (!acc[impact]) acc[impact] = []
+                  acc[impact].push(override)
+                  return acc
+                }, {} as Record<string, Override[]>)
+                
+                return (
+                  <div className="space-y-6">
+                    {/* Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full" />
+                          <span className="font-medium text-gray-900">High Risk</span>
+                        </div>
+                        <p className="text-2xl font-bold text-red-600 mt-1">{overridesByImpact.high?.length || 0}</p>
+                        <p className="text-sm text-gray-600">Locked elements modified</p>
+                      </div>
+                      
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                          <span className="font-medium text-gray-900">Medium Risk</span>
+                        </div>
+                        <p className="text-2xl font-bold text-yellow-600 mt-1">{overridesByImpact.medium?.length || 0}</p>
+                        <p className="text-sm text-gray-600">Uncontrolled changes</p>
+                      </div>
+                      
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full" />
+                          <span className="font-medium text-gray-900">Low Risk</span>
+                        </div>
+                        <p className="text-2xl font-bold text-green-600 mt-1">{overridesByImpact.low?.length || 0}</p>
+                        <p className="text-sm text-gray-600">Allowed customizations</p>
+                      </div>
+                    </div>
+                    
+                    {/* Override Details */}
+                    <div className="space-y-4">
+                      {['high', 'medium', 'low'].map((impact) => {
+                        const overrides = overridesByImpact[impact] || []
+                        if (overrides.length === 0) return null
+                        
+                        const colors = {
+                          high: 'border-red-200 bg-red-50',
+                          medium: 'border-yellow-200 bg-yellow-50', 
+                          low: 'border-green-200 bg-green-50'
+                        }
+                        
+                        return (
+                          <div key={impact} className={`border rounded-lg p-4 ${colors[impact as keyof typeof colors]}`}>
+                            <h4 className="font-semibold text-gray-900 mb-3 capitalize">{impact} Risk Overrides</h4>
+                            <div className="space-y-2">
+                              {overrides.map((override) => (
+                                <div key={override.path} className="bg-white rounded p-3 border">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-gray-900">{override.path}</p>
+                                      <div className="text-sm text-gray-600 mt-1">
+                                        <span className="font-medium">Original:</span> {JSON.stringify(override.originalValue)}
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        <span className="font-medium">Override:</span> {JSON.stringify(override.overriddenValue)}
+                                      </div>
+                                      {override.reason && (
+                                        <div className="text-sm text-gray-500 mt-1">
+                                          <span className="font-medium">Reason:</span> {override.reason}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-right ml-4">
+                                      <p className="text-xs text-gray-500">{override.overriddenBy}</p>
+                                      <p className="text-xs text-gray-500">{override.timestamp.toLocaleDateString()}</p>
+                                      <button 
+                                        onClick={() => removeOverride(website.id, override.path)}
+                                        className="text-xs text-red-600 hover:text-red-800 mt-1"
+                                      >
+                                        Remove Override
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Website Creation Wizard */}
+      {showCreateWebsite && <WebsiteCreationWizard onClose={() => setShowCreateWebsite(false)} />}
+    </div>
+  )
+}
+
+// Website Creation Wizard Component
+function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
+  const { themes, addWebsite } = usePageStore()
+  const [step, setStep] = useState(1)
+  const [websiteData, setWebsiteData] = useState({
+    name: '',
+    domain: '',
+    themeId: '',
+    branding: {
+      primaryColor: '#0066cc',
+      secondaryColor: '#f8f9fa',
+      logoUrl: '',
+      fontFamily: 'Inter'
+    },
+    customizations: [] as Array<{path: string, value: string, reason: string}>
+  })
+  
+  const totalSteps = 3
+  const selectedTheme = themes.find(t => t.id === websiteData.themeId)
+  
+  const handleCreate = () => {
+    const newWebsite: Website = {
+      id: crypto.randomUUID(),
+      name: websiteData.name,
+      domain: websiteData.domain,
+      themeId: websiteData.themeId,
+      status: 'staging',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      overrides: websiteData.customizations.map(c => ({
+        path: c.path,
+        originalValue: getDefaultValueForPath(c.path),
+        overriddenValue: c.value,
+        overriddenAt: 'website' as const,
+        overriddenBy: 'Current User',
+        timestamp: new Date(),
+        reason: c.reason
+      })),
+      customSections: [],
+      branding: websiteData.branding,
+      deviationScore: calculateInitialDeviation(websiteData.customizations, selectedTheme),
+      lastThemeSync: new Date()
+    }
+    
+    addWebsite(newWebsite)
+    onClose()
+  }
+  
+  const getDefaultValueForPath = (path: string) => {
+    // Simple mapping of paths to default values
+    const defaults: Record<string, any> = {
+      'branding.logo': '/default-logo.svg',
+      'branding.primaryColor': '#1e40af',
+      'typography.headingFont': 'Inter, sans-serif',
+      'sections.hero.title': 'Welcome to Our Site'
+    }
+    return defaults[path] || 'default-value'
+  }
+  
+  const calculateInitialDeviation = (customizations: any[], theme: Theme | undefined) => {
+    if (!theme) return 0
+    let score = 0
+    // For themes, we calculate deviation based on how many customizations diverge from theme standards
+    score = customizations.length * 10 // Simple scoring for now
+    return Math.min(score, 100)
+  }
+  
+  const nextStep = () => setStep(Math.min(step + 1, totalSteps))
+  const prevStep = () => setStep(Math.max(step - 1, 1))
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">Create New Website</h3>
+              <p className="text-gray-600 mt-1">Step {step} of {totalSteps}</p>
+            </div>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center">
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <div key={i} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {i + 1}
+                  </div>
+                  {i < totalSteps - 1 && (
+                    <div className={`h-1 w-16 mx-2 ${
+                      i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex mt-2">
+              <div className="text-xs text-gray-600 w-8 text-center">Template</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Details</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Branding</div>
+            </div>
+          </div>
+          
+          {/* Step Content */}
+          <div className="min-h-[400px]">
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Choose Publishing Theme</h4>
+                  <p className="text-gray-600 mb-6">Select a complete theme package for your publishing platform</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
+                    {themes.map((theme) => (
+                      <div 
+                        key={theme.id}
+                        onClick={() => setWebsiteData({...websiteData, themeId: theme.id})}
+                        className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
+                          websiteData.themeId === theme.id 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded mb-4 flex items-center justify-center">
+                          <Palette className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h5 className="font-medium text-gray-900 text-lg">{theme.name}</h5>
+                        <p className="text-sm text-gray-600 mt-1 mb-3">{theme.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`px-2 py-1 text-xs rounded-full bg-green-100 text-green-800`}>
+                              {theme.publishingType}
+                            </div>
+                            <span className="text-xs text-gray-500">v{theme.version}</span>
+                          </div>
+                          <span className="text-xs text-gray-500">{theme.templates.length} templates</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {selectedTheme && (
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Palette className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div className="flex-1">
+                          <h6 className="font-medium text-blue-900">{selectedTheme.name}</h6>
+                          <p className="text-sm text-blue-700 mt-1">{selectedTheme.description}</p>
+                          <div className="mt-3">
+                            <div className="text-xs font-medium text-blue-800 mb-2">Included Templates:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {selectedTheme.templates.map((template) => (
+                                <span key={template.id} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                  {template.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
+                      <input
+                        type="text"
+                        value={websiteData.name}
+                        onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g., Wiley Research Portal"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Domain *</label>
+                      <input
+                        type="text"
+                        value={websiteData.domain}
+                        onChange={(e) => setWebsiteData({...websiteData, domain: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g., research.wiley.com"
+                      />
+                    </div>
+                  </div>
+                  
+                  {selectedTemplate && (
+                    <div className="mt-6">
+                      <h5 className="font-medium text-gray-900 mb-4">Initial Customizations</h5>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Configure initial customizations based on template's allowed overrides
+                      </p>
+                      
+                      <div className="space-y-4">
+                        {selectedTemplate.allowedOverrides.slice(0, 4).map((path) => (
+                          <div key={path} className="flex items-center gap-4">
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-gray-700">
+                                {path.replace(/\./g, ' → ')}
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                placeholder={`Custom value for ${path}`}
+                                onChange={(e) => {
+                                  const existing = websiteData.customizations.find(c => c.path === path)
+                                  if (existing) {
+                                    existing.value = e.target.value
+                                  } else if (e.target.value) {
+                                    setWebsiteData({
+                                      ...websiteData,
+                                      customizations: [...websiteData.customizations, {
+                                        path,
+                                        value: e.target.value,
+                                        reason: 'Initial customization'
+                                      }]
+                                    })
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Branding & Launch</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Primary Brand Color</label>
+                      <input
+                        type="color"
+                        value={websiteData.branding.primaryColor}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, primaryColor: e.target.value}
+                        })}
+                        className="w-full h-10 px-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                      <input
+                        type="color"
+                        value={websiteData.branding.secondaryColor}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, secondaryColor: e.target.value}
+                        })}
+                        className="w-full h-10 px-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                      <input
+                        type="text"
+                        value={websiteData.branding.logoUrl}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, logoUrl: e.target.value}
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="/path/to/logo.svg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
+                      <select
+                        value={websiteData.branding.fontFamily}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, fontFamily: e.target.value}
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="Inter">Inter</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Source Sans Pro">Source Sans Pro</option>
+                        <option value="Merriweather">Merriweather</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h5 className="font-medium text-gray-900 mb-4">Website Summary</h5>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Name:</span> {websiteData.name || 'Untitled Website'}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Domain:</span> {websiteData.domain || 'Not specified'}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Template:</span> {selectedTemplate?.name || 'None selected'}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Customizations:</span> {websiteData.customizations.length} configured
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Initial Status:</span> Staging
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Deviation Score:</span> {calculateInitialDeviation(websiteData.customizations, selectedTemplate)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-8 pt-6 border-t">
+            <div className="flex gap-2">
+              {step > 1 && (
+                <button
+                  onClick={prevStep}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              {step < totalSteps ? (
+                <button
+                  onClick={nextStep}
+                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && (!websiteData.name || !websiteData.domain))}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreate}
+                  disabled={!websiteData.name || !websiteData.domain || !websiteData.themeId}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create Website
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SiteManager() {
   const { setCurrentView, setSiteManagerView, siteManagerView } = usePageStore()
 
@@ -1733,6 +3861,7 @@ function SiteManager() {
               { id: 'overview', label: 'Overview', icon: Home },
               { id: 'themes', label: 'Themes', icon: Palette },
               { id: 'templates', label: 'Templates', icon: FileText },
+              { id: 'inheritance', label: 'Template Inheritance', icon: GitBranch },
               { id: 'websites', label: 'Websites', icon: Globe },
               { id: 'users', label: 'Users', icon: Users },
               { id: 'settings', label: 'Settings', icon: Cog }
@@ -1785,18 +3914,9 @@ function SiteManager() {
           {siteManagerView === 'themes' && (
             <SiteManagerPublicationCards />
           )}
-          {siteManagerView === 'templates' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Templates</h2>
-              <p className="text-gray-600">Template management - Coming soon</p>
-            </div>
-          )}
-          {siteManagerView === 'websites' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Websites</h2>
-              <p className="text-gray-600">Website management - Coming soon</p>
-            </div>
-          )}
+          {siteManagerView === 'templates' && <SiteManagerTemplates />}
+          {siteManagerView === 'inheritance' && <TemplateInheritanceTree />}
+          {siteManagerView === 'websites' && <SiteManagerWebsites />}
           {siteManagerView === 'users' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Users</h2>
@@ -1993,235 +4113,7 @@ function WidgetLibrary() {
   )
 }
 
-// Pre-fabricated sections templates based on AXP 2.0 specifications
-const PREFAB_SECTIONS = {
-  // Global Sections (site-wide persistent elements)
-  'global-header': {
-    name: 'Header Section',
-    description: 'Site-wide header with logo and navigation',
-    category: 'Global Sections',
-    template: {
-      name: 'Header',
-      type: 'content-block',
-      layout: 'one-third-left' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Logo Area',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Your Site Name',
-              align: 'left'
-            } as TextWidget
-          ]
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Navigation Area',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'navbar',
-              skin: 'minimal',
-              links: [
-                { label: 'Home', href: '#' },
-                { label: 'Browse', href: '#' },
-                { label: 'Search', href: '#' },
-                { label: 'Help', href: '#' }
-              ]
-            } as NavbarWidget
-          ]
-        }
-      ]
-    }
-  },
-  'global-footer': {
-    name: 'Footer Section',
-    description: 'Site-wide footer with links and copyright',
-    category: 'Global Sections',
-    template: {
-      name: 'Footer',
-      type: 'content-block',
-      layout: 'one-column' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Footer Content',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: '© 2025 Your Organization. All rights reserved.',
-              align: 'left'
-            } as TextWidget
-          ]
-        }
-      ]
-    }
-  },
-  
-  // Content Sections (pre-built layout patterns for main content)
-  'content-hero': {
-    name: 'Hero Section',
-    description: 'Large, visually prominent area with heading, text, and CTA',
-    category: 'Content Sections',
-    template: {
-      name: 'Hero',
-      type: 'content-block',
-      layout: 'vertical' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Hero Image',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'image',
-              skin: 'minimal',
-              src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2426&q=80',
-              alt: 'Hero banner image',
-              ratio: '16:9'
-            } as ImageWidget
-          ]
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Hero Content',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Welcome to Our Publication Platform\nDiscover research that changes the world',
-              align: 'center'
-            } as TextWidget
-          ]
-        }
-      ]
-    }
-  },
-  'content-banner': {
-    name: 'Banner Section',
-    description: 'Full-width strip with background, 1-2 columns for content',
-    category: 'Content Sections',
-    template: {
-      name: 'Banner',
-      type: 'content-block',
-      layout: 'two-columns' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Left Column',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Featured Content\nHighlight your most important announcements',
-              align: 'left'
-            } as TextWidget
-          ]
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Right Column',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Call to Action\nEngage your audience with compelling content',
-              align: 'right'
-            } as TextWidget
-          ]
-        }
-      ]
-    }
-  },
-  'content-features': {
-    name: 'Features Section',
-    description: 'Three-column showcase for highlighting key features',
-    category: 'Content Sections',
-    template: {
-      name: 'Features',
-      type: 'content-block',
-      layout: 'three-columns' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Feature 1',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Research Excellence\nAccess cutting-edge research publications',
-              align: 'center'
-            } as TextWidget
-          ]
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Feature 2',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Global Reach\nConnect with scholars worldwide',
-              align: 'center'
-            } as TextWidget
-          ]
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Feature 3',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'text',
-              skin: 'minimal',
-              text: 'Open Access\nFree access to knowledge for all',
-              align: 'center'
-            } as TextWidget
-          ]
-        }
-      ]
-    }
-  },
-  'content-recent-articles': {
-    name: 'Recent Articles Section',
-    description: 'Display most recently published articles',
-    category: 'Content Sections',
-    template: {
-      name: 'Recent Articles',
-      type: 'content-block',
-      layout: 'one-column' as ContentBlockLayout,
-      areas: [
-        {
-          id: crypto.randomUUID(),
-          name: 'Articles List',
-          widgets: [
-            {
-              id: crypto.randomUUID(),
-              type: 'publication-list',
-              skin: 'minimal',
-              contentSource: 'dynamic-query',
-              publications: MOCK_SCHOLARLY_ARTICLES,
-              cardConfig: DEFAULT_PUBLICATION_CARD_CONFIG,
-              layout: 'list',
-              maxItems: 5
-            } as PublicationListWidget
-          ]
-        }
-      ]
-    }
-  }
-}
+// NOTE: PREFAB_SECTIONS is now defined at the top of the file to avoid hoisting issues
 
 // Sections Content component
 function SectionsContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
