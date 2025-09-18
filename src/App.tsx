@@ -3655,15 +3655,15 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
                   
-                  {selectedTemplate && (
+                  {selectedTheme && (
                     <div className="mt-6">
-                      <h5 className="font-medium text-gray-900 mb-4">Initial Customizations</h5>
+                      <h5 className="font-medium text-gray-900 mb-4">Theme Customizations</h5>
                       <p className="text-sm text-gray-600 mb-4">
-                        Configure initial customizations based on template's allowed overrides
+                        Configure initial customizations for this theme
                       </p>
                       
                       <div className="space-y-4">
-                        {selectedTemplate.allowedOverrides.slice(0, 4).map((path) => (
+                        {['branding.logo', 'colors.primary', 'typography.headingFont', 'sections.hero.title'].map((path) => (
                           <div key={path} className="flex items-center gap-4">
                             <div className="flex-1">
                               <label className="block text-sm font-medium text-gray-700">
@@ -3770,7 +3770,10 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <span className="font-medium text-gray-600">Domain:</span> {websiteData.domain || 'Not specified'}
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Template:</span> {selectedTemplate?.name || 'None selected'}
+                        <span className="font-medium text-gray-600">Theme:</span> {selectedTheme?.name || 'None selected'}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Templates Included:</span> {selectedTheme?.templates.length || 0} templates
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Customizations:</span> {websiteData.customizations.length} configured
@@ -3779,7 +3782,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <span className="font-medium text-gray-600">Initial Status:</span> Staging
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Deviation Score:</span> {calculateInitialDeviation(websiteData.customizations, selectedTemplate)}%
+                        <span className="font-medium text-gray-600">Deviation Score:</span> {calculateInitialDeviation(websiteData.customizations, selectedTheme)}%
                       </div>
                     </div>
                   </div>
