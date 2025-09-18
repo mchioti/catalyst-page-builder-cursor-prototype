@@ -3187,15 +3187,15 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
 
 // Site Manager Websites component  
 function SiteManagerWebsites() {
-  const { websites, templates, addOverride, removeOverride, updateWebsite, addWebsite } = usePageStore()
+  const { websites, themes, addOverride, removeOverride, updateWebsite, addWebsite } = usePageStore()
   const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null)
   const [showOverrideAnalysis, setShowOverrideAnalysis] = useState<string | null>(null)
   const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
-  const getTemplateForWebsite = (websiteId: string) => {
+  const getThemeForWebsite = (websiteId: string) => {
     const website = websites.find(w => w.id === websiteId)
     if (!website) return null
-    return templates.find(t => t.id === website.templateId)
+    return themes.find(t => t.id === website.themeId)
   }
   
   const getDeviationColor = (score: number) => {
@@ -3217,13 +3217,16 @@ function SiteManagerWebsites() {
     )
   }
   
-  const getOverrideImpact = (override: Override, template: BaseTemplate | null) => {
-    if (!template) return 'unknown'
+  const getOverrideImpact = (override: Override, theme: Theme | null) => {
+    if (!theme) return 'unknown'
     
-    if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
-      return 'high' // Locked element override = high risk
-    } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
-      return 'low' // Allowed override = low risk
+    // Check against theme's templates to find relevant overrides
+    for (const template of theme.templates) {
+      if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
+        return 'high' // Locked element override = high risk
+      } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
+        return 'low' // Allowed override = low risk
+      }
     }
     return 'medium' // Other override = medium risk
   }
@@ -3254,7 +3257,7 @@ function SiteManagerWebsites() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Website</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Template</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Theme</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deviation</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overrides</th>
@@ -3264,7 +3267,7 @@ function SiteManagerWebsites() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {websites.map((website) => {
-                const template = getTemplateForWebsite(website.id)
+                const theme = getThemeForWebsite(website.id)
                 return (
                   <tr key={website.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
@@ -3275,8 +3278,8 @@ function SiteManagerWebsites() {
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{template?.name || 'Unknown'}</div>
-                        <div className="text-sm text-gray-500">v{template?.version}</div>
+                        <div className="font-medium text-gray-900">{theme?.name || 'Unknown'}</div>
+                        <div className="text-sm text-gray-500">v{theme?.version} • {theme?.publishingType}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -3349,12 +3352,12 @@ function SiteManagerWebsites() {
               
               {(() => {
                 const website = websites.find(w => w.id === showOverrideAnalysis)
-                const template = website ? getTemplateForWebsite(website.id) : null
+                const theme = website ? getThemeForWebsite(website.id) : null
                 
                 if (!website) return <div>Website not found</div>
                 
                 const overridesByImpact = website.overrides.reduce((acc, override) => {
-                  const impact = getOverrideImpact(override, template)
+                  const impact = getOverrideImpact(override, theme)
                   if (!acc[impact]) acc[impact] = []
                   acc[impact].push(override)
                   return acc
