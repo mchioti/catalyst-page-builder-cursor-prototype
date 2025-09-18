@@ -2224,7 +2224,7 @@ const PREFAB_SECTIONS = {
 }
 
 // Sections Content component
-function SectionsContent() {
+function SectionsContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
   const { addSection, customSections, removeCustomSection } = usePageStore()
   
   const handleAddPrefabSection = (sectionKey: keyof typeof PREFAB_SECTIONS) => {
@@ -2311,20 +2311,25 @@ function SectionsContent() {
                       onClick={() => {
                         const { addSection } = usePageStore.getState()
                         // Create a copy of the section with new ID
+                        const newSectionId = crypto.randomUUID()
                         const sectionCopy = {
                           ...section.section,
-                          id: crypto.randomUUID(),
+                          id: newSectionId,
                           areas: section.section.areas.map(area => ({
                             ...area,
                             id: crypto.randomUUID(),
                             widgets: area.widgets.map(widget => ({
                               ...widget,
                               id: crypto.randomUUID(),
-                              sectionId: section.section.id
+                              sectionId: newSectionId // Fixed: Use new section ID
                             }))
                           }))
                         }
                         addSection(sectionCopy)
+                        
+                        // Show success notification
+                        const widgetCount = sectionCopy.areas.reduce((count, area) => count + area.widgets.length, 0)
+                        showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
                       }}
                       className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                     >
@@ -2348,7 +2353,7 @@ function SectionsContent() {
 }
 
 // DIY Zone component
-function DIYZoneContent() {
+function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
   const { addWidget, customSections, addCustomSection, removeCustomSection } = usePageStore()
   
   const handleAddDIYWidget = (type: string) => {
@@ -2460,20 +2465,25 @@ function DIYZoneContent() {
                       onClick={() => {
                         const { addSection } = usePageStore.getState()
                         // Create a copy of the section with new ID
+                        const newSectionId = crypto.randomUUID()
                         const sectionCopy = {
                           ...section.section,
-                          id: crypto.randomUUID(),
+                          id: newSectionId,
                           areas: section.section.areas.map(area => ({
                             ...area,
                             id: crypto.randomUUID(),
                             widgets: area.widgets.map(widget => ({
                               ...widget,
                               id: crypto.randomUUID(),
-                              sectionId: section.section.id
+                              sectionId: newSectionId // Fixed: Use new section ID
                             }))
                           }))
                         }
                         addSection(sectionCopy)
+                        
+                        // Show success notification
+                        const widgetCount = sectionCopy.areas.reduce((count, area) => count + area.widgets.length, 0)
+                        showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
                       }}
                       className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                     >
@@ -2878,10 +2888,17 @@ function PageBuilder() {
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   
   
   const handleSetActiveSectionToolbar = (value: string | null) => {
     setActiveSectionToolbar(value)
+  }
+  
+  // Show toast notification
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000) // Auto-hide after 3 seconds
   }
   
   const sensors = useSensors(
@@ -3328,8 +3345,8 @@ function PageBuilder() {
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-4">
             {leftSidebarTab === 'library' && <WidgetLibrary />}
-            {leftSidebarTab === 'sections' && <SectionsContent />}
-            {leftSidebarTab === 'diy-zone' && <DIYZoneContent />}
+            {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
+            {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
             {leftSidebarTab === 'publication-cards' && <PublicationCardsContent />}
           </div>
         </div>
@@ -3385,6 +3402,7 @@ function PageBuilder() {
                           activeWidgetToolbar={activeWidgetToolbar}
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
                           activeDropZone={activeDropZone}
+                          showToast={showToast}
                           instanceId={instanceId}
                         />
                         
@@ -3425,6 +3443,24 @@ function PageBuilder() {
           onClose={() => setShowLayoutPicker(false)}
         />
       )}
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all transform ${
+          toast.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            {toast.type === 'success' ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <X className="w-4 h-4" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
       </div>
     </DndContext>
   )
@@ -3440,6 +3476,7 @@ function SortableItem({
   activeWidgetToolbar,
   setActiveWidgetToolbar,
   activeDropZone,
+  showToast,
   instanceId
 }: { 
   item: CanvasItem
@@ -3451,6 +3488,7 @@ function SortableItem({
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
   activeDropZone: string | null
+  showToast: (message: string, type: 'success' | 'error') => void
   instanceId: string
 }) {
   const {
@@ -3512,6 +3550,7 @@ function SortableItem({
             activeWidgetToolbar={activeWidgetToolbar}
             setActiveWidgetToolbar={setActiveWidgetToolbar}
             activeDropZone={activeDropZone}
+            showToast={showToast}
             instanceId={instanceId}
           />
         </div>
@@ -3790,6 +3829,7 @@ function SectionRenderer({
   activeWidgetToolbar,
   setActiveWidgetToolbar,
   activeDropZone,
+  showToast,
   instanceId
 }: { 
   section: WidgetSection
@@ -3801,6 +3841,7 @@ function SectionRenderer({
   activeWidgetToolbar: string | null
   setActiveWidgetToolbar: (value: string | null) => void
   activeDropZone: string | null
+  showToast: (message: string, type: 'success' | 'error') => void
   instanceId: string
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -3831,10 +3872,15 @@ function SectionRenderer({
   const handleSaveSection = () => {
     if (sectionName.trim()) {
       const { addCustomSection } = usePageStore.getState()
+      
+      // Count widgets in the section for better metadata
+      const widgetCount = section.areas.reduce((count, area) => count + area.widgets.length, 0)
+      
       const customSection = {
         id: crypto.randomUUID(),
         name: sectionName.trim(),
         description: sectionDescription.trim() || 'Custom saved section',
+        widgets: section.areas.flatMap(area => area.widgets), // Store flattened widget list for easier counting
         section: {
           ...section,
           id: crypto.randomUUID() // Generate new ID for the saved section
@@ -3844,6 +3890,9 @@ function SectionRenderer({
       setShowSaveModal(false)
       setSectionName('')
       setSectionDescription('')
+      
+      // Show success notification
+      showToast(`"${sectionName.trim()}" saved successfully with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
     }
   }
 
@@ -3868,6 +3917,10 @@ function SectionRenderer({
       const newCanvasItems = [...canvasItems]
       newCanvasItems.splice(sectionIndex + 1, 0, duplicatedSection)
       replaceCanvasItems(newCanvasItems)
+      
+      // Show success notification
+      const widgetCount = section.areas.reduce((count, area) => count + area.widgets.length, 0)
+      showToast(`Section duplicated successfully with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
     }
   }
 
