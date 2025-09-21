@@ -3268,9 +3268,9 @@ function SiteManager() {
   const { setCurrentView, setSiteManagerView, siteManagerView } = usePageStore()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b border-slate-200">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <button
@@ -3287,7 +3287,7 @@ function SiteManager() {
 
       <div className="flex h-[calc(100vh-73px)]">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r">
+        <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
           <nav className="p-4 space-y-2">
             {[
               { id: 'overview', label: 'Overview', icon: Home },
@@ -3315,7 +3315,7 @@ function SiteManager() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 bg-slate-50">
           {siteManagerView === 'overview' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Overview</h2>
@@ -4637,7 +4637,7 @@ function PageBuilder() {
       onDragEnd={handleDragEnd}
     >
       <div 
-        className="min-h-screen bg-gray-50 flex"
+        className="min-h-screen bg-slate-50 flex"
         onClick={(e) => {
           // Only close toolbars if clicking directly on this div, not on children
           if (e.target === e.currentTarget) {
@@ -4647,9 +4647,9 @@ function PageBuilder() {
         }}
       >
         {/* Left Sidebar */}
-        <div className="w-80 bg-white shadow-sm border-r flex flex-col">
+        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex flex-col">
           {/* Tabs */}
-          <div className="border-b">
+          <div className="border-b border-slate-200">
             <div className="flex">
               {[
                 { id: 'library', label: 'Library', icon: BookOpen },
@@ -4697,7 +4697,7 @@ function PageBuilder() {
             </div>
           </div>
 
-          <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
+          <div className="flex-1 p-6 bg-slate-50" onClick={() => selectWidget(null)}>
             {/* Template Context Bar - Only show in template editing mode */}
             {usePageStore(state => state.editingContext) === 'template' && (
               <div className="mb-3 flex items-center justify-between py-2 px-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -4751,7 +4751,7 @@ function PageBuilder() {
             )}
             
             <CanvasThemeProvider>
-              <div className="bg-white border border-gray-200 rounded-lg min-h-96 relative">
+              <div className="bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm">
               {canvasItems.length === 0 ? (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center text-gray-500">
@@ -4812,9 +4812,9 @@ function PageBuilder() {
         </div>
 
       {/* Right Sidebar - Properties Panel */}
-      <div className="w-80 bg-white shadow-sm border-l flex flex-col">
-        <div className="border-b p-4">
-          <h2 className="font-semibold text-gray-900">Properties</h2>
+      <div className="w-80 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col">
+        <div className="border-b border-slate-200 p-4">
+          <h2 className="font-semibold text-slate-800">Properties</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
           <PropertiesPanel />
