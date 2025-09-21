@@ -9,6 +9,7 @@ import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, 
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { TemplateOverrideManager } from './components/SiteManager/TemplateOverrideManager'
+import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
