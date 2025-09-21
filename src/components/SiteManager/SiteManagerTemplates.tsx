@@ -504,34 +504,34 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
             </div>
           </div>
         </div>
-        {showPreview && selectedTemplate && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold">Template Preview: {selectedTemplate.name}</h3>
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+      </div>
+
+      {showPreview && selectedTemplate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Template Preview: {selectedTemplate.name}</h3>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <div className="text-gray-400 mb-4">
+                <Eye className="h-16 w-16 mx-auto" />
               </div>
-              
-              <div className="bg-gray-100 rounded-lg p-8 text-center">
-                <div className="text-gray-400 mb-4">
-                  <Eye className="h-16 w-16 mx-auto" />
-                </div>
-                <h4 className="text-lg font-medium text-gray-900 mb-2">Template Preview</h4>
-                <p className="text-gray-600 mb-4">{selectedTemplate.description}</p>
-                <p className="text-sm text-gray-500">
-                  Preview functionality will be implemented with live template rendering
-                </p>
-              </div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Template Preview</h4>
+              <p className="text-gray-600 mb-4">{selectedTemplate.description}</p>
+              <p className="text-sm text-gray-500">
+                Preview functionality will be implemented with live template rendering
+              </p>
             </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   )
 }
