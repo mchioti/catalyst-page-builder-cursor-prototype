@@ -840,7 +840,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                 {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
               </p>
               <p className="text-xs text-blue-600 mt-2">
-                📊 Usage shows websites using this theme: 2 websites use Academic Publishing Theme
+                📊 Usage shows websites using this theme: 2 of 3 total websites use Academic Publishing Theme
               </p>
             </div>
             <div className="text-right">
@@ -991,8 +991,8 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                                       )}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5">
-                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} • 
-                                      Created {template.createdAt.toLocaleDateString()}
+                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} using this template • 
+                                      Template created {template.createdAt.toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>
@@ -1156,8 +1156,9 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                   <div className="font-medium">{selectedTemplate.inheritsFrom}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Usage Count</div>
+                  <div className="text-gray-500">Used By</div>
                   <div className="font-medium">{selectedTemplate.usageCount} {selectedTemplate.category === 'website' || selectedTemplate.category === 'publication' ? 'websites' : 'instances'}</div>
+                  <div className="text-xs text-gray-400 mt-1">Template created {selectedTemplate.createdAt.toLocaleDateString()}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Overrides</div>
@@ -1197,9 +1198,13 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       {selectedTemplate.overrides > 0 && (
                         <div className="bg-orange-50 p-3 rounded text-center">
                           <div className="text-orange-700 font-medium">Customization Active</div>
-                          <div className="text-xs text-orange-600">{selectedTemplate.overrides} override(s) for brand differentiation</div>
+                          <div className="text-xs text-orange-600">{selectedTemplate.overrides} override(s) by Wiley Main Portal{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
                         </div>
                       )}
+                      <div className="bg-blue-50 p-3 rounded text-center">
+                        <div className="text-blue-700 font-medium">Template Usage</div>
+                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using Academic Publishing Theme</div>
+                      </div>
                     </div>
                   )}
 
@@ -1212,7 +1217,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       <div className="bg-purple-50 p-4 rounded">
                         <div className="text-purple-700 font-medium mb-2">Content-Driven Generation</div>
                         <div className="text-sm text-purple-600">
-                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'different websites'}
+                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'websites'} (Wiley Main Portal, Journal of Advanced Science)
                           <br />
                           • {selectedTemplate.overrides} of those websites have custom overrides
                           <br />

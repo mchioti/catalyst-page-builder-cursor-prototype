@@ -1521,6 +1521,44 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       deviationScore: 8,
       lastThemeSync: new Date('2024-09-01')
+    },
+    {
+      id: 'journal-of-science',
+      name: 'Journal of Advanced Science',
+      domain: 'advancedscience.wiley.com',
+      themeId: 'academic-publishing-theme',
+      status: 'active' as const,
+      createdAt: new Date('2024-08-15'),
+      updatedAt: new Date('2024-09-25'),
+      overrides: [
+        {
+          path: 'colors.accent',
+          originalValue: '#10b981',
+          overriddenValue: '#dc2626',
+          overriddenAt: 'website',
+          overriddenBy: 'editorial-team',
+          timestamp: new Date('2024-08-20'),
+          reason: 'Match journal brand colors'
+        },
+        {
+          path: 'layout.hero.showFeaturedArticle',
+          originalValue: 'false',
+          overriddenValue: 'true',
+          overriddenAt: 'website',
+          overriddenBy: 'editorial-team',
+          timestamp: new Date('2024-08-25'),
+          reason: 'Highlight latest research'
+        }
+      ],
+      customSections: [],
+      branding: {
+        primaryColor: '#dc2626',
+        secondaryColor: '#f3f4f6',
+        logoUrl: '/jas-logo.svg',
+        fontFamily: 'Source Serif Pro'
+      },
+      deviationScore: 22,
+      lastThemeSync: new Date('2024-09-10')
     }
   ] as Website[],
   
