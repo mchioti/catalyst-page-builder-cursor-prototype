@@ -308,90 +308,332 @@ const SECTION_TEMPLATES: Template[] = [
   }
 ]
 
+// Publication Page Templates - Journal and article page layouts
+const PUBLICATION_TEMPLATES: Template[] = [
+  {
+    id: 'publication-pages',
+    name: 'Publication Pages',
+    description: 'Root template for all publication-related pages',
+    category: 'publication',
+    inheritsFrom: 'Theme (Global sections)',
+    overrides: 0,
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-03-15'),
+    createdBy: 'Publishing Team',
+    usageCount: 85,
+    tags: ['publication', 'root', 'template'],
+    status: 'active'
+  },
+  {
+    id: 'journal-home',
+    name: 'Journal Home',
+    description: 'Homepage for individual journals',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 2,
+    createdAt: new Date('2024-01-22'),
+    updatedAt: new Date('2024-03-18'),
+    createdBy: 'Editorial Team',
+    usageCount: 45,
+    tags: ['journal', 'homepage', 'editorial'],
+    status: 'active'
+  },
+  {
+    id: 'table-of-contents',
+    name: 'Table Of Contents',
+    description: 'Table of contents for journal issues',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-03-20'),
+    createdBy: 'Editorial Team',
+    usageCount: 38,
+    tags: ['toc', 'issue', 'contents'],
+    status: 'active'
+  },
+  {
+    id: 'list-of-issues',
+    name: 'List of Issues',
+    description: 'Archive listing of journal issues',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-01-28'),
+    updatedAt: new Date('2024-03-22'),
+    createdBy: 'Editorial Team',
+    usageCount: 35,
+    tags: ['issues', 'archive', 'listing'],
+    status: 'active'
+  },
+  {
+    id: 'article',
+    name: 'Article',
+    description: 'Individual article page template',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 10,
+    createdAt: new Date('2024-01-30'),
+    updatedAt: new Date('2024-03-25'),
+    createdBy: 'Publishing Team',
+    usageCount: 120,
+    tags: ['article', 'content', 'academic'],
+    status: 'active'
+  },
+  {
+    id: 'book-series',
+    name: 'Book Series',
+    description: 'Book series landing page',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-02'),
+    updatedAt: new Date('2024-03-28'),
+    createdBy: 'Book Team',
+    usageCount: 15,
+    tags: ['book', 'series', 'collection'],
+    status: 'active'
+  },
+  {
+    id: 'book-set',
+    name: 'Book Set',
+    description: 'Book set collection page',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-05'),
+    updatedAt: new Date('2024-03-30'),
+    createdBy: 'Book Team',
+    usageCount: 12,
+    tags: ['book', 'set', 'collection'],
+    status: 'active'
+  },
+  {
+    id: 'book',
+    name: 'Book',
+    description: 'Individual book page template',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-08'),
+    updatedAt: new Date('2024-04-02'),
+    createdBy: 'Book Team',
+    usageCount: 25,
+    tags: ['book', 'individual', 'publication'],
+    status: 'active'
+  },
+  {
+    id: 'chapter',
+    name: 'Chapter',
+    description: 'Individual book chapter page',
+    category: 'publication',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-04-05'),
+    createdBy: 'Book Team',
+    usageCount: 18,
+    tags: ['chapter', 'book', 'content'],
+    status: 'active'
+  }
+]
+
 // Supporting Pages Templates - Auxiliary and supporting pages
 const SUPPORTING_PAGES_TEMPLATES: Template[] = [
   {
-    id: 'support-about-us',
-    name: 'About Us',
-    description: 'Company or organization about page with mission, vision, and team information',
+    id: 'supporting-pages',
+    name: 'Supporting Pages',
+    description: 'Root template for general supporting pages',
     category: 'supporting',
     inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'Content Team',
-    usageCount: 25,
-    tags: ['about', 'company', 'mission', 'team'],
+    usageCount: 60,
+    tags: ['supporting', 'root', 'template'],
     status: 'active'
   },
   {
-    id: 'support-contact',
-    name: 'Contact',
-    description: 'Contact page with forms, office locations, and contact information',
+    id: 'about',
+    name: 'About',
+    description: 'About page for organization information',
     category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
-    createdAt: new Date('2024-01-25'),
+    inheritsFrom: 'Supporting Pages',
+    overrides: 1,
+    createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-08'),
-    createdBy: 'Design Team',
-    usageCount: 30,
-    tags: ['contact', 'form', 'location', 'support'],
+    createdBy: 'Content Team',
+    usageCount: 25,
+    tags: ['about', 'company', 'organization'],
     status: 'active'
   },
   {
-    id: 'support-privacy-policy',
-    name: 'Privacy Policy',
-    description: 'Privacy policy and data protection information page',
+    id: 'contact-us',
+    name: 'Contact Us',
+    description: 'Contact page with forms and contact information',
     category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Supporting Pages',
+    overrides: 1,
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-03-10'),
+    createdBy: 'Content Team',
+    usageCount: 30,
+    tags: ['contact', 'form', 'support'],
+    status: 'active'
+  },
+  {
+    id: 'privacy-policy',
+    name: 'Privacy Policy',
+    description: 'Privacy policy and data protection information',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Pages',
     overrides: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Legal Team',
     usageCount: 40,
-    tags: ['privacy', 'legal', 'gdpr', 'policy'],
+    tags: ['privacy', 'legal', 'gdpr'],
     status: 'active'
   },
   {
-    id: 'support-terms-conditions',
-    name: 'Terms & Conditions',
-    description: 'Terms of service and usage conditions page',
+    id: 'terms-conditions',
+    name: 'Terms and Conditions',
+    description: 'Terms of service and usage conditions',
     category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Supporting Pages',
     overrides: 0,
-    createdAt: new Date('2024-02-05'),
-    updatedAt: new Date('2024-03-15'),
+    createdAt: new Date('2024-02-03'),
+    updatedAt: new Date('2024-03-14'),
     createdBy: 'Legal Team',
     usageCount: 35,
-    tags: ['terms', 'legal', 'conditions', 'service'],
+    tags: ['terms', 'legal', 'conditions'],
     status: 'active'
   },
   {
-    id: 'support-faq',
-    name: 'FAQ',
-    description: 'Frequently asked questions page with expandable sections',
+    id: 'accessibility-statement',
+    name: 'Accessibility Conformance Statement',
+    description: 'Accessibility compliance and conformance information',
     category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
-    overrides: 1,
-    createdAt: new Date('2024-02-10'),
-    updatedAt: new Date('2024-03-18'),
-    createdBy: 'Support Team',
-    usageCount: 22,
-    tags: ['faq', 'questions', 'help', 'support'],
-    status: 'active'
-  },
-  {
-    id: 'support-sitemap',
-    name: 'Sitemap',
-    description: 'Website sitemap page showing all available pages and sections',
-    category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Supporting Pages',
     overrides: 0,
-    createdAt: new Date('2024-02-15'),
+    createdAt: new Date('2024-02-05'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'Legal Team',
+    usageCount: 20,
+    tags: ['accessibility', 'compliance', 'legal'],
+    status: 'active'
+  },
+  {
+    id: 'cookie-policy',
+    name: 'Cookie Policy',
+    description: 'Cookie usage and management policy',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-08'),
+    updatedAt: new Date('2024-03-18'),
+    createdBy: 'Legal Team',
+    usageCount: 32,
+    tags: ['cookies', 'privacy', 'legal'],
+    status: 'active'
+  },
+  {
+    id: 'supporting-journal-pages',
+    name: 'Supporting Journal Pages',
+    description: 'Root template for journal-specific supporting pages',
+    category: 'supporting',
+    inheritsFrom: 'Publication Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
-    createdBy: 'Technical Team',
-    usageCount: 15,
-    tags: ['sitemap', 'navigation', 'structure', 'seo'],
+    createdBy: 'Editorial Team',
+    usageCount: 45,
+    tags: ['journal', 'supporting', 'editorial'],
+    status: 'active'
+  },
+  {
+    id: 'editorial-board',
+    name: 'Editorial Board',
+    description: 'Editorial board member listings and information',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 2,
+    createdAt: new Date('2024-02-12'),
+    updatedAt: new Date('2024-03-22'),
+    createdBy: 'Editorial Team',
+    usageCount: 28,
+    tags: ['editorial', 'board', 'staff'],
+    status: 'active'
+  },
+  {
+    id: 'author-guidelines',
+    name: 'Author Guidelines',
+    description: 'Guidelines and instructions for authors',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-14'),
+    updatedAt: new Date('2024-03-24'),
+    createdBy: 'Editorial Team',
+    usageCount: 35,
+    tags: ['author', 'guidelines', 'instructions'],
+    status: 'active'
+  },
+  {
+    id: 'reviewer-guidelines',
+    name: 'Reviewer Guidelines',
+    description: 'Guidelines and instructions for peer reviewers',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-16'),
+    updatedAt: new Date('2024-03-26'),
+    createdBy: 'Editorial Team',
+    usageCount: 22,
+    tags: ['reviewer', 'guidelines', 'peer-review'],
+    status: 'active'
+  },
+  {
+    id: 'aims-scope',
+    name: 'Aims & Scope',
+    description: 'Journal aims, scope, and focus areas',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 6,
+    createdAt: new Date('2024-02-18'),
+    updatedAt: new Date('2024-03-28'),
+    createdBy: 'Editorial Team',
+    usageCount: 40,
+    tags: ['aims', 'scope', 'journal-info'],
+    status: 'active'
+  },
+  {
+    id: 'subscribe-purchase',
+    name: 'Subscribe / Purchase',
+    description: 'Subscription and purchase information page',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 2,
+    createdAt: new Date('2024-02-20'),
+    updatedAt: new Date('2024-03-30'),
+    createdBy: 'Sales Team',
+    usageCount: 18,
+    tags: ['subscription', 'purchase', 'sales'],
+    status: 'active'
+  },
+  {
+    id: 'news-announcements',
+    name: 'News / Announcements',
+    description: 'Journal news and announcements page',
+    category: 'supporting',
+    inheritsFrom: 'Supporting Journal Pages',
+    overrides: 0,
+    createdAt: new Date('2024-02-22'),
+    updatedAt: new Date('2024-04-01'),
+    createdBy: 'Editorial Team',
+    usageCount: 25,
+    tags: ['news', 'announcements', 'updates'],
     status: 'active'
   }
 ]
@@ -476,7 +718,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
   ] as const
 
   // Combine all templates
-  const allTemplates = [...WEBSITE_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
+  const allTemplates = [...WEBSITE_TEMPLATES, ...PUBLICATION_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
   
   // Filter templates based on selected category, search, and status
   const filteredTemplates = allTemplates.filter(template => {
@@ -511,22 +753,43 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
 
   // Helper function to determine indentation level based on inheritance
   const getIndentationLevel = (template: Template): number => {
+    // Root themes (no indentation)
     if (template.inheritsFrom === 'Academic Publishing Theme' || template.inheritsFrom === 'Corporate Publishing Theme') {
-      return 0 // Root level templates - inheriting directly from themes
-    } else if (template.inheritsFrom === 'Theme (Global sections)') {
-      return 1 // First level - inheriting from Theme (Global sections)
-    } else if (template.inheritsFrom === 'Base Section') {
-      return 0 // Base section templates
-    } else if (template.inheritsFrom.includes('Option:') || template.inheritsFrom.includes(',')) {
-      return 2 // Templates with multiple inheritance options
-    } else {
-      // Check if inherits from Theme (Global sections) or other first-level templates
-      const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
-      if (parentTemplate && parentTemplate.inheritsFrom === 'Theme (Global sections)') {
-        return 2 // Second level inheritance from Theme (Global sections)
-      }
-      return 1 // Default first level inheritance
+      return 0
     }
+    
+    // First level templates inheriting directly from Theme (Global sections)
+    if (template.inheritsFrom === 'Theme (Global sections)') {
+      return 1
+    }
+    
+    // Second level templates (inherit from Publication Pages, Supporting Pages, etc.)
+    if (template.inheritsFrom === 'Publication Pages' || template.inheritsFrom === 'Supporting Pages') {
+      return 2
+    }
+    
+    // Third level templates (inherit from Supporting Journal Pages, etc.)
+    if (template.inheritsFrom === 'Supporting Journal Pages') {
+      return 3
+    }
+    
+    // Base section templates (no indentation)
+    if (template.inheritsFrom === 'Base Section') {
+      return 0
+    }
+    
+    // Templates with multiple inheritance options
+    if (template.inheritsFrom.includes('Option:') || template.inheritsFrom.includes(',')) {
+      return 2
+    }
+    
+    // Dynamic lookup for other inheritance patterns
+    const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
+    if (parentTemplate) {
+      return getIndentationLevel(parentTemplate) + 1
+    }
+    
+    return 1 // Default fallback
   }
 
   return (
