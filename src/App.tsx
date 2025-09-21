@@ -4700,51 +4700,34 @@ function PageBuilder() {
           <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
             {/* Template Context Bar - Only show in template editing mode */}
             {usePageStore(state => state.editingContext) === 'template' && (
-              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-blue-900">Template Editing Mode</span>
-                    </div>
-                    <span className="text-sm text-blue-700">
-                      <strong>Website Homepage</strong> template for <strong>Wiley Online Library</strong>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-xs text-blue-600">
-                      <span className="bg-blue-100 px-2 py-1 rounded">Academic Publishing Theme</span>
-                      <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">2 overrides</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
-                        setCurrentView('site-manager')
-                        setSiteManagerView('templates')
-                        setEditingContext('page') // Reset to normal page editing
-                      }}
-                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      Back to Templates
-                    </button>
-                    <button
-                      onClick={() => {
-                        const { setEditingContext } = usePageStore.getState()
-                        setEditingContext('page')
-                      }}
-                      className="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"
-                    >
-                      Switch to Page Mode
-                    </button>
-                  </div>
+              <div className="mb-3 flex items-center justify-between py-2 px-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-amber-600">✨ Template Mode</span>
+                  <span className="text-amber-500">•</span>
+                  <span className="text-amber-600">Override indicators visible</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="text-xs text-blue-600">
-                    💡 This page inherits from the <strong>Website Homepage</strong> template and has <strong>2 customizations</strong> (logo, primary color)
-                  </div>
-                  <div className="text-xs text-blue-500">
-                    ✨ Override indicators show template customizations • Switch to "Page Mode" for clean editing
-                  </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
+                      setCurrentView('site-manager')
+                      setSiteManagerView('templates')
+                      setEditingContext('page')
+                    }}
+                    className="text-xs text-amber-600 hover:text-amber-800 underline"
+                  >
+                    Back to Templates
+                  </button>
+                  <span className="text-amber-400">|</span>
+                  <button
+                    onClick={() => {
+                      const { setEditingContext } = usePageStore.getState()
+                      setEditingContext('page')
+                    }}
+                    className="text-xs text-amber-600 hover:text-amber-800 underline"
+                  >
+                    Switch to Page Mode
+                  </button>
                 </div>
               </div>
             )}
