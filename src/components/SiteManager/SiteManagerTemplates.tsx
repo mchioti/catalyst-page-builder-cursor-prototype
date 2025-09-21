@@ -871,7 +871,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
             </div>
             <div className="bg-purple-50 p-3 rounded-lg">
               <div className="text-purple-700 text-sm font-medium">
-                {filteredTemplates.reduce((sum, t) => sum + t.usageCount, 0)} Pages
+                {filteredTemplates.reduce((sum, t) => sum + t.usageCount, 0)} Websites
               </div>
               <div className="text-xs text-purple-600 mt-1">Using these templates</div>
             </div>
@@ -941,9 +941,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                         Inherits From
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Overrides
-                      </th>
-                      <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -986,7 +983,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                                       )}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5">
-                                      {template.usageCount} page{template.usageCount !== 1 ? 's' : ''} • 
+                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} • 
                                       Created {template.createdAt.toLocaleDateString()}
                                     </div>
                                   </div>
@@ -997,9 +994,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-500">
                           <span className="italic">{template.inheritsFrom}</span>
-                        </td>
-                        <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                          {template.overrides}
                         </td>
                         <td className="py-4 px-6 text-sm">
                           <div className="flex flex-col gap-1">
@@ -1155,7 +1149,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Usage Count</div>
-                  <div className="font-medium">{selectedTemplate.usageCount} pages</div>
+                  <div className="font-medium">{selectedTemplate.usageCount} {selectedTemplate.category === 'website' || selectedTemplate.category === 'publication' ? 'websites' : 'instances'}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Overrides</div>
@@ -1210,9 +1204,9 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       <div className="bg-purple-50 p-4 rounded">
                         <div className="text-purple-700 font-medium mb-2">Content-Driven Generation</div>
                         <div className="text-sm text-purple-600">
-                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journals' : 'content items'}
+                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'different websites'}
                           <br />
-                          • {selectedTemplate.overrides} custom layout overrides
+                          • {selectedTemplate.overrides} of those websites have custom overrides
                           <br />
                           • Maintains consistency while allowing targeted customization
                         </div>
