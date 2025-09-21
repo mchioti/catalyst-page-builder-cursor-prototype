@@ -32,7 +32,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'System',
-    usageCount: 100,
+    usageCount: 1,
     tags: ['theme', 'global', 'sections'],
     status: 'active'
   },
@@ -46,7 +46,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Admin User',
-    usageCount: 75,
+    usageCount: 1,
     tags: ['home', 'homepage', 'landing'],
     status: 'active'
   },
@@ -60,7 +60,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
     createdBy: 'Dev Team',
-    usageCount: 45,
+    usageCount: 1,
     tags: ['search', 'results', 'listing'],
     status: 'active'
   },
@@ -74,7 +74,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
     createdBy: 'Dev Team',
-    usageCount: 32,
+    usageCount: 0,
     tags: ['search', 'advanced', 'filters'],
     status: 'active'
   },
@@ -88,7 +88,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'UX Team',
-    usageCount: 58,
+    usageCount: 1,
     tags: ['browse', 'navigation', 'content'],
     status: 'active'
   },
@@ -102,7 +102,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-08'),
     createdBy: 'Content Team',
-    usageCount: 28,
+    usageCount: 0,
     tags: ['browse', 'taxonomy', 'subjects'],
     status: 'active'
   },
@@ -116,7 +116,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Content Team',
-    usageCount: 35,
+    usageCount: 1,
     tags: ['browse', 'alphabetical', 'titles'],
     status: 'active'
   },
@@ -130,7 +130,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Auth Team',
-    usageCount: 22,
+    usageCount: 0,
     tags: ['profile', 'admin', 'institutional'],
     status: 'active'
   },
@@ -144,7 +144,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Dev Team',
-    usageCount: 15,
+    usageCount: 0,
     tags: ['error', '404', '500'],
     status: 'active'
   },
@@ -158,7 +158,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-03-01'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'eCommerce Team',
-    usageCount: 12,
+    usageCount: 0,
     tags: ['ecommerce', 'sales', 'commerce'],
     status: 'active'
   },
@@ -204,7 +204,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Admin User',
-    usageCount: 45,
+    usageCount: 1,
     tags: ['header', 'navigation', 'global', 'responsive'],
     status: 'active'
   },
@@ -218,7 +218,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
     createdBy: 'Admin User',
-    usageCount: 42,
+    usageCount: 1,
     tags: ['footer', 'links', 'global', 'contact'],
     status: 'active'
   },
@@ -232,7 +232,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Design Team',
-    usageCount: 23,
+    usageCount: 0,
     tags: ['navigation', 'dropdown', 'search', 'comprehensive'],
     status: 'active'
   },
@@ -246,7 +246,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
     createdBy: 'UX Team',
-    usageCount: 67,
+    usageCount: 1,
     tags: ['breadcrumb', 'navigation', 'site-structure'],
     status: 'active'
   },
@@ -260,7 +260,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Dev Team',
-    usageCount: 38,
+    usageCount: 0,
     tags: ['search', 'filters', 'autocomplete', 'global'],
     status: 'active'
   },
@@ -274,7 +274,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'Auth Team',
-    usageCount: 55,
+    usageCount: 1,
     tags: ['user', 'account', 'authentication', 'dropdown'],
     status: 'active'
   },
@@ -288,7 +288,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Content Team',
-    usageCount: 12,
+    usageCount: 0,
     tags: ['notifications', 'announcements', 'banner'],
     status: 'draft'
   },
@@ -302,7 +302,7 @@ const SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-02-20'),
     createdBy: 'Legal Team',
-    usageCount: 78,
+    usageCount: 1,
     tags: ['cookies', 'consent', 'gdpr', 'legal'],
     status: 'active'
   }
@@ -320,7 +320,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Publishing Team',
-    usageCount: 85,
+    usageCount: 1,
     tags: ['publication', 'root', 'template'],
     status: 'active'
   },
@@ -334,7 +334,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
-    usageCount: 45,
+    usageCount: 1,
     tags: ['journal', 'homepage', 'editorial'],
     status: 'active'
   },
@@ -348,7 +348,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Editorial Team',
-    usageCount: 38,
+    usageCount: 0,
     tags: ['toc', 'issue', 'contents'],
     status: 'active'
   },
@@ -362,7 +362,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-28'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Editorial Team',
-    usageCount: 35,
+    usageCount: 1,
     tags: ['issues', 'archive', 'listing'],
     status: 'active'
   },
@@ -376,7 +376,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-25'),
     createdBy: 'Publishing Team',
-    usageCount: 120,
+    usageCount: 1,
     tags: ['article', 'content', 'academic'],
     status: 'active'
   },
@@ -390,7 +390,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-02'),
     updatedAt: new Date('2024-03-28'),
     createdBy: 'Book Team',
-    usageCount: 15,
+    usageCount: 0,
     tags: ['book', 'series', 'collection'],
     status: 'active'
   },
@@ -404,7 +404,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-30'),
     createdBy: 'Book Team',
-    usageCount: 12,
+    usageCount: 0,
     tags: ['book', 'set', 'collection'],
     status: 'active'
   },
@@ -418,7 +418,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-04-02'),
     createdBy: 'Book Team',
-    usageCount: 25,
+    usageCount: 0,
     tags: ['book', 'individual', 'publication'],
     status: 'active'
   },
@@ -432,7 +432,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-04-05'),
     createdBy: 'Book Team',
-    usageCount: 18,
+    usageCount: 0,
     tags: ['chapter', 'book', 'content'],
     status: 'active'
   }
@@ -450,7 +450,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'Content Team',
-    usageCount: 60,
+    usageCount: 1,
     tags: ['supporting', 'root', 'template'],
     status: 'active'
   },
@@ -464,7 +464,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-08'),
     createdBy: 'Content Team',
-    usageCount: 25,
+    usageCount: 0,
     tags: ['about', 'company', 'organization'],
     status: 'active'
   },
@@ -478,7 +478,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Content Team',
-    usageCount: 30,
+    usageCount: 0,
     tags: ['contact', 'form', 'support'],
     status: 'active'
   },
@@ -492,7 +492,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Legal Team',
-    usageCount: 40,
+    usageCount: 1,
     tags: ['privacy', 'legal', 'gdpr'],
     status: 'active'
   },
@@ -506,7 +506,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-03'),
     updatedAt: new Date('2024-03-14'),
     createdBy: 'Legal Team',
-    usageCount: 35,
+    usageCount: 1,
     tags: ['terms', 'legal', 'conditions'],
     status: 'active'
   },
@@ -520,7 +520,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-16'),
     createdBy: 'Legal Team',
-    usageCount: 20,
+    usageCount: 0,
     tags: ['accessibility', 'compliance', 'legal'],
     status: 'active'
   },
@@ -534,7 +534,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Legal Team',
-    usageCount: 32,
+    usageCount: 0,
     tags: ['cookies', 'privacy', 'legal'],
     status: 'active'
   },
@@ -548,7 +548,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Editorial Team',
-    usageCount: 45,
+    usageCount: 1,
     tags: ['journal', 'supporting', 'editorial'],
     status: 'active'
   },
@@ -562,7 +562,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-12'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Editorial Team',
-    usageCount: 28,
+    usageCount: 0,
     tags: ['editorial', 'board', 'staff'],
     status: 'active'
   },
@@ -576,7 +576,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-14'),
     updatedAt: new Date('2024-03-24'),
     createdBy: 'Editorial Team',
-    usageCount: 35,
+    usageCount: 1,
     tags: ['author', 'guidelines', 'instructions'],
     status: 'active'
   },
@@ -590,7 +590,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-16'),
     updatedAt: new Date('2024-03-26'),
     createdBy: 'Editorial Team',
-    usageCount: 22,
+    usageCount: 0,
     tags: ['reviewer', 'guidelines', 'peer-review'],
     status: 'active'
   },
@@ -604,7 +604,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-18'),
     updatedAt: new Date('2024-03-28'),
     createdBy: 'Editorial Team',
-    usageCount: 40,
+    usageCount: 1,
     tags: ['aims', 'scope', 'journal-info'],
     status: 'active'
   },
@@ -618,7 +618,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-30'),
     createdBy: 'Sales Team',
-    usageCount: 18,
+    usageCount: 0,
     tags: ['subscription', 'purchase', 'sales'],
     status: 'active'
   },
@@ -632,7 +632,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-22'),
     updatedAt: new Date('2024-04-01'),
     createdBy: 'Editorial Team',
-    usageCount: 25,
+    usageCount: 0,
     tags: ['news', 'announcements', 'updates'],
     status: 'active'
   }
@@ -650,7 +650,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Design Team',
-    usageCount: 32,
+    usageCount: 0,
     tags: ['hero', 'banner', 'cta', 'landing'],
     status: 'active'
   },
@@ -664,7 +664,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Content Team',
-    usageCount: 28,
+    usageCount: 0,
     tags: ['articles', 'list', 'grid', 'content'],
     status: 'active'
   },
@@ -678,7 +678,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
-    usageCount: 19,
+    usageCount: 0,
     tags: ['featured', 'highlight', 'promotion', 'editorial'],
     status: 'active'
   },
@@ -692,7 +692,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Content Team',
-    usageCount: 15,
+    usageCount: 0,
     tags: ['author', 'biography', 'credentials', 'academic'],
     status: 'active'
   }
@@ -828,11 +828,19 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         <div className="border-b border-gray-200 pb-6">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
-              </h2>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
+                </h2>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Academic Publishing Theme
+                </span>
+              </div>
               <p className="text-gray-600 mt-1">
                 {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                📊 Usage shows websites using this theme: 1 website uses Academic Publishing Theme
               </p>
             </div>
             <div className="text-right">
