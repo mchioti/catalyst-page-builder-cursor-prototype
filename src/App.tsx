@@ -1459,7 +1459,7 @@ const usePageStore = create<PageState>((set, get) => ({
   websites: [
     {
       id: 'wiley-main',
-      name: 'Wiley Main Portal',
+      name: 'Wiley Online Library',
       domain: 'wiley.com',
       themeId: 'academic-publishing-theme',
       status: 'active' as const,

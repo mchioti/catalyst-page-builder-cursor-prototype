@@ -1196,7 +1196,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       {selectedTemplate.overrides > 0 && (
                         <div className="bg-orange-50 p-3 rounded text-center">
                           <div className="text-orange-700 font-medium">Customization Active</div>
-                          <div className="text-xs text-orange-600">{selectedTemplate.overrides} override(s) by Wiley Main Portal{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
+                          <div className="text-xs text-orange-600">{selectedTemplate.overrides} override(s) by Wiley Online Library{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
                         </div>
                       )}
                       <div className="bg-blue-50 p-3 rounded text-center">
@@ -1215,7 +1215,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       <div className="bg-purple-50 p-4 rounded">
                         <div className="text-purple-700 font-medium mb-2">Content-Driven Generation</div>
                         <div className="text-sm text-purple-600">
-                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'websites'} (Wiley Main Portal, Journal of Advanced Science)
+                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'websites'} (Wiley Online Library, Journal of Advanced Science)
                           <br />
                           • {selectedTemplate.overrides} of those websites have custom overrides
                           <br />
