@@ -3477,7 +3477,7 @@ function DraggableLibraryWidget({ item }: { item: SpecItem }) {
 // Library component to show widgets and sections with collapsible categories
 function WidgetLibrary() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['sections']) // Start with Pre-fab Sections expanded, Core and Publishing collapsed
+    new Set([]) // Start with all widget categories collapsed for cleaner interface
   )
 
   const toggleCategory = (categoryId: string) => {

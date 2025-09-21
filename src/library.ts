@@ -104,23 +104,6 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
     ],
   },
   {
-    id: 'advanced',
-    name: 'DIY Widgets',
-    items: [
-      { id: 'html-block', label: 'HTML/Code Block', type: 'html-block', description: 'Embed custom HTML/CSS/JS', status: 'planned' },
-    ],
-  },
-  {
-    id: 'sections',
-    name: 'Pre-fab Sections',
-    items: [
-      { id: 'section-header', label: 'Header Section', type: 'section-header', description: 'Site header with logo and navigation', status: 'supported' },
-      { id: 'section-hero', label: 'Hero Section', type: 'section-hero', description: 'Eye-catching banner with image and text', status: 'supported' },
-      { id: 'section-footer', label: 'Footer Section', type: 'section-footer', description: 'Site footer with copyright and links', status: 'supported' },
-      { id: 'section-features', label: 'Features Section', type: 'section-features', description: 'Three-column feature showcase', status: 'supported' },
-    ],
-  },
-  {
     id: 'deprecated',
     name: 'Deprecated',
     items: [
