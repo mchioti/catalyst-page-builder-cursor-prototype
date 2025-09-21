@@ -363,17 +363,18 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-gray-200 pb-4">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
-        </h2>
-        <p className="text-gray-600 mt-1">
-          {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
-        </p>
-      </div>
+    <>
+      <div className="space-y-6">
+        <div className="border-b border-gray-200 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
+          </h2>
+          <p className="text-gray-600 mt-1">
+            {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
@@ -504,6 +505,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {showPreview && selectedTemplate && (
@@ -532,6 +534,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
