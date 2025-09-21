@@ -27,7 +27,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Theme (Global widgets)',
     description: 'Base theme with global widget configurations',
     category: 'website',
-    inheritsFrom: 'Classic',
+    inheritsFrom: 'Academic Publishing Theme',
     overrides: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-03-15'),
@@ -511,7 +511,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
 
   // Helper function to determine indentation level based on inheritance
   const getIndentationLevel = (template: Template): number => {
-    if (template.inheritsFrom === 'Theme' || template.inheritsFrom === 'Classic') {
+    if (template.inheritsFrom === 'Theme' || template.inheritsFrom === 'Academic Publishing Theme') {
       return 0 // Root level templates
     } else if (template.inheritsFrom === 'Base Section') {
       return 0 // Base section templates
@@ -520,7 +520,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
     } else {
       // Check if inherits from another template that inherits from Theme
       const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
-      if (parentTemplate && (parentTemplate.inheritsFrom === 'Theme' || parentTemplate.inheritsFrom === 'Classic')) {
+      if (parentTemplate && (parentTemplate.inheritsFrom === 'Theme' || parentTemplate.inheritsFrom === 'Academic Publishing Theme')) {
         return 2 // Second level inheritance
       }
       return 1 // First level inheritance from Theme
@@ -622,9 +622,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                                 <div>
                                   <div className="text-sm font-semibold text-gray-900">
                                     {template.name}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {template.description}
                                   </div>
                                 </div>
                               </div>
