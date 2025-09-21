@@ -8,6 +8,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit, GitBranch } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
+import { TemplateOverrideManager } from './components/SiteManager/TemplateOverrideManager'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
@@ -4158,7 +4159,7 @@ function SiteManager() {
             <ThemeEditor usePageStore={usePageStore} />
           )}
           {siteManagerView === 'templates' && <SiteManagerTemplates />}
-          {siteManagerView === 'inheritance' && <TemplateInheritanceTree />}
+          {siteManagerView === 'inheritance' && <TemplateOverrideManager usePageStore={() => usePageStore()} />}
           {siteManagerView === 'websites' && <SiteManagerWebsites />}
           {siteManagerView === 'users' && (
             <div>
