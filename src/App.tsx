@@ -168,8 +168,8 @@ const PREFAB_SECTIONS = {
 } as const
 
 // Main app routing types
-type AppView = 'page-builder' | 'site-manager'
-type SiteManagerView = 'overview' | 'themes' | 'theme-editor' | 'templates' | 'websites' | 'users' | 'settings'
+type AppView = 'page-builder' | 'design-console'
+type DesignConsoleView = 'overview' | 'themes' | 'theme-editor' | 'templates' | 'websites' | 'users' | 'settings'
 
 // Template System Types
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
@@ -565,10 +565,10 @@ type EditingContext = 'template' | 'page' | 'website'
 type PageState = {
   // Routing
   currentView: AppView
-  siteManagerView: SiteManagerView
+  siteManagerView: DesignConsoleView
   editingContext: EditingContext
   setCurrentView: (view: AppView) => void
-  setSiteManagerView: (view: SiteManagerView) => void
+  setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
   
   // Page Builder
@@ -2504,7 +2504,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Site Manager Websites component  
+// Design System Console Websites component  
 function SiteManagerWebsites() {
   const { websites, themes, addOverride, removeOverride, updateWebsite, addWebsite } = usePageStore()
   const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null)
@@ -3264,7 +3264,7 @@ function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SiteManager() {
+function DesignConsole() {
   const { setCurrentView, setSiteManagerView, siteManagerView } = usePageStore()
 
   return (
@@ -3280,7 +3280,7 @@ function SiteManager() {
               <ArrowLeft className="w-4 h-4" />
               Back to Page Builder
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">Site Manager</h1>
+            <h1 className="text-xl font-semibold text-slate-800">Design System Console</h1>
           </div>
         </div>
       </div>
@@ -3300,7 +3300,7 @@ function SiteManager() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setSiteManagerView(item.id as SiteManagerView)}
+                onClick={() => setSiteManagerView(item.id as DesignConsoleView)}
                 className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                   siteManagerView === item.id
                     ? 'bg-blue-50 text-blue-700 font-medium'
@@ -4197,7 +4197,7 @@ function PropertiesPanel() {
             <button 
               onClick={() => {
                 const { setCurrentView, setSiteManagerView } = usePageStore.getState()
-                setCurrentView('site-manager')
+                setCurrentView('design-console')
                 setSiteManagerView('themes')
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
@@ -4688,11 +4688,11 @@ function PageBuilder() {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
               <button
-                onClick={() => setCurrentView('site-manager')}
+                onClick={() => setCurrentView('design-console')}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                Site Manager
+                Design System Console
               </button>
             </div>
           </div>
@@ -4710,7 +4710,7 @@ function PageBuilder() {
                   <button
                     onClick={() => {
                       const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
-                      setCurrentView('site-manager')
+                      setCurrentView('design-console')
                       setSiteManagerView('templates')
                       setEditingContext('page')
                     }}
@@ -5553,8 +5553,8 @@ export default function App() {
     return () => document.removeEventListener('click', handleGlobalClick)
   }, [])
   
-  if (currentView === 'site-manager') {
-    return <SiteManager />
+  if (currentView === 'design-console') {
+    return <DesignConsole />
   }
   
   return <PageBuilder />
