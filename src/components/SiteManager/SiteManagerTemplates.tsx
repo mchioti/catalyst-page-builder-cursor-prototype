@@ -991,8 +991,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                                       )}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5">
-                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} using this template • 
-                                      Template created {template.createdAt.toLocaleDateString()}
+                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} using this template
                                     </div>
                                   </div>
                                 </div>
@@ -1158,7 +1157,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Used By</div>
                   <div className="font-medium">{selectedTemplate.usageCount} {selectedTemplate.category === 'website' || selectedTemplate.category === 'publication' ? 'websites' : 'instances'}</div>
-                  <div className="text-xs text-gray-400 mt-1">Template created {selectedTemplate.createdAt.toLocaleDateString()}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Overrides</div>
@@ -1303,6 +1301,36 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                     </button>
                   )}
                 </div>
+
+                {/* Audit Information - Available on demand */}
+                <details className="mt-4">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                    🔍 Audit Information
+                  </summary>
+                  <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-500">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="font-medium">Template Created</div>
+                        <div>{selectedTemplate.createdAt.toLocaleDateString()}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">Created By</div>
+                        <div>{selectedTemplate.createdBy}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">Last Updated</div>
+                        <div>{selectedTemplate.updatedAt.toLocaleDateString()}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">Template Version</div>
+                        <div>{selectedTemplate.version || '1.0.0'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-gray-200 text-gray-400">
+                      💡 This information is primarily for debugging and tracking when template changes originated from the design system.
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
           </div>
