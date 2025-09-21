@@ -652,7 +652,9 @@ const INITIAL_CANVAS_ITEMS: CanvasItem[] = [
             skin: 'minimal',
             text: 'Wiley',
             align: 'left',
-            sectionId: 'header-section'
+            sectionId: 'header-section',
+            isOverridden: true,
+            overrideReason: 'Custom Wiley branding'
           }
         ]
       },
@@ -707,7 +709,9 @@ const INITIAL_CANVAS_ITEMS: CanvasItem[] = [
             skin: 'minimal',
             text: 'Wiley Online Library\nAdvancing knowledge and research worldwide',
             align: 'center',
-            sectionId: 'hero-section'
+            sectionId: 'hero-section',
+            isOverridden: true,
+            overrideReason: 'Custom Wiley messaging and tagline'
           }
         ]
       }
@@ -4688,6 +4692,45 @@ function PageBuilder() {
           </div>
 
           <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
+            {/* Template Context Bar */}
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-blue-900">Currently editing</span>
+                  </div>
+                  <span className="text-sm text-blue-700">
+                    <strong>Website Homepage</strong> template for <strong>Wiley Online Library</strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-xs text-blue-600">
+                    <span className="bg-blue-100 px-2 py-1 rounded">Academic Publishing Theme</span>
+                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">2 overrides</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const { setCurrentView, setSiteManagerView } = usePageStore.getState()
+                      setCurrentView('site-manager')
+                      setSiteManagerView('templates')
+                    }}
+                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Manage Template
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="text-xs text-blue-600">
+                  💡 This page inherits from the <strong>Website Homepage</strong> template and has <strong>2 customizations</strong> (logo, primary color)
+                </div>
+                <div className="text-xs text-blue-500">
+                  📍 Hover over elements to see override details • Click "Manage Template" to return to Site Manager
+                </div>
+              </div>
+            </div>
+            
             <CanvasThemeProvider>
               <div className="bg-white border border-gray-200 rounded-lg min-h-96 relative">
               {canvasItems.length === 0 ? (
@@ -5124,6 +5167,13 @@ function DraggableWidgetInSection({
               <Trash2 className="w-3 h-3" />
             </button>
           </div>
+        </div>
+      )}
+      
+      {/* Override Indicator */}
+      {(widget as any).isOverridden && (
+        <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 z-30">
+          <span className="text-[10px] font-medium">✨ Override</span>
         </div>
       )}
       

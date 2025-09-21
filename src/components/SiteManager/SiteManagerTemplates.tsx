@@ -748,8 +748,14 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
 
   const handleEditTemplate = (template: Template) => {
     console.log('Opening editor for template:', template.id)
-    // In real app: navigate to page builder
-    alert(`Opening Page Builder for "${template.name}"...\n\nThis would launch the drag-and-drop editor where you can modify the template layout, content, and styling.`)
+    
+    if (template.id === 'website-homepage') {
+      // For Website Homepage template, show realistic workflow message and simulate navigation
+      alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for override indicators on customized elements.`)
+    } else {
+      // For other templates, show generic message
+      alert(`Opening Page Builder for "${template.name}"...\n\nThis would launch the drag-and-drop editor where you can modify the template layout, content, and styling.`)
+    }
   }
 
   const handleDeleteTemplate = (template: Template) => {
