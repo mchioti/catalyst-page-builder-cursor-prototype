@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Search, Plus, Copy, Edit, Trash2, Eye, Download, Upload, Filter } from 'lucide-react'
 
 // Template categories - 2 main types: page templates and section templates
-type TemplateCategory = 'website' | 'publication' | 'journal' | 'global' | 'section'
+type TemplateCategory = 'website' | 'publication' | 'supporting' | 'global' | 'section'
 
 type Template = {
   id: string
@@ -308,6 +308,94 @@ const SECTION_TEMPLATES: Template[] = [
   }
 ]
 
+// Supporting Pages Templates - Auxiliary and supporting pages
+const SUPPORTING_PAGES_TEMPLATES: Template[] = [
+  {
+    id: 'support-about-us',
+    name: 'About Us',
+    description: 'Company or organization about page with mission, vision, and team information',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 0,
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-03-05'),
+    createdBy: 'Content Team',
+    usageCount: 25,
+    tags: ['about', 'company', 'mission', 'team'],
+    status: 'active'
+  },
+  {
+    id: 'support-contact',
+    name: 'Contact',
+    description: 'Contact page with forms, office locations, and contact information',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 0,
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-03-08'),
+    createdBy: 'Design Team',
+    usageCount: 30,
+    tags: ['contact', 'form', 'location', 'support'],
+    status: 'active'
+  },
+  {
+    id: 'support-privacy-policy',
+    name: 'Privacy Policy',
+    description: 'Privacy policy and data protection information page',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 0,
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-03-12'),
+    createdBy: 'Legal Team',
+    usageCount: 40,
+    tags: ['privacy', 'legal', 'gdpr', 'policy'],
+    status: 'active'
+  },
+  {
+    id: 'support-terms-conditions',
+    name: 'Terms & Conditions',
+    description: 'Terms of service and usage conditions page',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 0,
+    createdAt: new Date('2024-02-05'),
+    updatedAt: new Date('2024-03-15'),
+    createdBy: 'Legal Team',
+    usageCount: 35,
+    tags: ['terms', 'legal', 'conditions', 'service'],
+    status: 'active'
+  },
+  {
+    id: 'support-faq',
+    name: 'FAQ',
+    description: 'Frequently asked questions page with expandable sections',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 1,
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-03-18'),
+    createdBy: 'Support Team',
+    usageCount: 22,
+    tags: ['faq', 'questions', 'help', 'support'],
+    status: 'active'
+  },
+  {
+    id: 'support-sitemap',
+    name: 'Sitemap',
+    description: 'Website sitemap page showing all available pages and sections',
+    category: 'supporting',
+    inheritsFrom: 'Theme',
+    overrides: 0,
+    createdAt: new Date('2024-02-15'),
+    updatedAt: new Date('2024-03-20'),
+    createdBy: 'Technical Team',
+    usageCount: 15,
+    tags: ['sitemap', 'navigation', 'structure', 'seo'],
+    status: 'active'
+  }
+]
+
 // Content Section Templates - Individual content components  
 const CONTENT_SECTION_TEMPLATES: Template[] = [
   {
@@ -382,13 +470,13 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
   const categories = [
     { key: 'website', label: 'Website Page Templates', description: 'Complete pages for the Publisher\'s site', type: 'page' },
     { key: 'publication', label: 'Publication Page Templates', description: 'Complete journal and article page layouts', type: 'page' },
-    { key: 'journal', label: 'Journal Page Templates', description: 'Complete journal-specific page layouts', type: 'page' },
+    { key: 'supporting', label: 'Supporting Pages Templates', description: 'Supporting and auxiliary page layouts', type: 'page' },
     { key: 'global', label: 'Global Section Templates', description: 'Reusable components like headers, footers, navigation', type: 'section' },
     { key: 'section', label: 'Content Section Templates', description: 'Individual content components and sections', type: 'section' }
   ] as const
 
   // Combine all templates
-  const allTemplates = [...WEBSITE_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
+  const allTemplates = [...WEBSITE_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
   
   // Filter templates based on selected category, search, and status
   const filteredTemplates = allTemplates.filter(template => {
@@ -421,6 +509,24 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
     setShowPreview(true)
   }
 
+  // Helper function to determine indentation level based on inheritance
+  const getIndentationLevel = (template: Template): number => {
+    if (template.inheritsFrom === 'Theme' || template.inheritsFrom === 'Classic') {
+      return 0 // Root level templates
+    } else if (template.inheritsFrom === 'Base Section') {
+      return 0 // Base section templates
+    } else if (template.inheritsFrom.includes('Option:') || template.inheritsFrom.includes(',')) {
+      return 1 // Templates with multiple inheritance options
+    } else {
+      // Check if inherits from another template that inherits from Theme
+      const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
+      if (parentTemplate && (parentTemplate.inheritsFrom === 'Theme' || parentTemplate.inheritsFrom === 'Classic')) {
+        return 2 // Second level inheritance
+      }
+      return 1 // First level inheritance from Theme
+    }
+  }
+
   return (
     <>
       <div className="space-y-6">
@@ -434,55 +540,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Template Types</h3>
-            <nav className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Page Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Complete page layouts</div>
-                <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'page').map((category) => (
-                    <button
-                      key={category.key}
-                      onClick={() => setSelectedCategory(category.key)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.key
-                          ? 'bg-blue-100 text-blue-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div>{category.label.replace(' Page Templates', '')}</div>
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Section Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Reusable components & sections</div>
-                <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'section').map((category) => (
-                    <button
-                      key={category.key}
-                      onClick={() => setSelectedCategory(category.key)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.key
-                          ? 'bg-green-100 text-green-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div>{category.label.replace(' Section Templates', '')}</div>
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </nav>
-          </div>
-        </div>
-
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-6 border-b border-gray-200">
@@ -554,12 +611,22 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       <tr key={template.id} className="hover:bg-gray-50">
                         <td className="py-4 px-6">
                           <div className="flex items-center">
-                            <div>
-                              <div className="text-sm font-semibold text-gray-900">
-                                {template.name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {template.description}
+                            <div style={{ marginLeft: `${getIndentationLevel(template) * 20}px` }}>
+                              <div className="flex items-center">
+                                {getIndentationLevel(template) > 0 && (
+                                  <div className="flex items-center text-gray-400 mr-2">
+                                    <div className="w-4 h-px bg-gray-300"></div>
+                                    <div className="w-2 h-px bg-gray-300 transform rotate-90 -ml-1"></div>
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    {template.name}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {template.description}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -589,6 +656,55 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
               </div>
             )}
             </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h3 className="font-semibold text-gray-900 mb-4">Template Types</h3>
+            <nav className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Page Templates</h4>
+                <div className="text-xs text-gray-500 mb-3">Complete page layouts</div>
+                <div className="space-y-1">
+                  {categories.filter(cat => cat.type === 'page').map((category) => (
+                    <button
+                      key={category.key}
+                      onClick={() => setSelectedCategory(category.key)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                        selectedCategory === category.key
+                          ? 'bg-blue-100 text-blue-900 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div>{category.label.replace(' Page Templates', '')}</div>
+                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Section Templates</h4>
+                <div className="text-xs text-gray-500 mb-3">Reusable components & sections</div>
+                <div className="space-y-1">
+                  {categories.filter(cat => cat.type === 'section').map((category) => (
+                    <button
+                      key={category.key}
+                      onClick={() => setSelectedCategory(category.key)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                        selectedCategory === category.key
+                          ? 'bg-green-100 text-green-900 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div>{category.label.replace(' Section Templates', '')}</div>
+                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </nav>
           </div>
         </div>
         </div>
