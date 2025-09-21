@@ -23,9 +23,9 @@ type Template = {
 // Website Page Templates from mockup
 const WEBSITE_TEMPLATES: Template[] = [
   {
-    id: 'theme-global-widgets',
-    name: 'Theme (Global widgets)',
-    description: 'Base theme with global widget configurations',
+    id: 'theme-global-sections',
+    name: 'Theme (Global sections)',
+    description: 'Base theme with global sections like headers and footers',
     category: 'website',
     inheritsFrom: 'Academic Publishing Theme',
     overrides: 0,
@@ -33,15 +33,15 @@ const WEBSITE_TEMPLATES: Template[] = [
     updatedAt: new Date('2024-03-15'),
     createdBy: 'System',
     usageCount: 100,
-    tags: ['theme', 'global', 'widgets'],
+    tags: ['theme', 'global', 'sections'],
     status: 'active'
   },
   {
-    id: 'global-home',
-    name: 'Global Home',
+    id: 'website-homepage',
+    name: 'Website Homepage',
     description: 'Homepage template for the publisher site',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 1,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
@@ -55,7 +55,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Search results',
     description: 'Template for displaying search results',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
@@ -69,7 +69,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Advanced Search',
     description: 'Advanced search page with filters and options',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
@@ -83,7 +83,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Browse',
     description: 'General browse page for content navigation',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-05'),
@@ -125,7 +125,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Profile and Institutional Admin pages',
     description: 'User profile and institutional administration pages',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-18'),
@@ -139,7 +139,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Error pages',
     description: '404, 500, and other error page templates',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-20'),
@@ -153,7 +153,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'eCommerce',
     description: 'Base eCommerce template for online sales',
     category: 'website',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-03-01'),
     updatedAt: new Date('2024-03-22'),
@@ -199,7 +199,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Standard Header',
     description: 'Default header template with logo, navigation, and search functionality',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
@@ -213,7 +213,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Standard Footer',
     description: 'Footer template with links, copyright, and contact information',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
@@ -227,7 +227,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Mega Navigation Menu',
     description: 'Comprehensive navigation with dropdown categories and search',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-15'),
@@ -241,7 +241,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Breadcrumb Navigation',
     description: 'Site navigation breadcrumb component for all pages',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
@@ -255,7 +255,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Global Search Bar',
     description: 'Advanced search component with filters and autocomplete',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
@@ -269,7 +269,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'User Account Menu',
     description: 'User login/account management dropdown menu',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-05'),
@@ -283,7 +283,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Notification Banner',
     description: 'Site-wide notification banner for announcements',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-12'),
@@ -297,7 +297,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Cookie Consent Bar',
     description: 'GDPR-compliant cookie consent notification bar',
     category: 'global',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-02-20'),
@@ -315,7 +315,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'About Us',
     description: 'Company or organization about page with mission, vision, and team information',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-05'),
@@ -329,7 +329,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'Contact',
     description: 'Contact page with forms, office locations, and contact information',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-08'),
@@ -343,7 +343,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'Privacy Policy',
     description: 'Privacy policy and data protection information page',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-12'),
@@ -357,7 +357,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'Terms & Conditions',
     description: 'Terms of service and usage conditions page',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-15'),
@@ -371,7 +371,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'FAQ',
     description: 'Frequently asked questions page with expandable sections',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 1,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-18'),
@@ -385,7 +385,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'Sitemap',
     description: 'Website sitemap page showing all available pages and sections',
     category: 'supporting',
-    inheritsFrom: 'Theme',
+    inheritsFrom: 'Theme (Global sections)',
     overrides: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-20'),
@@ -511,19 +511,21 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
 
   // Helper function to determine indentation level based on inheritance
   const getIndentationLevel = (template: Template): number => {
-    if (template.inheritsFrom === 'Theme' || template.inheritsFrom === 'Academic Publishing Theme') {
-      return 0 // Root level templates
+    if (template.inheritsFrom === 'Academic Publishing Theme' || template.inheritsFrom === 'Corporate Publishing Theme') {
+      return 0 // Root level templates - inheriting directly from themes
+    } else if (template.inheritsFrom === 'Theme (Global sections)') {
+      return 1 // First level - inheriting from Theme (Global sections)
     } else if (template.inheritsFrom === 'Base Section') {
       return 0 // Base section templates
     } else if (template.inheritsFrom.includes('Option:') || template.inheritsFrom.includes(',')) {
-      return 1 // Templates with multiple inheritance options
+      return 2 // Templates with multiple inheritance options
     } else {
-      // Check if inherits from another template that inherits from Theme
+      // Check if inherits from Theme (Global sections) or other first-level templates
       const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
-      if (parentTemplate && (parentTemplate.inheritsFrom === 'Theme' || parentTemplate.inheritsFrom === 'Academic Publishing Theme')) {
-        return 2 // Second level inheritance
+      if (parentTemplate && parentTemplate.inheritsFrom === 'Theme (Global sections)') {
+        return 2 // Second level inheritance from Theme (Global sections)
       }
-      return 1 // First level inheritance from Theme
+      return 1 // Default first level inheritance
     }
   }
 
