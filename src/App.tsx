@@ -5,10 +5,9 @@ import { DndContext, closestCenter, closestCorners, rectIntersection, PointerSen
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit, GitBranch } from 'lucide-react'
+import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
-import { TemplateOverrideManager } from './components/SiteManager/TemplateOverrideManager'
 import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
@@ -170,7 +169,7 @@ const PREFAB_SECTIONS = {
 
 // Main app routing types
 type AppView = 'page-builder' | 'site-manager'
-type SiteManagerView = 'overview' | 'themes' | 'theme-editor' | 'templates' | 'inheritance' | 'websites' | 'users' | 'settings'
+type SiteManagerView = 'overview' | 'themes' | 'theme-editor' | 'templates' | 'websites' | 'users' | 'settings'
 
 // Template System Types
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
@@ -2045,24 +2044,6 @@ function SkinWrap({ skin, children }: { skin: Skin; children: ReactNode }) {
   return <div className={className}>{children}</div>
 }
 
-function TemplateInheritanceTree() {
-  const { themes } = usePageStore()
-  
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Template Inheritance</h2>
-          <p className="text-gray-600">Visualize how templates inherit from themes and each other</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <p className="text-gray-500">Template inheritance visualization coming soon...</p>
-      </div>
-    </div>
-  )
-}
 
 // Template Creation Wizard Component
 function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
@@ -3265,7 +3246,6 @@ function SiteManager() {
               { id: 'themes', label: 'Publication Cards', icon: Palette },
               { id: 'theme-editor', label: 'Theme Settings', icon: Settings },
               { id: 'templates', label: 'Templates', icon: FileText },
-              { id: 'inheritance', label: 'Template Inheritance', icon: GitBranch },
               { id: 'websites', label: 'Websites', icon: Globe },
               { id: 'users', label: 'Users', icon: Users },
               { id: 'settings', label: 'Settings', icon: Cog }
@@ -3327,7 +3307,6 @@ function SiteManager() {
             <ThemeEditor usePageStore={usePageStore} />
           )}
           {siteManagerView === 'templates' && <SiteManagerTemplates />}
-          {siteManagerView === 'inheritance' && <TemplateOverrideManager usePageStore={() => usePageStore()} />}
           {siteManagerView === 'websites' && <SiteManagerWebsites />}
           {siteManagerView === 'users' && (
             <div>
