@@ -2061,7 +2061,7 @@ function TemplateInheritanceTree() {
     </div>
   )
 }
-
+/*
 // Site Manager Templates component
 function SiteManagerTemplates() {
   const { templates, websites, duplicateTemplate, removeTemplate, calculateDeviationScore, addTemplate } = usePageStore()
@@ -2112,7 +2112,9 @@ function SiteManagerTemplates() {
     </div>
   )
 }
+*/
 
+/*
 function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
   const { addTemplate, canvasItems } = usePageStore()
   const [step, setStep] = useState(1)
@@ -2182,7 +2184,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Configuration Panel */}
+        // Configuration Panel 
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -2192,7 +2194,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
               )}
             </div>
 
-            {/* Variant Name and Description */}
+            // Variant Name and Description 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Variant Name</label>
@@ -2216,9 +2218,9 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Configuration Sections */}
+            // Configuration Sections 
             <div className="space-y-6">
-              {/* Content Identification */}
+              // Content Identification 
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Content Identification</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2275,7 +2277,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
-              {/* Author Information */}
+              // Author Information
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Author Information</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2311,7 +2313,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
-              {/* Publication Context */}
+              // Publication Context 
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Publication Context</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2363,7 +2365,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
-              {/* Content Summary */}
+              // Content Summary
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Content Summary</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2400,7 +2402,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
-              {/* Access & Usage */}
+              // Access & Usage 
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Access & Usage</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2434,7 +2436,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
-              {/* Display Configuration */}
+              // Display Configuration 
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Display Configuration</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -2454,7 +2456,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            // Action Buttons 
             <div className="flex gap-3 pt-6 border-t border-gray-200">
               {selectedVariant ? (
                 <>
@@ -2496,9 +2498,9 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Sidebar */}
+        // Sidebar 
         <div className="space-y-6">
-          {/* Live Preview */}
+          // Live Preview 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
             <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -2509,7 +2511,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* Saved Variants */}
+          // Saved Variants 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Saved Variants</h3>
             <div className="space-y-3">
@@ -2547,7 +2549,9 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+*/
 
+/*
 // Theme and Template Structure Component
 function TemplateInheritanceTree() {
   const { themes } = usePageStore()
@@ -2564,7 +2568,7 @@ function TemplateInheritanceTree() {
       <div className="space-y-6">
         {themes.map((theme) => (
           <div key={theme.id} className="bg-white rounded-lg border border-gray-200">
-            {/* Theme Header */}
+            // Theme Header 
             <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
               <div className="flex items-start gap-4">
                 <div className="w-4 h-4 bg-purple-500 rounded-full mt-1"></div>
@@ -2586,7 +2590,7 @@ function TemplateInheritanceTree() {
               </div>
             </div>
             
-            {/* Theme Templates */}
+            // Theme Templates 
             <div className="divide-y divide-gray-100">
               {theme.templates.map((template) => (
                 <div key={template.id} className="p-4 pl-14">
@@ -2622,7 +2626,7 @@ function TemplateInheritanceTree() {
         ))}
       </div>
       
-      {/* Legend */}
+      // Legend 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="text-sm font-medium text-gray-700 mb-3">Template Categories:</div>
         <div className="flex items-center gap-6 text-sm">
@@ -2647,6 +2651,7 @@ function TemplateInheritanceTree() {
     </div>
   )
 }
+  */
 
 // Site Manager Templates component
 function SiteManagerTemplates() {
