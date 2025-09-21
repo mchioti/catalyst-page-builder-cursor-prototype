@@ -560,12 +560,16 @@ type PublicationCardVariant = {
   createdAt: Date
 }
 
+type EditingContext = 'template' | 'page' | 'website'
+
 type PageState = {
   // Routing
   currentView: AppView
   siteManagerView: SiteManagerView
+  editingContext: EditingContext
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: SiteManagerView) => void
+  setEditingContext: (context: EditingContext) => void
   
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections
@@ -1449,9 +1453,11 @@ function buildWidget(item: SpecItem): Widget {
 const usePageStore = create<PageState>((set, get) => ({
   // Routing  
   currentView: 'page-builder',
-  siteManagerView: 'overview', 
+  siteManagerView: 'overview',
+  editingContext: 'page', // 'template' | 'page' | 'website'
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
+  setEditingContext: (context) => set({ editingContext: context }),
   
   // Page Builder
   canvasItems: INITIAL_CANVAS_ITEMS,
@@ -4692,44 +4698,74 @@ function PageBuilder() {
           </div>
 
           <div className="flex-1 p-6" onClick={() => selectWidget(null)}>
-            {/* Template Context Bar */}
-            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-900">Currently editing</span>
+            {/* Template Context Bar - Only show in template editing mode */}
+            {usePageStore(state => state.editingContext) === 'template' && (
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-blue-900">Template Editing Mode</span>
+                    </div>
+                    <span className="text-sm text-blue-700">
+                      <strong>Website Homepage</strong> template for <strong>Wiley Online Library</strong>
+                    </span>
                   </div>
-                  <span className="text-sm text-blue-700">
-                    <strong>Website Homepage</strong> template for <strong>Wiley Online Library</strong>
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-xs text-blue-600">
+                      <span className="bg-blue-100 px-2 py-1 rounded">Academic Publishing Theme</span>
+                      <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">2 overrides</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
+                        setCurrentView('site-manager')
+                        setSiteManagerView('templates')
+                        setEditingContext('page') // Reset to normal page editing
+                      }}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Back to Templates
+                    </button>
+                    <button
+                      onClick={() => {
+                        const { setEditingContext } = usePageStore.getState()
+                        setEditingContext('page')
+                      }}
+                      className="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"
+                    >
+                      Switch to Page Mode
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-xs text-blue-600">
-                    <span className="bg-blue-100 px-2 py-1 rounded">Academic Publishing Theme</span>
-                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">2 overrides</span>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="text-xs text-blue-600">
+                    💡 This page inherits from the <strong>Website Homepage</strong> template and has <strong>2 customizations</strong> (logo, primary color)
                   </div>
-                  <button
-                    onClick={() => {
-                      const { setCurrentView, setSiteManagerView } = usePageStore.getState()
-                      setCurrentView('site-manager')
-                      setSiteManagerView('templates')
-                    }}
-                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Manage Template
-                  </button>
+                  <div className="text-xs text-blue-500">
+                    ✨ Override indicators show template customizations • Switch to "Page Mode" for clean editing
+                  </div>
                 </div>
               </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="text-xs text-blue-600">
-                  💡 This page inherits from the <strong>Website Homepage</strong> template and has <strong>2 customizations</strong> (logo, primary color)
+            )}
+            
+            {/* Regular Page Editing Context - Show minimal info */}
+            {usePageStore(state => state.editingContext) === 'page' && (
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Editing: <strong>Wiley Online Library Homepage</strong>
                 </div>
-                <div className="text-xs text-blue-500">
-                  📍 Hover over elements to see override details • Click "Manage Template" to return to Site Manager
-                </div>
+                <button
+                  onClick={() => {
+                    const { setEditingContext } = usePageStore.getState()
+                    setEditingContext('template')
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Switch to Template Mode
+                </button>
               </div>
-            </div>
+            )}
             
             <CanvasThemeProvider>
               <div className="bg-white border border-gray-200 rounded-lg min-h-96 relative">
@@ -5170,8 +5206,8 @@ function DraggableWidgetInSection({
         </div>
       )}
       
-      {/* Override Indicator */}
-      {(widget as any).isOverridden && (
+      {/* Override Indicator - Only show in template editing mode */}
+      {(widget as any).isOverridden && usePageStore.getState().editingContext === 'template' && (
         <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 z-30">
           <span className="text-[10px] font-medium">✨ Override</span>
         </div>
@@ -5518,6 +5554,11 @@ function SectionRenderer({
 
 export default function App() {
   const { currentView } = usePageStore()
+  
+  // Expose usePageStore to window for component access (for prototype only)
+  useEffect(() => {
+    (window as any).usePageStore = usePageStore
+  }, [])
   
   // Global click handler to close toolbars
   useEffect(() => {

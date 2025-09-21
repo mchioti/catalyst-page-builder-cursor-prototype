@@ -750,8 +750,18 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
     console.log('Opening editor for template:', template.id)
     
     if (template.id === 'website-homepage') {
-      // For Website Homepage template, show realistic workflow message and simulate navigation
-      alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for override indicators on customized elements.`)
+      // Set editing context to 'template' and navigate to Page Builder
+      const { setCurrentView, setEditingContext } = (window as any).usePageStore?.getState() || {}
+      if (setCurrentView && setEditingContext) {
+        setEditingContext('template')
+        setCurrentView('page-builder')
+        // Small delay to ensure state is updated before showing alert
+        setTimeout(() => {
+          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n✨ Notice the template context bar and override indicators!\n💡 This is template management mode - override indicators help you see customizations.`)
+        }, 100)
+      } else {
+        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for override indicators on customized elements.`)
+      }
     } else {
       // For other templates, show generic message
       alert(`Opening Page Builder for "${template.name}"...\n\nThis would launch the drag-and-drop editor where you can modify the template layout, content, and styling.`)
