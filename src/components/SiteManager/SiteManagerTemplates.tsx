@@ -541,7 +541,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
@@ -656,7 +656,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
               </div>
             )}
             </div>
-          </div>
           </div>
 
           <div className="lg:col-span-1">
