@@ -32,7 +32,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'System',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['theme', 'global', 'sections'],
     status: 'active'
   },
@@ -46,7 +46,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Admin User',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['home', 'homepage', 'landing'],
     status: 'active'
   },
@@ -60,7 +60,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
     createdBy: 'Dev Team',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['search', 'results', 'listing'],
     status: 'active'
   },
@@ -74,7 +74,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
     createdBy: 'Dev Team',
-    usageCount: 0,
+    usageCount: 1,
     tags: ['search', 'advanced', 'filters'],
     status: 'active'
   },
@@ -84,11 +84,11 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'General browse page for content navigation',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    overrides: 1,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'UX Team',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['browse', 'navigation', 'content'],
     status: 'active'
   },
@@ -112,11 +112,11 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Browse content alphabetically by title',
     category: 'website',
     inheritsFrom: 'Option: Theme, Search, Browse',
-    overrides: 1,
+    overrides: 2,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Content Team',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['browse', 'alphabetical', 'titles'],
     status: 'active'
   },
@@ -320,7 +320,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Publishing Team',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['publication', 'root', 'template'],
     status: 'active'
   },
@@ -334,7 +334,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
-    usageCount: 1,
+    usageCount: 2,
     tags: ['journal', 'homepage', 'editorial'],
     status: 'active'
   },
@@ -840,7 +840,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                 {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
               </p>
               <p className="text-xs text-blue-600 mt-2">
-                📊 Usage shows websites using this theme: 1 website uses Academic Publishing Theme
+                📊 Usage shows websites using this theme: 2 websites use Academic Publishing Theme
               </p>
             </div>
             <div className="text-right">
