@@ -3288,29 +3288,103 @@ function DesignConsole() {
       <div className="flex h-[calc(100vh-73px)]">
         {/* Sidebar */}
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
-          <nav className="p-4 space-y-2">
-            {[
-              { id: 'overview', label: 'Overview', icon: Home },
-              { id: 'themes', label: 'Publication Cards', icon: Palette },
-              { id: 'theme-editor', label: 'Theme Settings', icon: Settings },
-              { id: 'templates', label: 'Templates', icon: FileText },
-              { id: 'websites', label: 'Websites', icon: Globe },
-              { id: 'users', label: 'Users', icon: Users },
-              { id: 'settings', label: 'Settings', icon: Cog }
-            ].map((item) => (
+          <nav className="p-4">
+            {/* Overview */}
+            <button
+              onClick={() => setSiteManagerView('overview')}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                siteManagerView === 'overview'
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              Overview
+            </button>
+
+            {/* Themes Section */}
+            <div className="mt-6 mb-3">
+              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Themes
+              </div>
+            </div>
+            <div className="space-y-1">
               <button
-                key={item.id}
-                onClick={() => setSiteManagerView(item.id as DesignConsoleView)}
+                onClick={() => setSiteManagerView('theme-editor')}
                 className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                  siteManagerView === item.id
+                  siteManagerView === 'theme-editor'
                     ? 'bg-blue-50 text-blue-700 font-medium'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <item.icon className="w-4 h-4" />
-                {item.label}
+                <Settings className="w-4 h-4 ml-2" />
+                Theme Settings
               </button>
-            ))}
+              
+              <button
+                onClick={() => setSiteManagerView('themes')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                  siteManagerView === 'themes'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Palette className="w-4 h-4 ml-2" />
+                Publication Cards
+              </button>
+
+              <button
+                onClick={() => setSiteManagerView('templates')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                  siteManagerView === 'templates'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <FileText className="w-4 h-4 ml-2" />
+                Template Library
+              </button>
+            </div>
+
+            {/* Implementation Section */}
+            <div className="mt-6 mb-3">
+              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Implementation
+              </div>
+            </div>
+            <div className="space-y-1">
+              <button
+                onClick={() => setSiteManagerView('websites')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                  siteManagerView === 'websites'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Globe className="w-5 h-5" />
+                Websites
+              </button>
+            </div>
+
+            {/* System Section */}
+            <div className="mt-6 mb-3">
+              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                System
+              </div>
+            </div>
+            <div className="space-y-1">
+              <button
+                onClick={() => setSiteManagerView('settings')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                  siteManagerView === 'settings'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Cog className="w-5 h-5" />
+                Settings
+              </button>
+            </div>
           </nav>
         </div>
 
