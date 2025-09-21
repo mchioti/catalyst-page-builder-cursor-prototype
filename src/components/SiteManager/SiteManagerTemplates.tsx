@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Search, Plus, Copy, Edit, Trash2, Eye, Download, Upload, Filter } from 'lucide-react'
 
-// Template categories based on the 5-level hierarchy
-type TemplateCategory = 'theme' | 'global' | 'publication' | 'journal' | 'section' | 'website'
+// Template categories - 2 main types: page templates and section templates
+type TemplateCategory = 'website' | 'publication' | 'journal' | 'global' | 'section'
 
 type Template = {
   id: string
@@ -192,8 +192,8 @@ const WEBSITE_TEMPLATES: Template[] = [
   }
 ]
 
-// Mock template data for Global Templates category  
-const GLOBAL_TEMPLATES: Template[] = [
+// Section Templates - Reusable components
+const SECTION_TEMPLATES: Template[] = [
   {
     id: 'global-header-standard',
     name: 'Standard Header',
@@ -308,6 +308,66 @@ const GLOBAL_TEMPLATES: Template[] = [
   }
 ]
 
+// Content Section Templates - Individual content components  
+const CONTENT_SECTION_TEMPLATES: Template[] = [
+  {
+    id: 'section-hero-banner',
+    name: 'Hero Banner',
+    description: 'Large hero section with title, subtitle, and call-to-action',
+    category: 'section',
+    inheritsFrom: 'Base Section',
+    overrides: 0,
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-03-15'),
+    createdBy: 'Design Team',
+    usageCount: 32,
+    tags: ['hero', 'banner', 'cta', 'landing'],
+    status: 'active'
+  },
+  {
+    id: 'section-article-list',
+    name: 'Article List',
+    description: 'Grid or list view of articles with thumbnails and excerpts',
+    category: 'section',
+    inheritsFrom: 'Base Section',
+    overrides: 0,
+    createdAt: new Date('2024-02-05'),
+    updatedAt: new Date('2024-03-20'),
+    createdBy: 'Content Team',
+    usageCount: 28,
+    tags: ['articles', 'list', 'grid', 'content'],
+    status: 'active'
+  },
+  {
+    id: 'section-featured-content',
+    name: 'Featured Content',
+    description: 'Highlighted content section for promoting key articles or journals',
+    category: 'section',
+    inheritsFrom: 'Base Section',
+    overrides: 0,
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-03-18'),
+    createdBy: 'Editorial Team',
+    usageCount: 19,
+    tags: ['featured', 'highlight', 'promotion', 'editorial'],
+    status: 'active'
+  },
+  {
+    id: 'section-author-bio',
+    name: 'Author Bio',
+    description: 'Author biography section with photo, credentials, and publications',
+    category: 'section',
+    inheritsFrom: 'Base Section',
+    overrides: 0,
+    createdAt: new Date('2024-02-15'),
+    updatedAt: new Date('2024-03-22'),
+    createdBy: 'Content Team',
+    usageCount: 15,
+    tags: ['author', 'biography', 'credentials', 'academic'],
+    status: 'active'
+  }
+]
+
 interface SiteManagerTemplatesProps {
   // Could accept store props if needed later
 }
@@ -320,16 +380,15 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
   const [showPreview, setShowPreview] = useState(false)
 
   const categories = [
-    { key: 'theme', label: 'Themes', description: 'Site-wide themes and branding' },
-    { key: 'website', label: 'Website Page Templates', description: 'General templates about the Publisher\'s site' },
-    { key: 'global', label: 'Global Templates', description: 'Headers, footers, navigation' },
-    { key: 'publication', label: 'Publication Templates', description: 'Journal and article layouts' },
-    { key: 'journal', label: 'Journal Pages', description: 'Journal-specific pages' },
-    { key: 'section', label: 'Section Templates', description: 'Individual components' }
+    { key: 'website', label: 'Website Page Templates', description: 'Complete pages for the Publisher\'s site', type: 'page' },
+    { key: 'publication', label: 'Publication Page Templates', description: 'Complete journal and article page layouts', type: 'page' },
+    { key: 'journal', label: 'Journal Page Templates', description: 'Complete journal-specific page layouts', type: 'page' },
+    { key: 'global', label: 'Global Section Templates', description: 'Reusable components like headers, footers, navigation', type: 'section' },
+    { key: 'section', label: 'Content Section Templates', description: 'Individual content components and sections', type: 'section' }
   ] as const
 
   // Combine all templates
-  const allTemplates = [...WEBSITE_TEMPLATES, ...GLOBAL_TEMPLATES]
+  const allTemplates = [...WEBSITE_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
   
   // Filter templates based on selected category, search, and status
   const filteredTemplates = allTemplates.filter(template => {
@@ -377,22 +436,49 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
-            <nav className="space-y-1">
-              {categories.map((category) => (
-                <button
-                  key={category.key}
-                  onClick={() => setSelectedCategory(category.key)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    selectedCategory === category.key
-                      ? 'bg-blue-100 text-blue-900 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <div>{category.label}</div>
-                  <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                </button>
-              ))}
+            <h3 className="font-semibold text-gray-900 mb-4">Template Types</h3>
+            <nav className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Page Templates</h4>
+                <div className="text-xs text-gray-500 mb-3">Complete page layouts</div>
+                <div className="space-y-1">
+                  {categories.filter(cat => cat.type === 'page').map((category) => (
+                    <button
+                      key={category.key}
+                      onClick={() => setSelectedCategory(category.key)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                        selectedCategory === category.key
+                          ? 'bg-blue-100 text-blue-900 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div>{category.label.replace(' Page Templates', '')}</div>
+                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Section Templates</h4>
+                <div className="text-xs text-gray-500 mb-3">Reusable components & sections</div>
+                <div className="space-y-1">
+                  {categories.filter(cat => cat.type === 'section').map((category) => (
+                    <button
+                      key={category.key}
+                      onClick={() => setSelectedCategory(category.key)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                        selectedCategory === category.key
+                          ? 'bg-green-100 text-green-900 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div>{category.label.replace(' Section Templates', '')}</div>
+                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </nav>
           </div>
         </div>
