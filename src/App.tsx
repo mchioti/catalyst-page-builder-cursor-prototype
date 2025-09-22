@@ -257,6 +257,13 @@ type Website = {
     fontFamily?: string
   }
   
+  // Website purpose configuration
+  purpose?: {
+    contentTypes: string[]
+    hasSubjectOrganization: boolean
+    publishingTypes?: string[]
+  }
+  
   // Analytics
   deviationScore: number // 0-100, how much it differs from theme
   lastThemeSync?: Date
@@ -267,7 +274,7 @@ type Theme = {
   name: string
   description: string
   version: string
-  publishingType: 'journals' | 'books' | 'journals-books' | 'blog' | 'corporate' | 'mixed'
+  publishingType: 'journals' | 'books' | 'journals-books' | 'blog' | 'corporate' | 'mixed' | 'academic' | 'visual'
   author: string
   createdAt: Date
   updatedAt: Date
@@ -2923,6 +2930,11 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
   const [websiteData, setWebsiteData] = useState({
     name: '',
     themeId: '',
+    purpose: {
+      contentTypes: [] as string[],
+      hasSubjectOrganization: false,
+      publishingTypes: [] as string[]
+    },
     branding: {
       primaryColor: '',
       secondaryColor: '',
@@ -2967,6 +2979,8 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
           Object.entries(websiteData.branding).filter(([_, value]) => value !== '')
         )
       },
+      // Store the purpose configuration for future use
+      purpose: websiteData.purpose,
       deviationScore: calculateInitialDeviation(websiteData.customizations, selectedTheme),
       lastThemeSync: new Date()
     }
@@ -3030,9 +3044,9 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
               ))}
             </div>
             <div className="flex mt-2">
-              <div className="text-xs text-gray-600 w-8 text-center">Template</div>
+              <div className="text-xs text-gray-600 w-8 text-center">Theme</div>
+              <div className="text-xs text-gray-600 w-24 text-center">Purpose</div>
               <div className="text-xs text-gray-600 w-24 text-center">Details</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Branding</div>
             </div>
           </div>
           
@@ -3101,7 +3115,139 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Branding</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Define the Website's Purpose</h4>
+                  <p className="text-gray-600 mb-6">
+                    Help us configure your website by telling us about the content you'll be publishing and how you want to organize it.
+                  </p>
+                  
+                  {/* Content Type Selection */}
+                  <div className="mb-8">
+                    <label className="block text-base font-medium text-gray-900 mb-4">
+                      What type of content will you be publishing?
+                    </label>
+                    <p className="text-sm text-gray-600 mb-4">Select all that apply. This will enable the appropriate templates and features.</p>
+                    
+                    <div className="space-y-3">
+                      {[
+                        { id: 'journals', label: 'Journals', description: 'Academic journals, research articles, and peer-reviewed content' },
+                        { id: 'books', label: 'Books', description: 'eBooks, textbooks, monographs, and book series' },
+                        { id: 'conferences', label: 'Conference Proceedings', description: 'Conference papers, abstracts, and presentation materials' }
+                      ].map((contentType) => (
+                        <label key={contentType.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={websiteData.purpose.contentTypes.includes(contentType.id)}
+                            onChange={(e) => {
+                              const newContentTypes = e.target.checked
+                                ? [...websiteData.purpose.contentTypes, contentType.id]
+                                : websiteData.purpose.contentTypes.filter(type => type !== contentType.id)
+                              setWebsiteData({
+                                ...websiteData, 
+                                purpose: {...websiteData.purpose, contentTypes: newContentTypes}
+                              })
+                            }}
+                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{contentType.label}</div>
+                            <div className="text-sm text-gray-600">{contentType.description}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Subject Organization */}
+                  <div className="mb-8">
+                    <label className="block text-base font-medium text-gray-900 mb-4">
+                      Will your site organize content by subject area?
+                    </label>
+                    <p className="text-sm text-gray-600 mb-4">
+                      This enables taxonomy features like subject browsing, categorization, and filtering.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="subjectOrganization"
+                          checked={websiteData.purpose.hasSubjectOrganization === true}
+                          onChange={() => setWebsiteData({
+                            ...websiteData, 
+                            purpose: {...websiteData.purpose, hasSubjectOrganization: true}
+                          })}
+                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
+                          <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="subjectOrganization"
+                          checked={websiteData.purpose.hasSubjectOrganization === false}
+                          onChange={() => setWebsiteData({
+                            ...websiteData, 
+                            purpose: {...websiteData.purpose, hasSubjectOrganization: false}
+                          })}
+                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">No</div>
+                          <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Selected Theme Preview */}
+                  {selectedTheme && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Palette className="w-5 h-5 text-blue-600" />
+                        <h5 className="font-medium text-blue-900">Selected Theme: {selectedTheme.name}</h5>
+                      </div>
+                      <p className="text-sm text-blue-700 mb-3">{selectedTheme.description}</p>
+                      
+                      {websiteData.purpose.contentTypes.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-blue-200">
+                          <div className="text-sm text-blue-800 font-medium mb-2">
+                            Recommended features for your content types:
+                          </div>
+                          <div className="text-sm text-blue-700 space-y-1">
+                            {websiteData.purpose.contentTypes.includes('journals') && (
+                              <div>• Article templates, peer-review workflows, citation management</div>
+                            )}
+                            {websiteData.purpose.contentTypes.includes('books') && (
+                              <div>• Chapter navigation, table of contents, book series organization</div>
+                            )}
+                            {websiteData.purpose.contentTypes.includes('conferences') && (
+                              <div>• Proceedings organization, presentation materials, abstract browsing</div>
+                            )}
+                            {websiteData.purpose.hasSubjectOrganization && (
+                              <div>• Subject taxonomy, advanced filtering, topic-based navigation</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
+                  <p className="text-gray-600 mb-6">
+                    Complete your website setup with naming and optional branding customizations.
+                  </p>
+                  
+                  {/* Website Name */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
                     <input
@@ -3109,11 +3255,14 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                       value={websiteData.name}
                       onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g., Wiley Research Portal"
+                      placeholder="e.g., Journal of Advanced Materials"
                     />
-                    <p className="text-sm text-gray-500 mt-1">Domain will be auto-generated: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Domain: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}
+                    </p>
                   </div>
                   
+                  {/* Theme Defaults Preview */}
                   {selectedTheme && (
                     <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                       <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
@@ -3126,27 +3275,19 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                           </div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">Secondary Color:</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.secondary}}></div>
-                            <span className="text-gray-700">{selectedTheme.colors.secondary}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-600">Heading Font:</span>
+                          <span className="font-medium text-gray-600">Typography:</span>
                           <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-600">Body Font:</span>
-                          <span className="text-gray-700 ml-2">{selectedTheme.typography.bodyFont}</span>
                         </div>
                       </div>
                     </div>
                   )}
                   
-                  <div>
-                    <h5 className="font-medium text-gray-900 mb-3">Custom Modifications (Optional)</h5>
-                    <p className="text-sm text-gray-600 mb-4">Modify theme defaults with your own branding. Leave blank to use theme defaults.</p>
+                  {/* Optional Branding Customizations */}
+                  <div className="mb-6">
+                    <h5 className="font-medium text-gray-900 mb-3">Custom Branding (Optional)</h5>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Customize your brand colors and logo. Leave blank to use theme defaults.
+                    </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
@@ -3154,16 +3295,10 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <input
                           type="color"
                           value={websiteData.branding.primaryColor}
-                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, primaryColor: e.target.value}})}
-                          className="w-full h-10 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Secondary Color</label>
-                        <input
-                          type="color"
-                          value={websiteData.branding.secondaryColor}
-                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, secondaryColor: e.target.value}})}
+                          onChange={(e) => setWebsiteData({
+                            ...websiteData,
+                            branding: {...websiteData.branding, primaryColor: e.target.value}
+                          })}
                           className="w-full h-10 border border-gray-300 rounded-md"
                         />
                       </div>
@@ -3172,152 +3307,51 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <input
                           type="url"
                           value={websiteData.branding.logoUrl}
-                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, logoUrl: e.target.value}})}
+                          onChange={(e) => setWebsiteData({
+                            ...websiteData,
+                            branding: {...websiteData.branding, logoUrl: e.target.value}
+                          })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           placeholder="https://example.com/logo.svg"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Font Family</label>
-                        <input
-                          type="text"
-                          value={websiteData.branding.fontFamily}
-                          onChange={(e) => setWebsiteData({...websiteData, branding: {...websiteData.branding, fontFamily: e.target.value}})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="e.g., 'Roboto', sans-serif"
-                        />
-                      </div>
                     </div>
                   </div>
                   
-                  {selectedTheme && (
-                    <div className="mt-6">
-                      <h5 className="font-medium text-gray-900 mb-4">Theme Customizations</h5>
-                      <p className="text-sm text-gray-600 mb-4">
-                        Configure initial customizations for this theme
-                      </p>
-                      
-                      <div className="space-y-4">
-                        {['branding.logo', 'colors.primary', 'typography.headingFont', 'sections.hero.title'].map((path) => (
-                          <div key={path} className="flex items-center gap-4">
-                            <div className="flex-1">
-                              <label className="block text-sm font-medium text-gray-700">
-                                {path.replace(/\./g, ' → ')}
-                              </label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                placeholder={`Custom value for ${path}`}
-                                onChange={(e) => {
-                                  const existing = websiteData.customizations.find(c => c.path === path)
-                                  if (existing) {
-                                    existing.value = e.target.value
-                                  } else if (e.target.value) {
-                                    setWebsiteData({
-                                      ...websiteData,
-                                      customizations: [...websiteData.customizations, {
-                                        path,
-                                        value: e.target.value,
-                                        reason: 'Initial customization'
-                                      }]
-                                    })
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Branding & Launch</h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Primary Brand Color</label>
-                      <input
-                        type="color"
-                        value={websiteData.branding.primaryColor}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, primaryColor: e.target.value}
-                        })}
-                        className="w-full h-10 px-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
-                      <input
-                        type="color"
-                        value={websiteData.branding.secondaryColor}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, secondaryColor: e.target.value}
-                        })}
-                        className="w-full h-10 px-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
-                      <input
-                        type="text"
-                        value={websiteData.branding.logoUrl}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, logoUrl: e.target.value}
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="/path/to/logo.svg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
-                      <select
-                        value={websiteData.branding.fontFamily}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, fontFamily: e.target.value}
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="Inter">Inter</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Source Sans Pro">Source Sans Pro</option>
-                        <option value="Merriweather">Merriweather</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h5 className="font-medium text-gray-900 mb-4">Website Summary</h5>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                  {/* Website Summary */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h5 className="font-medium text-blue-900 mb-4">Website Summary</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-gray-600">Name:</span> {websiteData.name || 'Untitled Website'}
+                        <span className="font-medium text-blue-800">Name:</span> 
+                        <span className="text-blue-700 ml-2">{websiteData.name || 'Untitled Website'}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Domain:</span> {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'Auto-generated from name'}
+                        <span className="font-medium text-blue-800">Theme:</span> 
+                        <span className="text-blue-700 ml-2">{selectedTheme?.name || 'None selected'}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Theme:</span> {selectedTheme?.name || 'None selected'}
+                        <span className="font-medium text-blue-800">Content Types:</span> 
+                        <span className="text-blue-700 ml-2">
+                          {websiteData.purpose.contentTypes.length > 0 
+                            ? websiteData.purpose.contentTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1)).join(', ')
+                            : 'None selected'
+                          }
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Templates Included:</span> {selectedTheme?.templates.length || 0} templates
+                        <span className="font-medium text-blue-800">Subject Organization:</span> 
+                        <span className="text-blue-700 ml-2">
+                          {websiteData.purpose.hasSubjectOrganization ? 'Enabled' : 'Disabled'}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Customizations:</span> {websiteData.customizations.length} configured
+                        <span className="font-medium text-blue-800">Templates:</span> 
+                        <span className="text-blue-700 ml-2">{selectedTheme?.templates.length || 0} included</span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Initial Status:</span> Staging
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Deviation Score:</span> {calculateInitialDeviation(websiteData.customizations, selectedTheme)}%
+                        <span className="font-medium text-blue-800">Status:</span> 
+                        <span className="text-blue-700 ml-2">Ready to launch</span>
                       </div>
                     </div>
                   </div>
@@ -3348,7 +3382,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
               {step < totalSteps ? (
                 <button
                   onClick={nextStep}
-                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && !websiteData.name)}
+                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && websiteData.purpose.contentTypes.length === 0)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
