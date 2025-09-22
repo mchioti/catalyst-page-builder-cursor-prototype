@@ -1,0 +1,93 @@
+// Application and UI state types
+
+import { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardVariant, ContentBlockLayout } from './widgets'
+import { BaseTemplate, Website, Theme, Modification } from './templates'
+
+export type AppView = 'page-builder' | 'design-console'
+
+export type DesignConsoleView = 
+  | 'overview' 
+  // Theme-level views (foundational design system)
+  | 'modernist-theme-theme-settings' 
+  | 'modernist-theme-templates' 
+  | 'classicist-theme-theme-settings' 
+  | 'classicist-theme-templates'
+  | 'curator-theme-theme-settings' 
+  | 'curator-theme-templates'
+  // Website-level views (per-website customization)
+  | 'wiley-main-settings'
+  | 'wiley-main-publication-cards'
+  | 'wiley-main-custom-templates'
+  | 'research-hub-settings'
+  | 'research-hub-publication-cards'
+  | 'research-hub-custom-templates'
+  | 'journal-of-science-settings'
+  | 'journal-of-science-publication-cards'
+  | 'journal-of-science-custom-templates'
+  | 'art-quarterly-settings'
+  | 'art-quarterly-publication-cards'
+  | 'art-quarterly-custom-templates'
+  // System views
+  | 'websites' 
+  | 'settings'
+
+export type EditingContext = 'template' | 'page' | 'website'
+
+export type PageState = {
+  // Routing
+  currentView: AppView
+  siteManagerView: DesignConsoleView
+  editingContext: EditingContext
+  currentWebsiteId: string
+  setCurrentView: (view: AppView) => void
+  setSiteManagerView: (view: DesignConsoleView) => void
+  setEditingContext: (context: EditingContext) => void
+  setCurrentWebsiteId: (websiteId: string) => void
+  
+  // Page Builder
+  canvasItems: CanvasItem[] // Can contain both individual widgets and sections
+  customSections: CustomSection[]
+  publicationCardVariants: PublicationCardVariant[]
+  selectedWidget: string | null
+  insertPosition: { relativeTo: string; position: 'above' | 'below' } | null
+  
+  // Template System
+  templates: BaseTemplate[]
+  websites: Website[]
+  themes: Theme[]
+  
+  // Page Builder Actions
+  addWidget: (widget: Widget) => void
+  addSection: (section: WidgetSection) => void
+  moveItem: (fromIndex: number, toIndex: number) => void
+  replaceCanvasItems: (items: CanvasItem[]) => void
+  selectWidget: (id: string | null) => void
+  deleteWidget: (widgetId: string) => void
+  addCustomSection: (section: CustomSection) => void
+  removeCustomSection: (id: string) => void
+  addPublicationCardVariant: (variant: PublicationCardVariant) => void
+  removePublicationCardVariant: (id: string) => void
+  setInsertPosition: (position: { relativeTo: string; position: 'above' | 'below' } | null) => void
+  createContentBlockWithLayout: (layout: ContentBlockLayout) => void
+  
+  // Template Management
+  addTemplate: (template: BaseTemplate) => void
+  updateTemplate: (id: string, template: Partial<BaseTemplate>) => void
+  removeTemplate: (id: string) => void
+  duplicateTemplate: (id: string) => void
+  
+  // Website Management  
+  addWebsite: (website: Website) => void
+  updateWebsite: (id: string, website: Partial<Website>) => void
+  removeWebsite: (id: string) => void
+  
+  // Modification Management
+  addModification: (websiteId: string, modification: Modification) => void
+  removeModification: (websiteId: string, modificationPath: string) => void
+  calculateDeviationScore: (websiteId: string) => number
+  
+  // Theme Management
+  addTheme: (theme: Theme) => void
+  updateTheme: (id: string, theme: Partial<Theme>) => void
+  removeTheme: (id: string) => void
+}
