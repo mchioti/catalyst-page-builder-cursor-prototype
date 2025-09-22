@@ -5,7 +5,7 @@ import { DndContext, closestCenter, closestCorners, rectIntersection, PointerSen
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit } from 'lucide-react'
+import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit, List } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
@@ -177,15 +177,27 @@ const PREFAB_SECTIONS = {
 type AppView = 'page-builder' | 'design-console'
 type DesignConsoleView = 
   | 'overview' 
+  // Theme-level views (foundational design system)
   | 'modernist-theme-theme-settings' 
-  | 'modernist-theme-publication-cards'
   | 'modernist-theme-templates' 
   | 'classicist-theme-theme-settings' 
-  | 'classicist-theme-publication-cards' 
   | 'classicist-theme-templates'
   | 'curator-theme-theme-settings' 
-  | 'curator-theme-publication-cards' 
   | 'curator-theme-templates'
+  // Website-level views (per-website customization)
+  | 'wiley-main-settings'
+  | 'wiley-main-publication-cards'
+  | 'wiley-main-custom-templates'
+  | 'research-hub-settings'
+  | 'research-hub-publication-cards'
+  | 'research-hub-custom-templates'
+  | 'journal-of-science-settings'
+  | 'journal-of-science-publication-cards'
+  | 'journal-of-science-custom-templates'
+  | 'art-quarterly-settings'
+  | 'art-quarterly-publication-cards'
+  | 'art-quarterly-custom-templates'
+  // System views
   | 'websites' 
   | 'settings'
 
@@ -3478,8 +3490,9 @@ function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function DesignConsole() {
-  const { setCurrentView, setSiteManagerView, siteManagerView, themes } = usePageStore()
-  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand academic theme
+  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
+  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
+  const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['wiley-main'])) // Default expand wiley-main
 
   const toggleTheme = (themeId: string) => {
     const newExpanded = new Set(expandedThemes)
@@ -3492,6 +3505,18 @@ function DesignConsole() {
   }
 
   const isThemeExpanded = (themeId: string) => expandedThemes.has(themeId)
+
+  const toggleWebsite = (websiteId: string) => {
+    const newExpanded = new Set(expandedWebsites)
+    if (newExpanded.has(websiteId)) {
+      newExpanded.delete(websiteId)
+    } else {
+      newExpanded.add(websiteId)
+    }
+    setExpandedWebsites(newExpanded)
+  }
+
+  const isWebsiteExpanded = (websiteId: string) => expandedWebsites.has(websiteId)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -3567,9 +3592,64 @@ function DesignConsole() {
                       </button>
                       
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-publication-cards`
+                          siteManagerView === `${theme.id}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Theme Templates
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Websites Section */}
+            <div className="mt-6 mb-3">
+              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Websites
+              </div>
+            </div>
+            <div className="space-y-1">
+              {websites.map((website) => (
+                <div key={website.id}>
+                  {/* Website Header - Clickable to expand/collapse */}
+                  <button
+                    onClick={() => toggleWebsite(website.id)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4" />
+                      <span className="font-medium">{website.name}</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${
+                      isWebsiteExpanded(website.id) ? 'transform rotate-180' : ''
+                    }`} />
+                  </button>
+
+                  {/* Website Sub-menu - Only show when expanded */}
+                  {isWebsiteExpanded(website.id) && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-settings` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-settings`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Website Settings
+                      </button>
+
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-publication-cards`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
@@ -3579,39 +3659,32 @@ function DesignConsole() {
                       </button>
 
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${website.id}-custom-templates` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-templates`
+                          siteManagerView === `${website.id}-custom-templates`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
                         <FileText className="w-4 h-4" />
-                        Template Library
+                        Custom Templates
                       </button>
                     </div>
                   )}
                 </div>
               ))}
-            </div>
-
-            {/* Implementation Section */}
-            <div className="mt-6 mb-3">
-              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Implementation
-              </div>
-            </div>
-            <div className="space-y-1">
+              
+              {/* All Websites Overview Link */}
               <button
                 onClick={() => setSiteManagerView('websites')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors mt-2 ${
                   siteManagerView === 'websites'
                     ? 'bg-blue-50 text-blue-700 font-medium'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Globe className="w-5 h-5" />
-                Websites
+                <List className="w-4 h-4" />
+                All Websites
               </button>
             </div>
 
@@ -3655,28 +3728,51 @@ function DesignConsole() {
                         Theme Settings →
                       </button>
                       <button 
-                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Theme Templates →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {websites.slice(0, 3).map((website) => (
+                  <div key={website.id} className="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{website.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {website.purpose?.contentTypes.join(', ') || 'Legacy setup'}
+                      {website.purpose?.hasSubjectOrganization ? ' • Taxonomy enabled' : ' • Simple organization'}
+                    </p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-settings` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Website Settings →
+                      </button>
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Publication Cards →
                       </button>
-                      <button 
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-custom-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Template Library →
+                        Custom Templates →
                       </button>
                     </div>
                   </div>
                 ))}
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Implementation</h3>
-                  <p className="text-gray-600 text-sm mb-4">Websites using these themes</p>
-                  <button 
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">All Websites</h3>
+                  <p className="text-gray-600 text-sm mb-4">Manage all {websites.length} websites and track modifications</p>
+                  <button
                     onClick={() => setSiteManagerView('websites')}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    Manage Websites →
+                    View All Websites →
                   </button>
                 </div>
               </div>
@@ -3693,20 +3789,11 @@ function DesignConsole() {
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
             </div>
           )}
-          {siteManagerView === 'modernist-theme-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design clean, digital-first publication displays with modern typography</p>
-              </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
           {siteManagerView === 'modernist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Manage clean, grid-based page templates for modern open-access journals</p>
+                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Modern theme</p>
               </div>
               <SiteManagerTemplates />
             </div>
@@ -3722,20 +3809,11 @@ function DesignConsole() {
               <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
             </div>
           )}
-          {siteManagerView === 'classicist-theme-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design traditional, text-forward publication displays for academic content</p>
-              </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
           {siteManagerView === 'classicist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Manage dense, text-forward page templates for established academic publishers</p>
+                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Classic theme</p>
               </div>
               <SiteManagerTemplates />
             </div>
@@ -3751,22 +3829,154 @@ function DesignConsole() {
               <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
             </div>
           )}
-          {siteManagerView === 'curator-theme-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design image-heavy publication displays for art books and visual content</p>
-              </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
           {siteManagerView === 'curator-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Manage visual-focused page templates with masonry grids and large hero images</p>
+                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Curator theme</p>
               </div>
               <SiteManagerTemplates />
+            </div>
+          )}
+
+          {/* Website-Specific Views */}
+          {/* Wiley Online Library */}
+          {siteManagerView === 'wiley-main-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Website Settings</h2>
+                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Website Settings - Coming Soon</h3>
+                <p className="text-gray-600">Configure website-specific settings, domain, purpose, and branding modifications.</p>
+              </div>
+            </div>
+          )}
+          {siteManagerView === 'wiley-main-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design publication cards optimized for journals and books with taxonomy features</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'wiley-main-custom-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Custom Templates</h2>
+                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
+                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Wiley Research Hub */}
+          {siteManagerView === 'research-hub-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
+                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Website Settings - Coming Soon</h3>
+                <p className="text-gray-600">Configure website-specific settings, domain, purpose, and branding modifications.</p>
+              </div>
+            </div>
+          )}
+          {siteManagerView === 'research-hub-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design publication cards optimized for research journals with simple organization</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'research-hub-custom-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Custom Templates</h2>
+                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
+                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Journal of Advanced Science */}
+          {siteManagerView === 'journal-of-science-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Website Settings</h2>
+                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Website Settings - Coming Soon</h3>
+                <p className="text-gray-600">Configure website-specific settings, domain, purpose, and branding modifications.</p>
+              </div>
+            </div>
+          )}
+          {siteManagerView === 'journal-of-science-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design publication cards optimized for scientific journals and conferences with taxonomy features</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'journal-of-science-custom-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Custom Templates</h2>
+                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
+                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Art Quarterly Review */}
+          {siteManagerView === 'art-quarterly-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Website Settings</h2>
+                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Website Settings - Coming Soon</h3>
+                <p className="text-gray-600">Configure website-specific settings, domain, purpose, and branding modifications.</p>
+              </div>
+            </div>
+          )}
+          {siteManagerView === 'art-quarterly-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design publication cards optimized for visual content, journals and art books with taxonomy features</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'art-quarterly-custom-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Custom Templates</h2>
+                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
+                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+              </div>
             </div>
           )}
 
