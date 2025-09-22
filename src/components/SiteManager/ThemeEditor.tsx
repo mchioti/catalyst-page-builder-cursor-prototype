@@ -103,25 +103,6 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Theme Settings</h2>
-        <p className="text-gray-600">Customize colors and typography for your website theme</p>
-      </div>
-
-      {/* Theme Selector */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Theme</label>
-        <select
-          value={selectedTheme}
-          onChange={(e) => setSelectedTheme(e.target.value)}
-          className="w-64 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {themes.map(theme => (
-            <option key={theme.id} value={theme.id}>{theme.name}</option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
