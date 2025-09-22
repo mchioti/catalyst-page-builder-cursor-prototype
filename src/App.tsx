@@ -604,9 +604,11 @@ type PageState = {
   currentView: AppView
   siteManagerView: DesignConsoleView
   editingContext: EditingContext
+  currentWebsiteId: string
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
+  setCurrentWebsiteId: (websiteId: string) => void
   
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections
@@ -1492,9 +1494,11 @@ const usePageStore = create<PageState>((set, get) => ({
   currentView: 'page-builder',
   siteManagerView: 'overview',
   editingContext: 'page', // 'template' | 'page' | 'website'
+  currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
+  setCurrentWebsiteId: (websiteId) => set({ currentWebsiteId: websiteId }),
   
   // Page Builder
   canvasItems: INITIAL_CANVAS_ITEMS,
@@ -4818,9 +4822,10 @@ function PropertiesPanel() {
             </select>
             <button 
               onClick={() => {
-                const { setCurrentView, setSiteManagerView } = usePageStore.getState()
+                const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
                 setCurrentView('design-console')
-                setSiteManagerView('modernist-theme-publication-cards')
+                // Navigate to the specific website's publication cards based on current editing context
+                setSiteManagerView(`${currentWebsiteId}-publication-cards` as DesignConsoleView)
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
             >
