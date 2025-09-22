@@ -175,7 +175,16 @@ const PREFAB_SECTIONS = {
 
 // Main app routing types
 type AppView = 'page-builder' | 'design-console'
-type DesignConsoleView = 'overview' | 'themes' | 'theme-editor' | 'templates' | 'websites' | 'users' | 'settings'
+type DesignConsoleView = 
+  | 'overview' 
+  | 'academic-theme-settings' 
+  | 'academic-publication-cards'
+  | 'academic-templates' 
+  | 'corporate-theme-settings' 
+  | 'corporate-publication-cards' 
+  | 'corporate-templates'
+  | 'websites' 
+  | 'settings'
 
 // Template System Types
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
@@ -3271,7 +3280,20 @@ function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function DesignConsole() {
-  const { setCurrentView, setSiteManagerView, siteManagerView } = usePageStore()
+  const { setCurrentView, setSiteManagerView, siteManagerView, themes } = usePageStore()
+  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['academic-publishing-theme'])) // Default expand academic theme
+
+  const toggleTheme = (themeId: string) => {
+    const newExpanded = new Set(expandedThemes)
+    if (newExpanded.has(themeId)) {
+      newExpanded.delete(themeId)
+    } else {
+      newExpanded.add(themeId)
+    }
+    setExpandedThemes(newExpanded)
+  }
+
+  const isThemeExpanded = (themeId: string) => expandedThemes.has(themeId)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -3315,41 +3337,64 @@ function DesignConsole() {
               </div>
             </div>
             <div className="space-y-1">
-              <button
-                onClick={() => setSiteManagerView('theme-editor')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                  siteManagerView === 'theme-editor'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Settings className="w-4 h-4 ml-2" />
-                Theme Settings
-              </button>
-              
-              <button
-                onClick={() => setSiteManagerView('themes')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                  siteManagerView === 'themes'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Palette className="w-4 h-4 ml-2" />
-                Publication Cards
-              </button>
+              {themes.map((theme) => (
+                <div key={theme.id}>
+                  {/* Theme Header - Clickable to expand/collapse */}
+                  <button
+                    onClick={() => toggleTheme(theme.id)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-4 h-4" />
+                      <span className="font-medium">{theme.name}</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${
+                      isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
+                    }`} />
+                  </button>
 
-              <button
-                onClick={() => setSiteManagerView('templates')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                  siteManagerView === 'templates'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <FileText className="w-4 h-4 ml-2" />
-                Template Library
-              </button>
+                  {/* Theme Sub-menu - Only show when expanded */}
+                  {isThemeExpanded(theme.id) && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Theme Settings
+                      </button>
+                      
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Publication Cards
+                      </button>
+
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Template Library
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
             {/* Implementation Section */}
@@ -3398,54 +3443,114 @@ function DesignConsole() {
         <div className="flex-1 p-6 bg-slate-50">
           {siteManagerView === 'overview' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Overview</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Design System Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {themes.map((theme) => (
+                  <div key={theme.id} className="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{theme.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
+                    <div className="space-y-2">
+                      <button 
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Theme Settings →
+                      </button>
+                      <button 
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Publication Cards →
+                      </button>
+                      <button 
+                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Template Library →
+                      </button>
+                    </div>
+                  </div>
+                ))}
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Publication Cards</h3>
-                  <p className="text-gray-600 text-sm mb-4">Configure how publication metadata is displayed across your site</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Implementation</h3>
+                  <p className="text-gray-600 text-sm mb-4">Websites using these themes</p>
                   <button 
-                    onClick={() => setSiteManagerView('themes')}
+                    onClick={() => setSiteManagerView('websites')}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    Manage Card Variants →
+                    Manage Websites →
                   </button>
-                </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Themes</h3>
-                  <p className="text-gray-600 text-sm mb-4">Control global styling and branding</p>
-                  <button 
-                    onClick={() => setSiteManagerView('theme-editor')}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    Edit Theme Settings →
-                  </button>
-                </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Templates</h3>
-                  <p className="text-gray-600 text-sm mb-4">Pre-designed page structures</p>
-                  <p className="text-gray-500 text-xs">Coming soon</p>
                 </div>
               </div>
             </div>
           )}
-          {siteManagerView === 'themes' && (
-            <PublicationCards usePageStore={usePageStore} />
-          )}
-          {siteManagerView === 'theme-editor' && (
-            <ThemeEditor usePageStore={usePageStore} />
-          )}
-          {siteManagerView === 'templates' && <SiteManagerTemplates />}
-          {siteManagerView === 'websites' && <SiteManagerWebsites />}
-          {siteManagerView === 'users' && (
+          
+          {/* Academic Publishing Theme Views */}
+          {siteManagerView === 'academic-theme-settings' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Users</h2>
-              <p className="text-gray-600">User management - Coming soon</p>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Settings</h2>
+                <p className="text-slate-600 mt-1">Configure typography, colors, and global styling for academic publishing websites</p>
+              </div>
+              <ThemeEditor usePageStore={usePageStore} />
             </div>
           )}
+          {siteManagerView === 'academic-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design how research articles and publications are displayed</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'academic-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Templates</h2>
+                <p className="text-slate-600 mt-1">Manage page templates for academic publishing websites</p>
+              </div>
+              <SiteManagerTemplates />
+            </div>
+          )}
+          
+          {/* Corporate Publishing Theme Views */}
+          {siteManagerView === 'corporate-theme-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Settings</h2>
+                <p className="text-slate-600 mt-1">Configure typography, colors, and global styling for corporate websites</p>
+              </div>
+              <ThemeEditor usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'corporate-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design how corporate content and resources are displayed</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'corporate-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Templates</h2>
+                <p className="text-slate-600 mt-1">Manage page templates for corporate websites</p>
+              </div>
+              <SiteManagerTemplates />
+            </div>
+          )}
+
+          {/* Implementation Views */}
+          {siteManagerView === 'websites' && <SiteManagerWebsites />}
+          
+          {/* System Views */}
           {siteManagerView === 'settings' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
-              <p className="text-gray-600">Settings - Coming soon</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">System Settings</h2>
+              <p className="text-gray-600">Global system configuration - Coming soon</p>
             </div>
           )}
         </div>
@@ -4278,7 +4383,7 @@ function PropertiesPanel() {
               onClick={() => {
                 const { setCurrentView, setSiteManagerView } = usePageStore.getState()
                 setCurrentView('design-console')
-                setSiteManagerView('themes')
+                setSiteManagerView('academic-publication-cards')
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
             >
@@ -4791,7 +4896,7 @@ function PageBuilder() {
                     onClick={() => {
                       const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
                       setCurrentView('design-console')
-                      setSiteManagerView('templates')
+                      setSiteManagerView('academic-templates')
                       setEditingContext('page')
                     }}
                     className="text-xs text-amber-600 hover:text-amber-800 underline"
