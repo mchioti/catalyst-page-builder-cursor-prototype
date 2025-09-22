@@ -1527,6 +1527,11 @@ const usePageStore = create<PageState>((set, get) => ({
         logoUrl: '/wiley-logo.svg',
         fontFamily: 'Inter'
       },
+      purpose: {
+        contentTypes: ['journals', 'books'],
+        hasSubjectOrganization: true,
+        publishingTypes: ['academic', 'research']
+      },
       deviationScore: 15,
       lastThemeSync: new Date('2024-08-01')
     },
@@ -1553,6 +1558,11 @@ const usePageStore = create<PageState>((set, get) => ({
       branding: {
         primaryColor: '#7c3aed',
         logoUrl: '/research-logo.svg'
+      },
+      purpose: {
+        contentTypes: ['journals'],
+        hasSubjectOrganization: false,
+        publishingTypes: ['research']
       },
       deviationScore: 8,
       lastThemeSync: new Date('2024-09-01')
@@ -1592,6 +1602,11 @@ const usePageStore = create<PageState>((set, get) => ({
         logoUrl: '/jas-logo.svg',
         fontFamily: 'Source Serif Pro'
       },
+      purpose: {
+        contentTypes: ['journals', 'conferences'],
+        hasSubjectOrganization: true,
+        publishingTypes: ['scientific', 'peer-reviewed']
+      },
       deviationScore: 22,
       lastThemeSync: new Date('2024-09-10')
     },
@@ -1629,6 +1644,11 @@ const usePageStore = create<PageState>((set, get) => ({
         secondaryColor: '#f8fafc',
         logoUrl: '/art-quarterly-logo.svg',
         fontFamily: 'Playfair Display'
+      },
+      purpose: {
+        contentTypes: ['journals', 'books'],
+        hasSubjectOrganization: true,
+        publishingTypes: ['visual', 'art-focused']
       },
       deviationScore: 12,
       lastThemeSync: new Date('2024-11-01')
@@ -2721,6 +2741,7 @@ function SiteManagerWebsites() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Website</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Theme</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deviation</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modifications</th>
@@ -2743,6 +2764,27 @@ function SiteManagerWebsites() {
                       <div>
                         <div className="font-medium text-gray-900">{theme?.name || 'Unknown'}</div>
                         <div className="text-sm text-gray-500">v{theme?.version} • {theme?.publishingType}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        {website.purpose ? (
+                          <>
+                            <div className="font-medium text-gray-900">
+                              {website.purpose.contentTypes.length > 0 
+                                ? website.purpose.contentTypes.map(type => 
+                                    type.charAt(0).toUpperCase() + type.slice(1)
+                                  ).join(', ')
+                                : 'Not specified'
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {website.purpose.hasSubjectOrganization ? '• Subject taxonomy enabled' : '• Simple organization'}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-gray-400 italic">Legacy setup</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
