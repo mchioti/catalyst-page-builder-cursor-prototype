@@ -12,6 +12,12 @@ import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTempla
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
+// Widget extension types for template modification tracking
+type ModifiableWidget = {
+  isModified?: boolean
+  modificationReason?: string
+}
+
 // Pre-fabricated sections templates based on AXP 2.0 specifications
 const PREFAB_SECTIONS = {
   // Global Sections (site-wide persistent elements)
@@ -176,12 +182,12 @@ type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
 
 type TemplateStatus = 'active' | 'draft' | 'archived' | 'deprecated'
 
-type Override = {
+type Modification = {
   path: string // e.g., "header.logo.src", "footer.styles.backgroundColor"
   originalValue: any
-  overriddenValue: any
-  overriddenAt: 'website' | 'page'
-  overriddenBy: string // user ID or system
+  modifiedValue: any
+  modifiedAt: 'website' | 'page'
+  modifiedBy: string // user ID or system
   timestamp: Date
   reason?: string
 }
@@ -209,13 +215,13 @@ type BaseTemplate = {
     spacing?: string
   }
   
-  // Override settings (from spec)
-  allowedOverrides: string[] // paths that can be customized
+  // Modification settings (from spec)
+  allowedModifications: string[] // paths that can be customized
   lockedElements: string[] // paths that cannot be modified
-  // Override scope options from the spec
-  defaultOverrideScope: string // Default scope when making changes
-  broadenOverrideOptions: string[] // Available broader scope options
-  narrowOverrideOptions: string[] // Available narrower scope options
+  // Modification scope options from the spec
+  defaultModificationScope: string // Default scope when making changes
+  broadenModificationOptions: string[] // Available broader scope options
+  narrowModificationOptions: string[] // Available narrower scope options
 }
 
 type Website = {
@@ -228,7 +234,7 @@ type Website = {
   updatedAt: Date
   
   // Customizations from base theme
-  overrides: Override[]
+  modifications: Modification[]
   customSections: WidgetSection[]
   
   // Website-specific settings (override theme defaults)
@@ -608,9 +614,9 @@ type PageState = {
   updateWebsite: (id: string, website: Partial<Website>) => void
   removeWebsite: (id: string) => void
   
-  // Override Management
-  addOverride: (websiteId: string, override: Override) => void
-  removeOverride: (websiteId: string, overridePath: string) => void
+  // Modification Management
+  addModification: (websiteId: string, modification: Modification) => void
+  removeModification: (websiteId: string, modificationPath: string) => void
   calculateDeviationScore: (websiteId: string) => number
   
   // Theme Management
@@ -657,8 +663,8 @@ const INITIAL_CANVAS_ITEMS: CanvasItem[] = [
             text: 'Wiley',
             align: 'left',
             sectionId: 'header-section',
-            isOverridden: true,
-            overrideReason: 'Custom Wiley branding'
+            isModified: true,
+            modificationReason: 'Custom Wiley branding'
           }
         ]
       },
@@ -714,8 +720,8 @@ const INITIAL_CANVAS_ITEMS: CanvasItem[] = [
             text: 'Wiley Online Library\nAdvancing knowledge and research worldwide',
             align: 'center',
             sectionId: 'hero-section',
-            isOverridden: true,
-            overrideReason: 'Custom Wiley messaging and tagline'
+            isModified: true,
+            modificationReason: 'Custom Wiley messaging and tagline'
           }
         ]
       }
@@ -1475,22 +1481,22 @@ const usePageStore = create<PageState>((set, get) => ({
       status: 'active' as const,
       createdAt: new Date('2024-06-01'),
       updatedAt: new Date('2024-09-15'),
-      overrides: [
+      modifications: [
         {
           path: 'branding.logo.src',
           originalValue: '/default-logo.svg',
-          overriddenValue: '/wiley-logo.svg',
-          overriddenAt: 'website',
-          overriddenBy: 'admin',
+          modifiedValue: '/wiley-logo.svg',
+          modifiedAt: 'website',
+          modifiedBy: 'admin',
           timestamp: new Date('2024-06-01'),
           reason: 'Brand consistency'
         },
         {
           path: 'colors.primary',
           originalValue: '#1e40af',
-          overriddenValue: '#0066cc',
-          overriddenAt: 'website',
-          overriddenBy: 'admin',
+          modifiedValue: '#0066cc',
+          modifiedAt: 'website',
+          modifiedBy: 'admin',
           timestamp: new Date('2024-06-15'),
           reason: 'Match brand guidelines'
         }
@@ -1513,13 +1519,13 @@ const usePageStore = create<PageState>((set, get) => ({
       status: 'active' as const,
       createdAt: new Date('2024-07-10'),
       updatedAt: new Date('2024-09-20'),
-      overrides: [
+      modifications: [
         {
           path: 'layout.sidebar',
           originalValue: 'left',
-          overriddenValue: 'right',
-          overriddenAt: 'website',
-          overriddenBy: 'editor',
+          modifiedValue: 'right',
+          modifiedAt: 'website',
+          modifiedBy: 'editor',
           timestamp: new Date('2024-07-20'),
           reason: 'Better UX for research content'
         }
@@ -1540,22 +1546,22 @@ const usePageStore = create<PageState>((set, get) => ({
       status: 'active' as const,
       createdAt: new Date('2024-08-15'),
       updatedAt: new Date('2024-09-25'),
-      overrides: [
+      modifications: [
         {
           path: 'colors.accent',
           originalValue: '#10b981',
-          overriddenValue: '#dc2626',
-          overriddenAt: 'website',
-          overriddenBy: 'editorial-team',
+          modifiedValue: '#dc2626',
+          modifiedAt: 'website',
+          modifiedBy: 'editorial-team',
           timestamp: new Date('2024-08-20'),
           reason: 'Match journal brand colors'
         },
         {
           path: 'layout.hero.showFeaturedArticle',
           originalValue: 'false',
-          overriddenValue: 'true',
-          overriddenAt: 'website',
-          overriddenBy: 'editorial-team',
+          modifiedValue: 'true',
+          modifiedAt: 'website',
+          modifiedBy: 'editorial-team',
           timestamp: new Date('2024-08-25'),
           reason: 'Highlight latest research'
         }
@@ -1604,11 +1610,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1200px',
             spacing: 'comfortable'
           },
-          allowedOverrides: ['branding.logo', 'colors.primary'],
+          allowedModifications: ['branding.logo', 'colors.primary'],
           lockedElements: ['structure.main', 'navigation.primary'],
-          defaultOverrideScope: 'Publication (this or all journals)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: ['Publication (this or all journals)', 'Topic (all topics or specific)']
+          defaultModificationScope: 'Publication (this or all journals)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: ['Publication (this or all journals)', 'Topic (all topics or specific)']
         },
         {
           id: 'article-page',
@@ -1629,11 +1635,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1000px',
             spacing: 'comfortable'
           },
-          allowedOverrides: ['typography.bodyFont'],
+          allowedModifications: ['typography.bodyFont'],
           lockedElements: ['compliance.*', 'structure.*'],
-          defaultOverrideScope: 'Publication (this or all journals)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: ['Publication (this or all journals)', 'Group type (Current, Ahead of Print, Just Accepted)', 'Topic (all topics or specific)']
+          defaultModificationScope: 'Publication (this or all journals)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: ['Publication (this or all journals)', 'Group type (Current, Ahead of Print, Just Accepted)', 'Topic (all topics or specific)']
         },
         {
           id: 'search-results',
@@ -1654,11 +1660,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1400px',
             spacing: 'comfortable'
           },
-          allowedOverrides: [],
+          allowedModifications: [],
           lockedElements: [],
-          defaultOverrideScope: 'Website (this)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: []
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
         }
       ],
       
@@ -1735,11 +1741,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1200px',
             spacing: 'comfortable'
           },
-          allowedOverrides: ['branding.*', 'sections.hero.*'],
+          allowedModifications: ['branding.*', 'sections.hero.*'],
           lockedElements: ['navigation.structure'],
-          defaultOverrideScope: 'Website (this)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: []
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
         },
         {
           id: 'about-us',
@@ -1760,11 +1766,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1000px',
             spacing: 'spacious'
           },
-          allowedOverrides: ['content.*'],
+          allowedModifications: ['content.*'],
           lockedElements: [],
-          defaultOverrideScope: 'Website (this)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: []
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
         },
         {
           id: 'contact-us',
@@ -1785,11 +1791,11 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '800px',
             spacing: 'comfortable'
           },
-          allowedOverrides: ['contact.*'],
+          allowedModifications: ['contact.*'],
           lockedElements: [],
-          defaultOverrideScope: 'Website (this)',
-          broadenOverrideOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowOverrideOptions: []
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
         }
       ],
       
@@ -1943,18 +1949,18 @@ const usePageStore = create<PageState>((set, get) => ({
     websites: state.websites.filter(w => w.id !== id)
   })),
   
-  // Override Management
-  addOverride: (websiteId, override) => set((state) => ({
+  // Modification Management
+  addModification: (websiteId, modification) => set((state) => ({
     websites: state.websites.map(w => 
       w.id === websiteId 
-        ? { ...w, overrides: [...w.overrides, override], updatedAt: new Date() }
+        ? { ...w, modifications: [...w.modifications, modification], updatedAt: new Date() }
         : w
     )
   })),
-  removeOverride: (websiteId, overridePath) => set((state) => ({
+  removeModification: (websiteId, modificationPath) => set((state) => ({
     websites: state.websites.map(w => 
       w.id === websiteId 
-        ? { ...w, overrides: w.overrides.filter(o => o.path !== overridePath), updatedAt: new Date() }
+        ? { ...w, modifications: w.modifications.filter(o => o.path !== modificationPath), updatedAt: new Date() }
         : w
     )
   })),
@@ -1968,15 +1974,15 @@ const usePageStore = create<PageState>((set, get) => ({
     const template = state.templates.find(t => t.id === website.templateId)
     if (!template) return 0
     
-    // Simple scoring: each override adds points based on impact
+    // Simple scoring: each modification adds points based on impact
     let score = 0
-    website.overrides.forEach(override => {
-      if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
+    website.modifications.forEach(modification => {
+      if (template.lockedElements.some(locked => modification.path.startsWith(locked))) {
         score += 20 // High impact for locked elements
-      } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
-        score += 5 // Low impact for allowed overrides  
+      } else if (template.allowedModifications.some(allowed => modification.path.startsWith(allowed))) {
+        score += 5 // Low impact for allowed modifications  
       } else {
-        score += 10 // Medium impact for other overrides
+        score += 10 // Medium impact for other modifications
       }
     })
     
@@ -2102,7 +2108,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
     description: '',
     category: 'website' as TemplateCategory,
     tags: [] as string[],
-    allowedOverrides: [] as string[],
+    allowedModifications: [] as string[],
     lockedElements: [] as string[],
     fromCurrentPage: false,
     includeContent: true
@@ -2135,11 +2141,11 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
         maxWidth: '1200px',
         spacing: 'comfortable'
       },
-      allowedOverrides: templateData.allowedOverrides,
+      allowedModifications: templateData.allowedModifications,
       lockedElements: templateData.lockedElements,
-      defaultOverrideScope: 'Website (this)',
-      broadenOverrideOptions: [],
-      narrowOverrideOptions: []
+      defaultModificationScope: 'Website (this)',
+      broadenModificationOptions: [],
+      narrowModificationOptions: []
     }
     
     addTemplate(newTemplate)
@@ -2327,17 +2333,17 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                           <label key={path} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
-                              checked={templateData.allowedOverrides.includes(path)}
+                              checked={templateData.allowedModifications.includes(path)}
                               onChange={(e) => {
                                 if (e.target.checked) {
                                   setTemplateData({
                                     ...templateData, 
-                                    allowedOverrides: [...templateData.allowedOverrides, path]
+                                    allowedModifications: [...templateData.allowedModifications, path]
                                   })
                                 } else {
                                   setTemplateData({
                                     ...templateData, 
-                                    allowedOverrides: templateData.allowedOverrides.filter(p => p !== path)
+                                    allowedModifications: templateData.allowedModifications.filter(p => p !== path)
                                   })
                                 }
                               }}
@@ -2447,7 +2453,7 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Allowed Customizations</label>
-                        <p className="text-gray-900">{templateData.allowedOverrides.length} elements</p>
+                        <p className="text-gray-900">{templateData.allowedModifications.length} elements</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Locked Elements</label>
@@ -2506,9 +2512,9 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
 
 // Design System Console Websites component  
 function SiteManagerWebsites() {
-  const { websites, themes, addOverride, removeOverride, updateWebsite, addWebsite } = usePageStore()
+  const { websites, themes, addModification, removeModification, updateWebsite, addWebsite } = usePageStore()
   const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null)
-  const [showOverrideAnalysis, setShowOverrideAnalysis] = useState<string | null>(null)
+  const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
   const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
   const getThemeForWebsite = (websiteId: string) => {
@@ -2536,18 +2542,18 @@ function SiteManagerWebsites() {
     )
   }
   
-  const getOverrideImpact = (override: Override, theme: Theme | null) => {
+  const getModificationImpact = (modification: Modification, theme: Theme | null) => {
     if (!theme) return 'unknown'
     
-    // Check against theme's templates to find relevant overrides
+    // Check against theme's templates to find relevant modifications
     for (const template of theme.templates) {
-      if (template.lockedElements.some(locked => override.path.startsWith(locked))) {
-        return 'high' // Locked element override = high risk
-      } else if (template.allowedOverrides.some(allowed => override.path.startsWith(allowed))) {
-        return 'low' // Allowed override = low risk
+      if (template.lockedElements.some(locked => modification.path.startsWith(locked))) {
+        return 'high' // Locked element modification = high risk
+      } else if (template.allowedModifications.some(allowed => modification.path.startsWith(allowed))) {
+        return 'low' // Allowed modification = low risk
       }
     }
-    return 'medium' // Other override = medium risk
+    return 'medium' // Other modification = medium risk
   }
 
   return (
@@ -2579,7 +2585,7 @@ function SiteManagerWebsites() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Theme</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deviation</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overrides</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modifications</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
@@ -2612,10 +2618,10 @@ function SiteManagerWebsites() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-900">{website.overrides.length}</span>
-                        {website.overrides.length > 0 && (
+                        <span className="text-sm text-gray-900">{website.modifications.length}</span>
+                        {website.modifications.length > 0 && (
                           <button 
-                            onClick={() => setShowOverrideAnalysis(website.id)}
+                            onClick={() => setShowModificationAnalysis(website.id)}
                             className="text-xs text-blue-600 hover:text-blue-800"
                           >
                             View Details
@@ -2647,22 +2653,22 @@ function SiteManagerWebsites() {
         </div>
       </div>
       
-      {/* Override Analysis Modal */}
-      {showOverrideAnalysis && (
+      {/* Modification Analysis Modal */}
+      {showModificationAnalysis && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">
-                    Override Analysis
+                    Modification Analysis
                   </h3>
                   <p className="text-gray-600 mt-1">
-                    {websites.find(w => w.id === showOverrideAnalysis)?.name} - Template Customizations
+                    {websites.find(w => w.id === showModificationAnalysis)?.name} - Template Customizations
                   </p>
                 </div>
                 <button 
-                  onClick={() => setShowOverrideAnalysis(null)}
+                  onClick={() => setShowModificationAnalysis(null)}
                   className="p-2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-5 h-5" />
@@ -2670,17 +2676,17 @@ function SiteManagerWebsites() {
               </div>
               
               {(() => {
-                const website = websites.find(w => w.id === showOverrideAnalysis)
+                const website = websites.find(w => w.id === showModificationAnalysis)
                 const theme = website ? getThemeForWebsite(website.id) : null
                 
                 if (!website) return <div>Website not found</div>
                 
-                const overridesByImpact = website.overrides.reduce((acc, override) => {
-                  const impact = getOverrideImpact(override, theme)
+                const modificationsByImpact = website.modifications.reduce((acc, modification) => {
+                  const impact = getModificationImpact(modification, theme)
                   if (!acc[impact]) acc[impact] = []
-                  acc[impact].push(override)
+                  acc[impact].push(modification)
                   return acc
-                }, {} as Record<string, Override[]>)
+                }, {} as Record<string, Modification[]>)
                 
                 return (
                   <div className="space-y-6">
@@ -2691,7 +2697,7 @@ function SiteManagerWebsites() {
                           <div className="w-3 h-3 bg-red-500 rounded-full" />
                           <span className="font-medium text-gray-900">High Risk</span>
                         </div>
-                        <p className="text-2xl font-bold text-red-600 mt-1">{overridesByImpact.high?.length || 0}</p>
+                        <p className="text-2xl font-bold text-red-600 mt-1">{modificationsByImpact.high?.length || 0}</p>
                         <p className="text-sm text-gray-600">Locked elements modified</p>
                       </div>
                       
@@ -2700,7 +2706,7 @@ function SiteManagerWebsites() {
                           <div className="w-3 h-3 bg-yellow-500 rounded-full" />
                           <span className="font-medium text-gray-900">Medium Risk</span>
                         </div>
-                        <p className="text-2xl font-bold text-yellow-600 mt-1">{overridesByImpact.medium?.length || 0}</p>
+                        <p className="text-2xl font-bold text-yellow-600 mt-1">{modificationsByImpact.medium?.length || 0}</p>
                         <p className="text-sm text-gray-600">Uncontrolled changes</p>
                       </div>
                       
@@ -2709,16 +2715,16 @@ function SiteManagerWebsites() {
                           <div className="w-3 h-3 bg-green-500 rounded-full" />
                           <span className="font-medium text-gray-900">Low Risk</span>
                         </div>
-                        <p className="text-2xl font-bold text-green-600 mt-1">{overridesByImpact.low?.length || 0}</p>
+                        <p className="text-2xl font-bold text-green-600 mt-1">{modificationsByImpact.low?.length || 0}</p>
                         <p className="text-sm text-gray-600">Allowed customizations</p>
                       </div>
                     </div>
                     
-                    {/* Override Details */}
+                    {/* Modification Details */}
                     <div className="space-y-4">
                       {['high', 'medium', 'low'].map((impact) => {
-                        const overrides = overridesByImpact[impact] || []
-                        if (overrides.length === 0) return null
+                        const modifications = modificationsByImpact[impact] || []
+                        if (modifications.length === 0) return null
                         
                         const colors = {
                           high: 'border-red-200 bg-red-50',
@@ -2728,33 +2734,33 @@ function SiteManagerWebsites() {
                         
                         return (
                           <div key={impact} className={`border rounded-lg p-4 ${colors[impact as keyof typeof colors]}`}>
-                            <h4 className="font-semibold text-gray-900 mb-3 capitalize">{impact} Risk Overrides</h4>
+                            <h4 className="font-semibold text-gray-900 mb-3 capitalize">{impact} Risk Modifications</h4>
                             <div className="space-y-2">
-                              {overrides.map((override) => (
-                                <div key={override.path} className="bg-white rounded p-3 border">
+                              {modifications.map((modification) => (
+                                <div key={modification.path} className="bg-white rounded p-3 border">
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                      <p className="font-medium text-gray-900">{override.path}</p>
+                                      <p className="font-medium text-gray-900">{modification.path}</p>
                                       <div className="text-sm text-gray-600 mt-1">
-                                        <span className="font-medium">Original:</span> {JSON.stringify(override.originalValue)}
+                                        <span className="font-medium">Original:</span> {JSON.stringify(modification.originalValue)}
                                       </div>
                                       <div className="text-sm text-gray-600">
-                                        <span className="font-medium">Override:</span> {JSON.stringify(override.overriddenValue)}
+                                        <span className="font-medium">Modified:</span> {JSON.stringify(modification.modifiedValue)}
                                       </div>
-                                      {override.reason && (
+                                      {modification.reason && (
                                         <div className="text-sm text-gray-500 mt-1">
-                                          <span className="font-medium">Reason:</span> {override.reason}
+                                          <span className="font-medium">Reason:</span> {modification.reason}
                                         </div>
                                       )}
                                     </div>
                                     <div className="text-right ml-4">
-                                      <p className="text-xs text-gray-500">{override.overriddenBy}</p>
-                                      <p className="text-xs text-gray-500">{override.timestamp.toLocaleDateString()}</p>
+                                      <p className="text-xs text-gray-500">{modification.modifiedBy}</p>
+                                      <p className="text-xs text-gray-500">{modification.timestamp.toLocaleDateString()}</p>
                                       <button 
-                                        onClick={() => removeOverride(website.id, override.path)}
+                                        onClick={() => removeModification(website.id, modification.path)}
                                         className="text-xs text-red-600 hover:text-red-800 mt-1"
                                       >
-                                        Remove Override
+                                        Remove Modification
                                       </button>
                                     </div>
                                   </div>
@@ -2814,12 +2820,12 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
       status: 'staging',
       createdAt: new Date(),
       updatedAt: new Date(),
-      overrides: websiteData.customizations.map(c => ({
+      modifications: websiteData.customizations.map(c => ({
         path: c.path,
         originalValue: getDefaultValueForPath(c.path),
-        overriddenValue: c.value,
-        overriddenAt: 'website' as const,
-        overriddenBy: 'Current User',
+        modifiedValue: c.value,
+        modifiedAt: 'website' as const,
+        modifiedBy: 'Current User',
         timestamp: new Date(),
         reason: c.reason
       })),
@@ -3008,8 +3014,8 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                   )}
                   
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-3">Custom Overrides (Optional)</h5>
-                    <p className="text-sm text-gray-600 mb-4">Override theme defaults with your own branding. Leave blank to use theme defaults.</p>
+                    <h5 className="font-medium text-gray-900 mb-3">Custom Modifications (Optional)</h5>
+                    <p className="text-sm text-gray-600 mb-4">Modify theme defaults with your own branding. Leave blank to use theme defaults.</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
@@ -4778,7 +4784,7 @@ function PageBuilder() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-amber-600">✨ Template Mode</span>
                   <span className="text-amber-500">•</span>
-                  <span className="text-amber-600">Override indicators visible</span>
+                  <span className="text-amber-600">Modification indicators visible</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -5263,10 +5269,10 @@ function DraggableWidgetInSection({
         </div>
       )}
       
-      {/* Override Indicator - Only show in template editing mode */}
-      {(widget as any).isOverridden && usePageStore.getState().editingContext === 'template' && (
+      {/* Modification Indicator - Only show in template editing mode */}
+      {(widget as any).isModified && usePageStore.getState().editingContext === 'template' && (
         <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 z-30">
-          <span className="text-[10px] font-medium">✨ Override</span>
+          <span className="text-[10px] font-medium">🔧 Modified</span>
         </div>
       )}
       

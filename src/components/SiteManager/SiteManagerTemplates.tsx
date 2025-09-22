@@ -10,7 +10,7 @@ type Template = {
   description: string
   category: TemplateCategory
   inheritsFrom: string
-  overrides: number
+  modifications: number
   createdAt: Date
   updatedAt: Date
   createdBy: string
@@ -28,7 +28,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Base theme with global sections like headers and footers',
     category: 'website',
     inheritsFrom: 'Academic Publishing Theme',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'System',
@@ -42,7 +42,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Homepage template for the publisher site',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 1,
+    modifications: 1,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Admin User',
@@ -56,7 +56,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Template for displaying search results',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
     createdBy: 'Dev Team',
@@ -70,7 +70,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Advanced search page with filters and options',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
     createdBy: 'Dev Team',
@@ -84,7 +84,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'General browse page for content navigation',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 1,
+    modifications: 1,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'UX Team',
@@ -98,7 +98,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Browse content by subject taxonomy',
     category: 'website',
     inheritsFrom: 'Option: Theme, Search, Browse',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-08'),
     createdBy: 'Content Team',
@@ -112,7 +112,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Browse content alphabetically by title',
     category: 'website',
     inheritsFrom: 'Option: Theme, Search, Browse',
-    overrides: 2,
+    modifications: 2,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Content Team',
@@ -126,7 +126,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'User profile and institutional administration pages',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Auth Team',
@@ -140,7 +140,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: '404, 500, and other error page templates',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Dev Team',
@@ -154,7 +154,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Base eCommerce template for online sales',
     category: 'website',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-03-01'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'eCommerce Team',
@@ -168,7 +168,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Shopping cart page template',
     category: 'website',
     inheritsFrom: 'eCommerce',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-03-05'),
     updatedAt: new Date('2024-03-25'),
     createdBy: 'eCommerce Team',
@@ -182,7 +182,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     description: 'Checkout and payment page template',
     category: 'website',
     inheritsFrom: 'eCommerce',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-03-08'),
     updatedAt: new Date('2024-03-28'),
     createdBy: 'eCommerce Team',
@@ -200,7 +200,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Default header template with logo, navigation, and search functionality',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Admin User',
@@ -214,7 +214,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Footer template with links, copyright, and contact information',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
     createdBy: 'Admin User',
@@ -228,7 +228,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Comprehensive navigation with dropdown categories and search',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Design Team',
@@ -242,7 +242,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Site navigation breadcrumb component for all pages',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
     createdBy: 'UX Team',
@@ -256,7 +256,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Advanced search component with filters and autocomplete',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Dev Team',
@@ -270,7 +270,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'User login/account management dropdown menu',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'Auth Team',
@@ -284,7 +284,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'Site-wide notification banner for announcements',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Content Team',
@@ -298,7 +298,7 @@ const SECTION_TEMPLATES: Template[] = [
     description: 'GDPR-compliant cookie consent notification bar',
     category: 'global',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-02-20'),
     createdBy: 'Legal Team',
@@ -316,7 +316,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Root template for all publication-related pages',
     category: 'publication',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Publishing Team',
@@ -330,7 +330,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Homepage for individual journals',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 2,
+    modifications: 2,
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
@@ -344,7 +344,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Table of contents for journal issues',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Editorial Team',
@@ -358,7 +358,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Archive listing of journal issues',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-28'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Editorial Team',
@@ -372,7 +372,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Individual article page template',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 10,
+    modifications: 10,
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-25'),
     createdBy: 'Publishing Team',
@@ -386,7 +386,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Book series landing page',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-02'),
     updatedAt: new Date('2024-03-28'),
     createdBy: 'Book Team',
@@ -400,7 +400,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Book set collection page',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-30'),
     createdBy: 'Book Team',
@@ -414,7 +414,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Individual book page template',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-04-02'),
     createdBy: 'Book Team',
@@ -428,7 +428,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     description: 'Individual book chapter page',
     category: 'publication',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-04-05'),
     createdBy: 'Book Team',
@@ -446,7 +446,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Root template for general supporting pages',
     category: 'supporting',
     inheritsFrom: 'Theme (Global sections)',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-05'),
     createdBy: 'Content Team',
@@ -460,7 +460,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'About page for organization information',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 1,
+    modifications: 1,
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-08'),
     createdBy: 'Content Team',
@@ -474,7 +474,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Contact page with forms and contact information',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 1,
+    modifications: 1,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-10'),
     createdBy: 'Content Team',
@@ -488,7 +488,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Privacy policy and data protection information',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-12'),
     createdBy: 'Legal Team',
@@ -502,7 +502,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Terms of service and usage conditions',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-03'),
     updatedAt: new Date('2024-03-14'),
     createdBy: 'Legal Team',
@@ -516,7 +516,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Accessibility compliance and conformance information',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-16'),
     createdBy: 'Legal Team',
@@ -530,7 +530,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Cookie usage and management policy',
     category: 'supporting',
     inheritsFrom: 'Supporting Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Legal Team',
@@ -544,7 +544,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Root template for journal-specific supporting pages',
     category: 'supporting',
     inheritsFrom: 'Publication Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Editorial Team',
@@ -558,7 +558,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Editorial board member listings and information',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 2,
+    modifications: 2,
     createdAt: new Date('2024-02-12'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Editorial Team',
@@ -572,7 +572,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Guidelines and instructions for authors',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-14'),
     updatedAt: new Date('2024-03-24'),
     createdBy: 'Editorial Team',
@@ -586,7 +586,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Guidelines and instructions for peer reviewers',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-16'),
     updatedAt: new Date('2024-03-26'),
     createdBy: 'Editorial Team',
@@ -600,7 +600,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Journal aims, scope, and focus areas',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 6,
+    modifications: 6,
     createdAt: new Date('2024-02-18'),
     updatedAt: new Date('2024-03-28'),
     createdBy: 'Editorial Team',
@@ -614,7 +614,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Subscription and purchase information page',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 2,
+    modifications: 2,
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-30'),
     createdBy: 'Sales Team',
@@ -628,7 +628,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     description: 'Journal news and announcements page',
     category: 'supporting',
     inheritsFrom: 'Supporting Journal Pages',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-22'),
     updatedAt: new Date('2024-04-01'),
     createdBy: 'Editorial Team',
@@ -646,7 +646,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     description: 'Large hero section with title, subtitle, and call-to-action',
     category: 'section',
     inheritsFrom: 'Base Section',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-15'),
     createdBy: 'Design Team',
@@ -660,7 +660,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     description: 'Grid or list view of articles with thumbnails and excerpts',
     category: 'section',
     inheritsFrom: 'Base Section',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Content Team',
@@ -674,7 +674,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     description: 'Highlighted content section for promoting key articles or journals',
     category: 'section',
     inheritsFrom: 'Base Section',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
@@ -688,7 +688,7 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
     description: 'Author biography section with photo, credentials, and publications',
     category: 'section',
     inheritsFrom: 'Base Section',
-    overrides: 0,
+    modifications: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-22'),
     createdBy: 'Content Team',
@@ -757,10 +757,10 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         setCurrentView('page-builder')
         // Small delay to ensure state is updated before showing alert
         setTimeout(() => {
-          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n✨ Notice the template context bar and override indicators!\n💡 This is template management mode - override indicators help you see customizations.`)
+          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
         }, 100)
       } else {
-        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Overrides: ${template.overrides}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for override indicators on customized elements.`)
+        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
       }
     } else {
       // For other templates, show generic message
@@ -780,10 +780,10 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
     }
   }
 
-  const handleManageOverrides = (template: Template) => {
-    console.log('Managing overrides for template:', template.id)
-    // In real app: navigate to override management
-    alert(`Managing Template Overrides for "${template.name}"\n\n${template.overrides} page(s) currently override this template.\n\nThis would show:\n• Which specific pages/journals have overrides\n• What changes were made in each override\n• Ability to approve/reject override requests`)
+  const handleManageModifications = (template: Template) => {
+    console.log('Managing modifications for template:', template.id)
+    // In real app: navigate to modification management
+    alert(`Managing Template Modifications for "${template.name}"\n\n${template.modifications} page(s) currently modify this template.\n\nThis would show:\n• Which specific pages/journals have modifications\n• What changes were made in each modification\n• Ability to approve/reject modification requests`)
   }
 
   const handlePreviewTemplate = (template: Template) => {
@@ -889,7 +889,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
             </div>
             <div className="bg-orange-50 p-3 rounded-lg">
               <div className="text-orange-700 text-sm font-medium">
-                {filteredTemplates.reduce((sum, t) => sum + t.overrides, 0)} Overrides
+                {filteredTemplates.reduce((sum, t) => sum + t.modifications, 0)} Modifications
               </div>
               <div className="text-xs text-orange-600 mt-1">Custom variations</div>
             </div>
@@ -993,9 +993,9 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                                   <div>
                                     <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                                       {template.name}
-                                      {template.overrides > 0 && (
+                                      {template.modifications > 0 && (
                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                          {template.overrides}
+                                          {template.modifications}
                                         </span>
                                       )}
                                       {template.status !== 'active' && (
@@ -1026,12 +1026,12 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                             >
                               Edit Page Template
                             </button>
-                            {template.overrides > 0 && (
+                            {template.modifications > 0 && (
                               <button 
-                                onClick={() => handleManageOverrides(template)}
+                                onClick={() => handleManageModifications(template)}
                                 className="text-orange-600 hover:text-orange-800 text-left transition-colors"
                               >
-                                Manage Template Overrides ({template.overrides})
+                                Manage Template Modifications ({template.modifications})
                               </button>
                             )}
                             <div className="flex gap-2 mt-1">
@@ -1175,8 +1175,8 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                   <div className="font-medium">{selectedTemplate.usageCount} {selectedTemplate.category === 'website' || selectedTemplate.category === 'publication' ? 'websites' : 'instances'}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Overrides</div>
-                  <div className="font-medium">{selectedTemplate.overrides}</div>
+                  <div className="text-gray-500">Modifications</div>
+                  <div className="font-medium">{selectedTemplate.modifications}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="text-gray-500">Status</div>
@@ -1209,10 +1209,10 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                           <div className="text-xs text-gray-500">From Theme (Global sections)</div>
                         </div>
                       </div>
-                      {selectedTemplate.overrides > 0 && (
+                      {selectedTemplate.modifications > 0 && (
                         <div className="bg-orange-50 p-3 rounded text-center">
                           <div className="text-orange-700 font-medium">Customization Active</div>
-                          <div className="text-xs text-orange-600">{selectedTemplate.overrides} override(s) by Wiley Online Library{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
+                          <div className="text-xs text-orange-600">{selectedTemplate.modifications} modification(s) by Wiley Online Library{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
                         </div>
                       )}
                       <div className="bg-blue-50 p-3 rounded text-center">
@@ -1233,7 +1233,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                         <div className="text-sm text-purple-600">
                           • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'websites'} (Wiley Online Library, Journal of Advanced Science)
                           <br />
-                          • {selectedTemplate.overrides} of those websites have custom overrides
+                          • {selectedTemplate.modifications} of those websites have custom modifications
                           <br />
                           • Maintains consistency while allowing targeted customization
                         </div>
@@ -1308,12 +1308,12 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                   >
                     Duplicate Template
                   </button>
-                  {selectedTemplate.overrides > 0 && (
+                  {selectedTemplate.modifications > 0 && (
                     <button 
-                      onClick={() => handleManageOverrides(selectedTemplate)}
+                      onClick={() => handleManageModifications(selectedTemplate)}
                       className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
                     >
-                      Manage Overrides ({selectedTemplate.overrides})
+                      Manage Modifications ({selectedTemplate.modifications})
                     </button>
                   )}
                 </div>
@@ -1339,7 +1339,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       </div>
                       <div>
                         <div className="font-medium">Template Version</div>
-                        <div>{selectedTemplate.version || '1.0.0'}</div>
+                        <div>1.0.0</div>
                       </div>
                     </div>
                     <div className="mt-2 pt-2 border-t border-gray-200 text-gray-400">
