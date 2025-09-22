@@ -5259,7 +5259,7 @@ function PageBuilder() {
       onDragEnd={handleDragEnd}
     >
       <div 
-        className="min-h-screen bg-slate-50 flex"
+        className="h-screen bg-slate-50 flex overflow-hidden"
         onClick={(e) => {
           // Only close toolbars if clicking directly on this div, not on children
           if (e.target === e.currentTarget) {
@@ -5268,8 +5268,8 @@ function PageBuilder() {
           }
         }}
       >
-        {/* Left Sidebar */}
-        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex flex-col">
+        {/* Left Sidebar - Sticky */}
+        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex flex-col sticky top-0 h-screen">
           {/* Tabs */}
           <div className="border-b border-slate-200">
             <div className="flex">
@@ -5304,8 +5304,8 @@ function PageBuilder() {
           </div>
         </div>
 
-        {/* Main Canvas Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Main Canvas Area - Scrollable */}
+        <div className="flex-1 flex flex-col h-screen overflow-y-auto">
           <div className="border-b bg-white px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
@@ -5433,8 +5433,8 @@ function PageBuilder() {
           </div>
         </div>
 
-      {/* Right Sidebar - Properties Panel */}
-      <div className="w-80 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col">
+      {/* Right Sidebar - Properties Panel - Sticky */}
+      <div className="w-80 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen">
         <div className="border-b border-slate-200 p-4">
           <h2 className="font-semibold text-slate-800">Properties</h2>
         </div>
