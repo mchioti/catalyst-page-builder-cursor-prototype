@@ -1631,7 +1631,7 @@ const usePageStore = create<PageState>((set, get) => ({
   themes: [
     {
       id: 'modernist-theme',
-      name: 'The Modernist Theme',
+      name: 'Modern',
       description: 'Clean, minimalist, digital-first design with sans-serif fonts, generous white space, and vibrant accents. Perfect for modern open-access journals and tech-focused publishers.',
       version: '3.0.0',
       publishingType: 'journals' as const,
@@ -1762,7 +1762,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     {
       id: 'classicist-theme',
-      name: 'The Classicist Theme',
+      name: 'Classic',
       description: 'Traditional, scholarly theme inspired by classic academic journals. Features serif fonts, formal color palette, and dense, text-forward layout. Perfect for established university presses and historical societies.',
       version: '2.1.0',
       publishingType: 'academic' as const,
@@ -1891,7 +1891,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     {
       id: 'curator-theme',
-      name: 'The Curator Theme',
+      name: 'Curator',
       description: 'Visually rich, image-forward theme perfect for publishers of art books, magazines, and image-heavy journals. Prioritizes large hero images, masonry grids, and elegant typography that complements visuals.',
       version: '1.0.0',
       publishingType: 'visual' as const,
@@ -3611,7 +3611,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Settings</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
@@ -3620,7 +3620,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Publication Cards</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design clean, digital-first publication displays with modern typography</p>
               </div>
               <PublicationCards usePageStore={usePageStore} />
@@ -3629,7 +3629,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Templates</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Templates</h2>
                 <p className="text-slate-600 mt-1">Manage clean, grid-based page templates for modern open-access journals</p>
               </div>
               <SiteManagerTemplates />
@@ -3640,7 +3640,7 @@ function DesignConsole() {
           {siteManagerView === 'classicist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Settings</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
@@ -3649,7 +3649,7 @@ function DesignConsole() {
           {siteManagerView === 'classicist-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Publication Cards</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design traditional, text-forward publication displays for academic content</p>
               </div>
               <PublicationCards usePageStore={usePageStore} />
@@ -3658,7 +3658,7 @@ function DesignConsole() {
           {siteManagerView === 'classicist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Templates</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Templates</h2>
                 <p className="text-slate-600 mt-1">Manage dense, text-forward page templates for established academic publishers</p>
               </div>
               <SiteManagerTemplates />
@@ -3669,7 +3669,7 @@ function DesignConsole() {
           {siteManagerView === 'curator-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Settings</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
@@ -3678,7 +3678,7 @@ function DesignConsole() {
           {siteManagerView === 'curator-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Publication Cards</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design image-heavy publication displays for art books and visual content</p>
               </div>
               <PublicationCards usePageStore={usePageStore} />
@@ -3687,7 +3687,7 @@ function DesignConsole() {
           {siteManagerView === 'curator-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Templates</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Templates</h2>
                 <p className="text-slate-600 mt-1">Manage visual-focused page templates with masonry grids and large hero images</p>
               </div>
               <SiteManagerTemplates />
