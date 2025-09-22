@@ -6,7 +6,7 @@ type Theme = {
   name: string
   description: string
   version: string
-  publishingType: 'journals' | 'books' | 'journals-books' | 'blog' | 'corporate' | 'mixed'
+  publishingType: 'journals' | 'books' | 'journals-books' | 'blog' | 'corporate' | 'mixed' | 'academic' | 'visual'
   author: string
   createdAt: Date
   updatedAt: Date
@@ -56,11 +56,12 @@ type UsePageStore = {
 // Props
 interface ThemeEditorProps {
   usePageStore: () => UsePageStore
+  themeId?: string // Optional theme ID to start with
 }
 
-export function ThemeEditor({ usePageStore }: ThemeEditorProps) {
+export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
   const { themes, updateTheme } = usePageStore()
-  const [selectedTheme, setSelectedTheme] = useState<string>('academic-publishing-theme')
+  const [selectedTheme, setSelectedTheme] = useState<string>(themeId || 'modernist-theme')
   
   const currentTheme = themes.find(t => t.id === selectedTheme)
   
@@ -80,6 +81,9 @@ export function ThemeEditor({ usePageStore }: ThemeEditorProps) {
   
   const fontOptions = [
     'Inter, sans-serif',
+    'Crimson Text, serif',
+    'Playfair Display, serif',
+    'Source Sans Pro, sans-serif',
     'Georgia, serif',
     'Times New Roman, serif',
     'Arial, sans-serif',

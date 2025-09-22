@@ -3614,7 +3614,7 @@ function DesignConsole() {
                 <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
               </div>
-              <ThemeEditor usePageStore={usePageStore} />
+              <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
             </div>
           )}
           {siteManagerView === 'modernist-theme-publication-cards' && (
@@ -3643,7 +3643,7 @@ function DesignConsole() {
                 <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
               </div>
-              <ThemeEditor usePageStore={usePageStore} />
+              <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
             </div>
           )}
           {siteManagerView === 'classicist-theme-publication-cards' && (
@@ -3672,7 +3672,7 @@ function DesignConsole() {
                 <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
               </div>
-              <ThemeEditor usePageStore={usePageStore} />
+              <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
             </div>
           )}
           {siteManagerView === 'curator-theme-publication-cards' && (
