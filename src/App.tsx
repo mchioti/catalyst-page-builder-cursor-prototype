@@ -177,12 +177,15 @@ const PREFAB_SECTIONS = {
 type AppView = 'page-builder' | 'design-console'
 type DesignConsoleView = 
   | 'overview' 
-  | 'academic-theme-settings' 
-  | 'academic-publication-cards'
-  | 'academic-templates' 
-  | 'corporate-theme-settings' 
-  | 'corporate-publication-cards' 
-  | 'corporate-templates'
+  | 'modernist-theme-theme-settings' 
+  | 'modernist-theme-publication-cards'
+  | 'modernist-theme-templates' 
+  | 'classicist-theme-theme-settings' 
+  | 'classicist-theme-publication-cards' 
+  | 'classicist-theme-templates'
+  | 'curator-theme-theme-settings' 
+  | 'curator-theme-publication-cards' 
+  | 'curator-theme-templates'
   | 'websites' 
   | 'settings'
 
@@ -1486,7 +1489,7 @@ const usePageStore = create<PageState>((set, get) => ({
       id: 'wiley-main',
       name: 'Wiley Online Library',
       domain: 'https://onlinelibrary.wiley.com/',
-      themeId: 'academic-publishing-theme',
+      themeId: 'modernist-theme',
       status: 'active' as const,
       createdAt: new Date('2024-06-01'),
       updatedAt: new Date('2024-09-15'),
@@ -1524,7 +1527,7 @@ const usePageStore = create<PageState>((set, get) => ({
       id: 'research-hub',
       name: 'Wiley Research Hub',
       domain: 'research.wiley.com',
-      themeId: 'corporate-theme',
+      themeId: 'classicist-theme',
       status: 'active' as const,
       createdAt: new Date('2024-07-10'),
       updatedAt: new Date('2024-09-20'),
@@ -1551,7 +1554,7 @@ const usePageStore = create<PageState>((set, get) => ({
       id: 'journal-of-science',
       name: 'Journal of Advanced Science',
       domain: 'advancedscience.wiley.com',
-      themeId: 'academic-publishing-theme',
+      themeId: 'modernist-theme',
       status: 'active' as const,
       createdAt: new Date('2024-08-15'),
       updatedAt: new Date('2024-09-25'),
@@ -1584,19 +1587,57 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       deviationScore: 22,
       lastThemeSync: new Date('2024-09-10')
+    },
+    {
+      id: 'art-quarterly',
+      name: 'Art Quarterly Review',
+      domain: 'https://artquarterly.org/',
+      themeId: 'curator-theme',
+      status: 'active' as const,
+      createdAt: new Date('2024-03-01'),
+      updatedAt: new Date('2024-12-15'),
+      modifications: [
+        {
+          path: 'gallery.layout.type',
+          originalValue: 'standard',
+          modifiedValue: 'masonry',
+          modifiedAt: 'website',
+          modifiedBy: 'design-director',
+          timestamp: new Date('2024-05-12'),
+          reason: 'Better showcase of visual content'
+        },
+        {
+          path: 'hero.image.size',
+          originalValue: 'medium',
+          modifiedValue: 'large',
+          modifiedAt: 'website',
+          modifiedBy: 'editorial-team',
+          timestamp: new Date('2024-07-20'),
+          reason: 'More visual impact for featured exhibitions'
+        }
+      ],
+      customSections: [],
+      branding: {
+        primaryColor: '#ef4444',
+        secondaryColor: '#f8fafc',
+        logoUrl: '/art-quarterly-logo.svg',
+        fontFamily: 'Playfair Display'
+      },
+      deviationScore: 12,
+      lastThemeSync: new Date('2024-11-01')
     }
   ] as Website[],
   
   themes: [
     {
-      id: 'academic-publishing-theme',
-      name: 'Academic Publishing Theme',
-      description: 'Complete theme for academic journals with templates for articles, journals, and research content',
-      version: '2.0.0',
+      id: 'modernist-theme',
+      name: 'The Modernist Theme',
+      description: 'Clean, minimalist, digital-first design with sans-serif fonts, generous white space, and vibrant accents. Perfect for modern open-access journals and tech-focused publishers.',
+      version: '3.0.0',
       publishingType: 'journals' as const,
-      author: 'Wiley Design Team',
+      author: 'Catalyst Design Team',
       createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-09-15'),
+      updatedAt: new Date('2024-12-22'),
       
       // Complete template package for academic publishing
       templates: [
@@ -1678,18 +1719,18 @@ const usePageStore = create<PageState>((set, get) => ({
       ],
       
       colors: {
-        primary: '#0066cc',
-        secondary: '#6366f1',
-        accent: '#10b981',
-        background: '#ffffff',
-        text: '#1f2937',
-        muted: '#6b7280'
+        primary: '#2563eb',    // Modern vibrant blue
+        secondary: '#64748b',  // Clean slate gray
+        accent: '#06b6d4',     // Bright cyan accent
+        background: '#ffffff', // Pure white for maximum contrast
+        text: '#0f172a',       // Deep slate for readability
+        muted: '#94a3b8'       // Light slate for secondary text
       },
       typography: {
-        headingFont: 'Merriweather, serif',
-        bodyFont: 'Source Sans Pro, sans-serif',
-        baseSize: '16px',
-        scale: 1.25
+        headingFont: 'Inter, sans-serif',           // Modern geometric sans-serif
+        bodyFont: 'Inter, sans-serif',             // Consistent modern typography
+        baseSize: '17px',                          // Slightly larger for digital reading
+        scale: 1.333                               // Perfect fourth for clean hierarchy
       },
       spacing: {
         base: '1rem',
@@ -1720,12 +1761,12 @@ const usePageStore = create<PageState>((set, get) => ({
     },
     
     {
-      id: 'corporate-theme',
-      name: 'Corporate Publishing Theme',
-      description: 'Professional theme for corporate websites with clean layouts and business focus',
-      version: '1.5.0',
-      publishingType: 'corporate' as const,
-      author: 'Wiley Design Team',
+      id: 'classicist-theme',
+      name: 'The Classicist Theme',
+      description: 'Traditional, scholarly theme inspired by classic academic journals. Features serif fonts, formal color palette, and dense, text-forward layout. Perfect for established university presses and historical societies.',
+      version: '2.1.0',
+      publishingType: 'academic' as const,
+      author: 'Catalyst Design Team',
       createdAt: new Date('2024-02-01'),
       updatedAt: new Date('2024-09-10'),
       
@@ -1809,18 +1850,18 @@ const usePageStore = create<PageState>((set, get) => ({
       ],
       
       colors: {
-        primary: '#1e40af',
-        secondary: '#f1f5f9',
-        accent: '#0ea5e9',
-        background: '#ffffff',
-        text: '#1e293b',
-        muted: '#64748b'
+        primary: '#7c2d12',    // Deep brown for scholarly gravitas
+        secondary: '#f7f3f0',  // Warm off-white parchment
+        accent: '#b45309',     // Burnt orange for highlights
+        background: '#fefcfb', // Subtle warm white
+        text: '#1c1917',       // Rich dark brown for text
+        muted: '#78716c'       // Warm gray for secondary text
       },
       typography: {
-        headingFont: 'Inter, sans-serif',
-        bodyFont: 'Inter, sans-serif',
-        baseSize: '16px',
-        scale: 1.2
+        headingFont: 'Crimson Text, serif',       // Classic scholarly serif
+        bodyFont: 'Crimson Text, serif',         // Consistent serif typography
+        baseSize: '16px',                        // Traditional reading size
+        scale: 1.25                              // Classic ratio for hierarchy
       },
       spacing: {
         base: '1rem',
@@ -1839,6 +1880,87 @@ const usePageStore = create<PageState>((set, get) => ({
         form: {
           borderRadius: '6px',
           border: '2px solid #e2e8f0'
+        }
+      },
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'],
+        footer: PREFAB_SECTIONS['footer-section']
+      },
+      publicationCardVariants: []
+    },
+    
+    {
+      id: 'curator-theme',
+      name: 'The Curator Theme',
+      description: 'Visually rich, image-forward theme perfect for publishers of art books, magazines, and image-heavy journals. Prioritizes large hero images, masonry grids, and elegant typography that complements visuals.',
+      version: '1.0.0',
+      publishingType: 'visual' as const,
+      author: 'Catalyst Design Team',
+      createdAt: new Date('2024-12-22'),
+      updatedAt: new Date('2024-12-22'),
+      
+      // Visual-focused template package
+      templates: [
+        {
+          id: 'gallery-home',
+          name: 'Gallery Home',
+          description: 'Visual homepage with large hero images and masonry content grid',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.0.0',
+          author: 'Catalyst Design Team',
+          createdAt: new Date('2024-12-22'),
+          updatedAt: new Date('2024-12-22'),
+          tags: ['gallery', 'visual', 'hero', 'masonry'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1600px',
+            spacing: 'generous'
+          },
+          allowedModifications: ['hero.*', 'gallery.*', 'colors.*'],
+          lockedElements: ['structure.masonry'],
+          defaultModificationScope: 'Publication (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
+        }
+      ],
+      
+      colors: {
+        primary: '#18181b',    // Rich charcoal for sophistication
+        secondary: '#f8fafc',  // Pure light gray for contrast
+        accent: '#ef4444',     // Bold red for visual punctuation
+        background: '#ffffff', // Pure white to showcase imagery
+        text: '#27272a',       // Dark zinc for readability
+        muted: '#71717a'       // Medium zinc for captions and metadata
+      },
+      typography: {
+        headingFont: 'Playfair Display, serif',   // Elegant display serif
+        bodyFont: 'Source Sans Pro, sans-serif',  // Clean sans-serif for body
+        baseSize: '18px',                         // Larger for visual emphasis
+        scale: 1.414                              // √2 ratio for visual harmony
+      },
+      spacing: {
+        base: '1.25rem',
+        scale: 1.618                              // Golden ratio for visual appeal
+      },
+      components: {
+        button: {
+          borderRadius: '2px',
+          fontWeight: '400',
+          transition: 'all 0.3s ease'
+        },
+        card: {
+          borderRadius: '0px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          border: 'none'
+        },
+        form: {
+          borderRadius: '0px',
+          border: '1px solid #d4d4d8',
+          focusColor: '#ef4444'
         }
       },
       globalSections: {
@@ -3252,7 +3374,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
 // Theme Provider component that applies theme variables to canvas only
 function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
   const { themes } = usePageStore()
-  const currentTheme = themes.find(t => t.id === 'academic-publishing-theme') // Default theme for now
+  const currentTheme = themes.find(t => t.id === 'modernist-theme') // Default theme for now
   
   if (!currentTheme) {
     return <>{children}</>
@@ -3281,7 +3403,7 @@ function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
 
 function DesignConsole() {
   const { setCurrentView, setSiteManagerView, siteManagerView, themes } = usePageStore()
-  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['academic-publishing-theme'])) // Default expand academic theme
+  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand academic theme
 
   const toggleTheme = (themeId: string) => {
     const newExpanded = new Set(expandedThemes)
@@ -3357,9 +3479,9 @@ function DesignConsole() {
                   {isThemeExpanded(theme.id) && (
                     <div className="ml-6 mt-1 space-y-1">
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings`
+                          siteManagerView === `${theme.id}-theme-settings`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
@@ -3369,9 +3491,9 @@ function DesignConsole() {
                       </button>
                       
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards`
+                          siteManagerView === `${theme.id}-publication-cards`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
@@ -3381,9 +3503,9 @@ function DesignConsole() {
                       </button>
 
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates`
+                          siteManagerView === `${theme.id}-templates`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
@@ -3451,19 +3573,19 @@ function DesignConsole() {
                     <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
                     <div className="space-y-2">
                       <button 
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-theme-settings` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Theme Settings →
                       </button>
                       <button 
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-publication-cards` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Publication Cards →
                       </button>
                       <button 
-                        onClick={() => setSiteManagerView(`${theme.id === 'academic-publishing-theme' ? 'academic' : 'corporate'}-templates` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Template Library →
@@ -3485,59 +3607,88 @@ function DesignConsole() {
             </div>
           )}
           
-          {/* Academic Publishing Theme Views */}
-          {siteManagerView === 'academic-theme-settings' && (
+          {/* Modernist Theme Views */}
+          {siteManagerView === 'modernist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure typography, colors, and global styling for academic publishing websites</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Settings</h2>
+                <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} />
             </div>
           )}
-          {siteManagerView === 'academic-publication-cards' && (
+          {siteManagerView === 'modernist-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design how research articles and publications are displayed</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design clean, digital-first publication displays with modern typography</p>
               </div>
               <PublicationCards usePageStore={usePageStore} />
             </div>
           )}
-          {siteManagerView === 'academic-templates' && (
+          {siteManagerView === 'modernist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Academic Publishing Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Manage page templates for academic publishing websites</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Modernist Theme - Templates</h2>
+                <p className="text-slate-600 mt-1">Manage clean, grid-based page templates for modern open-access journals</p>
               </div>
               <SiteManagerTemplates />
             </div>
           )}
           
-          {/* Corporate Publishing Theme Views */}
-          {siteManagerView === 'corporate-theme-settings' && (
+          {/* Classicist Theme Views */}
+          {siteManagerView === 'classicist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure typography, colors, and global styling for corporate websites</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Settings</h2>
+                <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} />
             </div>
           )}
-          {siteManagerView === 'corporate-publication-cards' && (
+          {siteManagerView === 'classicist-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design how corporate content and resources are displayed</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design traditional, text-forward publication displays for academic content</p>
               </div>
               <PublicationCards usePageStore={usePageStore} />
             </div>
           )}
-          {siteManagerView === 'corporate-templates' && (
+          {siteManagerView === 'classicist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Corporate Publishing Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Manage page templates for corporate websites</p>
+                <h2 className="text-2xl font-bold text-slate-800">The Classicist Theme - Templates</h2>
+                <p className="text-slate-600 mt-1">Manage dense, text-forward page templates for established academic publishers</p>
+              </div>
+              <SiteManagerTemplates />
+            </div>
+          )}
+          
+          {/* Curator Theme Views */}
+          {siteManagerView === 'curator-theme-theme-settings' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Settings</h2>
+                <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
+              </div>
+              <ThemeEditor usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'curator-theme-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Design image-heavy publication displays for art books and visual content</p>
+              </div>
+              <PublicationCards usePageStore={usePageStore} />
+            </div>
+          )}
+          {siteManagerView === 'curator-theme-templates' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">The Curator Theme - Templates</h2>
+                <p className="text-slate-600 mt-1">Manage visual-focused page templates with masonry grids and large hero images</p>
               </div>
               <SiteManagerTemplates />
             </div>
@@ -4383,7 +4534,7 @@ function PropertiesPanel() {
               onClick={() => {
                 const { setCurrentView, setSiteManagerView } = usePageStore.getState()
                 setCurrentView('design-console')
-                setSiteManagerView('academic-publication-cards')
+                setSiteManagerView('modernist-theme-publication-cards')
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
             >
@@ -4896,7 +5047,7 @@ function PageBuilder() {
                     onClick={() => {
                       const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
                       setCurrentView('design-console')
-                      setSiteManagerView('academic-templates')
+                      setSiteManagerView('modernist-theme-templates')
                       setEditingContext('page')
                     }}
                     className="text-xs text-amber-600 hover:text-amber-800 underline"
