@@ -1,6 +1,6 @@
 // Template and theme system types
 
-import { WidgetSection, PublicationCardVariant } from './widgets'
+import type { WidgetSection, PublicationCardVariant } from './widgets'
 
 export type TemplateCategory = 'website' | 'publication' | 'supporting' | 'theme'
 

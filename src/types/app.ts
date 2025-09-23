@@ -1,7 +1,7 @@
 // Application and UI state types
 
-import { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardVariant, ContentBlockLayout } from './widgets'
-import { BaseTemplate, Website, Theme, Modification } from './templates'
+import type { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardVariant, ContentBlockLayout } from './widgets'
+import type { BaseTemplate, Website, Theme, Modification } from './templates'
 
 export type AppView = 'page-builder' | 'design-console'
 

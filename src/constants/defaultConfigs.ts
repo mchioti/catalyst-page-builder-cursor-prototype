@@ -1,6 +1,6 @@
 // Default configurations for various components
 
-import { PublicationCardConfig } from '../types/widgets'
+import type { PublicationCardConfig } from '../types/widgets'
 
 export const DEFAULT_PUBLICATION_CARD_CONFIG: PublicationCardConfig = {
   // Content Identification

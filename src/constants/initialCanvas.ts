@@ -1,6 +1,6 @@
 // Initial canvas setup with Wiley Online Library sections
 
-import { CanvasItem } from '../types/widgets'
+import type { CanvasItem } from '../types/widgets'
 
 export const INITIAL_CANVAS_ITEMS: CanvasItem[] = [
   // Header Section
