@@ -2804,6 +2804,18 @@ function DesignConsole() {
                       </button>
                       
                       <button
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-publication-cards`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Publication Cards
+                      </button>
+                      
+                      <button
                         onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                           siteManagerView === `${theme.id}-templates`
@@ -2940,6 +2952,12 @@ function DesignConsole() {
                         Theme Settings →
                       </button>
                       <button 
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Publication Cards →
+                      </button>
+                      <button 
                         onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
@@ -3001,6 +3019,19 @@ function DesignConsole() {
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
             </div>
           )}
+          {siteManagerView === 'modernist-theme-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Predefined publication card designs with clean, minimalist styling and vibrant accents</p>
+                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
+                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                </div>
+              </div>
+              <ThemePublicationCards themeId="modernist-theme" />
+            </div>
+          )}
           {siteManagerView === 'modernist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -3021,6 +3052,19 @@ function DesignConsole() {
               <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
             </div>
           )}
+          {siteManagerView === 'classicist-theme-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Predefined publication card designs with traditional, scholarly styling and formal typography</p>
+                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
+                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Classic theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                </div>
+              </div>
+              <ThemePublicationCards themeId="classicist-theme" />
+            </div>
+          )}
           {siteManagerView === 'classicist-theme-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -3039,6 +3083,19 @@ function DesignConsole() {
                 <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
               </div>
               <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
+            </div>
+          )}
+          {siteManagerView === 'curator-theme-publication-cards' && (
+            <div>
+              <div className="mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
+                <p className="text-slate-600 mt-1">Predefined publication card designs with visually rich, image-forward styling and elegant typography</p>
+                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
+                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Curator theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                </div>
+              </div>
+              <ThemePublicationCards themeId="curator-theme" />
             </div>
           )}
           {siteManagerView === 'curator-theme-templates' && (
@@ -5694,6 +5751,284 @@ function SectionRenderer({
         </div>
       )}
     </>
+  )
+}
+
+// Theme Publication Cards component - shows predefined OOB cards for each theme
+function ThemePublicationCards({ themeId }: { themeId: string }) {
+  // Predefined publication cards for each theme
+  const themePublicationCards = {
+    'modernist-theme': {
+      name: 'Modern Theme',
+      description: 'Clean, minimalist publication cards with sans-serif typography and vibrant accents',
+      cards: [
+        {
+          id: 'modern-article-card',
+          name: 'Modern Article Card',
+          type: 'Article',
+          description: 'Clean, modern design with bold titles and subtle metadata',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#3b82f6',
+            fontFamily: 'Inter, sans-serif',
+            titleSize: '18px',
+            spacing: 'generous'
+          }
+        },
+        {
+          id: 'modern-book-card',
+          name: 'Modern Book Card',
+          type: 'Book',
+          description: 'Minimalist book presentation with focus on cover and clean typography',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#3b82f6',
+            fontFamily: 'Inter, sans-serif',
+            titleSize: '16px',
+            spacing: 'generous'
+          }
+        },
+        {
+          id: 'modern-journal-card',
+          name: 'Modern Journal Card',
+          type: 'Journal',
+          description: 'Contemporary journal card with prominent branding and clear hierarchy',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#3b82f6',
+            fontFamily: 'Inter, sans-serif',
+            titleSize: '20px',
+            spacing: 'generous'
+          }
+        }
+      ]
+    },
+    'classicist-theme': {
+      name: 'Classic Theme',
+      description: 'Traditional, scholarly publication cards with serif typography and formal styling',
+      cards: [
+        {
+          id: 'classic-article-card',
+          name: 'Classic Article Card',
+          type: 'Article',
+          description: 'Traditional scholarly design with serif typography and formal structure',
+          style: {
+            backgroundColor: '#fefefe',
+            borderColor: '#d1d5db',
+            titleColor: '#374151',
+            metaColor: '#6b7280',
+            accentColor: '#7c3aed',
+            fontFamily: 'Georgia, serif',
+            titleSize: '18px',
+            spacing: 'compact'
+          }
+        },
+        {
+          id: 'classic-book-card',
+          name: 'Classic Book Card',
+          type: 'Book',
+          description: 'Elegant book presentation with traditional typography and formal layout',
+          style: {
+            backgroundColor: '#fefefe',
+            borderColor: '#d1d5db',
+            titleColor: '#374151',
+            metaColor: '#6b7280',
+            accentColor: '#7c3aed',
+            fontFamily: 'Georgia, serif',
+            titleSize: '16px',
+            spacing: 'compact'
+          }
+        },
+        {
+          id: 'classic-journal-card',
+          name: 'Classic Journal Card',
+          type: 'Journal',
+          description: 'Formal journal presentation with scholarly typography and structured layout',
+          style: {
+            backgroundColor: '#fefefe',
+            borderColor: '#d1d5db',
+            titleColor: '#374151',
+            metaColor: '#6b7280',
+            accentColor: '#7c3aed',
+            fontFamily: 'Georgia, serif',
+            titleSize: '20px',
+            spacing: 'compact'
+          }
+        }
+      ]
+    },
+    'curator-theme': {
+      name: 'Curator Theme',
+      description: 'Visually rich publication cards with image-forward design and elegant typography',
+      cards: [
+        {
+          id: 'curator-article-card',
+          name: 'Curator Article Card',
+          type: 'Article',
+          description: 'Image-forward design with elegant typography and visual hierarchy',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#f3f4f6',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#ef4444',
+            fontFamily: 'Playfair Display, serif',
+            titleSize: '18px',
+            spacing: 'relaxed'
+          }
+        },
+        {
+          id: 'curator-book-card',
+          name: 'Curator Book Card',
+          type: 'Book',
+          description: 'Visually striking book cards with prominent cover art and elegant details',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#f3f4f6',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#ef4444',
+            fontFamily: 'Playfair Display, serif',
+            titleSize: '16px',
+            spacing: 'relaxed'
+          }
+        },
+        {
+          id: 'curator-journal-card',
+          name: 'Curator Journal Card',
+          type: 'Journal',
+          description: 'Editorial-style journal presentation with rich visuals and sophisticated typography',
+          style: {
+            backgroundColor: '#ffffff',
+            borderColor: '#f3f4f6',
+            titleColor: '#1f2937',
+            metaColor: '#6b7280',
+            accentColor: '#ef4444',
+            fontFamily: 'Playfair Display, serif',
+            titleSize: '20px',
+            spacing: 'relaxed'
+          }
+        }
+      ]
+    }
+  }
+
+  const themeData = themePublicationCards[themeId as keyof typeof themePublicationCards]
+  
+  if (!themeData) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No publication cards defined for this theme.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Cards List */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Available Publication Cards</h3>
+          <p className="text-sm text-gray-600 mb-4">{themeData.description}</p>
+          
+          <div className="space-y-3">
+            {themeData.cards.map((card) => (
+              <div
+                key={card.id}
+                className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 mb-1">{card.name}</h4>
+                    <p className="text-sm text-gray-600 mb-2">{card.description}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                        {card.type}
+                      </span>
+                      <span className="text-xs text-gray-500">{card.style.fontFamily}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview Area */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Card Previews</h3>
+          <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+            <div className="space-y-4">
+              {themeData.cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-lg p-4 shadow-sm border"
+                  style={{
+                    backgroundColor: card.style.backgroundColor,
+                    borderColor: card.style.borderColor,
+                    fontFamily: card.style.fontFamily
+                  }}
+                >
+                  <h4 
+                    className="font-semibold mb-2"
+                    style={{ 
+                      color: card.style.titleColor,
+                      fontSize: card.style.titleSize
+                    }}
+                  >
+                    Sample {card.type} Title
+                  </h4>
+                  <div 
+                    className="text-sm mb-2"
+                    style={{ color: card.style.metaColor }}
+                  >
+                    Published in Sample Journal • 2024 • Vol. 12, Issue 3
+                  </div>
+                  <div 
+                    className="text-sm"
+                    style={{ color: card.style.metaColor }}
+                  >
+                    Authors: J. Smith, K. Johnson, M. Davis
+                  </div>
+                  <div 
+                    className="mt-3 text-sm font-medium"
+                    style={{ color: card.style.accentColor }}
+                  >
+                    Open Access
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
+        <div className="flex items-start gap-3">
+          <div className="text-amber-600 mt-0.5">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <h4 className="text-amber-800 font-medium mb-1">Theme Foundation Cards</h4>
+            <p className="text-amber-700 text-sm">
+              These publication cards are part of the <strong>{themeData.name}</strong> design system. 
+              Websites using this theme will inherit these card styles as their starting point and can then customize them in their individual Publication Cards settings.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

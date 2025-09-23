@@ -9,10 +9,13 @@ export type DesignConsoleView =
   | 'overview' 
   // Theme-level views (foundational design system)
   | 'modernist-theme-theme-settings' 
+  | 'modernist-theme-publication-cards'
   | 'modernist-theme-templates' 
   | 'classicist-theme-theme-settings' 
+  | 'classicist-theme-publication-cards'
   | 'classicist-theme-templates'
   | 'curator-theme-theme-settings' 
+  | 'curator-theme-publication-cards'
   | 'curator-theme-templates'
   // Website-level views (per-website customization)
   | 'wiley-main-settings'
