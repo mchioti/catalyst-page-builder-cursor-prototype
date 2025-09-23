@@ -3197,7 +3197,7 @@ function DesignConsole() {
 }
 
 // Left sidebar tabs
-type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'publication-cards'
+type LeftSidebarTab = 'library' | 'sections' | 'diy-zone'
 
 // Layout picker component
 function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: ContentBlockLayout) => void; onClose: () => void }) {
@@ -4486,8 +4486,7 @@ function PageBuilder() {
               {[
                 { id: 'library', label: 'Library', icon: BookOpen },
                 { id: 'sections', label: 'Sections', icon: Plus },
-                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb },
-                { id: 'publication-cards', label: 'Publication Cards', icon: Building2 }
+                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -4510,7 +4509,6 @@ function PageBuilder() {
             {leftSidebarTab === 'library' && <WidgetLibrary />}
             {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
             {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
-            {leftSidebarTab === 'publication-cards' && <PublicationCardsContent />}
           </div>
         </div>
 
