@@ -1895,7 +1895,6 @@ function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
 // Design System Console Websites component  
 function SiteManagerWebsites() {
   const { websites, themes, addModification, removeModification, updateWebsite, addWebsite } = usePageStore()
-  const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null)
   const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
   const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
@@ -1938,6 +1937,74 @@ function SiteManagerWebsites() {
     return 'medium' // Other modification = medium risk
   }
 
+  const getPublishingAction = (website: Website) => {
+    switch(website.status) {
+      case 'staging': 
+        return { 
+          label: 'Publish Live', 
+          action: 'publish', 
+          color: 'bg-green-600 hover:bg-green-700 text-white',
+          icon: '🚀'
+        }
+      case 'active': 
+        return { 
+          label: 'Move to Staging', 
+          action: 'stage', 
+          color: 'bg-blue-600 hover:bg-blue-700 text-white',
+          icon: '🧪'
+        }
+      case 'maintenance': 
+        return { 
+          label: 'Restore Service', 
+          action: 'restore', 
+          color: 'bg-green-600 hover:bg-green-700 text-white',
+          icon: '🔧'
+        }
+      default:
+        return { 
+          label: 'Deploy', 
+          action: 'deploy', 
+          color: 'bg-blue-600 hover:bg-blue-700 text-white',
+          icon: '📦'
+        }
+    }
+  }
+
+  const handlePublishingAction = (websiteId: string, action: string) => {
+    const website = websites.find(w => w.id === websiteId)
+    if (!website) return
+
+    let newStatus: string
+    let actionMessage: string
+
+    switch(action) {
+      case 'publish':
+        newStatus = 'active'
+        actionMessage = `${website.name} has been published live! 🚀`
+        break
+      case 'stage':
+        newStatus = 'staging'
+        actionMessage = `${website.name} moved to staging for testing 🧪`
+        break
+      case 'restore':
+        newStatus = 'active'
+        actionMessage = `${website.name} service restored ✅`
+        break
+      case 'deploy':
+        newStatus = 'staging'
+        actionMessage = `${website.name} deployed to staging 📦`
+        break
+      default:
+        return
+    }
+
+    // Update the website status
+    updateWebsite(websiteId, { status: newStatus as 'active' | 'staging' | 'maintenance', updatedAt: new Date() })
+    
+    // Show success message (you could implement a toast notification here)
+    alert(actionMessage)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1970,7 +2037,7 @@ function SiteManagerWebsites() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deviation</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modifications</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Publishing</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -2038,13 +2105,26 @@ function SiteManagerWebsites() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        {(() => {
+                          const publishingAction = getPublishingAction(website)
+                          return (
+                            <button 
+                              onClick={() => handlePublishingAction(website.id, publishingAction.action)}
+                              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${publishingAction.color}`}
+                            >
+                              <span className="mr-1">{publishingAction.icon}</span>
+                              {publishingAction.label}
+                            </button>
+                          )
+                        })()}
                         <button 
-                          onClick={() => setSelectedWebsite(website.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
+                          onClick={() => {
+                            const { setSiteManagerView } = usePageStore.getState()
+                            setSiteManagerView(`${website.id}-settings` as DesignConsoleView)
+                          }}
+                          className="text-gray-400 hover:text-gray-600"
+                          title="Website Settings"
                         >
-                          Edit
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
                           <Settings className="w-4 h-4" />
                         </button>
                       </div>
