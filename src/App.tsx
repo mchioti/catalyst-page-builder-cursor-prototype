@@ -4375,12 +4375,19 @@ function PageBuilder() {
         ? active.data.current.originalSortableId 
         : active.id
       
-      if (activeItemId !== over?.id) {
+      // If dropping over a section area, get the section ID instead of the drop zone ID
+      let targetId = over.id
+      if (over.data?.current?.type === 'section-area' && over.data?.current?.sectionId) {
+        targetId = over.data.current.sectionId
+        console.log('🎯 Section dragged over section area, using section ID:', targetId)
+      }
+      
+      if (activeItemId !== targetId) {
         const { moveItem } = usePageStore.getState()
         const oldIndex = canvasItems.findIndex((item) => item.id === activeItemId)
-        const newIndex = canvasItems.findIndex((item) => item.id === over.id)
+        const newIndex = canvasItems.findIndex((item) => item.id === targetId)
         
-        console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, overId: over.id })
+        console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, targetId, originalOverId: over.id })
         
         if (oldIndex !== -1 && newIndex !== -1) {
           console.log('✅ Canvas item reordered!')
