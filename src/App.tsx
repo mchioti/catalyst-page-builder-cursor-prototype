@@ -5756,166 +5756,318 @@ function SectionRenderer({
 
 // Theme Publication Cards component - shows predefined OOB cards for each theme
 function ThemePublicationCards({ themeId }: { themeId: string }) {
-  // Predefined publication cards for each theme
+  // Predefined publication cards for each theme - designed for real-world contexts
   const themePublicationCards = {
     'modernist-theme': {
       name: 'Modern Theme',
-      description: 'Clean, minimalist publication cards with sans-serif typography and vibrant accents',
+      description: 'Clean, minimalist publication cards optimized for search results, grids, table of contents, and page headers',
+      usageContexts: ['Search Results Grid', 'Issue Table of Contents', 'Recent Publications', 'Journal Page Headers'],
       cards: [
         {
-          id: 'modern-article-card',
-          name: 'Modern Article Card',
+          id: 'modern-article-compact',
+          name: 'Article Card (Compact)',
           type: 'Article',
-          description: 'Clean, modern design with bold titles and subtle metadata',
+          description: 'For search results and publication grids',
+          context: 'Search Results, Grids',
+          features: ['Access status badges', 'Publication status', 'Clean typography', 'DOI links'],
           style: {
+            layout: 'compact',
             backgroundColor: '#ffffff',
             borderColor: '#e5e7eb',
             titleColor: '#1f2937',
-            metaColor: '#6b7280',
-            accentColor: '#3b82f6',
-            fontFamily: 'Inter, sans-serif',
-            titleSize: '18px',
-            spacing: 'generous'
-          }
-        },
-        {
-          id: 'modern-book-card',
-          name: 'Modern Book Card',
-          type: 'Book',
-          description: 'Minimalist book presentation with focus on cover and clean typography',
-          style: {
-            backgroundColor: '#ffffff',
-            borderColor: '#e5e7eb',
-            titleColor: '#1f2937',
-            metaColor: '#6b7280',
-            accentColor: '#3b82f6',
-            fontFamily: 'Inter, sans-serif',
+            titleFont: 'Inter, sans-serif',
+            titleWeight: '600',
             titleSize: '16px',
-            spacing: 'generous'
+            metaColor: '#6b7280',
+            metaFont: 'Inter, sans-serif',
+            metaSize: '14px',
+            accentColor: '#3b82f6',
+            statusColors: {
+              fullAccess: '#10b981',
+              freeAccess: '#f59e0b',
+              subscription: '#6b7280'
+            },
+            spacing: '16px',
+            borderRadius: '8px'
           }
         },
         {
-          id: 'modern-journal-card',
-          name: 'Modern Journal Card',
-          type: 'Journal',
-          description: 'Contemporary journal card with prominent branding and clear hierarchy',
+          id: 'modern-article-detailed',
+          name: 'Article Card (Detailed)',
+          type: 'Article',
+          description: 'For individual article pages and detailed views',
+          context: 'Article Pages, Detailed Views',
+          features: ['Action buttons', 'Abstract preview', 'Full metadata', 'Download options'],
           style: {
+            layout: 'detailed',
             backgroundColor: '#ffffff',
             borderColor: '#e5e7eb',
             titleColor: '#1f2937',
+            titleFont: 'Inter, sans-serif',
+            titleWeight: '700',
+            titleSize: '20px',
+            metaColor: '#6b7280',
+            metaFont: 'Inter, sans-serif',
+            metaSize: '14px',
+            accentColor: '#3b82f6',
+            buttonStyle: 'modern',
+            spacing: '20px',
+            borderRadius: '12px'
+          }
+        },
+        {
+          id: 'modern-issue-banner',
+          name: 'Issue Card (Banner)',
+          type: 'Issue',
+          description: 'For journal issue pages and featured content',
+          context: 'Issue Pages, Journal Headers',
+          features: ['Cover image', 'Volume/Issue info', 'ISSN display', 'Featured styling'],
+          style: {
+            layout: 'banner',
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+            titleColor: '#1f2937',
+            titleFont: 'Inter, sans-serif',
+            titleWeight: '700',
+            titleSize: '24px',
             metaColor: '#6b7280',
             accentColor: '#3b82f6',
-            fontFamily: 'Inter, sans-serif',
-            titleSize: '20px',
-            spacing: 'generous'
+            imageStyle: 'prominent',
+            spacing: '24px',
+            borderRadius: '12px'
+          }
+        },
+        {
+          id: 'modern-book-featured',
+          name: 'Book Card (Featured)',
+          type: 'Book',
+          description: 'For book pages and featured book displays',
+          context: 'Book Pages, Featured Content',
+          features: ['Cover image', 'Author photos', 'ISBN display', 'Chapter access'],
+          style: {
+            layout: 'featured',
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+            titleColor: '#1f2937',
+            titleFont: 'Inter, sans-serif',
+            titleWeight: '700',
+            titleSize: '22px',
+            metaColor: '#6b7280',
+            accentColor: '#3b82f6',
+            imageStyle: 'cover-prominent',
+            authorDisplay: 'photos',
+            spacing: '20px',
+            borderRadius: '12px'
           }
         }
       ]
     },
     'classicist-theme': {
       name: 'Classic Theme',
-      description: 'Traditional, scholarly publication cards with serif typography and formal styling',
+      description: 'Traditional, scholarly publication cards with serif typography, formal styling, and academic conventions',
+      usageContexts: ['Academic Search', 'Scholarly Listings', 'Institutional Displays', 'Reference Pages'],
       cards: [
         {
-          id: 'classic-article-card',
-          name: 'Classic Article Card',
+          id: 'classic-article-compact',
+          name: 'Article Card (Compact)',
           type: 'Article',
-          description: 'Traditional scholarly design with serif typography and formal structure',
+          description: 'Traditional academic style for search and listings',
+          context: 'Academic Search, Reference Lists',
+          features: ['Formal typography', 'Citation format', 'Academic status', 'Publication venues'],
           style: {
+            layout: 'compact',
             backgroundColor: '#fefefe',
             borderColor: '#d1d5db',
             titleColor: '#374151',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            fontFamily: 'Georgia, serif',
-            titleSize: '18px',
-            spacing: 'compact'
-          }
-        },
-        {
-          id: 'classic-book-card',
-          name: 'Classic Book Card',
-          type: 'Book',
-          description: 'Elegant book presentation with traditional typography and formal layout',
-          style: {
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            fontFamily: 'Georgia, serif',
+            titleFont: 'Georgia, serif',
+            titleWeight: '600',
             titleSize: '16px',
-            spacing: 'compact'
+            metaColor: '#6b7280',
+            metaFont: 'Georgia, serif',
+            metaSize: '14px',
+            accentColor: '#7c3aed',
+            statusColors: {
+              fullAccess: '#059669',
+              freeAccess: '#d97706',
+              subscription: '#6b7280'
+            },
+            spacing: '14px',
+            borderRadius: '6px'
           }
         },
         {
-          id: 'classic-journal-card',
-          name: 'Classic Journal Card',
-          type: 'Journal',
-          description: 'Formal journal presentation with scholarly typography and structured layout',
+          id: 'classic-article-detailed',
+          name: 'Article Card (Detailed)',
+          type: 'Article',
+          description: 'Formal academic presentation with complete metadata',
+          context: 'Academic Journals, Scholarly Archives',
+          features: ['Complete citations', 'Abstract access', 'Reference formatting', 'Academic buttons'],
           style: {
+            layout: 'detailed',
             backgroundColor: '#fefefe',
             borderColor: '#d1d5db',
             titleColor: '#374151',
+            titleFont: 'Georgia, serif',
+            titleWeight: '700',
+            titleSize: '18px',
+            metaColor: '#6b7280',
+            metaFont: 'Georgia, serif',
+            metaSize: '14px',
+            accentColor: '#7c3aed',
+            buttonStyle: 'traditional',
+            spacing: '18px',
+            borderRadius: '8px'
+          }
+        },
+        {
+          id: 'classic-issue-banner',
+          name: 'Issue Card (Banner)',
+          type: 'Issue',
+          description: 'Formal journal issue presentation',
+          context: 'Academic Journals, Issue Archives',
+          features: ['Traditional layout', 'Academic formatting', 'ISSN prominence', 'Scholarly branding'],
+          style: {
+            layout: 'banner',
+            backgroundColor: '#fefefe',
+            borderColor: '#d1d5db',
+            titleColor: '#374151',
+            titleFont: 'Georgia, serif',
+            titleWeight: '700',
+            titleSize: '22px',
             metaColor: '#6b7280',
             accentColor: '#7c3aed',
-            fontFamily: 'Georgia, serif',
+            imageStyle: 'traditional',
+            spacing: '20px',
+            borderRadius: '8px'
+          }
+        },
+        {
+          id: 'classic-book-featured',
+          name: 'Book Card (Featured)',
+          type: 'Book',
+          description: 'Scholarly book presentation with academic conventions',
+          context: 'Academic Books, University Press',
+          features: ['Scholarly typography', 'Academic metadata', 'ISBN prominence', 'Citation ready'],
+          style: {
+            layout: 'featured',
+            backgroundColor: '#fefefe',
+            borderColor: '#d1d5db',
+            titleColor: '#374151',
+            titleFont: 'Georgia, serif',
+            titleWeight: '700',
             titleSize: '20px',
-            spacing: 'compact'
+            metaColor: '#6b7280',
+            accentColor: '#7c3aed',
+            imageStyle: 'cover-traditional',
+            authorDisplay: 'formal',
+            spacing: '18px',
+            borderRadius: '8px'
           }
         }
       ]
     },
     'curator-theme': {
       name: 'Curator Theme',
-      description: 'Visually rich publication cards with image-forward design and elegant typography',
+      description: 'Visually rich, editorial-style publication cards with image-forward design and sophisticated layouts',
+      usageContexts: ['Visual Discovery', 'Editorial Features', 'Magazine Layouts', 'Image-Rich Collections'],
       cards: [
         {
-          id: 'curator-article-card',
-          name: 'Curator Article Card',
+          id: 'curator-article-compact',
+          name: 'Article Card (Compact)',
           type: 'Article',
-          description: 'Image-forward design with elegant typography and visual hierarchy',
+          description: 'Visual-first design for discovery and browsing',
+          context: 'Visual Search, Editorial Grids',
+          features: ['Image thumbnails', 'Editorial typography', 'Visual hierarchy', 'Aesthetic focus'],
           style: {
+            layout: 'compact',
             backgroundColor: '#ffffff',
             borderColor: '#f3f4f6',
             titleColor: '#1f2937',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            fontFamily: 'Playfair Display, serif',
-            titleSize: '18px',
-            spacing: 'relaxed'
-          }
-        },
-        {
-          id: 'curator-book-card',
-          name: 'Curator Book Card',
-          type: 'Book',
-          description: 'Visually striking book cards with prominent cover art and elegant details',
-          style: {
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            fontFamily: 'Playfair Display, serif',
+            titleFont: 'Playfair Display, serif',
+            titleWeight: '600',
             titleSize: '16px',
-            spacing: 'relaxed'
+            metaColor: '#6b7280',
+            metaFont: 'Source Sans Pro, sans-serif',
+            metaSize: '13px',
+            accentColor: '#ef4444',
+            statusColors: {
+              fullAccess: '#10b981',
+              freeAccess: '#f59e0b',
+              subscription: '#6b7280'
+            },
+            spacing: '18px',
+            borderRadius: '12px',
+            imageStyle: 'thumbnail'
           }
         },
         {
-          id: 'curator-journal-card',
-          name: 'Curator Journal Card',
-          type: 'Journal',
-          description: 'Editorial-style journal presentation with rich visuals and sophisticated typography',
+          id: 'curator-article-detailed',
+          name: 'Article Card (Detailed)',
+          type: 'Article',
+          description: 'Editorial-style detailed presentation',
+          context: 'Editorial Features, Visual Articles',
+          features: ['Hero images', 'Magazine layout', 'Editorial buttons', 'Rich presentation'],
           style: {
+            layout: 'detailed',
             backgroundColor: '#ffffff',
             borderColor: '#f3f4f6',
             titleColor: '#1f2937',
+            titleFont: 'Playfair Display, serif',
+            titleWeight: '700',
+            titleSize: '22px',
+            metaColor: '#6b7280',
+            metaFont: 'Source Sans Pro, sans-serif',
+            metaSize: '14px',
+            accentColor: '#ef4444',
+            buttonStyle: 'editorial',
+            spacing: '24px',
+            borderRadius: '16px',
+            imageStyle: 'hero'
+          }
+        },
+        {
+          id: 'curator-issue-banner',
+          name: 'Issue Card (Banner)',
+          type: 'Issue',
+          description: 'Magazine-style issue presentation',
+          context: 'Editorial Issues, Visual Collections',
+          features: ['Cover prominence', 'Magazine layout', 'Visual impact', 'Editorial branding'],
+          style: {
+            layout: 'banner',
+            backgroundColor: '#ffffff',
+            borderColor: '#f3f4f6',
+            titleColor: '#1f2937',
+            titleFont: 'Playfair Display, serif',
+            titleWeight: '700',
+            titleSize: '26px',
             metaColor: '#6b7280',
             accentColor: '#ef4444',
-            fontFamily: 'Playfair Display, serif',
-            titleSize: '20px',
-            spacing: 'relaxed'
+            imageStyle: 'magazine-cover',
+            spacing: '28px',
+            borderRadius: '16px'
+          }
+        },
+        {
+          id: 'curator-book-featured',
+          name: 'Book Card (Featured)',
+          type: 'Book',
+          description: 'Visual book presentation with editorial flair',
+          context: 'Book Features, Visual Collections',
+          features: ['Cover art focus', 'Editorial typography', 'Visual metadata', 'Aesthetic presentation'],
+          style: {
+            layout: 'featured',
+            backgroundColor: '#ffffff',
+            borderColor: '#f3f4f6',
+            titleColor: '#1f2937',
+            titleFont: 'Playfair Display, serif',
+            titleWeight: '700',
+            titleSize: '24px',
+            metaColor: '#6b7280',
+            accentColor: '#ef4444',
+            imageStyle: 'cover-editorial',
+            authorDisplay: 'visual',
+            spacing: '24px',
+            borderRadius: '16px'
           }
         }
       ]
@@ -5934,27 +6086,76 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Usage Context Overview */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-blue-800 font-medium mb-2">🎯 Real-World Usage Contexts</h3>
+        <p className="text-blue-700 text-sm mb-3">{themeData.description}</p>
+        <div className="flex flex-wrap gap-2">
+          {themeData.usageContexts.map((context, index) => (
+            <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+              {context}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cards List */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Available Publication Cards</h3>
-          <p className="text-sm text-gray-600 mb-4">{themeData.description}</p>
+          <h3 className="text-lg font-semibold text-gray-900">Publication Card Variants</h3>
           
-          <div className="space-y-3">
+          <div className="space-y-4">
             {themeData.cards.map((card) => (
               <div
                 key={card.id}
                 className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 mb-1">{card.name}</h4>
                     <p className="text-sm text-gray-600 mb-2">{card.description}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-3">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
                         {card.type}
                       </span>
-                      <span className="text-xs text-gray-500">{card.style.fontFamily}</span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                        {card.style.layout}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      <strong>Usage:</strong> {card.context}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Features */}
+                <div className="mb-3">
+                  <div className="text-xs font-medium text-gray-700 mb-1">Key Features:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {card.features.map((feature, index) => (
+                      <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-800">
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Style Properties */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Typography:</span>
+                    <div style={{ fontFamily: card.style.titleFont, color: card.style.titleColor }} className="font-medium">
+                      {card.style.titleFont.split(',')[0]}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Accent:</span>
+                    <div className="flex items-center gap-1">
+                      <div 
+                        className="w-3 h-3 rounded-full border border-gray-300"
+                        style={{ backgroundColor: card.style.accentColor }}
+                      ></div>
+                      <span style={{ color: card.style.accentColor }}>{card.style.accentColor}</span>
                     </div>
                   </div>
                 </div>
@@ -5965,45 +6166,138 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
 
         {/* Preview Area */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Card Previews</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Live Card Previews</h3>
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {themeData.cards.map((card) => (
-                <div
-                  key={card.id}
-                  className="rounded-lg p-4 shadow-sm border"
-                  style={{
-                    backgroundColor: card.style.backgroundColor,
-                    borderColor: card.style.borderColor,
-                    fontFamily: card.style.fontFamily
-                  }}
-                >
-                  <h4 
-                    className="font-semibold mb-2"
-                    style={{ 
-                      color: card.style.titleColor,
-                      fontSize: card.style.titleSize
+                <div key={card.id} className="space-y-2">
+                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                    {card.name}
+                  </div>
+                  <div
+                    className="shadow-sm border transition-all hover:shadow-md"
+                    style={{
+                      backgroundColor: card.style.backgroundColor,
+                      borderColor: card.style.borderColor,
+                      borderRadius: card.style.borderRadius,
+                      padding: card.style.spacing
                     }}
                   >
-                    Sample {card.type} Title
-                  </h4>
-                  <div 
-                    className="text-sm mb-2"
-                    style={{ color: card.style.metaColor }}
-                  >
-                    Published in Sample Journal • 2024 • Vol. 12, Issue 3
-                  </div>
-                  <div 
-                    className="text-sm"
-                    style={{ color: card.style.metaColor }}
-                  >
-                    Authors: J. Smith, K. Johnson, M. Davis
-                  </div>
-                  <div 
-                    className="mt-3 text-sm font-medium"
-                    style={{ color: card.style.accentColor }}
-                  >
-                    Open Access
+                    {/* Article/Book Content */}
+                    {(card.type === 'Article' || card.type === 'Book') && (
+                      <>
+                        {/* Access Status */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span 
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
+                            style={{ backgroundColor: card.style.statusColors?.fullAccess || card.style.accentColor }}
+                          >
+                            🔓 FULL ACCESS
+                          </span>
+                        </div>
+                        
+                        <h4 
+                          className="mb-2"
+                          style={{ 
+                            color: card.style.titleColor,
+                            fontSize: card.style.titleSize,
+                            fontFamily: card.style.titleFont,
+                            fontWeight: card.style.titleWeight
+                          }}
+                        >
+                          {card.type === 'Article' 
+                            ? "OpenVPN is Open to VPN Fingerprinting" 
+                            : "Pushing the Boundaries: Frontiers in Impactful OR/OM Research"
+                          }
+                        </h4>
+                        
+                        <div 
+                          className="text-sm mb-2"
+                          style={{ 
+                            color: card.style.metaColor,
+                            fontFamily: card.style.metaFont,
+                            fontSize: card.style.metaSize
+                          }}
+                        >
+                          {card.type === 'Article' 
+                            ? "Diwen Xue, Reethika Ramesh, Arham Jain, Michaelis Kallitsis"
+                            : "Cheryl Druehl, Wedad Elmaghraby, Douglas Shier, Harvey J. Greenberg"
+                          }
+                        </div>
+                        
+                        <div 
+                          className="text-sm mb-2"
+                          style={{ color: card.style.metaColor }}
+                        >
+                          {card.type === 'Article' 
+                            ? "Ahead of Print"
+                            : "1 Nov 2020 • ISBN: 978-0-9906153-4-7"
+                          }
+                        </div>
+                        
+                        {/* Action buttons for detailed layouts */}
+                        {card.style.layout === 'detailed' && (
+                          <div className="flex items-center gap-2 mt-3">
+                            <button 
+                              className="px-3 py-1 text-xs rounded border"
+                              style={{ 
+                                borderColor: card.style.accentColor,
+                                color: card.style.accentColor
+                              }}
+                            >
+                              Abstract
+                            </button>
+                            <button 
+                              className="px-3 py-1 text-xs rounded text-white"
+                              style={{ backgroundColor: card.style.accentColor }}
+                            >
+                              Full Text
+                            </button>
+                            <button 
+                              className="px-3 py-1 text-xs rounded border border-gray-300 text-gray-600"
+                            >
+                              PDF
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Issue Content */}
+                    {card.type === 'Issue' && (
+                      <>
+                        <h4 
+                          className="mb-2"
+                          style={{ 
+                            color: card.style.titleColor,
+                            fontSize: card.style.titleSize,
+                            fontFamily: card.style.titleFont,
+                            fontWeight: card.style.titleWeight
+                          }}
+                        >
+                          Digital Government: Research and Practice
+                        </h4>
+                        <div 
+                          className="text-sm mb-2"
+                          style={{ color: card.style.metaColor }}
+                        >
+                          Volume 5, Number 3 • 30 Sep 2024
+                        </div>
+                        <div 
+                          className="text-sm"
+                          style={{ color: card.style.metaColor }}
+                        >
+                          ISSN (online): 2639-0175
+                        </div>
+                        <a 
+                          href="#" 
+                          className="text-sm mt-2 inline-block"
+                          style={{ color: card.style.accentColor }}
+                        >
+                          http://doi.org/10.1145/DGOV
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -6020,10 +6314,10 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
             </svg>
           </div>
           <div>
-            <h4 className="text-amber-800 font-medium mb-1">Theme Foundation Cards</h4>
+            <h4 className="text-amber-800 font-medium mb-1">Design System Foundation</h4>
             <p className="text-amber-700 text-sm">
-              These publication cards are part of the <strong>{themeData.name}</strong> design system. 
-              Websites using this theme will inherit these card styles as their starting point and can then customize them in their individual Publication Cards settings.
+              These publication cards are optimized for <strong>{themeData.name}</strong> and designed for real-world publishing contexts: search results, issue listings, journal headers, and featured content displays. 
+              Websites using this theme inherit these cards as their foundation and can customize them for specific needs.
             </p>
           </div>
         </div>
