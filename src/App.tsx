@@ -5756,6 +5756,28 @@ function SectionRenderer({
 
 // Theme Publication Cards component - shows predefined OOB cards for each theme
 function ThemePublicationCards({ themeId }: { themeId: string }) {
+  // Mock cover images for realistic display
+  const mockCovers = {
+    // Journal Issue Covers
+    issues: {
+      digitalGovernment: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23667eea'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='40' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='16' font-weight='bold'%3EDigital Government%3C/text%3E%3Ctext x='100' y='60' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3EResearch and Practice%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='14' font-weight='bold'%3EVol. 5 No. 3%3C/text%3E%3Ctext x='100' y='110' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3ESep 2024%3C/text%3E%3Ccircle cx='100' cy='150' r='30' fill='white' opacity='0.2'/%3E%3Cpath d='M85 140 L100 155 L115 140 M100 155 L100 170' stroke='white' stroke-width='3' fill='none'/%3E%3Ctext x='100' y='200' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='10'%3EISSN: 2639-0175%3C/text%3E%3C/svg%3E",
+      computingEducation: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23ffeaa7'/%3E%3Cstop offset='100%25' style='stop-color:%23fab1a0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='40' text-anchor='middle' fill='%23333' font-family='Arial,sans-serif' font-size='16' font-weight='bold'%3EComputing Education%3C/text%3E%3Ctext x='100' y='60' text-anchor='middle' fill='%23333' font-family='Arial,sans-serif' font-size='12'%3ETheory and Practice%3C/text%3E%3Ctext x='100' y='90' text-anchor='middle' fill='%23333' font-family='Arial,sans-serif' font-size='14' font-weight='bold'%3EVol. 15 No. 2%3C/text%3E%3Ctext x='100' y='110' text-anchor='middle' fill='%23333' font-family='Arial,sans-serif' font-size='12'%3EMar 2024%3C/text%3E%3Crect x='70' y='130' width='60' height='40' rx='5' fill='%23333' opacity='0.1'/%3E%3Ctext x='100' y='155' text-anchor='middle' fill='%23333' font-family='monospace' font-size='16'%3E&lt;/&gt;%3C/text%3E%3Ctext x='100' y='200' text-anchor='middle' fill='%23333' font-family='Arial,sans-serif' font-size='10'%3EISSN: 1946-6226%3C/text%3E%3C/svg%3E",
+      scientificReports: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%2300b894'/%3E%3Cstop offset='100%25' style='stop-color:%2300a085'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='40' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='18' font-weight='bold'%3EScientific Reports%3C/text%3E%3Ctext x='100' y='80' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='14' font-weight='bold'%3EVol. 14%3C/text%3E%3Ctext x='100' y='100' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3EIssue 1234%3C/text%3E%3Ctext x='100' y='120' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3E15 Nov 2024%3C/text%3E%3Ccircle cx='100' cy='160' r='25' fill='white' opacity='0.2'/%3E%3Cpath d='M90 160 Q100 150 110 160 Q100 170 90 160' fill='white'/%3E%3Ctext x='100' y='210' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='10'%3ENature Portfolio%3C/text%3E%3Ctext x='100' y='225' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='10'%3EISSN: 2045-2322%3C/text%3E%3C/svg%3E"
+    },
+    // Book Covers  
+    books: {
+      operationsResearch: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23141e30'/%3E%3Cstop offset='100%25' style='stop-color:%23243b55'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='50' text-anchor='middle' fill='%23ffd700' font-family='Georgia,serif' font-size='18' font-weight='bold'%3EPushing the%3C/text%3E%3Ctext x='100' y='70' text-anchor='middle' fill='%23ffd700' font-family='Georgia,serif' font-size='18' font-weight='bold'%3EBoundaries%3C/text%3E%3Ctext x='100' y='100' text-anchor='middle' fill='white' font-family='Georgia,serif' font-size='14'%3EFrontiers in Impactful%3C/text%3E%3Ctext x='100' y='120' text-anchor='middle' fill='white' font-family='Georgia,serif' font-size='14'%3EOR/OM Research%3C/text%3E%3Crect x='30' y='140' width='140' height='2' fill='%23ffd700'/%3E%3Ctext x='100' y='170' text-anchor='middle' fill='white' font-family='Georgia,serif' font-size='12'%3EDruehl • Elmaghraby%3C/text%3E%3Ctext x='100' y='185' text-anchor='middle' fill='white' font-family='Georgia,serif' font-size='12'%3EShier • Greenberg%3C/text%3E%3Ctext x='100' y='220' text-anchor='middle' fill='%23ccc' font-family='Arial,sans-serif' font-size='11'%3EINFORMS%3C/text%3E%3Ctext x='100' y='240' text-anchor='middle' fill='%23ccc' font-family='Arial,sans-serif' font-size='9'%3EISBN: 978-0-9906153-4-7%3C/text%3E%3C/svg%3E",
+      dataScience: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23667eea'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='40' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='20' font-weight='bold'%3EData Science%3C/text%3E%3Ctext x='100' y='65' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='16'%3Efor Social Good%3C/text%3E%3Ccircle cx='60' cy='120' r='20' fill='white' opacity='0.3'/%3E%3Ccircle cx='140' cy='140' r='15' fill='white' opacity='0.4'/%3E%3Ccircle cx='100' cy='160' r='25' fill='white' opacity='0.2'/%3E%3Cline x1='60' y1='120' x2='100' y2='160' stroke='white' stroke-width='2' opacity='0.5'/%3E%3Cline x1='140' y1='140' x2='100' y2='160' stroke='white' stroke-width='2' opacity='0.5'/%3E%3Ctext x='100' y='200' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3ESmith, Johnson, Davis%3C/text%3E%3Ctext x='100' y='220' text-anchor='middle' fill='%23ddd' font-family='Arial,sans-serif' font-size='11'%3EMIT Press%3C/text%3E%3Ctext x='100' y='240' text-anchor='middle' fill='%23ddd' font-family='Arial,sans-serif' font-size='9'%3EISBN: 978-0-262-04567-8%3C/text%3E%3C/svg%3E",
+      aiEthics: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='260' viewBox='0 0 200 260'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23ff7675'/%3E%3Cstop offset='100%25' style='stop-color:%23fd79a8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='260' fill='url(%23bg)'/%3E%3Ctext x='100' y='40' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='18' font-weight='bold'%3EArtificial Intelligence%3C/text%3E%3Ctext x='100' y='65' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='16'%3E%26 Ethics%3C/text%3E%3Ctext x='100' y='85' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='14'%3EA Modern Approach%3C/text%3E%3Crect x='70' y='110' width='60' height='60' rx='30' fill='white' opacity='0.2'/%3E%3Ccircle cx='85' cy='135' r='3' fill='white'/%3E%3Ccircle cx='115' cy='135' r='3' fill='white'/%3E%3Cpath d='M80 155 Q100 165 120 155' stroke='white' stroke-width='2' fill='none'/%3E%3Ctext x='100' y='200' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='12'%3ERussell %26 Norvig%3C/text%3E%3Ctext x='100' y='220' text-anchor='middle' fill='%23ddd' font-family='Arial,sans-serif' font-size='11'%3EPearson%3C/text%3E%3Ctext x='100' y='240' text-anchor='middle' fill='%23ddd' font-family='Arial,sans-serif' font-size='9'%3EISBN: 978-0-13-461099-3%3C/text%3E%3C/svg%3E"
+    },
+    // Article thumbnails (for compact cards)
+    articles: {
+      vpnSecurity: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%23f8f9fa'/%3E%3Crect x='20' y='20' width='80' height='40' rx='5' fill='%23e9ecef' stroke='%23adb5bd'/%3E%3Ccircle cx='35' cy='35' r='4' fill='%23dc3545'/%3E%3Ccircle cx='60' cy='45' r='6' fill='%23007bff'/%3E%3Ccircle cx='85' cy='35' r='4' fill='%23ffc107'/%3E%3Cline x1='35' y1='35' x2='60' y2='45' stroke='%236c757d' stroke-width='1'/%3E%3Cline x1='60' y1='45' x2='85' y2='35' stroke='%236c757d' stroke-width='1'/%3E%3C/svg%3E",
+      languageModels: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%23f8f9fa'/%3E%3Crect x='10' y='15' width='100' height='50' rx='3' fill='%23fff'/%3E%3Ctext x='60' y='35' text-anchor='middle' font-family='monospace' font-size='12' fill='%23495057'%3ELLM%3C/text%3E%3Ctext x='60' y='50' text-anchor='middle' font-family='monospace' font-size='8' fill='%236c757d'%3ELanguage Model%3C/text%3E%3Crect x='20' y='20' width='15' height='6' fill='%2328a745'/%3E%3Crect x='40' y='20' width='10' height='6' fill='%23007bff'/%3E%3Crect x='55' y='20' width='20' height='6' fill='%23ffc107'/%3E%3Crect x='80' y='20' width='15' height='6' fill='%23dc3545'/%3E%3C/svg%3E",
+      performanceAnalysis: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%23f8f9fa'/%3E%3Cpolyline points='20,60 30,50 40,55 50,40 60,35 70,45 80,30 90,25 100,20' stroke='%23007bff' stroke-width='2' fill='none'/%3E%3Ccircle cx='30' cy='50' r='2' fill='%23007bff'/%3E%3Ccircle cx='50' cy='40' r='2' fill='%23007bff'/%3E%3Ccircle cx='70' cy='45' r='2' fill='%23007bff'/%3E%3Ccircle cx='90' cy='25' r='2' fill='%23007bff'/%3E%3Cline x1='15' y1='70' x2='105' y2='70' stroke='%23adb5bd'/%3E%3Cline x1='15' y1='70' x2='15' y2='10' stroke='%23adb5bd'/%3E%3C/svg%3E"
+    }
+  }
+
   // Predefined publication cards for each theme - designed for real-world contexts
   const themePublicationCards = {
     'modernist-theme': {
@@ -6183,56 +6205,64 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                       padding: card.style.spacing
                     }}
                   >
-                    {/* Article/Book Content */}
-                    {(card.type === 'Article' || card.type === 'Book') && (
+                    {/* Article Content */}
+                    {card.type === 'Article' && (
                       <>
-                        {/* Access Status */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <span 
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
-                            style={{ backgroundColor: card.style.statusColors?.fullAccess || card.style.accentColor }}
-                          >
-                            🔓 FULL ACCESS
-                          </span>
-                        </div>
-                        
-                        <h4 
-                          className="mb-2"
-                          style={{ 
-                            color: card.style.titleColor,
-                            fontSize: card.style.titleSize,
-                            fontFamily: card.style.titleFont,
-                            fontWeight: card.style.titleWeight
-                          }}
-                        >
-                          {card.type === 'Article' 
-                            ? "OpenVPN is Open to VPN Fingerprinting" 
-                            : "Pushing the Boundaries: Frontiers in Impactful OR/OM Research"
-                          }
-                        </h4>
-                        
-                        <div 
-                          className="text-sm mb-2"
-                          style={{ 
-                            color: card.style.metaColor,
-                            fontFamily: card.style.metaFont,
-                            fontSize: card.style.metaSize
-                          }}
-                        >
-                          {card.type === 'Article' 
-                            ? "Diwen Xue, Reethika Ramesh, Arham Jain, Michaelis Kallitsis"
-                            : "Cheryl Druehl, Wedad Elmaghraby, Douglas Shier, Harvey J. Greenberg"
-                          }
-                        </div>
-                        
-                        <div 
-                          className="text-sm mb-2"
-                          style={{ color: card.style.metaColor }}
-                        >
-                          {card.type === 'Article' 
-                            ? "Ahead of Print"
-                            : "1 Nov 2020 • ISBN: 978-0-9906153-4-7"
-                          }
+                        <div className="flex gap-3">
+                          {/* Article thumbnail for compact layouts */}
+                          {card.style.layout === 'compact' && (
+                            <div className="flex-shrink-0">
+                              <img 
+                                src={card.id.includes('modern') ? mockCovers.articles.vpnSecurity : 
+                                     card.id.includes('classic') ? mockCovers.articles.performanceAnalysis :
+                                     mockCovers.articles.languageModels} 
+                                alt="Article thumbnail" 
+                                className="w-16 h-10 object-cover rounded border"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex-1">
+                            {/* Access Status */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <span 
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
+                                style={{ backgroundColor: card.style.statusColors?.fullAccess || card.style.accentColor }}
+                              >
+                                🔓 FULL ACCESS
+                              </span>
+                            </div>
+                            
+                            <h4 
+                              className="mb-2"
+                              style={{ 
+                                color: card.style.titleColor,
+                                fontSize: card.style.titleSize,
+                                fontFamily: card.style.titleFont,
+                                fontWeight: card.style.titleWeight
+                              }}
+                            >
+                              OpenVPN is Open to VPN Fingerprinting
+                            </h4>
+                            
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ 
+                                color: card.style.metaColor,
+                                fontFamily: card.style.metaFont,
+                                fontSize: card.style.metaSize
+                              }}
+                            >
+                              Diwen Xue, Reethika Ramesh, Arham Jain, Michaelis Kallitsis
+                            </div>
+                            
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ color: card.style.metaColor }}
+                            >
+                              Ahead of Print
+                            </div>
+                          </div>
                         </div>
                         
                         {/* Action buttons for detailed layouts */}
@@ -6263,39 +6293,132 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                       </>
                     )}
 
+                    {/* Book Content */}
+                    {card.type === 'Book' && (
+                      <>
+                        <div className="flex gap-4">
+                          {/* Book Cover */}
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={card.id.includes('modern') ? mockCovers.books.dataScience :
+                                   card.id.includes('classic') ? mockCovers.books.operationsResearch :
+                                   mockCovers.books.aiEthics} 
+                              alt="Book cover" 
+                              className={`object-cover rounded border ${
+                                card.style.layout === 'featured' ? 'w-20 h-26' : 'w-12 h-16'
+                              }`}
+                            />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h4 
+                              className="mb-2"
+                              style={{ 
+                                color: card.style.titleColor,
+                                fontSize: card.style.titleSize,
+                                fontFamily: card.style.titleFont,
+                                fontWeight: card.style.titleWeight
+                              }}
+                            >
+                              {card.id.includes('modern') ? 'Data Science for Social Good' :
+                               card.id.includes('classic') ? 'Pushing the Boundaries: Frontiers in Impactful OR/OM Research' :
+                               'Artificial Intelligence & Ethics: A Modern Approach'}
+                            </h4>
+                            
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ 
+                                color: card.style.metaColor,
+                                fontFamily: card.style.metaFont,
+                                fontSize: card.style.metaSize
+                              }}
+                            >
+                              {card.id.includes('modern') ? 'Smith, Johnson, Davis' :
+                               card.id.includes('classic') ? 'Druehl, Elmaghraby, Shier, Greenberg' :
+                               'Russell & Norvig'}
+                            </div>
+                            
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ color: card.style.metaColor }}
+                            >
+                              {card.id.includes('modern') ? '2024 • ISBN: 978-0-262-04567-8' :
+                               card.id.includes('classic') ? '1 Nov 2020 • ISBN: 978-0-9906153-4-7' :
+                               '2024 • ISBN: 978-0-13-461099-3'}
+                            </div>
+                            
+                            {/* Publisher */}
+                            <div 
+                              className="text-sm font-medium"
+                              style={{ color: card.style.accentColor }}
+                            >
+                              {card.id.includes('modern') ? 'MIT Press' :
+                               card.id.includes('classic') ? 'INFORMS' :
+                               'Pearson'}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
                     {/* Issue Content */}
                     {card.type === 'Issue' && (
                       <>
-                        <h4 
-                          className="mb-2"
-                          style={{ 
-                            color: card.style.titleColor,
-                            fontSize: card.style.titleSize,
-                            fontFamily: card.style.titleFont,
-                            fontWeight: card.style.titleWeight
-                          }}
-                        >
-                          Digital Government: Research and Practice
-                        </h4>
-                        <div 
-                          className="text-sm mb-2"
-                          style={{ color: card.style.metaColor }}
-                        >
-                          Volume 5, Number 3 • 30 Sep 2024
+                        <div className="flex gap-4">
+                          {/* Issue Cover */}
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={card.id.includes('modern') ? mockCovers.issues.digitalGovernment :
+                                   card.id.includes('classic') ? mockCovers.issues.scientificReports :
+                                   mockCovers.issues.computingEducation} 
+                              alt="Issue cover" 
+                              className={`object-cover rounded border ${
+                                card.style.layout === 'banner' ? 'w-24 h-32' : 'w-16 h-20'
+                              }`}
+                            />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h4 
+                              className="mb-2"
+                              style={{ 
+                                color: card.style.titleColor,
+                                fontSize: card.style.titleSize,
+                                fontFamily: card.style.titleFont,
+                                fontWeight: card.style.titleWeight
+                              }}
+                            >
+                              {card.id.includes('modern') ? 'Digital Government: Research and Practice' :
+                               card.id.includes('classic') ? 'Scientific Reports' :
+                               'Computing Education: Theory and Practice'}
+                            </h4>
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ color: card.style.metaColor }}
+                            >
+                              {card.id.includes('modern') ? 'Volume 5, Number 3 • 30 Sep 2024' :
+                               card.id.includes('classic') ? 'Vol. 14, Issue 1234 • 15 Nov 2024' :
+                               'Volume 15, Number 2 • Mar 2024'}
+                            </div>
+                            <div 
+                              className="text-sm mb-2"
+                              style={{ color: card.style.metaColor }}
+                            >
+                              {card.id.includes('modern') ? 'ISSN (online): 2639-0175' :
+                               card.id.includes('classic') ? 'ISSN: 2045-2322' :
+                               'ISSN: 1946-6226'}
+                            </div>
+                            <a 
+                              href="#" 
+                              className="text-sm inline-block"
+                              style={{ color: card.style.accentColor }}
+                            >
+                              {card.id.includes('modern') ? 'http://doi.org/10.1145/DGOV' :
+                               card.id.includes('classic') ? 'http://doi.org/10.1038/s41598-024-xyz' :
+                               'http://doi.org/10.1145/CompEd.2024'}
+                            </a>
+                          </div>
                         </div>
-                        <div 
-                          className="text-sm"
-                          style={{ color: card.style.metaColor }}
-                        >
-                          ISSN (online): 2639-0175
-                        </div>
-                        <a 
-                          href="#" 
-                          className="text-sm mt-2 inline-block"
-                          style={{ color: card.style.accentColor }}
-                        >
-                          http://doi.org/10.1145/DGOV
-                        </a>
                       </>
                     )}
                   </div>
