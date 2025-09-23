@@ -4363,9 +4363,11 @@ function PageBuilder() {
 
     // Handle existing canvas item reordering (sections and standalone widgets) - EXCLUDE section-widgets!
     if (!active.data?.current?.type || 
+        active.data?.current?.type === 'canvas-section' ||
+        active.data?.current?.type === 'canvas-widget' ||
+        active.data?.current?.type === 'standalone-widget' ||
         (active.data?.current?.type !== 'library-widget' && 
-         active.data?.current?.type !== 'section-widget') ||
-        active.data?.current?.type === 'standalone-widget') {
+         active.data?.current?.type !== 'section-widget')) {
       console.log('🔄 Attempting canvas item reordering for canvas items')
       
       // For standalone-widget type, use the original sortable ID for comparison
@@ -5029,7 +5031,13 @@ function SortableItem({
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: item.id })
+  } = useSortable({ 
+    id: item.id,
+    data: {
+      type: isSection(item) ? 'canvas-section' : 'canvas-widget',
+      item: item
+    }
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
