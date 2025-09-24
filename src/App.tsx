@@ -3097,13 +3097,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'modernist-theme-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Modern theme</p>
-              </div>
-              <SiteManagerTemplates />
-            </div>
+            <SiteManagerTemplates />
           )}
           
           {/* Classicist Theme Views */}
@@ -3130,13 +3124,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'classicist-theme-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Classic theme</p>
-              </div>
-              <SiteManagerTemplates />
-            </div>
+            <SiteManagerTemplates />
           )}
           
           {/* Curator Theme Views */}
@@ -3163,13 +3151,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'curator-theme-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Templates</h2>
-                <p className="text-slate-600 mt-1">Foundational page templates included with this theme - inherited by all websites using the Curator theme</p>
-              </div>
-              <SiteManagerTemplates />
-            </div>
+            <SiteManagerTemplates />
           )}
 
           {/* Website-Specific Views */}
