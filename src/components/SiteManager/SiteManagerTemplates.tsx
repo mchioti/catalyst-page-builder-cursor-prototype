@@ -865,41 +865,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
             </div>
           </div>
 
-          {/* Category-specific insights */}
-          <div className="grid grid-cols-4 gap-4 mt-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-blue-700 text-sm font-medium">
-                {selectedCategory === 'website' && 'Infrastructure'} 
-                {selectedCategory === 'publication' && 'Content Generation'}
-                {selectedCategory === 'supporting' && 'Creative Freedom'}
-                {(selectedCategory === 'global' || selectedCategory === 'section') && 'Reusable Components'}
-              </div>
-              <div className="text-xs text-blue-600 mt-1">
-                {selectedCategory === 'website' && 'Consistent site foundation with selective customization'}
-                {selectedCategory === 'publication' && 'Enterprise-scale dynamic page generation'}
-                {selectedCategory === 'supporting' && 'Compete with generic page builders'}
-                {(selectedCategory === 'global' || selectedCategory === 'section') && 'Shared across multiple pages'}
-              </div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-green-700 text-sm font-medium">
-                {filteredTemplates.filter(t => t.status === 'active').length} Active
-              </div>
-              <div className="text-xs text-green-600 mt-1">Ready for use</div>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg">
-              <div className="text-orange-700 text-sm font-medium">
-                {filteredTemplates.reduce((sum, t) => sum + t.modifications, 0)} Modifications
-              </div>
-              <div className="text-xs text-orange-600 mt-1">Custom variations</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-purple-700 text-sm font-medium">
-                {filteredTemplates.reduce((sum, t) => sum + t.usageCount, 0)} Websites
-              </div>
-              <div className="text-xs text-purple-600 mt-1">Using these templates</div>
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
