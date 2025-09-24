@@ -855,13 +855,6 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
               <p className="text-gray-600 mt-1">
                 {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
               </p>
-              <p className="text-xs text-blue-600 mt-2">
-                📊 Usage shows websites using this theme: 2 of 3 total websites use Modern Theme
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Total Templates</div>
-              <div className="text-2xl font-bold text-gray-900">{filteredTemplates.length}</div>
             </div>
           </div>
 
