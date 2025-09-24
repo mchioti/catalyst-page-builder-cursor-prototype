@@ -833,49 +833,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       deviationScore: 22,
       lastThemeSync: new Date('2024-09-10')
-    },
-    {
-      id: 'art-quarterly',
-      name: 'Art Quarterly Review',
-      domain: 'https://artquarterly.org/',
-      themeId: 'curator-theme',
-      status: 'active' as const,
-      createdAt: new Date('2024-03-01'),
-      updatedAt: new Date('2024-12-15'),
-      modifications: [
-        {
-          path: 'gallery.layout.type',
-          originalValue: 'standard',
-          modifiedValue: 'masonry',
-          modifiedAt: 'website',
-          modifiedBy: 'design-director',
-          timestamp: new Date('2024-05-12'),
-          reason: 'Better showcase of visual content'
-        },
-        {
-          path: 'hero.image.size',
-          originalValue: 'medium',
-          modifiedValue: 'large',
-          modifiedAt: 'website',
-          modifiedBy: 'editorial-team',
-          timestamp: new Date('2024-07-20'),
-          reason: 'More visual impact for featured exhibitions'
-        }
-      ],
-      customSections: [],
-      branding: {
-        primaryColor: '#ef4444',
-        secondaryColor: '#f8fafc',
-        logoUrl: '/art-quarterly-logo.svg',
-        fontFamily: 'Playfair Display'
-      },
-      purpose: {
-        contentTypes: ['journals', 'books'],
-        hasSubjectOrganization: true,
-        publishingTypes: ['visual', 'art-focused']
-      },
-      deviationScore: 12,
-      lastThemeSync: new Date('2024-11-01')
     }
   ] as Website[],
   
@@ -2786,6 +2743,11 @@ function DesignConsole() {
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['wiley-main'])) // Default expand wiley-main
 
+  // Get only themes that are currently used by websites (for this publisher)
+  const usedThemes = themes.filter(theme => 
+    websites.some(website => website.themeId === theme.id)
+  )
+
   const toggleTheme = (themeId: string) => {
     const newExpanded = new Set(expandedThemes)
     if (newExpanded.has(themeId)) {
@@ -2852,7 +2814,7 @@ function DesignConsole() {
               </div>
             </div>
             <div className="space-y-1">
-              {themes.map((theme) => (
+              {usedThemes.map((theme) => (
                 <div key={theme.id}>
                   {/* Theme Header - Clickable to expand/collapse */}
                   <button
@@ -3020,7 +2982,7 @@ function DesignConsole() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Design System Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {themes.map((theme) => (
+                {usedThemes.map((theme) => (
                   <div key={theme.id} className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{theme.name}</h3>
                     <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
@@ -3285,37 +3247,6 @@ function DesignConsole() {
             </div>
           )}
 
-          {/* Art Quarterly Review */}
-          {siteManagerView === 'art-quarterly-settings' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-              </div>
-              <WebsiteSettings websiteId="art-quarterly" />
-            </div>
-          )}
-          {siteManagerView === 'art-quarterly-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design publication cards optimized for visual content, journals and art books with taxonomy features</p>
-              </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
-          {siteManagerView === 'art-quarterly-custom-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Art Quarterly Review - Custom Templates</h2>
-                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-              </div>
-            </div>
-          )}
 
           {/* Implementation Views */}
           {siteManagerView === 'websites' && <SiteManagerWebsites />}

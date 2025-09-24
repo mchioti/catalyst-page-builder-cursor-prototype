@@ -27,9 +27,6 @@ export type DesignConsoleView =
   | 'journal-of-science-settings'
   | 'journal-of-science-publication-cards'
   | 'journal-of-science-custom-templates'
-  | 'art-quarterly-settings'
-  | 'art-quarterly-publication-cards'
-  | 'art-quarterly-custom-templates'
   // System views
   | 'websites' 
   | 'settings'
