@@ -3097,7 +3097,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'modernist-theme-templates' && (
-            <SiteManagerTemplates />
+            <SiteManagerTemplates themeId="modernist-theme" />
           )}
           
           {/* Classicist Theme Views */}
@@ -3124,7 +3124,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'classicist-theme-templates' && (
-            <SiteManagerTemplates />
+            <SiteManagerTemplates themeId="classicist-theme" />
           )}
           
           {/* Curator Theme Views */}
@@ -3151,7 +3151,7 @@ function DesignConsole() {
             </div>
           )}
           {siteManagerView === 'curator-theme-templates' && (
-            <SiteManagerTemplates />
+            <SiteManagerTemplates themeId="curator-theme" />
           )}
 
           {/* Website-Specific Views */}

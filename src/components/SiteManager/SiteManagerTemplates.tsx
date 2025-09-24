@@ -699,15 +699,29 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
 ]
 
 interface SiteManagerTemplatesProps {
-  // Could accept store props if needed later
+  themeId?: string // Theme ID to display in header badge
 }
 
-export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
+export function SiteManagerTemplates({ themeId }: SiteManagerTemplatesProps) {
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft' | 'archived'>('all')
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+
+  // Map theme IDs to display names
+  const getThemeName = (themeId?: string): string => {
+    switch (themeId) {
+      case 'modernist-theme':
+        return 'Modern Theme'
+      case 'classicist-theme':
+        return 'Classic Theme'
+      case 'curator-theme':
+        return 'Curator Theme'
+      default:
+        return 'Modern Theme' // fallback
+    }
+  }
 
   const categories = [
     { key: 'website', label: 'Website Page Templates', description: 'Complete pages for the Publisher\'s site', type: 'page' },
@@ -757,10 +771,10 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         setCurrentView('page-builder')
         // Small delay to ensure state is updated before showing alert
         setTimeout(() => {
-          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Modern Theme\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
+          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
         }, 100)
       } else {
-        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Modern Theme\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
+        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
       }
     } else {
       // For other templates, show generic message
@@ -849,7 +863,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                   {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Modern Theme
+                  {getThemeName(themeId)}
                 </span>
               </div>
               <p className="text-gray-600 mt-1">
@@ -1175,7 +1189,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       )}
                       <div className="bg-blue-50 p-3 rounded text-center">
                         <div className="text-blue-700 font-medium">Template Usage</div>
-                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using Modern Theme</div>
+                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using {getThemeName(themeId)}</div>
                       </div>
                     </div>
                   )}
