@@ -27,7 +27,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Theme (Global sections)',
     description: 'Base theme with global sections like headers and footers',
     category: 'website',
-    inheritsFrom: 'Academic Publishing Theme',
+    inheritsFrom: 'Modern Theme',
     modifications: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-03-15'),
@@ -757,10 +757,10 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
         setCurrentView('page-builder')
         // Small delay to ensure state is updated before showing alert
         setTimeout(() => {
-          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
+          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Modern Theme\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
         }, 100)
       } else {
-        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Academic Publishing Theme\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
+        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: Modern Theme\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
       }
     } else {
       // For other templates, show generic message
@@ -800,7 +800,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
   // Helper function to determine indentation level based on inheritance
   const getIndentationLevel = (template: Template): number => {
     // Root themes (no indentation)
-    if (template.inheritsFrom === 'Academic Publishing Theme' || template.inheritsFrom === 'Corporate Publishing Theme') {
+    if (template.inheritsFrom === 'Modern Theme' || template.inheritsFrom === 'Classic Theme') {
       return 0
     }
     
@@ -849,14 +849,14 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                   {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Academic Publishing Theme
+                  Modern Theme
                 </span>
               </div>
               <p className="text-gray-600 mt-1">
                 {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
               </p>
               <p className="text-xs text-blue-600 mt-2">
-                📊 Usage shows websites using this theme: 2 of 3 total websites use Academic Publishing Theme
+                📊 Usage shows websites using this theme: 2 of 3 total websites use Modern Theme
               </p>
             </div>
             <div className="text-right">
@@ -1217,7 +1217,7 @@ export function SiteManagerTemplates({}: SiteManagerTemplatesProps) {
                       )}
                       <div className="bg-blue-50 p-3 rounded text-center">
                         <div className="text-blue-700 font-medium">Template Usage</div>
-                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using Academic Publishing Theme</div>
+                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using Modern Theme</div>
                       </div>
                     </div>
                   )}
