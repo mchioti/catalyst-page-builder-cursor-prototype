@@ -3585,15 +3585,6 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
     let widget: Widget
     
     switch (type) {
-      case 'html-block':
-        widget = {
-          id: crypto.randomUUID(),
-          type: 'html',
-          skin: 'minimal',
-          htmlContent: '',
-          title: 'HTML Widget'
-        } as HTMLWidget
-        break
       case 'code-block':
         widget = {
           id: crypto.randomUUID(),
@@ -3620,16 +3611,6 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
         <div className="space-y-3 mb-6">
           <h4 className="font-medium text-gray-700">DIY Widgets</h4>
           <div className="space-y-2">
-            <button
-              onClick={() => handleAddDIYWidget('html-block')}
-              className="block w-full text-left p-3 border border-orange-200 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Code className="w-4 h-4 text-orange-600" />
-                <span className="font-medium text-gray-900">HTML Block</span>
-              </div>
-              <p className="text-sm text-gray-600">Custom HTML, CSS and JavaScript</p>
-            </button>
             
             <button
               onClick={() => handleAddDIYWidget('code-block')}
