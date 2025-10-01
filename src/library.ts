@@ -62,7 +62,6 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
           { id: 'cta', label: 'Generic CTA', type: 'cta', description: 'Call to action', status: 'planned' },
           { id: 'feedback-form', label: 'Feedback Form', type: 'feedback-form', description: 'Collect feedback', status: 'planned', legacy: { axpCategory: 'General', internalName: 'literatumFeedbackWidget' } },
           { id: 'recommend-to-library', label: 'Recommend to Library', type: 'recommend-to-library', description: 'Recommend content', status: 'planned' },
-          { id: 'html-block', label: 'HTML Block', type: 'html-block', description: 'Custom HTML content', status: 'supported' },
         ],
       },
     ],

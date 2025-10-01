@@ -3314,7 +3314,7 @@ function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: Co
 }
 
 // Draggable Library Widget Component
-function DraggableLibraryWidget({ item }: { item: SpecItem }) {
+function DraggableLibraryWidget({ item, isDIY = false }: { item: SpecItem; isDIY?: boolean }) {
   const { addWidget } = usePageStore()
   const [dragStarted, setDragStarted] = useState(false)
   
@@ -3365,14 +3365,28 @@ function DraggableLibraryWidget({ item }: { item: SpecItem }) {
       onPointerDown={handlePointerDown}
       {...attributes}
       {...listeners}
-      className={`block w-full text-left p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50' : ''
-      }`}
+      className={`block w-full text-left rounded transition-colors cursor-grab active:cursor-grabbing ${
+        isDIY 
+          ? 'p-3 border border-orange-200 bg-orange-50 hover:bg-orange-100' 
+          : 'p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700'
+      } ${isDragging ? 'opacity-50' : ''}`}
       title="Click to add to canvas, or drag to drop into a section"
     >
-      {item.label}
-      {item.status === 'planned' && (
-        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+      {isDIY ? (
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Code className="w-4 h-4 text-orange-600" />
+            <span className="font-medium text-gray-900">{item.label}</span>
+          </div>
+          <p className="text-sm text-gray-600">{item.description}</p>
+        </div>
+      ) : (
+        <div>
+          {item.label}
+          {item.status === 'planned' && (
+            <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+          )}
+        </div>
       )}
     </button>
   )
@@ -3585,6 +3599,15 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
     let widget: Widget
     
     switch (type) {
+      case 'html-block':
+        widget = {
+          id: crypto.randomUUID(),
+          type: 'html',
+          skin: 'minimal',
+          htmlContent: '',
+          title: 'HTML Widget'
+        } as HTMLWidget
+        break
       case 'code-block':
         widget = {
           id: crypto.randomUUID(),
@@ -3611,7 +3634,16 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
         <div className="space-y-3 mb-6">
           <h4 className="font-medium text-gray-700">DIY Widgets</h4>
           <div className="space-y-2">
-            
+            <DraggableLibraryWidget 
+              item={{ 
+                id: 'html-block', 
+                label: 'HTML Block', 
+                type: 'html-block', 
+                description: 'Custom HTML, CSS and JavaScript',
+                status: 'supported'
+              }}
+              isDIY={true}
+            />
             <button
               onClick={() => handleAddDIYWidget('code-block')}
               className="block w-full text-left p-3 border border-orange-200 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
