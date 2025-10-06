@@ -1,4 +1,134 @@
 import React, { useState } from 'react'
+import { AlertTriangle, CheckCircle, Info } from 'lucide-react'
+
+// Color accessibility utility functions
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null
+}
+
+function getLuminance(r: number, g: number, b: number): number {
+  const [rs, gs, bs] = [r, g, b].map(c => {
+    c = c / 255
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  })
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+}
+
+function getContrastRatio(color1: string, color2: string): number {
+  const rgb1 = hexToRgb(color1)
+  const rgb2 = hexToRgb(color2)
+  
+  if (!rgb1 || !rgb2) return 1
+  
+  const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b)
+  const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b)
+  
+  const brightest = Math.max(lum1, lum2)
+  const darkest = Math.min(lum1, lum2)
+  
+  return (brightest + 0.05) / (darkest + 0.05)
+}
+
+function getAccessibilityStatus(ratio: number): {
+  level: 'excellent' | 'good' | 'poor' | 'fail'
+  wcagAA: boolean
+  wcagAAA: boolean
+  icon: React.ReactNode
+  message: string
+  color: string
+} {
+  if (ratio >= 7) {
+    return {
+      level: 'excellent',
+      wcagAA: true,
+      wcagAAA: true,
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      message: `${ratio.toFixed(1)}:1 - WCAG AAA ✓`,
+      color: 'text-green-600'
+    }
+  } else if (ratio >= 4.5) {
+    return {
+      level: 'good',
+      wcagAA: true,
+      wcagAAA: false,
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      message: `${ratio.toFixed(1)}:1 - WCAG AA ✓`,
+      color: 'text-green-600'
+    }
+  } else if (ratio >= 3) {
+    return {
+      level: 'poor',
+      wcagAA: false,
+      wcagAAA: false,
+      icon: <AlertTriangle className="w-4 h-4 text-orange-500" />,
+      message: `${ratio.toFixed(1)}:1 - Below WCAG AA`,
+      color: 'text-orange-500'
+    }
+  } else {
+    return {
+      level: 'fail',
+      wcagAA: false,
+      wcagAAA: false,
+      icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+      message: `${ratio.toFixed(1)}:1 - Poor contrast`,
+      color: 'text-red-500'
+    }
+  }
+}
+
+// Color input component with accessibility warnings
+function ColorInput({ 
+  label, 
+  value, 
+  onChange, 
+  backgroundColor, 
+  description 
+}: { 
+  label: string
+  value: string
+  onChange: (value: string) => void
+  backgroundColor?: string
+  description?: string
+}) {
+  const contrastRatio = backgroundColor ? getContrastRatio(value, backgroundColor) : null
+  const accessibilityStatus = contrastRatio ? getAccessibilityStatus(contrastRatio) : null
+  
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <div className="flex items-center gap-3">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      {description && (
+        <p className="text-xs text-gray-500 mt-1">{description}</p>
+      )}
+      {accessibilityStatus && (
+        <div className="flex items-center gap-2 mt-2">
+          {accessibilityStatus.icon}
+          <span className={`text-xs font-medium ${accessibilityStatus.color}`}>
+            {accessibilityStatus.message}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Types
 type Theme = {
@@ -61,7 +191,7 @@ interface ThemeEditorProps {
 
 export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
   const { themes, updateTheme } = usePageStore()
-  const [selectedTheme, setSelectedTheme] = useState<string>(themeId || 'modernist-theme')
+  const selectedTheme = themeId || 'modernist-theme'
   
   const currentTheme = themes.find(t => t.id === selectedTheme)
   
@@ -106,115 +236,59 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Colors</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.primary}
-                  onChange={(e) => updateThemeColors({ primary: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.primary}
-                  onChange={(e) => updateThemeColors({ primary: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Colors</h3>
+            <div title="Color contrast warnings help ensure WCAG accessibility compliance">
+              <Info className="w-4 h-4 text-gray-400" />
             </div>
+          </div>
+          <div className="space-y-6">
+            <ColorInput
+              label="Primary Color"
+              value={currentTheme.colors.primary}
+              onChange={(value) => updateThemeColors({ primary: value })}
+              backgroundColor={currentTheme.colors.background}
+              description="Used for buttons, links, and key interactive elements"
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.secondary}
-                  onChange={(e) => updateThemeColors({ secondary: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.secondary}
-                  onChange={(e) => updateThemeColors({ secondary: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <ColorInput
+              label="Secondary Color"
+              value={currentTheme.colors.secondary}
+              onChange={(value) => updateThemeColors({ secondary: value })}
+              backgroundColor={currentTheme.colors.background}
+              description="Supporting color for borders, dividers, and secondary elements"
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.accent}
-                  onChange={(e) => updateThemeColors({ accent: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.accent}
-                  onChange={(e) => updateThemeColors({ accent: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <ColorInput
+              label="Accent Color"
+              value={currentTheme.colors.accent}
+              onChange={(value) => updateThemeColors({ accent: value })}
+              backgroundColor={currentTheme.colors.background}
+              description="Highlight color for notifications, badges, and emphasis"
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.text}
-                  onChange={(e) => updateThemeColors({ text: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.text}
-                  onChange={(e) => updateThemeColors({ text: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <ColorInput
+              label="Text Color"
+              value={currentTheme.colors.text}
+              onChange={(value) => updateThemeColors({ text: value })}
+              backgroundColor={currentTheme.colors.background}
+              description="Main text color - should have high contrast with background"
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.background}
-                  onChange={(e) => updateThemeColors({ background: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.background}
-                  onChange={(e) => updateThemeColors({ background: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <ColorInput
+              label="Background Color"
+              value={currentTheme.colors.background}
+              onChange={(value) => updateThemeColors({ background: value })}
+              description="Main background color for pages and content areas"
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Muted Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={currentTheme.colors.muted}
-                  onChange={(e) => updateThemeColors({ muted: e.target.value })}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={currentTheme.colors.muted}
-                  onChange={(e) => updateThemeColors({ muted: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <ColorInput
+              label="Muted Color"
+              value={currentTheme.colors.muted}
+              onChange={(value) => updateThemeColors({ muted: value })}
+              backgroundColor={currentTheme.colors.background}
+              description="Subtle text color for captions, metadata, and secondary information"
+            />
           </div>
         </div>
 

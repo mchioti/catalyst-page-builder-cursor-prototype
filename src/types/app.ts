@@ -33,6 +33,29 @@ export type DesignConsoleView =
 
 export type EditingContext = 'template' | 'page' | 'website'
 
+export type NotificationType = 'info' | 'warning' | 'error' | 'success'
+
+export type Notification = {
+  id: string
+  type: NotificationType
+  title: string
+  message: string
+  timestamp: Date
+  autoClose?: boolean
+  closeAfter?: number // milliseconds
+}
+
+export type PageIssue = {
+  id: string
+  type: 'accessibility' | 'content' | 'link' | 'image' | 'seo'
+  severity: 'error' | 'warning' | 'info'
+  title: string
+  description: string
+  element?: string // widget/section ID
+  line?: number
+  suggestions?: string[]
+}
+
 export type PageState = {
   // Routing
   currentView: AppView
@@ -43,6 +66,16 @@ export type PageState = {
   setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
   setCurrentWebsiteId: (websiteId: string) => void
+  
+  // Notifications & Issues
+  notifications: Notification[]
+  pageIssues: PageIssue[]
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void
+  removeNotification: (id: string) => void
+  clearNotifications: () => void
+  addPageIssue: (issue: Omit<PageIssue, 'id'>) => void
+  removePageIssue: (id: string) => void
+  clearPageIssues: () => void
   
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections
