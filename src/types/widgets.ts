@@ -55,12 +55,18 @@ export type PublicationCardConfig = {
 
 export type PublicationListWidget = WidgetBase & { 
   type: 'publication-list'
-  contentSource: 'dynamic-query' | 'doi-list' | 'ai-generated'
+  contentSource: 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
   publications: any[] // JSON-LD ScholarlyArticle array
   cardConfig: PublicationCardConfig
   cardVariantId?: string // Reference to saved variant
   layout: 'list' | 'grid' | 'featured'
   maxItems?: number
+  // Schema objects source configuration
+  schemaSource?: {
+    selectionType: 'by-id' | 'by-type'
+    selectedIds?: string[] // Specific schema object IDs
+    selectedType?: string // Schema.org type to filter by
+  }
 }
 
 export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | PublicationListWidget

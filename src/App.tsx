@@ -370,6 +370,7 @@ function WidgetRenderer({
   activeWidgetToolbar?: string | null
   setActiveWidgetToolbar?: (value: string | null) => void
 }) {
+  const { schemaObjects } = usePageStore()
   const canvasItems = usePageStore((s) => s.canvasItems)
   const replaceCanvasItems = usePageStore((s) => s.replaceCanvasItems)
   
@@ -745,9 +746,32 @@ function WidgetRenderer({
       
     case 'publication-list':
       const publicationWidget = widget as PublicationListWidget
+      
+      // Get publications based on content source
+      let publications: any[] = []
+      if (publicationWidget.contentSource === 'schema-objects' && publicationWidget.schemaSource) {
+        const { selectionType, selectedIds, selectedType } = publicationWidget.schemaSource
+        
+        if (selectionType === 'by-type' && selectedType) {
+          // Get all objects of the selected type
+          publications = schemaObjects
+            .filter(obj => obj.type === selectedType)
+            .map(obj => JSON.parse(obj.jsonLD))
+        } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
+          // Get specific objects by ID
+          publications = selectedIds
+            .map(id => schemaObjects.find(obj => obj.id === id))
+            .filter(obj => obj !== undefined)
+            .map(obj => JSON.parse(obj!.jsonLD))
+        }
+      } else {
+        // Use default publications for other content sources
+        publications = publicationWidget.publications
+      }
+      
       const displayedPublications = publicationWidget.maxItems 
-        ? publicationWidget.publications.slice(0, publicationWidget.maxItems)
-        : publicationWidget.publications
+        ? publications.slice(0, publicationWidget.maxItems)
+        : publications
 
       return (
         <SkinWrap skin={widget.skin}>
@@ -768,11 +792,19 @@ function WidgetRenderer({
             </div>
 
             {/* Show more indicator if there are more articles */}
-            {publicationWidget.maxItems && publicationWidget.publications.length > publicationWidget.maxItems && (
+            {publicationWidget.maxItems && publications.length > publicationWidget.maxItems && (
               <div className="text-center pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Showing {publicationWidget.maxItems} of {publicationWidget.publications.length} publications
+                  Showing {publicationWidget.maxItems} of {publications.length} publications
                 </p>
+              </div>
+            )}
+            
+            {/* Show message if no publications from schema objects */}
+            {publicationWidget.contentSource === 'schema-objects' && publications.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No schema objects found for the current selection.</p>
+                <p className="text-sm mt-1">Create some schema objects or adjust your selection.</p>
               </div>
             )}
           </div>
@@ -4313,16 +4345,138 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
             <label className="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
             <select
               value={(widget as PublicationListWidget).contentSource}
-              onChange={(e) => updateWidget({ 
-                contentSource: e.target.value as 'dynamic-query' | 'doi-list' | 'ai-generated' 
-              })}
+              onChange={(e) => {
+                const newContentSource = e.target.value as 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
+                updateWidget({ 
+                  contentSource: newContentSource,
+                  // Reset schema source when changing content source
+                  ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
+                    schemaSource: {
+                      selectionType: 'by-type',
+                      selectedType: '',
+                      selectedIds: []
+                    }
+                  })
+                })
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="dynamic-query">Dynamic Query</option>
               <option value="doi-list">DOI List</option>
               <option value="ai-generated">AI Generated</option>
+              <option value="schema-objects">Schema Objects</option>
             </select>
           </div>
+          
+          {/* Schema Objects Selection (conditional) */}
+          {(widget as PublicationListWidget).contentSource === 'schema-objects' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Selection Method</label>
+                <select
+                  value={(widget as PublicationListWidget).schemaSource?.selectionType || 'by-type'}
+                  onChange={(e) => {
+                    const selectionType = e.target.value as 'by-id' | 'by-type'
+                    updateWidget({ 
+                      schemaSource: {
+                        selectionType,
+                        selectedIds: [],
+                        selectedType: ''
+                      }
+                    })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="by-type">By Type (All objects of a type)</option>
+                  <option value="by-id">By ID (Specific objects)</option>
+                </select>
+              </div>
+
+              {(widget as PublicationListWidget).schemaSource?.selectionType === 'by-type' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Schema Type</label>
+                  <select
+                    value={(widget as PublicationListWidget).schemaSource?.selectedType || ''}
+                    onChange={(e) => {
+                      const currentSchemaSource = (widget as PublicationListWidget).schemaSource
+                      updateWidget({ 
+                        schemaSource: {
+                          selectionType: currentSchemaSource?.selectionType || 'by-type',
+                          selectedType: e.target.value,
+                          selectedIds: currentSchemaSource?.selectedIds || []
+                        }
+                      })
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">-- Select type --</option>
+                    <option value="Article">Articles</option>
+                    <option value="BlogPosting">Blog Posts</option>
+                    <option value="NewsArticle">News Articles</option>
+                    <option value="Event">Events</option>
+                    <option value="Organization">Organizations</option>
+                    <option value="Person">People</option>
+                    <option value="Book">Books</option>
+                    <option value="Movie">Movies</option>
+                    <option value="Review">Reviews</option>
+                    <option value="Course">Courses</option>
+                    <option value="Recipe">Recipes</option>
+                    <option value="HowTo">How-To Guides</option>
+                  </select>
+                  
+                  {(widget as PublicationListWidget).schemaSource?.selectedType && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Will show all {schemaObjects.filter(obj => 
+                        obj.type === (widget as PublicationListWidget).schemaSource?.selectedType
+                      ).length} objects of type "{(widget as PublicationListWidget).schemaSource?.selectedType}"
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {(widget as PublicationListWidget).schemaSource?.selectionType === 'by-id' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Objects</label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                    {schemaObjects.length === 0 ? (
+                      <p className="text-sm text-gray-500 p-2">No schema objects created yet</p>
+                    ) : (
+                      schemaObjects.map((obj) => (
+                        <label key={obj.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
+                          <input
+                            type="checkbox"
+                            checked={(widget as PublicationListWidget).schemaSource?.selectedIds?.includes(obj.id) || false}
+                            onChange={(e) => {
+                              const currentIds = (widget as PublicationListWidget).schemaSource?.selectedIds || []
+                              const newIds = e.target.checked
+                                ? [...currentIds, obj.id]
+                                : currentIds.filter(id => id !== obj.id)
+                              const currentSchemaSource = (widget as PublicationListWidget).schemaSource
+                              updateWidget({ 
+                                schemaSource: {
+                                  selectionType: currentSchemaSource?.selectionType || 'by-id',
+                                  selectedType: currentSchemaSource?.selectedType || '',
+                                  selectedIds: newIds
+                                }
+                              })
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">{obj.name}</div>
+                            <div className="text-xs text-gray-500">{obj.type}</div>
+                          </div>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(widget as PublicationListWidget).schemaSource?.selectedIds?.length || 0} objects selected
+                  </p>
+                </div>
+              )}
+            </>
+          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
