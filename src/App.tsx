@@ -4403,7 +4403,8 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     addNotification 
   } = usePageStore()
   
-  const [selectedType, setSelectedType] = useState<SchemaOrgType>('Event')
+  const [selectedMainType, setSelectedMainType] = useState<string>('')
+  const [selectedSubType, setSelectedSubType] = useState<SchemaOrgType | ''>('')
   const [isCreating, setIsCreating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -4424,29 +4425,62 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   
   const handleCreateNew = () => {
     setIsCreating(true)
-    setSelectedType('Event') // Default to Event
+    setSelectedMainType('')
+    setSelectedSubType('')
     selectSchemaObject(null)
   }
   
   const handleCancelCreate = () => {
     setIsCreating(false)
+    setSelectedMainType('')
+    setSelectedSubType('')
     selectSchemaObject(null)
   }
   
-  const schemaTypeCategories = {
-    'Media Objects': ['AudioObject', 'ImageObject', 'VideoObject'] as SchemaOrgType[],
-    'Events': ['Event'] as SchemaOrgType[],
-    'People & Organizations': ['Person', 'Organization'] as SchemaOrgType[],
-    'Reviews': ['Review'] as SchemaOrgType[],
-    'Creative Works': ['CreativeWork'] as SchemaOrgType[],
-    'Articles & Content': ['Article', 'BlogPosting', 'NewsArticle'] as SchemaOrgType[],
-    'Books & Literature': ['Book'] as SchemaOrgType[],
-    'Entertainment': ['Movie', 'TVSeries', 'MusicRecording', 'Game'] as SchemaOrgType[],
-    'Art & Visual': ['Photograph', 'Painting', 'Sculpture'] as SchemaOrgType[],
-    'Educational': ['Course'] as SchemaOrgType[],
-    'Web & Digital': ['WebPage', 'WebSite', 'SoftwareApplication', 'Dataset'] as SchemaOrgType[],
-    'Guides & Instructions': ['Recipe', 'HowTo'] as SchemaOrgType[]
+  // Main schema types (most commonly used)
+  const mainSchemaTypes = [
+    { value: 'AudioObject', label: 'Audio Object', description: 'Audio files and content' },
+    { value: 'ImageObject', label: 'Image Object', description: 'Images and visual content' },
+    { value: 'VideoObject', label: 'Video Object', description: 'Video files and content' },
+    { value: 'Event', label: 'Event', description: 'Events and happenings' },
+    { value: 'Organization', label: 'Organization', description: 'Companies, institutions, groups' },
+    { value: 'Person', label: 'Person', description: 'People and individuals' },
+    { value: 'Review', label: 'Review', description: 'Reviews and ratings' },
+    { value: 'CreativeWork', label: 'Creative Work', description: 'Articles, books, media, and other creative content' }
+  ]
+
+  // Subtypes for CreativeWork (the more specific types)
+  const creativeWorkSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'Article', label: 'Article', description: 'News articles and investigative reports' },
+    { value: 'BlogPosting', label: 'Blog Post', description: 'Blog posts and personal articles' },
+    { value: 'NewsArticle', label: 'News Article', description: 'News articles with context and background' },
+    { value: 'Book', label: 'Book', description: 'Books and publications' },
+    { value: 'Movie', label: 'Movie', description: 'Films and movies' },
+    { value: 'TVSeries', label: 'TV Series', description: 'Television series and shows' },
+    { value: 'MusicRecording', label: 'Music Recording', description: 'Songs and music tracks' },
+    { value: 'Photograph', label: 'Photograph', description: 'Photographs and photo content' },
+    { value: 'Painting', label: 'Painting', description: 'Paintings and painted artwork' },
+    { value: 'Sculpture', label: 'Sculpture', description: 'Sculptures and 3D artwork' },
+    { value: 'SoftwareApplication', label: 'Software Application', description: 'Apps and software programs' },
+    { value: 'WebPage', label: 'Web Page', description: 'Individual web pages' },
+    { value: 'WebSite', label: 'Web Site', description: 'Complete websites' },
+    { value: 'Course', label: 'Course', description: 'Educational courses and classes' },
+    { value: 'Recipe', label: 'Recipe', description: 'Cooking recipes and instructions' },
+    { value: 'HowTo', label: 'How-To Guide', description: 'Step-by-step instructions' },
+    { value: 'Game', label: 'Game', description: 'Games and interactive content' },
+    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' }
+  ]
+  
+  // Get available subtypes based on main type selection
+  const getAvailableSubtypes = (mainType: string) => {
+    if (mainType === 'CreativeWork') {
+      return creativeWorkSubtypes
+    }
+    return []
   }
+  
+  const availableSubtypes = getAvailableSubtypes(selectedMainType)
+  const showSubtypeDropdown = availableSubtypes.length > 0
   
   return (
     <div className="space-y-4">
@@ -4478,8 +4512,8 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
       
       {/* Type Selector (shown when creating) */}
       {isCreating && (
-        <div className="p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center justify-between mb-3">
+        <div className="p-4 bg-gray-50 rounded-lg border space-y-4">
+          <div className="flex items-center justify-between">
             <h4 className="font-medium text-gray-900">Select Schema Type</h4>
             <button
               onClick={handleCancelCreate}
@@ -4489,29 +4523,78 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             </button>
           </div>
           
-          {Object.entries(schemaTypeCategories).map(([category, types]) => (
-            <div key={category} className="mb-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-2">{category}</h5>
-              <div className="grid grid-cols-2 gap-2">
-                {types.map((type) => {
-                  const definition = SCHEMA_DEFINITIONS[type]
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        onCreateSchema(type)
-                        setIsCreating(false)
-                      }}
-                      className="p-3 text-left border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                    >
-                      <div className="font-medium text-sm text-gray-900">{definition.label}</div>
-                      <div className="text-xs text-gray-500 mt-1">{definition.description}</div>
-                    </button>
-                  )
-                })}
-              </div>
+          {/* Main Type Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Content Type
+            </label>
+            <select
+              value={selectedMainType}
+              onChange={(e) => {
+                setSelectedMainType(e.target.value)
+                setSelectedSubType('') // Reset subtype when main type changes
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Select content type --</option>
+              {mainSchemaTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+            {selectedMainType && (
+              <p className="text-xs text-gray-500 mt-1">
+                {mainSchemaTypes.find(t => t.value === selectedMainType)?.description}
+              </p>
+            )}
+          </div>
+          
+          {/* Subtype Dropdown (conditional) */}
+          {showSubtypeDropdown && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Specific Type
+              </label>
+              <select
+                value={selectedSubType}
+                onChange={(e) => setSelectedSubType(e.target.value as SchemaOrgType)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Select specific type --</option>
+                {availableSubtypes.map((subtype) => (
+                  <option key={subtype.value} value={subtype.value}>
+                    {subtype.label}
+                  </option>
+                ))}
+              </select>
+              {selectedSubType && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {availableSubtypes.find(t => t.value === selectedSubType)?.description}
+                </p>
+              )}
             </div>
-          ))}
+          )}
+          
+          {/* Create Button */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                const typeToCreate = selectedSubType || selectedMainType as SchemaOrgType
+                if (typeToCreate) {
+                  onCreateSchema(typeToCreate)
+                  setIsCreating(false)
+                  setSelectedMainType('')
+                  setSelectedSubType('')
+                }
+              }}
+              disabled={!selectedMainType || (showSubtypeDropdown && !selectedSubType)}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Create {selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 
+                      selectedMainType ? mainSchemaTypes.find(t => t.value === selectedMainType)?.label : 'Object'}
+            </button>
+          </div>
         </div>
       )}
       
