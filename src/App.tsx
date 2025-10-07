@@ -214,8 +214,40 @@ function IssuesSidebar() {
 
 
 
-// Publication Card component
+// Publication Card component - Schema.org CreativeWork compliant
 function PublicationCard({ article, config }: { article: any, config: PublicationCardConfig }) {
+  
+  // Helper to get title from various schema.org properties
+  const getTitle = (item: any) => {
+    return item.headline || item.name || item.title || 'Untitled'
+  }
+  
+  // Helper to get subtitle from various schema.org properties  
+  const getSubtitle = (item: any) => {
+    return item.alternativeHeadline || item.subtitle || ''
+  }
+  
+  // Helper to get description/abstract from various schema.org properties
+  const getDescription = (item: any) => {
+    return item.abstract || item.description || ''
+  }
+  
+  // Helper to get identifier (DOI, ISBN, etc.) from schema.org
+  const getIdentifier = (item: any) => {
+    if (item.identifier) {
+      // Handle both string and PropertyValue formats
+      if (typeof item.identifier === 'string') return item.identifier
+      if (item.identifier.value) return item.identifier.value
+      if (Array.isArray(item.identifier)) {
+        const doi = item.identifier.find((id: any) => 
+          id.name === 'DOI' || id['@type'] === 'DOI' || (typeof id === 'string' && id.includes('doi.org'))
+        )
+        return doi?.value || doi || item.identifier[0]?.value || item.identifier[0]
+      }
+    }
+    return item.doi || '' // Fallback to legacy doi field
+  }
+  
   const getAccessStatusBadge = (accessMode: string) => {
     switch (accessMode) {
       case 'FULL_ACCESS':
@@ -236,11 +268,26 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
     return `${authors[0].name}, et al.`
   }
 
+  // Helper to get publication context (Journal, Blog, Book series, etc.)
   const formatPublicationInfo = (article: any) => {
     const parts = []
-    if (article.isPartOf?.isPartOf?.isPartOf?.name) {
+    
+    // Handle different CreativeWork types
+    if (article['@type'] === 'BlogPosting' && article.isPartOf?.name) {
+      // For blog posts, show blog name
+      parts.push(article.isPartOf.name)
+    } else if (article['@type'] === 'Book' && article.publisher?.name) {
+      // For books, show publisher
+      parts.push(article.publisher.name)
+    } else if (article.isPartOf?.isPartOf?.isPartOf?.name) {
+      // For scholarly articles, show journal name
       parts.push(article.isPartOf.isPartOf.isPartOf.name)
+    } else if (article.isPartOf?.name) {
+      // Generic container name
+      parts.push(article.isPartOf.name)
     }
+    
+    // Add volume/issue info for academic content
     if (config.showVolumeIssue && article.isPartOf?.isPartOf?.volumeNumber) {
       parts.push(`Vol. ${article.isPartOf.isPartOf.volumeNumber}`)
     }
@@ -250,7 +297,30 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
     if (config.showChapterPages && article.pageStart && article.pageEnd) {
       parts.push(`pp. ${article.pageStart}-${article.pageEnd}`)
     }
+    
     return parts.join(', ')
+  }
+  
+  // Helper to get content type from schema.org @type
+  const getContentType = (item: any) => {
+    const schemaType = item['@type'] || item.type || ''
+    const customType = item.contentType || ''
+    
+    // Map schema.org types to readable labels
+    const typeMap: { [key: string]: string } = {
+      'ScholarlyArticle': 'Research Article',
+      'BlogPosting': 'Blog Post', 
+      'NewsArticle': 'News Article',
+      'Article': 'Article',
+      'Book': 'Book',
+      'Course': 'Course',
+      'Event': 'Event',
+      'Person': 'Profile',
+      'Organization': 'Organization',
+      'Review': 'Review'
+    }
+    
+    return customType || typeMap[schemaType] || schemaType || 'Content'
   }
 
   const formatDate = (dateString: string) => {
@@ -267,9 +337,9 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
       {/* Header with type label and access status */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          {config.showContentTypeLabel && article.contentType && (
+          {config.showContentTypeLabel && (
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
-              {article.contentType}
+              {getContentType(article)}
             </span>
           )}
           {config.showAccessStatus && (
@@ -281,14 +351,14 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
       {/* Article/Chapter Title */}
       {config.showTitle && (
         <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
-          {article.headline}
+          {getTitle(article)}
         </h3>
       )}
       
       {/* Subtitle */}
-      {config.showSubtitle && article.alternativeHeadline && (
+      {config.showSubtitle && getSubtitle(article) && (
         <p className="text-blue-600 text-sm font-medium mb-3">
-          {article.alternativeHeadline}
+          {getSubtitle(article)}
         </p>
       )}
 
@@ -314,10 +384,41 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
       )}
 
       {/* Abstract */}
-      {config.showAbstract && article.abstract && (
+      {config.showAbstract && getDescription(article) && (
         <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-          {article.abstract.length > 150 ? `${article.abstract.substring(0, 150)}...` : article.abstract}
+          {getDescription(article).length > 150 ? `${getDescription(article).substring(0, 150)}...` : getDescription(article)}
         </p>
+      )}
+
+      {/* Keywords and Subjects (Schema.org common properties) */}
+      {config.showKeywords && (article.keywords || article.about) && (
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-1">
+            {/* Keywords (free text) */}
+            {article.keywords && (
+              Array.isArray(article.keywords) 
+                ? article.keywords.map((keyword: string, index: number) => (
+                    <span key={`keyword-${index}`} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      {keyword}
+                    </span>
+                  ))
+                : article.keywords.split(',').map((keyword: string, index: number) => (
+                    <span key={`keyword-${index}`} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      {keyword.trim()}
+                    </span>
+                  ))
+            )}
+            
+            {/* Subjects (controlled vocabulary) */}
+            {article.about && Array.isArray(article.about) && (
+              article.about.map((subject: any, index: number) => (
+                <span key={`subject-${index}`} className="text-xs bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200">
+                  {typeof subject === 'string' ? subject : subject.name || subject.value}
+                </span>
+              ))
+            )}
+          </div>
+        </div>
       )}
 
       {/* Action buttons and DOI */}
@@ -336,14 +437,14 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
           </div>
         )}
         
-        {config.showDOI && article.identifier?.value && (
+        {config.showDOI && getIdentifier(article) && (
           <a 
-            href={article.identifier.value} 
+            href={getIdentifier(article)} 
             className="text-blue-500 text-xs hover:text-blue-700 break-all"
             target="_blank" 
             rel="noopener noreferrer"
           >
-            {article.identifier.value}
+            {getIdentifier(article)}
           </a>
         )}
       </div>
@@ -1016,6 +1117,10 @@ const usePageStore = create<PageState>((set, get) => ({
         "datePublished": "2024-01-15",
         "abstract": "Learn how to create stunning websites with modern page builder tools and best practices. This comprehensive guide covers everything from basic concepts to advanced techniques.",
         "keywords": ["page builder", "web design", "no-code", "website creation"],
+        "about": [
+          {"@type": "Thing", "name": "Web Development"},
+          {"@type": "Thing", "name": "User Experience"}
+        ],
         "url": "https://example.com/blog/getting-started-page-builders",
         "isPartOf": {
           "@type": "Blog",
