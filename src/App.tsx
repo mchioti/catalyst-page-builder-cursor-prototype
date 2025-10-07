@@ -855,17 +855,13 @@ function WidgetRenderer({
         
         try {
           if (selectionType === 'by-type' && selectedType) {
-            console.log('Loading schema objects by type:', selectedType)
             // Get all objects of the selected type
             const filteredObjects = schemaObjects.filter(obj => obj.type === selectedType)
-            console.log('Found objects:', filteredObjects.length)
             
             publications = filteredObjects
               .map(obj => {
                 try {
-                  const parsed = JSON.parse(obj.jsonLD)
-                  console.log('Parsed schema object:', parsed)
-                  return parsed
+                  return JSON.parse(obj.jsonLD)
                 } catch (e) {
                   console.error('Failed to parse JSON-LD for object:', obj.id, e)
                   return null
@@ -873,9 +869,7 @@ function WidgetRenderer({
               })
               .filter(pub => pub !== null)
               
-            console.log('Final publications array:', publications)
           } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
-            console.log('Loading schema objects by IDs:', selectedIds)
             // Get specific objects by ID
             publications = selectedIds
               .map(id => schemaObjects.find(obj => obj.id === id))
@@ -4320,7 +4314,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
   onSaveSchema: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancelSchema: () => void
 }) {
-  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants } = usePageStore()
+  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects } = usePageStore()
   
   // Show schema form if creating or editing schema
   if (creatingSchemaType || selectedSchemaObject) {
