@@ -4434,11 +4434,18 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   }
   
   const schemaTypeCategories = {
-    'Content': ['BlogPosting', 'NewsArticle', 'CreativeWork', 'WebPage'] as SchemaOrgType[],
+    'Media Objects': ['AudioObject', 'ImageObject', 'VideoObject'] as SchemaOrgType[],
     'Events': ['Event'] as SchemaOrgType[],
-    'People & Organizations': ['Person', 'Organization', 'EducationalOrganization'] as SchemaOrgType[],
+    'People & Organizations': ['Person', 'Organization'] as SchemaOrgType[],
+    'Reviews': ['Review'] as SchemaOrgType[],
+    'Creative Works': ['CreativeWork'] as SchemaOrgType[],
+    'Articles & Content': ['Article', 'BlogPosting', 'NewsArticle'] as SchemaOrgType[],
+    'Books & Literature': ['Book'] as SchemaOrgType[],
+    'Entertainment': ['Movie', 'TVSeries', 'MusicRecording', 'Game'] as SchemaOrgType[],
+    'Art & Visual': ['Photograph', 'Painting', 'Sculpture'] as SchemaOrgType[],
     'Educational': ['Course'] as SchemaOrgType[],
-    'Other': ['Place', 'PostalAddress', 'ContactPoint'] as SchemaOrgType[]
+    'Web & Digital': ['WebPage', 'WebSite', 'SoftwareApplication', 'Dataset'] as SchemaOrgType[],
+    'Guides & Instructions': ['Recipe', 'HowTo'] as SchemaOrgType[]
   }
   
   return (
@@ -5315,10 +5322,10 @@ function PageBuilder() {
         }}
       >
         {/* Left Sidebar - Sticky */}
-        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex flex-col sticky top-0 h-screen">
-          {/* Tabs */}
-          <div className="border-b border-slate-200">
-            <div className="flex">
+        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex sticky top-0 h-screen">
+          {/* Vertical Tabs */}
+          <div className="w-16 border-r border-slate-200 bg-slate-50">
+            <div className="flex flex-col">
               {[
                 { id: 'library', label: 'Library', icon: BookOpen },
                 { id: 'sections', label: 'Sections', icon: Plus },
@@ -5328,21 +5335,22 @@ function PageBuilder() {
                 <button
                   key={tab.id}
                   onClick={() => setLeftSidebarTab(tab.id as LeftSidebarTab)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex flex-col items-center gap-1 px-2 py-4 text-xs font-medium border-l-2 transition-colors ${
                     leftSidebarTab === tab.id
                       ? 'border-blue-500 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-slate-100'
                   }`}
+                  title={tab.label}
                 >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
+                  <tab.icon className="w-5 h-5" />
+                  <span className="leading-none">{tab.label.split(' ')[0]}</span>
                 </button>
               ))}
             </div>
           </div>
           
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 flex flex-col overflow-y-auto p-4">
             {leftSidebarTab === 'library' && <WidgetLibrary />}
             {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
             {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
