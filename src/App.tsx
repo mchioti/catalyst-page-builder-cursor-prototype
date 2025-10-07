@@ -752,17 +752,46 @@ function WidgetRenderer({
       if (publicationWidget.contentSource === 'schema-objects' && publicationWidget.schemaSource) {
         const { selectionType, selectedIds, selectedType } = publicationWidget.schemaSource
         
-        if (selectionType === 'by-type' && selectedType) {
-          // Get all objects of the selected type
-          publications = schemaObjects
-            .filter(obj => obj.type === selectedType)
-            .map(obj => JSON.parse(obj.jsonLD))
-        } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
-          // Get specific objects by ID
-          publications = selectedIds
-            .map(id => schemaObjects.find(obj => obj.id === id))
-            .filter(obj => obj !== undefined)
-            .map(obj => JSON.parse(obj!.jsonLD))
+        try {
+          if (selectionType === 'by-type' && selectedType) {
+            console.log('Loading schema objects by type:', selectedType)
+            // Get all objects of the selected type
+            const filteredObjects = schemaObjects.filter(obj => obj.type === selectedType)
+            console.log('Found objects:', filteredObjects.length)
+            
+            publications = filteredObjects
+              .map(obj => {
+                try {
+                  const parsed = JSON.parse(obj.jsonLD)
+                  console.log('Parsed schema object:', parsed)
+                  return parsed
+                } catch (e) {
+                  console.error('Failed to parse JSON-LD for object:', obj.id, e)
+                  return null
+                }
+              })
+              .filter(pub => pub !== null)
+              
+            console.log('Final publications array:', publications)
+          } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
+            console.log('Loading schema objects by IDs:', selectedIds)
+            // Get specific objects by ID
+            publications = selectedIds
+              .map(id => schemaObjects.find(obj => obj.id === id))
+              .filter(obj => obj !== undefined)
+              .map(obj => {
+                try {
+                  return JSON.parse(obj!.jsonLD)
+                } catch (e) {
+                  console.error('Failed to parse JSON-LD for object:', obj!.id, e)
+                  return null
+                }
+              })
+              .filter(pub => pub !== null)
+          }
+        } catch (error) {
+          console.error('Error loading schema objects:', error)
+          publications = []
         }
       } else {
         // Use default publications for other content sources
@@ -902,7 +931,7 @@ function buildWidget(item: SpecItem): Widget {
 const usePageStore = create<PageState>((set, get) => ({
   // Routing  
   currentView: 'page-builder',
-  siteManagerView: 'overview',
+  siteManagerView: 'overview', 
   editingContext: 'page', // 'template' | 'page' | 'website'
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   setCurrentView: (view) => set({ currentView: view }),
@@ -951,7 +980,101 @@ const usePageStore = create<PageState>((set, get) => ({
   clearPageIssues: () => set({ pageIssues: [] }),
   
   // Schema.org Content Management
-  schemaObjects: [],
+  schemaObjects: [
+    {
+      id: 'blog-post-1',
+      type: 'BlogPosting' as SchemaOrgType,
+      name: 'Getting Started with Page Builders',
+      data: {
+        name: 'Getting Started with Page Builders',
+        headline: 'Getting Started with Page Builders: A Complete Guide',
+        author: {
+          '@type': 'Person',
+          name: 'Sarah Johnson',
+          jobTitle: 'UX Designer'
+        },
+        datePublished: '2024-01-15T10:00:00Z',
+        description: 'Learn how to create stunning websites with modern page builder tools and best practices.',
+        articleBody: 'Page builders have revolutionized web design by making it accessible to everyone...',
+        keywords: ['page builder', 'web design', 'no-code', 'website creation'],
+        wordCount: 1200,
+        url: 'https://example.com/blog/getting-started-page-builders'
+      },
+      jsonLD: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Getting Started with Page Builders: A Complete Guide",
+        "alternativeHeadline": "A beginner-friendly guide to modern web design tools",
+        "author": [{
+          "@type": "Person",
+          "name": "Sarah Johnson",
+          "affiliation": {
+            "@type": "Organization",
+            "name": "UX Design Studio"
+          }
+        }],
+        "datePublished": "2024-01-15",
+        "abstract": "Learn how to create stunning websites with modern page builder tools and best practices. This comprehensive guide covers everything from basic concepts to advanced techniques.",
+        "keywords": ["page builder", "web design", "no-code", "website creation"],
+        "url": "https://example.com/blog/getting-started-page-builders",
+        "isPartOf": {
+          "@type": "Blog",
+          "name": "Web Design Insights"
+        },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Blog Post"
+      }, null, 2),
+      tags: ['tutorial', 'beginner', 'web-design'],
+      createdAt: new Date('2024-01-15T10:00:00Z'),
+      updatedAt: new Date('2024-01-15T10:00:00Z')
+    },
+    {
+      id: 'author-1',
+      type: 'Person' as SchemaOrgType,
+      name: 'Dr. Maria Rodriguez',
+      data: {
+        name: 'Dr. Maria Rodriguez',
+        jobTitle: 'Senior Research Scientist',
+        affiliation: {
+          '@type': 'Organization',
+          name: 'Tech Innovation Lab',
+          url: 'https://techinnovationlab.org'
+        },
+        email: 'maria.rodriguez@techinnovationlab.org',
+        url: 'https://mariaresearch.com',
+        description: 'Leading researcher in AI and machine learning with over 15 years of experience.',
+        image: 'https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=MR',
+        sameAs: [
+          'https://linkedin.com/in/mariaresearch',
+          'https://twitter.com/mariarodriguez_ai',
+          'https://orcid.org/0000-0000-0000-0001'
+        ]
+      },
+      jsonLD: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Dr. Maria Rodriguez",
+        "jobTitle": "Senior Research Scientist",
+        "affiliation": {
+          "@type": "Organization",
+          "name": "Tech Innovation Lab",
+          "url": "https://techinnovationlab.org"
+        },
+        "email": "maria.rodriguez@techinnovationlab.org",
+        "url": "https://mariaresearch.com",
+        "description": "Leading researcher in AI and machine learning with over 15 years of experience.",
+        "image": "https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=MR",
+        "sameAs": [
+          "https://linkedin.com/in/mariaresearch",
+          "https://twitter.com/mariarodriguez_ai",
+          "https://orcid.org/0000-0000-0000-0001"
+        ]
+      }, null, 2),
+      tags: ['researcher', 'ai', 'academia'],
+      createdAt: new Date('2024-01-10T14:30:00Z'),
+      updatedAt: new Date('2024-01-10T14:30:00Z')
+    }
+  ],
   selectedSchemaObject: null,
   addSchemaObject: (object) => {
     const id = `schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -2349,13 +2472,13 @@ function SiteManagerWebsites() {
                         {(() => {
                           const publishingAction = getPublishingAction(website)
                           return (
-                            <button 
+                        <button 
                               onClick={() => handlePublishingAction(website.id, publishingAction.action)}
                               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${publishingAction.color}`}
-                            >
+                        >
                               <span className="mr-1">{publishingAction.icon}</span>
                               {publishingAction.label}
-                            </button>
+                        </button>
                           )
                         })()}
                         <button 
@@ -2743,7 +2866,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         { id: 'conferences', label: 'Conference Proceedings', description: 'Conference papers, abstracts, and presentation materials' }
                       ].map((contentType) => (
                         <label key={contentType.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                          <input
+                    <input
                             type="checkbox"
                             checked={websiteData.purpose.contentTypes.includes(contentType.id)}
                             onChange={(e) => {
@@ -2790,7 +2913,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
                           <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
-                        </div>
+                          </div>
                       </label>
                       
                       <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
@@ -2809,8 +2932,8 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                           <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
                         </div>
                       </label>
-                    </div>
-                  </div>
+                          </div>
+                        </div>
                   
                   {/* Selected Theme Preview */}
                   {selectedTheme && (
@@ -2818,14 +2941,14 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                       <div className="flex items-center gap-3 mb-3">
                         <Palette className="w-5 h-5 text-blue-600" />
                         <h5 className="font-medium text-blue-900">Selected Theme: {selectedTheme.name}</h5>
-                      </div>
+                        </div>
                       <p className="text-sm text-blue-700 mb-3">{selectedTheme.description}</p>
                       
                       {websiteData.purpose.contentTypes.length > 0 && (
                         <div className="mt-4 pt-3 border-t border-blue-200">
                           <div className="text-sm text-blue-800 font-medium mb-2">
                             Recommended features for your content types:
-                          </div>
+                        </div>
                           <div className="text-sm text-blue-700 space-y-1">
                             {websiteData.purpose.contentTypes.includes('journals') && (
                               <div>• Article templates, peer-review workflows, citation management</div>
@@ -2839,18 +2962,18 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                             {websiteData.purpose.hasSubjectOrganization && (
                               <div>• Subject taxonomy, advanced filtering, topic-based navigation</div>
                             )}
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   )}
-                </div>
-              </div>
+                      </div>
+                  )}
+                      </div>
+                      </div>
             )}
             
             {step === 3 && (
               <div className="space-y-6">
-                <div>
+                      <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
                   <p className="text-gray-600 mb-6">
                     Complete your website setup with naming and optional branding customizations.
@@ -2859,13 +2982,13 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                   {/* Website Name */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
-                    <input
-                      type="text"
+                        <input
+                          type="text"
                       value={websiteData.name}
                       onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       placeholder="e.g., Journal of Advanced Materials"
-                    />
+                        />
                     <p className="text-sm text-gray-500 mt-1">
                       Domain: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}
                     </p>
@@ -2881,49 +3004,49 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                           <div className="flex items-center gap-2 mt-1">
                             <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.primary}}></div>
                             <span className="text-gray-700">{selectedTheme.colors.primary}</span>
+                            </div>
                           </div>
-                        </div>
                         <div>
                           <span className="font-medium text-gray-600">Typography:</span>
                           <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
-                        </div>
                       </div>
-                    </div>
-                  )}
-                  
+                </div>
+              </div>
+            )}
+            
                   {/* Optional Branding Customizations */}
                   <div className="mb-6">
                     <h5 className="font-medium text-gray-900 mb-3">Custom Branding (Optional)</h5>
                     <p className="text-sm text-gray-600 mb-4">
                       Customize your brand colors and logo. Leave blank to use theme defaults.
                     </p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
-                        <input
-                          type="color"
-                          value={websiteData.branding.primaryColor}
-                          onChange={(e) => setWebsiteData({
-                            ...websiteData,
-                            branding: {...websiteData.branding, primaryColor: e.target.value}
-                          })}
+                      <input
+                        type="color"
+                        value={websiteData.branding.primaryColor}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, primaryColor: e.target.value}
+                        })}
                           className="w-full h-10 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div>
+                      />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
-                        <input
+                      <input
                           type="url"
-                          value={websiteData.branding.logoUrl}
-                          onChange={(e) => setWebsiteData({
-                            ...websiteData,
-                            branding: {...websiteData.branding, logoUrl: e.target.value}
-                          })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        value={websiteData.branding.logoUrl}
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
+                          branding: {...websiteData.branding, logoUrl: e.target.value}
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           placeholder="https://example.com/logo.svg"
-                        />
-                      </div>
+                      />
+                    </div>
                     </div>
                   </div>
                   
@@ -3022,7 +3145,7 @@ function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
   if (!currentTheme) {
     return <>{children}</>
   }
-  
+
   return (
     <div 
       className="theme-canvas"
@@ -3101,17 +3224,17 @@ function DesignConsole() {
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
           <nav className="p-4">
             {/* Overview */}
-            <button
+              <button
               onClick={() => setSiteManagerView('overview')}
-              className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                 siteManagerView === 'overview'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
               <Home className="w-5 h-5" />
               Overview
-            </button>
+              </button>
 
             {/* Themes Section */}
             <div className="mt-6 mb-3">
@@ -3346,7 +3469,7 @@ function DesignConsole() {
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">All Websites</h3>
                   <p className="text-gray-600 text-sm mb-4">Manage all {websites.length} websites and track modifications</p>
-                  <button
+                  <button 
                     onClick={() => setSiteManagerView('websites')}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
@@ -3463,8 +3586,8 @@ function DesignConsole() {
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Custom Templates</h2>
                 <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
               </div>
@@ -3495,12 +3618,12 @@ function DesignConsole() {
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Custom Templates</h2>
                 <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+                </div>
               </div>
-            </div>
           )}
 
           {/* Journal of Advanced Science */}
@@ -3666,9 +3789,9 @@ function DraggableLibraryWidget({ item, isDIY = false }: { item: SpecItem; isDIY
         </div>
       ) : (
         <div>
-          {item.label}
-          {item.status === 'planned' && (
-            <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+      {item.label}
+      {item.status === 'planned' && (
+        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
           )}
         </div>
       )}
@@ -5719,7 +5842,7 @@ function PageBuilder() {
                   </div>
                 </SortableContext>
               )}
-              </div>
+            </div>
             </CanvasThemeProvider>
           </div>
         </div>
