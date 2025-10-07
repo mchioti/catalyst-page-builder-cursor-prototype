@@ -1133,33 +1133,30 @@ const usePageStore = create<PageState>((set, get) => ({
       name: 'Dr. Maria Rodriguez',
       data: {
         name: 'Dr. Maria Rodriguez',
+        givenName: 'Maria',
+        familyName: 'Rodriguez',
         jobTitle: 'Senior Research Scientist',
-        affiliation: {
-          '@type': 'Organization',
-          name: 'Tech Innovation Lab',
-          url: 'https://techinnovationlab.org'
-        },
+        worksFor: 'Tech Innovation Lab',
         email: 'maria.rodriguez@techinnovationlab.org',
+        telephone: '+1-555-0123',
         url: 'https://mariaresearch.com',
         description: 'Leading researcher in AI and machine learning with over 15 years of experience.',
         image: 'https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=MR',
-        sameAs: [
-          'https://linkedin.com/in/mariaresearch',
-          'https://twitter.com/mariarodriguez_ai',
-          'https://orcid.org/0000-0000-0000-0001'
-        ]
+        sameAs: 'https://linkedin.com/in/mariaresearch\nhttps://twitter.com/mariarodriguez_ai\nhttps://orcid.org/0000-0000-0000-0001'
       },
       jsonLD: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Person",
         "name": "Dr. Maria Rodriguez",
+        "givenName": "Maria",
+        "familyName": "Rodriguez",
         "jobTitle": "Senior Research Scientist",
-        "affiliation": {
+        "worksFor": {
           "@type": "Organization",
-          "name": "Tech Innovation Lab",
-          "url": "https://techinnovationlab.org"
+          "name": "Tech Innovation Lab"
         },
         "email": "maria.rodriguez@techinnovationlab.org",
+        "telephone": "+1-555-0123",
         "url": "https://mariaresearch.com",
         "description": "Leading researcher in AI and machine learning with over 15 years of experience.",
         "image": "https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=MR",
