@@ -3,3 +3,4 @@
 export * from './widgets'
 export * from './templates' 
 export * from './app'
+export * from './schema'

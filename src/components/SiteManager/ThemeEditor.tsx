@@ -101,30 +101,30 @@ function ColorInput({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+          className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {accessibilityStatus && (
+          <div className="flex items-center gap-1 ml-2">
+            {accessibilityStatus.icon}
+            <span className={`text-xs font-medium ${accessibilityStatus.color}`}>
+              {accessibilityStatus.message}
+            </span>
+          </div>
+        )}
       </div>
       {description && (
         <p className="text-xs text-gray-500 mt-1">{description}</p>
-      )}
-      {accessibilityStatus && (
-        <div className="flex items-center gap-2 mt-2">
-          {accessibilityStatus.icon}
-          <span className={`text-xs font-medium ${accessibilityStatus.color}`}>
-            {accessibilityStatus.message}
-          </span>
-        </div>
       )}
     </div>
   )
@@ -242,7 +242,7 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
               <Info className="w-4 h-4 text-gray-400" />
             </div>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-3">
             <ColorInput
               label="Primary Color"
               value={currentTheme.colors.primary}

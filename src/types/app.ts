@@ -2,6 +2,7 @@
 
 import type { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardVariant, ContentBlockLayout } from './widgets'
 import type { BaseTemplate, Website, Theme, Modification } from './templates'
+import type { SchemaObject, SchemaOrgType } from './schema'
 
 export type AppView = 'page-builder' | 'design-console'
 
@@ -76,6 +77,16 @@ export type PageState = {
   addPageIssue: (issue: Omit<PageIssue, 'id'>) => void
   removePageIssue: (id: string) => void
   clearPageIssues: () => void
+  
+  // Schema.org Content Management
+  schemaObjects: SchemaObject[]
+  selectedSchemaObject: SchemaObject | null
+  addSchemaObject: (object: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
+  updateSchemaObject: (id: string, updates: Partial<SchemaObject>) => void
+  removeSchemaObject: (id: string) => void
+  selectSchemaObject: (id: string | null) => void
+  getSchemaObjectsByType: (type: SchemaOrgType) => SchemaObject[]
+  searchSchemaObjects: (query: string) => SchemaObject[]
   
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections

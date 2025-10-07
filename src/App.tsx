@@ -21,7 +21,9 @@ import {
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type BaseTemplate, type Website, type Theme,
   // App types
-  type AppView, type DesignConsoleView, type EditingContext, type PageState, type Notification, type PageIssue, type NotificationType
+  type AppView, type DesignConsoleView, type EditingContext, type PageState, type Notification, type PageIssue, type NotificationType,
+  // Schema.org types
+  type SchemaObject, type SchemaOrgType, type SchemaDefinition, SCHEMA_DEFINITIONS
 } from './types'
 import { 
   MOCK_SCHOLARLY_ARTICLES, 
@@ -915,6 +917,48 @@ const usePageStore = create<PageState>((set, get) => ({
     pageIssues: state.pageIssues.filter(i => i.id !== id)
   })),
   clearPageIssues: () => set({ pageIssues: [] }),
+  
+  // Schema.org Content Management
+  schemaObjects: [],
+  selectedSchemaObject: null,
+  addSchemaObject: (object) => {
+    const id = `schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const now = new Date()
+    const newObject: SchemaObject = {
+      ...object,
+      id,
+      createdAt: now,
+      updatedAt: now
+    }
+    set((state) => ({ 
+      schemaObjects: [...state.schemaObjects, newObject] 
+    }))
+  },
+  updateSchemaObject: (id, updates) => set((state) => ({
+    schemaObjects: state.schemaObjects.map(obj => 
+      obj.id === id ? { ...obj, ...updates, updatedAt: new Date() } : obj
+    )
+  })),
+  removeSchemaObject: (id) => set((state) => ({
+    schemaObjects: state.schemaObjects.filter(obj => obj.id !== id),
+    selectedSchemaObject: state.selectedSchemaObject?.id === id ? null : state.selectedSchemaObject
+  })),
+  selectSchemaObject: (id) => set((state) => ({
+    selectedSchemaObject: id ? state.schemaObjects.find(obj => obj.id === id) || null : null
+  })),
+  getSchemaObjectsByType: (type) => {
+    const state = get()
+    return state.schemaObjects.filter(obj => obj.type === type)
+  },
+  searchSchemaObjects: (query) => {
+    const state = get()
+    const lowerQuery = query.toLowerCase()
+    return state.schemaObjects.filter(obj => 
+      obj.name.toLowerCase().includes(lowerQuery) ||
+      obj.type.toLowerCase().includes(lowerQuery) ||
+      (obj.tags && obj.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
+    )
+  },
   
   // Page Builder
   canvasItems: INITIAL_CANVAS_ITEMS,
@@ -3477,7 +3521,7 @@ function DesignConsole() {
 }
 
 // Left sidebar tabs
-type LeftSidebarTab = 'library' | 'sections' | 'diy-zone'
+type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
 
 // Layout picker component
 function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: ContentBlockLayout) => void; onClose: () => void }) {
@@ -4010,8 +4054,28 @@ function PublicationCardsContent() {
 }
 
 // Properties Panel component
-function PropertiesPanel() {
+function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchema, onCancelSchema }: {
+  creatingSchemaType: SchemaOrgType | null
+  selectedSchemaObject: SchemaObject | null
+  onSaveSchema: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onCancelSchema: () => void
+}) {
   const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants } = usePageStore()
+  
+  // Show schema form if creating or editing schema
+  if (creatingSchemaType || selectedSchemaObject) {
+    const schemaType = creatingSchemaType || selectedSchemaObject?.type
+    if (schemaType) {
+      return (
+        <SchemaFormEditor
+          schemaType={schemaType}
+          initialData={selectedSchemaObject || undefined}
+          onSave={onSaveSchema}
+          onCancel={onCancelSchema}
+        />
+      )
+    }
+  }
   
   if (!selectedWidget) {
     return (
@@ -4327,15 +4391,494 @@ function PropertiesPanel() {
   )
 }
 
+// Schema Content Tab component
+function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrgType) => void }) {
+  const { 
+    schemaObjects, 
+    selectedSchemaObject, 
+    addSchemaObject, 
+    updateSchemaObject, 
+    removeSchemaObject, 
+    selectSchemaObject,
+    addNotification 
+  } = usePageStore()
+  
+  const [selectedType, setSelectedType] = useState<SchemaOrgType>('Event')
+  const [isCreating, setIsCreating] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Filter objects by search query
+  const filteredObjects = searchQuery 
+    ? schemaObjects.filter(obj => 
+        obj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        obj.type.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : schemaObjects
+  
+  // Group objects by type
+  const objectsByType = filteredObjects.reduce((acc, obj) => {
+    if (!acc[obj.type]) acc[obj.type] = []
+    acc[obj.type].push(obj)
+    return acc
+  }, {} as Record<SchemaOrgType, SchemaObject[]>)
+  
+  const handleCreateNew = () => {
+    setIsCreating(true)
+    setSelectedType('Event') // Default to Event
+    selectSchemaObject(null)
+  }
+  
+  const handleCancelCreate = () => {
+    setIsCreating(false)
+    selectSchemaObject(null)
+  }
+  
+  const schemaTypeCategories = {
+    'Content': ['BlogPosting', 'NewsArticle', 'CreativeWork', 'WebPage'] as SchemaOrgType[],
+    'Events': ['Event'] as SchemaOrgType[],
+    'People & Organizations': ['Person', 'Organization', 'EducationalOrganization'] as SchemaOrgType[],
+    'Educational': ['Course'] as SchemaOrgType[],
+    'Other': ['Place', 'PostalAddress', 'ContactPoint'] as SchemaOrgType[]
+  }
+  
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Schema Content</h3>
+          <p className="text-sm text-gray-500">Create and manage structured data objects</p>
+        </div>
+        <button
+          onClick={handleCreateNew}
+          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New
+        </button>
+      </div>
+      
+      {/* Search */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search schema objects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      
+      {/* Type Selector (shown when creating) */}
+      {isCreating && (
+        <div className="p-4 bg-gray-50 rounded-lg border">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-gray-900">Select Schema Type</h4>
+            <button
+              onClick={handleCancelCreate}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {Object.entries(schemaTypeCategories).map(([category, types]) => (
+            <div key={category} className="mb-4">
+              <h5 className="text-sm font-medium text-gray-700 mb-2">{category}</h5>
+              <div className="grid grid-cols-2 gap-2">
+                {types.map((type) => {
+                  const definition = SCHEMA_DEFINITIONS[type]
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        onCreateSchema(type)
+                        setIsCreating(false)
+                      }}
+                      className="p-3 text-left border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                    >
+                      <div className="font-medium text-sm text-gray-900">{definition.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{definition.description}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Schema Objects Archive */}
+      {!isCreating && (
+        <div className="space-y-3">
+          <h4 className="font-medium text-gray-900">
+            Your Schema Objects ({schemaObjects.length})
+          </h4>
+          
+          {schemaObjects.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>No schema objects created yet</p>
+              <p className="text-sm">Click "New" to create your first schema object</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(objectsByType).map(([type, objects]) => (
+                <div key={type}>
+                  <h5 className="text-sm font-medium text-gray-700 mb-2">
+                    {SCHEMA_DEFINITIONS[type as SchemaOrgType]?.label || type} ({objects.length})
+                  </h5>
+                  <div className="space-y-2">
+                    {objects.map((obj) => (
+                      <div
+                        key={obj.id}
+                        className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                          selectedSchemaObject?.id === obj.id
+                            ? 'border-blue-300 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={() => selectSchemaObject(obj.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h6 className="font-medium text-sm text-gray-900 truncate">{obj.name}</h6>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Created {obj.createdAt.toLocaleDateString()}
+                            </p>
+                            {obj.tags && obj.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {obj.tags.map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeSchemaObject(obj.id)
+                              addNotification({
+                                type: 'success',
+                                title: 'Schema Object Deleted',
+                                message: `${obj.name} has been deleted`
+                              })
+                            }}
+                            className="text-gray-400 hover:text-red-500 ml-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Schema Form Editor component
+function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
+  schemaType: SchemaOrgType
+  initialData?: Partial<SchemaObject>
+  onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onCancel: () => void
+}) {
+  const definition = SCHEMA_DEFINITIONS[schemaType]
+  const [formData, setFormData] = useState<Record<string, any>>(initialData?.data || {})
+  const [objectName, setObjectName] = useState(initialData?.name || '')
+  const [tags, setTags] = useState<string[]>(initialData?.tags || [])
+  const [tagInput, setTagInput] = useState('')
+  
+  // Generate JSON-LD from form data
+  const generateJsonLD = () => {
+    const jsonLD = {
+      "@context": "https://schema.org",
+      "@type": schemaType,
+      ...formData
+    }
+    return JSON.stringify(jsonLD, null, 2)
+  }
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validate required fields
+    const missingRequired = definition.requiredProperties.filter(
+      prop => !formData[prop] || formData[prop].toString().trim() === ''
+    )
+    
+    if (missingRequired.length > 0) {
+      alert(`Please fill in required fields: ${missingRequired.join(', ')}`)
+      return
+    }
+    
+    onSave({
+      type: schemaType,
+      name: objectName || formData.name || `${definition.label} ${Date.now()}`,
+      data: formData,
+      jsonLD: generateJsonLD(),
+      tags
+    })
+  }
+  
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()])
+      setTagInput('')
+    }
+  }
+  
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove))
+  }
+  
+  const renderFormField = (property: any) => {
+    const value = formData[property.name] || ''
+    
+    const updateField = (newValue: any) => {
+      setFormData(prev => ({
+        ...prev,
+        [property.name]: newValue
+      }))
+    }
+    
+    switch (property.type) {
+      case 'textarea':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => updateField(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
+            placeholder={property.placeholder}
+          />
+        )
+      
+      case 'select':
+        return (
+          <select
+            value={value}
+            onChange={(e) => updateField(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Select {property.label} --</option>
+            {property.options?.map((option: string) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        )
+      
+      case 'boolean':
+        return (
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={(e) => updateField(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">Yes</span>
+          </label>
+        )
+      
+      case 'number':
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => updateField(e.target.value ? parseFloat(e.target.value) : '')}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={property.placeholder}
+            min={property.min}
+            max={property.max}
+          />
+        )
+      
+      default: // text, url, email, tel, date, datetime-local
+        return (
+          <input
+            type={property.type}
+            value={value}
+            onChange={(e) => updateField(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={property.placeholder}
+            pattern={property.pattern}
+          />
+        )
+    }
+  }
+  
+  return (
+    <div className="p-4 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{definition.label}</h3>
+          <p className="text-sm text-gray-500">{definition.description}</p>
+        </div>
+        <button
+          onClick={onCancel}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Object Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Object Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={objectName}
+            onChange={(e) => setObjectName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Give this object a descriptive name"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">Internal name for managing this object</p>
+        </div>
+        
+        {/* Schema Properties */}
+        {definition.properties.map((property) => (
+          <div key={property.name}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {property.label}
+              {property.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            {renderFormField(property)}
+            {property.description && (
+              <p className="text-xs text-gray-500 mt-1">{property.description}</p>
+            )}
+          </div>
+        ))}
+        
+        {/* Tags */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add a tag..."
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+            />
+            <button
+              type="button"
+              onClick={handleAddTag}
+              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
+            >
+              Add
+            </button>
+          </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* JSON-LD Preview */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">JSON-LD Preview</label>
+          <pre className="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-xs overflow-auto max-h-40">
+            {generateJsonLD()}
+          </pre>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors"
+          >
+            {initialData ? 'Update' : 'Save'} Object
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 function PageBuilder() {
   const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification } = usePageStore()
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  
+  // Schema editing state
+  const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
+  
+  const handleCreateSchema = (type: SchemaOrgType) => {
+    setCreatingSchemaType(type)
+    selectWidget(null) // Clear widget selection
+    selectSchemaObject(null) // Clear schema selection to trigger new form
+  }
+  
+  const handleSaveSchema = (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (selectedSchemaObject) {
+      // Updating existing schema
+      updateSchemaObject(selectedSchemaObject.id, data)
+      addNotification({
+        type: 'success',
+        title: 'Schema Updated',
+        message: `${data.name} has been updated successfully`
+      })
+    } else {
+      // Creating new schema
+      addSchemaObject(data)
+      addNotification({
+        type: 'success',
+        title: 'Schema Created',
+        message: `${data.name} has been created successfully`
+      })
+    }
+    setCreatingSchemaType(null)
+    selectSchemaObject(null)
+  }
+  
+  const handleCancelSchema = () => {
+    setCreatingSchemaType(null)
+    selectSchemaObject(null)
+  }
   
   
   const handleSetActiveSectionToolbar = (value: string | null) => {
@@ -4779,7 +5322,8 @@ function PageBuilder() {
               {[
                 { id: 'library', label: 'Library', icon: BookOpen },
                 { id: 'sections', label: 'Sections', icon: Plus },
-                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb }
+                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb },
+                { id: 'schema-content', label: 'Schema', icon: FileText }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -4802,6 +5346,7 @@ function PageBuilder() {
             {leftSidebarTab === 'library' && <WidgetLibrary />}
             {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
             {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
+            {leftSidebarTab === 'schema-content' && <SchemaContentTab onCreateSchema={handleCreateSchema} />}
           </div>
         </div>
 
@@ -4940,7 +5485,12 @@ function PageBuilder() {
           <h2 className="font-semibold text-slate-800">Properties</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <PropertiesPanel />
+          <PropertiesPanel 
+            creatingSchemaType={creatingSchemaType}
+            selectedSchemaObject={selectedSchemaObject}
+            onSaveSchema={handleSaveSchema}
+            onCancelSchema={handleCancelSchema}
+          />
         </div>
       </div>
 
