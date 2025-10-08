@@ -69,7 +69,23 @@ export type PublicationListWidget = WidgetBase & {
   }
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | PublicationListWidget
+export type PublicationDetailsWidget = WidgetBase & {
+  type: 'publication-details'
+  contentSource: 'doi' | 'ai-generated' | 'schema-objects' | 'context'
+  publication: any // JSON-LD Publication object
+  cardConfig: PublicationCardConfig
+  cardVariantId?: string // Reference to saved variant
+  layout: 'default' | 'compact' | 'hero' | 'sidebar'
+  // Source-specific configuration
+  doiSource?: {
+    doi: string // Specific DOI to fetch
+  }
+  schemaSource?: {
+    selectedId: string // Single schema object ID
+  }
+}
+
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | PublicationListWidget | PublicationDetailsWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical'

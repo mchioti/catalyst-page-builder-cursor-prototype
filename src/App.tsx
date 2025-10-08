@@ -17,7 +17,7 @@ import {
   // Widget types
   type Widget, type WidgetSection, type LayoutArea, type CanvasItem, isSection, 
   type CustomSection, type PublicationCardVariant, type PublicationCardConfig, type ContentBlockLayout,
-  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type PublicationListWidget,
+  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type BaseTemplate, type Website, type Theme,
   // App types
@@ -935,6 +935,59 @@ function WidgetRenderer({
         </SkinWrap>
       )
       
+    case 'publication-details':
+      const publicationDetailsWidget = widget as PublicationDetailsWidget
+      let publication: any = null
+      
+      // Get publication based on content source
+      try {
+        if (publicationDetailsWidget.contentSource === 'schema-objects' && publicationDetailsWidget.schemaSource?.selectedId) {
+          // Get single schema object by ID
+          const schemaObject = schemaObjects.find(obj => obj.id === publicationDetailsWidget.schemaSource?.selectedId)
+          if (schemaObject) {
+            publication = JSON.parse(schemaObject.jsonLD)
+          }
+        } else if (publicationDetailsWidget.contentSource === 'doi' && publicationDetailsWidget.doiSource?.doi) {
+          // For DOI source, use mock data (in real app would fetch from DOI API)
+          publication = MOCK_SCHOLARLY_ARTICLES.find(article => 
+            article.identifier?.value?.includes(publicationDetailsWidget.doiSource?.doi || '')
+          ) || MOCK_SCHOLARLY_ARTICLES[0]
+        } else if (publicationDetailsWidget.contentSource === 'context') {
+          // For context source, use first mock article (in real app would get from page context)
+          publication = MOCK_SCHOLARLY_ARTICLES[0]
+        } else {
+          // Use widget's stored publication or fallback
+          publication = publicationDetailsWidget.publication || MOCK_SCHOLARLY_ARTICLES[0]
+        }
+      } catch (error) {
+        console.error('Error loading publication details:', error)
+        publication = MOCK_SCHOLARLY_ARTICLES[0] // Fallback
+      }
+
+      return (
+        <SkinWrap skin={widget.skin}>
+          <div className={`${
+            publicationDetailsWidget.layout === 'hero' 
+              ? 'bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-lg' 
+              : publicationDetailsWidget.layout === 'sidebar'
+              ? 'flex gap-6' 
+              : ''
+          }`}>
+            {publication ? (
+              <PublicationCard
+                article={publication}
+                config={publicationDetailsWidget.cardConfig}
+              />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No publication data available</p>
+                <p className="text-sm mt-1">Please configure the data source or select a publication</p>
+              </div>
+            )}
+          </div>
+        </SkinWrap>
+      )
+      
     default:
       return (
         <SkinWrap skin={(widget as WidgetBase).skin}>
@@ -1011,6 +1064,16 @@ function buildWidget(item: SpecItem): Widget {
         maxItems: 6
       } as PublicationListWidget;
     
+    case 'publication-details':
+      return {
+        ...baseWidget,
+        type: 'publication-details',
+        contentSource: 'context',
+        publication: MOCK_SCHOLARLY_ARTICLES[0], // Use first article as default
+        cardConfig: DEFAULT_PUBLICATION_CARD_CONFIG,
+        cardVariantId: 'compact-variant',
+        layout: 'default'
+      } as PublicationDetailsWidget;
     
     default:
       // Fallback to text widget
@@ -5008,6 +5071,134 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                 const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
                 setCurrentView('design-console')
                 // Navigate to the specific website's publication cards based on current editing context
+                setSiteManagerView(`${currentWebsiteId}-publication-cards` as DesignConsoleView)
+              }}
+              className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
+            >
+              → Configure Publication Cards
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'publication-details' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
+            <select
+              value={(widget as PublicationDetailsWidget).contentSource}
+              onChange={(e) => {
+                const newContentSource = e.target.value as 'doi' | 'ai-generated' | 'schema-objects' | 'context'
+                updateWidget({ 
+                  contentSource: newContentSource,
+                  // Reset source-specific config when changing content source
+                  ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
+                    schemaSource: { selectedId: '' }
+                  }),
+                  ...(newContentSource !== 'doi' ? { doiSource: undefined } : {
+                    doiSource: { doi: '' }
+                  })
+                })
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="context">Page Context</option>
+              <option value="doi">DOI</option>
+              <option value="ai-generated">AI Generated</option>
+              <option value="schema-objects">Schema Objects</option>
+            </select>
+          </div>
+          
+          {/* DOI Input (conditional) */}
+          {(widget as PublicationDetailsWidget).contentSource === 'doi' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">DOI</label>
+              <input
+                type="text"
+                value={(widget as PublicationDetailsWidget).doiSource?.doi || ''}
+                onChange={(e) => updateWidget({ 
+                  doiSource: { doi: e.target.value }
+                })}
+                placeholder="10.1145/3695868"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter the DOI to fetch publication details</p>
+            </div>
+          )}
+          
+          {/* Schema Objects Selection (conditional) */}
+          {(widget as PublicationDetailsWidget).contentSource === 'schema-objects' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Publication</label>
+              <select
+                value={(widget as PublicationDetailsWidget).schemaSource?.selectedId || ''}
+                onChange={(e) => updateWidget({ 
+                  schemaSource: { selectedId: e.target.value }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">-- Select publication --</option>
+                {schemaObjects.map((obj) => (
+                  <option key={obj.id} value={obj.id}>
+                    {obj.name} ({obj.type})
+                  </option>
+                ))}
+              </select>
+              
+              {(widget as PublicationDetailsWidget).schemaSource?.selectedId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Selected: {schemaObjects.find(obj => 
+                    obj.id === (widget as PublicationDetailsWidget).schemaSource?.selectedId
+                  )?.name}
+                </p>
+              )}
+              
+              {schemaObjects.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">No schema objects available. Create some in the Schema Content tab.</p>
+              )}
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
+            <select
+              value={(widget as PublicationDetailsWidget).layout}
+              onChange={(e) => updateWidget({ 
+                layout: e.target.value as 'default' | 'compact' | 'hero' | 'sidebar'
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="default">Default</option>
+              <option value="compact">Compact</option>
+              <option value="hero">Hero</option>
+              <option value="sidebar">Sidebar</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
+            <select
+              value={(widget as PublicationDetailsWidget).cardVariantId || 'default'}
+              onChange={(e) => {
+                const variantId = e.target.value === 'default' ? undefined : e.target.value
+                const selectedVariant = publicationCardVariants.find(v => v.id === variantId)
+                const cardConfig = selectedVariant ? selectedVariant.config : DEFAULT_PUBLICATION_CARD_CONFIG
+                updateWidget({ 
+                  cardVariantId: variantId,
+                  cardConfig: cardConfig
+                })
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
+            >
+              <option value="default">Default</option>
+              {publicationCardVariants.map(variant => (
+                <option key={variant.id} value={variant.id}>{variant.name}</option>
+              ))}
+            </select>
+            <button 
+              onClick={() => {
+                const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
+                setCurrentView('design-console')
                 setSiteManagerView(`${currentWebsiteId}-publication-cards` as DesignConsoleView)
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
