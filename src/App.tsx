@@ -5775,6 +5775,12 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     { value: 'Sculpture', label: 'Sculpture', description: '3D artwork and sculptures' }
   ]
 
+  const learningResourceSubtypes: { value: string; label: string; description: string }[] = [
+    { value: 'Course', label: 'Course', description: 'Educational courses and classes' },
+    { value: 'Quiz', label: 'Quiz', description: 'Quizzes and assessments' },
+    { value: 'Syllabus', label: 'Syllabus', description: 'Course syllabi and curricula' }
+  ]
+
   // Get available sub-subtypes based on subtype selection
   const getAvailableSubSubtypes = (subType: string) => {
     switch (subType) {
@@ -5788,6 +5794,8 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
         return softwareApplicationSubtypes
       case 'VisualArtwork':
         return visualArtworkSubtypes
+      case 'LearningResource':
+        return learningResourceSubtypes
       default:
         return []
     }
