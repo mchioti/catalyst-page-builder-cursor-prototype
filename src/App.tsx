@@ -5637,13 +5637,18 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   
   // Main schema types (most commonly used)
   const mainSchemaTypes = [
-    { value: 'AudioObject', label: 'Audio Object', description: 'Audio files and content' },
-    { value: 'ImageObject', label: 'Image Object', description: 'Images and visual content' },
-    { value: 'VideoObject', label: 'Video Object', description: 'Video files and content' },
+    { value: 'MediaObject', label: 'Media Object', description: 'Audio, image, and video content' },
     { value: 'Event', label: 'Event', description: 'Events and happenings' },
     { value: 'Organization', label: 'Organization', description: 'Companies, institutions, groups' },
     { value: 'Person', label: 'Person', description: 'People and individuals' },
     { value: 'CreativeWork', label: 'Other Creative Work', description: 'Articles, books, media, reviews and other creative content' }
+  ]
+
+  // Subtypes for Media Object
+  const mediaObjectSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'AudioObject', label: 'Audio Object', description: 'Audio files, podcasts, music' },
+    { value: 'ImageObject', label: 'Image Object', description: 'Photos, images, graphics' },
+    { value: 'VideoObject', label: 'Video Object', description: 'Videos, movies, clips' }
   ]
 
   // Subtypes for Event
@@ -5717,6 +5722,8 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   // Get available subtypes based on main type selection
   const getAvailableSubtypes = (mainType: string) => {
     switch (mainType) {
+      case 'MediaObject':
+        return mediaObjectSubtypes
       case 'CreativeWork':
         return creativeWorkSubtypes
       case 'Event':
@@ -5805,14 +5812,14 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
           {showSubtypeDropdown && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Specific Type
+                Specific Type <span className="text-gray-500 font-normal">(optional)</span>
               </label>
               <select
                 value={selectedSubType}
                 onChange={(e) => setSelectedSubType(e.target.value as SchemaOrgType)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">-- Select specific type --</option>
+                <option value="">-- Use general type or select specific --</option>
                 {availableSubtypes.map((subtype) => (
                   <option key={subtype.value} value={subtype.value}>
                     {subtype.label}
@@ -5839,7 +5846,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
                   setSelectedSubType('')
                 }
               }}
-              disabled={!selectedMainType || (showSubtypeDropdown && !selectedSubType)}
+              disabled={!selectedMainType}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               Create {selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 

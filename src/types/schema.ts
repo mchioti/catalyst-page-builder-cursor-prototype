@@ -1,6 +1,7 @@
 // Schema.org content management types
 
 export type SchemaOrgType = 
+  | 'MediaObject'
   | 'AudioObject'
   | 'ImageObject'
   | 'VideoObject'
@@ -125,6 +126,24 @@ export interface SchemaArchive {
 
 // Pre-defined schema.org type definitions
 export const SCHEMA_DEFINITIONS: Record<SchemaOrgType, SchemaDefinition> = {
+  MediaObject: {
+    type: 'MediaObject',
+    label: 'Media Object',
+    description: 'A media object such as an image, video, or audio file',
+    category: 'content',
+    requiredProperties: ['name'],
+    properties: [
+      { name: 'name', label: 'Media Title', type: 'text', required: true, description: 'The title of the media content' },
+      { name: 'description', label: 'Description', type: 'textarea', required: false, description: 'A description of the media content' },
+      { name: 'contentUrl', label: 'Media URL', type: 'url', required: false, description: 'Direct URL to the media file' },
+      { name: 'encodingFormat', label: 'Format', type: 'text', required: false, description: 'Media format (e.g., image/jpeg, video/mp4, audio/mpeg)' },
+      { name: 'creator', label: 'Creator', type: 'text', required: false, description: 'The creator of the media content' },
+      { name: 'dateCreated', label: 'Created Date', type: 'date', required: false, description: 'When the media was created' },
+      { name: 'datePublished', label: 'Published Date', type: 'date', required: false, description: 'When the media was published' },
+      { name: 'copyrightHolder', label: 'Copyright Holder', type: 'text', required: false, description: 'Who holds the copyright' },
+      { name: 'license', label: 'License', type: 'url', required: false, description: 'URL to the license terms' }
+    ]
+  },
   AudioObject: {
     type: 'AudioObject',
     label: 'Audio Object',
