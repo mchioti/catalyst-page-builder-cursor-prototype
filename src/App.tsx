@@ -43,11 +43,35 @@ function generateAIContent(prompt: string): any[] {
   // Parse the prompt to extract key information
   const lowerPrompt = prompt.toLowerCase()
   
-  // Extract number of articles (default to 3 if not specified)
-  const numberMatch = prompt.match(/(\d+)(?:\s+(?:to|or)\s+(\d+))?/)
-  const minCount = numberMatch ? parseInt(numberMatch[1]) : 3
-  const maxCount = numberMatch && numberMatch[2] ? parseInt(numberMatch[2]) : minCount
-  const articleCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount
+  // Parse different prompt patterns
+  let articleCount = 3
+  let authorProgression: 'random' | 'progressive' = 'random'
+  let maxAuthors = 4
+  
+  // Pattern 1: "generate X articles" (exact count)
+  const exactCountMatch = prompt.match(/generate\s+(\d+)\s+articles/)
+  if (exactCountMatch) {
+    articleCount = parseInt(exactCountMatch[1])
+  }
+  
+  // Pattern 2: "generate articles... for 1 to X" (range of articles)
+  const rangeCountMatch = prompt.match(/(\d+)(?:\s+(?:to|or)\s+(\d+))(?:\s+articles)?$/)
+  if (rangeCountMatch && !exactCountMatch) {
+    const minCount = parseInt(rangeCountMatch[1])
+    const maxCount = rangeCountMatch[2] ? parseInt(rangeCountMatch[2]) : minCount
+    articleCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount
+  }
+  
+  // Pattern 3: "written by 1, 2 up to X authors" (progressive author counts)
+  const authorProgressionMatch = prompt.match(/written by.*?(\d+).*?up to\s+(\d+)\s+authors/)
+  if (authorProgressionMatch) {
+    authorProgression = 'progressive'
+    maxAuthors = parseInt(authorProgressionMatch[2])
+    // If we have progressive authors, use that count as article count if not specified
+    if (!exactCountMatch && !rangeCountMatch) {
+      articleCount = maxAuthors
+    }
+  }
   
   // Extract subject/topic (default to general science)
   let subject = 'Science'
@@ -84,8 +108,16 @@ function generateAIContent(prompt: string): any[] {
   // Generate articles
   const articles = []
   for (let i = 0; i < articleCount; i++) {
-    // Random selection of 1-4 authors
-    const numAuthors = Math.floor(Math.random() * 4) + 1
+    // Determine number of authors based on progression type
+    let numAuthors: number
+    if (authorProgression === 'progressive') {
+      // Progressive: 1, 2, 3, 4, 5, 6 authors
+      numAuthors = (i % maxAuthors) + 1
+    } else {
+      // Random selection of 1-4 authors (original behavior)
+      numAuthors = Math.floor(Math.random() * 4) + 1
+    }
+    
     const selectedAuthors = [...authorPools]
       .sort(() => Math.random() - 0.5)
       .slice(0, numAuthors)
@@ -100,16 +132,46 @@ function generateAIContent(prompt: string): any[] {
         }
       }))
     
-    // Generate title with subject keywords
+    // Generate title with variable lengths and subject keywords
     const randomKeyword = subjectKeywords[Math.floor(Math.random() * subjectKeywords.length)]
+    
+    // Variable length title templates (short to very long)
     const titleTemplates = [
+      // Short titles (1-3 words + subject)
+      `${randomKeyword.charAt(0).toUpperCase() + randomKeyword.slice(1)} in ${subject}`,
+      `New ${randomKeyword} methods`,
+      `${subject} ${randomKeyword}`,
+      
+      // Medium titles (4-7 words)
       `Novel ${randomKeyword} approaches in ${subject}`,
-      `Advanced ${randomKeyword} methods for ${subject} applications`,
+      `Advanced ${randomKeyword} methods for ${subject}`,
       `Investigating ${randomKeyword} mechanisms in ${subject}`,
-      `${randomKeyword.charAt(0).toUpperCase() + randomKeyword.slice(1)} insights into ${subject}`,
-      `Experimental ${randomKeyword} studies in ${subject}`
+      
+      // Long titles (8-12 words)
+      `Comprehensive analysis of ${randomKeyword} techniques in modern ${subject} research`,
+      `Experimental evaluation of advanced ${randomKeyword} methodologies for ${subject} applications`,
+      `Systematic investigation of ${randomKeyword} processes and their implications in ${subject}`,
+      
+      // Very long titles (13+ words)
+      `A systematic review and meta-analysis of ${randomKeyword} approaches in contemporary ${subject} research: implications for future studies`,
+      `Innovative ${randomKeyword} methodologies for enhanced understanding of complex ${subject} phenomena: a comprehensive experimental investigation`,
+      `Comparative analysis of traditional versus modern ${randomKeyword} techniques in ${subject}: experimental validation and theoretical framework development`
     ]
-    const title = titleTemplates[Math.floor(Math.random() * titleTemplates.length)]
+    
+    // Select title based on article index for progressive length variation
+    let selectedTitleIndex: number
+    if (lowerPrompt.includes('variable length')) {
+      // Progressive length: short to long titles
+      const titleGroup = Math.floor((i / articleCount) * 4) // 0-3 groups
+      const groupStart = titleGroup * 3
+      const groupEnd = Math.min(groupStart + 3, titleTemplates.length)
+      selectedTitleIndex = groupStart + Math.floor(Math.random() * (groupEnd - groupStart))
+    } else {
+      // Random title selection (original behavior)
+      selectedTitleIndex = Math.floor(Math.random() * titleTemplates.length)
+    }
+    
+    const title = titleTemplates[selectedTitleIndex]
     
     // Generate DOI
     const doi = `10.1021/ac${2024000 + i + Math.floor(Math.random() * 1000)}`
@@ -5233,7 +5295,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                     prompt: e.target.value
                   }
                 })}
-                placeholder="e.g., generate article cards on Organic chemistry with variable authors for 1 to 6"
+                placeholder="e.g., generate 6 articles on Organic chemistry with variable length titles written by 1, 2 up to 6 authors"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                 rows={3}
               />
@@ -5268,7 +5330,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Tip: Specify topic, number of articles (e.g., "3 to 5"), and author preferences for better results
+                Tip: Use "generate X articles", "variable length titles", and "written by 1, 2 up to X authors" for progressive authorship
               </p>
             </div>
           )}
@@ -5434,7 +5496,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                     prompt: e.target.value
                   }
                 })}
-                placeholder="e.g., generate an article on quantum computing by Stanford researchers"
+                placeholder="e.g., generate an article on quantum computing with a long title by 3 Stanford researchers"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                 rows={3}
               />
@@ -5469,7 +5531,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Tip: Describe the type of publication, subject area, and author preferences for better results
+                Tip: Specify subject, title length ("long title"), and exact author count ("by 3 researchers") for better results
               </p>
             </div>
           )}
