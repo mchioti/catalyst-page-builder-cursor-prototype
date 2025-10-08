@@ -67,6 +67,12 @@ export type PublicationListWidget = WidgetBase & {
     selectedIds?: string[] // Specific schema object IDs
     selectedType?: string // Schema.org type to filter by
   }
+  // AI generation configuration
+  aiSource?: {
+    prompt: string // Natural language prompt for AI generation
+    lastGenerated?: Date // Timestamp of last generation
+    generatedContent?: any[] // Cached generated publications
+  }
 }
 
 export type PublicationDetailsWidget = WidgetBase & {
@@ -82,6 +88,12 @@ export type PublicationDetailsWidget = WidgetBase & {
   }
   schemaSource?: {
     selectedId: string // Single schema object ID
+  }
+  // AI generation configuration
+  aiSource?: {
+    prompt: string // Natural language prompt for AI generation
+    lastGenerated?: Date // Timestamp of last generation
+    generatedContent?: any // Cached generated publication
   }
 }
 

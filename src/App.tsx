@@ -888,6 +888,26 @@ function WidgetRenderer({
           console.error('Error loading schema objects:', error)
           publications = []
         }
+      } else if (publicationWidget.contentSource === 'ai-generated' && publicationWidget.aiSource?.prompt) {
+        // Generate AI content based on prompt
+        try {
+          if (publicationWidget.aiSource.generatedContent && publicationWidget.aiSource.lastGenerated) {
+            // Use cached content if it exists and is recent (less than 1 hour old)
+            const hoursSinceGeneration = (Date.now() - publicationWidget.aiSource.lastGenerated.getTime()) / (1000 * 60 * 60)
+            if (hoursSinceGeneration < 1) {
+              publications = publicationWidget.aiSource.generatedContent
+            } else {
+              // Re-generate if cache is stale
+              publications = generateAIContent(publicationWidget.aiSource.prompt)
+            }
+          } else {
+            // Generate new content
+            publications = generateAIContent(publicationWidget.aiSource.prompt)
+          }
+        } catch (error) {
+          console.error('Error generating AI content:', error)
+          publications = publicationWidget.publications // Fallback to default
+        }
       } else {
         // Use default publications for other content sources
         publications = publicationWidget.publications
@@ -952,6 +972,21 @@ function WidgetRenderer({
           publication = MOCK_SCHOLARLY_ARTICLES.find(article => 
             article.identifier?.value?.includes(publicationDetailsWidget.doiSource?.doi || '')
           ) || MOCK_SCHOLARLY_ARTICLES[0]
+        } else if (publicationDetailsWidget.contentSource === 'ai-generated' && publicationDetailsWidget.aiSource?.prompt) {
+          // Generate AI content based on prompt
+          if (publicationDetailsWidget.aiSource.generatedContent && publicationDetailsWidget.aiSource.lastGenerated) {
+            // Use cached content if it exists and is recent (less than 1 hour old)
+            const hoursSinceGeneration = (Date.now() - publicationDetailsWidget.aiSource.lastGenerated.getTime()) / (1000 * 60 * 60)
+            if (hoursSinceGeneration < 1) {
+              publication = publicationDetailsWidget.aiSource.generatedContent
+            } else {
+              // Re-generate if cache is stale
+              publication = generateAISingleContent(publicationDetailsWidget.aiSource.prompt)
+            }
+          } else {
+            // Generate new content
+            publication = generateAISingleContent(publicationDetailsWidget.aiSource.prompt)
+          }
         } else if (publicationDetailsWidget.contentSource === 'context') {
           // For context source, use first mock article (in real app would get from page context)
           publication = MOCK_SCHOLARLY_ARTICLES[0]
@@ -1061,7 +1096,12 @@ function buildWidget(item: SpecItem): Widget {
         cardConfig: DEFAULT_PUBLICATION_CARD_CONFIG,
         cardVariantId: 'compact-variant',
         layout: 'list',
-        maxItems: 6
+        maxItems: 6,
+        aiSource: {
+          prompt: '',
+          lastGenerated: undefined,
+          generatedContent: undefined
+        }
       } as PublicationListWidget;
     
     case 'publication-details':
@@ -1072,7 +1112,12 @@ function buildWidget(item: SpecItem): Widget {
         publication: MOCK_SCHOLARLY_ARTICLES[0], // Use first article as default
         cardConfig: DEFAULT_PUBLICATION_CARD_CONFIG,
         cardVariantId: 'compact-variant',
-        layout: 'default'
+        layout: 'default',
+        aiSource: {
+          prompt: '',
+          lastGenerated: undefined,
+          generatedContent: undefined
+        }
       } as PublicationDetailsWidget;
     
     default:
@@ -4396,10 +4441,161 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
       "identifier": generateIdentifier(), // Auto-generated identifier
       ...formData
     }
-    return JSON.stringify(jsonLD, null, 2)
+  return JSON.stringify(jsonLD, null, 2)
+}
+
+// AI Content Generation
+function generateAIContent(prompt: string): any[] {
+  // Parse the prompt to extract key information
+  const lowerPrompt = prompt.toLowerCase()
+  
+  // Extract number of articles (default to 3 if not specified)
+  const numberMatch = prompt.match(/(\d+)(?:\s+(?:to|or)\s+(\d+))?/)
+  const minCount = numberMatch ? parseInt(numberMatch[1]) : 3
+  const maxCount = numberMatch && numberMatch[2] ? parseInt(numberMatch[2]) : minCount
+  const articleCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount
+  
+  // Extract subject/topic (default to general science)
+  let subject = 'Science'
+  let subjectKeywords = ['research', 'analysis', 'study']
+  
+  if (lowerPrompt.includes('organic chemistry') || lowerPrompt.includes('chemistry')) {
+    subject = 'Organic Chemistry'
+    subjectKeywords = ['synthesis', 'catalysis', 'molecular', 'reaction', 'compound']
+  } else if (lowerPrompt.includes('physics')) {
+    subject = 'Physics'
+    subjectKeywords = ['quantum', 'mechanics', 'electromagnetic', 'particle', 'field']
+  } else if (lowerPrompt.includes('biology') || lowerPrompt.includes('biomedical')) {
+    subject = 'Biology'
+    subjectKeywords = ['cellular', 'molecular', 'genetic', 'protein', 'enzyme']
+  } else if (lowerPrompt.includes('computer science') || lowerPrompt.includes('ai') || lowerPrompt.includes('machine learning')) {
+    subject = 'Computer Science'
+    subjectKeywords = ['algorithm', 'neural', 'computational', 'artificial', 'machine']
   }
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // Sample author pools for variety
+  const authorPools = [
+    { givenName: 'Sarah', familyName: 'Chen', affiliation: 'MIT' },
+    { givenName: 'Michael', familyName: 'Rodriguez', affiliation: 'Stanford University' },
+    { givenName: 'Elena', familyName: 'Petrov', affiliation: 'Harvard University' },
+    { givenName: 'David', familyName: 'Thompson', affiliation: 'UC Berkeley' },
+    { givenName: 'Priya', familyName: 'Sharma', affiliation: 'Oxford University' },
+    { givenName: 'James', familyName: 'Liu', affiliation: 'Cambridge University' },
+    { givenName: 'Maria', familyName: 'Garcia', affiliation: 'ETH Zurich' },
+    { givenName: 'Robert', familyName: 'Kim', affiliation: 'Caltech' },
+    { givenName: 'Anna', familyName: 'Volkov', affiliation: 'Max Planck Institute' },
+    { givenName: 'Carlos', familyName: 'Santos', affiliation: 'University of São Paulo' }
+  ]
+  
+  // Generate articles
+  const articles = []
+  for (let i = 0; i < articleCount; i++) {
+    // Random selection of 1-4 authors
+    const numAuthors = Math.floor(Math.random() * 4) + 1
+    const selectedAuthors = [...authorPools]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, numAuthors)
+      .map(author => ({
+        "@type": "Person",
+        "givenName": author.givenName,
+        "familyName": author.familyName,
+        "name": `${author.givenName} ${author.familyName}`,
+        "affiliation": {
+          "@type": "Organization",
+          "name": author.affiliation
+        }
+      }))
+    
+    // Generate title with subject keywords
+    const randomKeyword = subjectKeywords[Math.floor(Math.random() * subjectKeywords.length)]
+    const titleTemplates = [
+      `Novel ${randomKeyword} approaches in ${subject}`,
+      `Advanced ${randomKeyword} methods for ${subject} applications`,
+      `Investigating ${randomKeyword} mechanisms in ${subject}`,
+      `${randomKeyword.charAt(0).toUpperCase() + randomKeyword.slice(1)} insights into ${subject}`,
+      `Experimental ${randomKeyword} studies in ${subject}`
+    ]
+    const title = titleTemplates[Math.floor(Math.random() * titleTemplates.length)]
+    
+    // Generate DOI
+    const doi = `10.1021/ac${2024000 + i + Math.floor(Math.random() * 1000)}`
+    
+    // Generate abstract
+    const abstract = `This study presents ${randomKeyword} research in ${subject}, exploring innovative methodologies and their practical applications. Our findings demonstrate significant advances in the field and provide insights for future research directions.`
+    
+    // Generate publication date (within last 2 years)
+    const publishDate = new Date()
+    publishDate.setMonth(publishDate.getMonth() - Math.floor(Math.random() * 24))
+    
+    // Generate journal names
+    const journals = [
+      'Journal of Advanced Research',
+      'Scientific Reports',
+      'Nature Communications',
+      'PLOS ONE',
+      'Applied Sciences',
+      `${subject} Today`,
+      `International Journal of ${subject}`,
+      `${subject} Letters`
+    ]
+    const journal = journals[Math.floor(Math.random() * journals.length)]
+    
+    const article = {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "identifier": {
+        "@type": "PropertyValue",
+        "propertyID": "DOI",
+        "value": doi
+      },
+      "headline": title,
+      "name": title,
+      "abstract": abstract,
+      "description": abstract,
+      "author": selectedAuthors,
+      "datePublished": publishDate.toISOString().split('T')[0],
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "name": journal,
+        "volumeNumber": String(Math.floor(Math.random() * 50) + 1),
+        "issueNumber": String(Math.floor(Math.random() * 12) + 1),
+        "isPartOf": {
+          "@type": "Periodical",
+          "name": journal,
+          "issn": `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`
+        }
+      },
+      "pageStart": String(Math.floor(Math.random() * 500) + 1),
+      "pageEnd": String(Math.floor(Math.random() * 500) + 1 + Math.floor(Math.random() * 20) + 5),
+      "keywords": [
+        subject.toLowerCase(),
+        randomKeyword,
+        `${randomKeyword} methods`,
+        'research',
+        'experimental'
+      ],
+      "about": [
+        {
+          "@type": "DefinedTerm",
+          "name": subject,
+          "inDefinedTermSet": "Research Areas"
+        }
+      ]
+    }
+    
+    articles.push(article)
+  }
+  
+  return articles
+}
+
+function generateAISingleContent(prompt: string): any {
+  // For single publications, generate one item and return it
+  const articles = generateAIContent(prompt)
+  return articles[0] || null
+}
+
+const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
     // Validate required fields
@@ -4888,12 +5084,19 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                 const newContentSource = e.target.value as 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
                 updateWidget({ 
                   contentSource: newContentSource,
-                  // Reset schema source when changing content source
+                  // Reset source-specific config when changing content source
                   ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
                     schemaSource: {
                       selectionType: 'by-type',
                       selectedType: '',
                       selectedIds: []
+                    }
+                  }),
+                  ...(newContentSource !== 'ai-generated' ? { aiSource: undefined } : {
+                    aiSource: {
+                      prompt: '',
+                      lastGenerated: undefined,
+                      generatedContent: undefined
                     }
                   })
                 })
@@ -5017,6 +5220,58 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
             </>
           )}
           
+          {/* AI Generation Prompt (conditional) */}
+          {(widget as PublicationListWidget).contentSource === 'ai-generated' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
+              <textarea
+                value={(widget as PublicationListWidget).aiSource?.prompt || ''}
+                onChange={(e) => updateWidget({ 
+                  aiSource: { 
+                    ...(widget as PublicationListWidget).aiSource,
+                    prompt: e.target.value
+                  }
+                })}
+                placeholder="e.g., generate article cards on Organic chemistry with variable authors for 1 to 6"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                rows={3}
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    const prompt = (widget as PublicationListWidget).aiSource?.prompt
+                    if (prompt) {
+                      try {
+                        const generatedContent = generateAIContent(prompt)
+                        updateWidget({
+                          aiSource: {
+                            prompt,
+                            lastGenerated: new Date(),
+                            generatedContent
+                          }
+                        })
+                      } catch (error) {
+                        console.error('Error generating content:', error)
+                      }
+                    }
+                  }}
+                  disabled={!(widget as PublicationListWidget).aiSource?.prompt?.trim()}
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  🤖 Generate
+                </button>
+                {(widget as PublicationListWidget).aiSource?.lastGenerated && (
+                  <span className="text-xs text-gray-500 self-center">
+                    Last generated: {(widget as PublicationListWidget).aiSource.lastGenerated.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Tip: Specify topic, number of articles (e.g., "3 to 5"), and author preferences for better results
+              </p>
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
             <select
@@ -5097,6 +5352,13 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                   }),
                   ...(newContentSource !== 'doi' ? { doiSource: undefined } : {
                     doiSource: { doi: '' }
+                  }),
+                  ...(newContentSource !== 'ai-generated' ? { aiSource: undefined } : {
+                    aiSource: {
+                      prompt: '',
+                      lastGenerated: undefined,
+                      generatedContent: undefined
+                    }
                   })
                 })
               }}
@@ -5156,6 +5418,58 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
               {schemaObjects.length === 0 && (
                 <p className="text-xs text-gray-500 mt-1">No schema objects available. Create some in the Schema Content tab.</p>
               )}
+            </div>
+          )}
+          
+          {/* AI Generation Prompt (conditional) */}
+          {(widget as PublicationDetailsWidget).contentSource === 'ai-generated' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
+              <textarea
+                value={(widget as PublicationDetailsWidget).aiSource?.prompt || ''}
+                onChange={(e) => updateWidget({ 
+                  aiSource: { 
+                    ...(widget as PublicationDetailsWidget).aiSource,
+                    prompt: e.target.value
+                  }
+                })}
+                placeholder="e.g., generate an article on quantum computing by Stanford researchers"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                rows={3}
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    const prompt = (widget as PublicationDetailsWidget).aiSource?.prompt
+                    if (prompt) {
+                      try {
+                        const generatedContent = generateAISingleContent(prompt)
+                        updateWidget({
+                          aiSource: {
+                            prompt,
+                            lastGenerated: new Date(),
+                            generatedContent
+                          }
+                        })
+                      } catch (error) {
+                        console.error('Error generating content:', error)
+                      }
+                    }
+                  }}
+                  disabled={!(widget as PublicationDetailsWidget).aiSource?.prompt?.trim()}
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  🤖 Generate
+                </button>
+                {(widget as PublicationDetailsWidget).aiSource?.lastGenerated && (
+                  <span className="text-xs text-gray-500 self-center">
+                    Last generated: {(widget as PublicationDetailsWidget).aiSource.lastGenerated.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Tip: Describe the type of publication, subject area, and author preferences for better results
+              </p>
             </div>
           )}
           
