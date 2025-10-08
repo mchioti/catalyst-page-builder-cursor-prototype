@@ -5603,6 +5603,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   
   const [selectedMainType, setSelectedMainType] = useState<string>('')
   const [selectedSubType, setSelectedSubType] = useState<SchemaOrgType | ''>('')
+  const [selectedSubSubType, setSelectedSubSubType] = useState<SchemaOrgType | ''>('')
   const [isCreating, setIsCreating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -5625,6 +5626,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     setIsCreating(true)
     setSelectedMainType('')
     setSelectedSubType('')
+    setSelectedSubSubType('')
     selectSchemaObject(null)
   }
   
@@ -5632,6 +5634,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     setIsCreating(false)
     setSelectedMainType('')
     setSelectedSubType('')
+    setSelectedSubSubType('')
     selectSchemaObject(null)
   }
   
@@ -5690,34 +5693,97 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     { value: 'WorkersUnion', label: 'Workers Union', description: 'Labor unions and worker organizations' }
   ]
 
-  // Subtypes for Person
-  const personSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'Patient', label: 'Patient', description: 'Medical patients' }
+  // Subtypes for CreativeWork (comprehensive schema.org list)
+  const creativeWorkSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'Blog', label: 'Blog', description: 'A blog or blog site' },
+    { value: 'Certification', label: 'Certification', description: 'A certification or credential' },
+    { value: 'Clip', label: 'Clip', description: 'A short video or audio clip' },
+    { value: 'Collection', label: 'Collection', description: 'A collection of creative works' },
+    { value: 'Comment', label: 'Comment', description: 'A comment on content' },
+    { value: 'Conversation', label: 'Conversation', description: 'A conversation or dialogue' },
+    { value: 'Course', label: 'Course', description: 'Educational course or curriculum' },
+    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' },
+    { value: 'DigitalDocument', label: 'Digital Document', description: 'Electronic documents and files' },
+    { value: 'EducationalOccupationalCredential', label: 'Educational Credential', description: 'Educational or occupational credentials' },
+    { value: 'Guide', label: 'Guide', description: 'A guide or manual' },
+    { value: 'HowTo', label: 'How-To', description: 'Instructional content' },
+    { value: 'HowToDirection', label: 'How-To Direction', description: 'A direction in instructions' },
+    { value: 'HowToSection', label: 'How-To Section', description: 'A section of instructions' },
+    { value: 'HowToStep', label: 'How-To Step', description: 'A step in instructions' },
+    { value: 'HowToTip', label: 'How-To Tip', description: 'A tip or hint in instructions' },
+    { value: 'HyperToc', label: 'Hyper Table of Contents', description: 'A hyperlinked table of contents' },
+    { value: 'HyperTocEntry', label: 'Hyper ToC Entry', description: 'An entry in a hyperlinked table of contents' },
+    { value: 'LearningResource', label: 'Learning Resource', description: 'Educational learning materials' },
+    { value: 'Manuscript', label: 'Manuscript', description: 'A manuscript or draft document' },
+    { value: 'MathSolver', label: 'Math Solver', description: 'Mathematical problem solver' },
+    { value: 'Poster', label: 'Poster', description: 'A poster or large format display' },
+    { value: 'Quotation', label: 'Quotation', description: 'A quotation or cited text' },
+    { value: 'Review', label: 'Review', description: 'Reviews and ratings' },
+    { value: 'ShortStory', label: 'Short Story', description: 'A short work of fiction' },
+    { value: 'SoftwareApplication', label: 'Software Application', description: 'Software apps and programs' },
+    { value: 'SoftwareSourceCode', label: 'Software Source Code', description: 'Computer source code' },
+    { value: 'SpecialAnnouncement', label: 'Special Announcement', description: 'Important announcements' },
+    { value: 'Statement', label: 'Statement', description: 'A statement or declaration' },
+    { value: 'Thesis', label: 'Thesis', description: 'Academic thesis or dissertation' },
+    { value: 'VisualArtwork', label: 'Visual Artwork', description: 'Paintings, drawings, and visual art' },
+    { value: 'WebContent', label: 'Web Content', description: 'General web content' },
+    { value: 'WebPage', label: 'Web Page', description: 'Individual web pages' },
+    { value: 'WebPageElement', label: 'Web Page Element', description: 'Elements within web pages' },
+    { value: 'WebSite', label: 'Web Site', description: 'Complete websites' }
   ]
 
-  // Subtypes for CreativeWork (the more specific types)
-  const creativeWorkSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+  // Sub-subtypes for CreativeWork types that have more specific types
+  const digitalDocumentSubtypes: { value: string; label: string; description: string }[] = [
     { value: 'Article', label: 'Article', description: 'News articles and investigative reports' },
-    { value: 'BlogPosting', label: 'Blog Post', description: 'Blog posts and personal articles' },
-    { value: 'NewsArticle', label: 'News Article', description: 'News articles with context and background' },
-    { value: 'Book', label: 'Book', description: 'Books and publications' },
-    { value: 'Movie', label: 'Movie', description: 'Films and movies' },
-    { value: 'TVSeries', label: 'TV Series', description: 'Television series and shows' },
-    { value: 'MusicRecording', label: 'Music Recording', description: 'Songs and music tracks' },
-    { value: 'Photograph', label: 'Photograph', description: 'Photographs and photo content' },
-    { value: 'Painting', label: 'Painting', description: 'Paintings and painted artwork' },
-    { value: 'Sculpture', label: 'Sculpture', description: 'Sculptures and 3D artwork' },
-    { value: 'SoftwareApplication', label: 'Software Application', description: 'Apps and software programs' },
-    { value: 'WebPage', label: 'Web Page', description: 'Individual web pages' },
-    { value: 'WebSite', label: 'Web Site', description: 'Complete websites' },
-    { value: 'Course', label: 'Course', description: 'Educational courses and classes' },
-    { value: 'Recipe', label: 'Recipe', description: 'Cooking recipes and instructions' },
-    { value: 'Review', label: 'Review', description: 'Reviews and ratings of products, services, or content' },
-    { value: 'HowTo', label: 'How-To Guide', description: 'Step-by-step instructions' },
-    { value: 'Game', label: 'Game', description: 'Games and interactive content' },
-    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' },
-    { value: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research articles' }
+    { value: 'BlogPosting', label: 'Blog Posting', description: 'Blog posts and personal articles' },
+    { value: 'NewsArticle', label: 'News Article', description: 'Journalism and news content' },
+    { value: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research' },
+    { value: 'TechArticle', label: 'Technical Article', description: 'Technical documentation and guides' }
   ]
+
+  const webPageSubtypes: { value: string; label: string; description: string }[] = [
+    { value: 'AboutPage', label: 'About Page', description: 'About us or information pages' },
+    { value: 'CheckoutPage', label: 'Checkout Page', description: 'E-commerce checkout pages' },
+    { value: 'CollectionPage', label: 'Collection Page', description: 'Pages showing collections of items' },
+    { value: 'ContactPage', label: 'Contact Page', description: 'Contact information pages' },
+    { value: 'FAQPage', label: 'FAQ Page', description: 'Frequently asked questions pages' },
+    { value: 'ItemPage', label: 'Item Page', description: 'Pages showing individual items' },
+    { value: 'MedicalWebPage', label: 'Medical Web Page', description: 'Medical and health information pages' },
+    { value: 'ProfilePage', label: 'Profile Page', description: 'User or entity profile pages' },
+    { value: 'QAPage', label: 'Q&A Page', description: 'Question and answer pages' },
+    { value: 'RealEstateListing', label: 'Real Estate Listing', description: 'Property listing pages' },
+    { value: 'SearchResultsPage', label: 'Search Results Page', description: 'Search results display pages' }
+  ]
+
+  const softwareApplicationSubtypes: { value: string; label: string; description: string }[] = [
+    { value: 'MobileApplication', label: 'Mobile Application', description: 'Mobile apps for phones and tablets' },
+    { value: 'VideoGame', label: 'Video Game', description: 'Interactive games and entertainment software' },
+    { value: 'WebApplication', label: 'Web Application', description: 'Browser-based applications' }
+  ]
+
+  const visualArtworkSubtypes: { value: string; label: string; description: string }[] = [
+    { value: 'CoverArt', label: 'Cover Art', description: 'Album covers, book covers, etc.' },
+    { value: 'ComicStory', label: 'Comic Story', description: 'Comic books and graphic novels' },
+    { value: 'Painting', label: 'Painting', description: 'Painted artwork and canvases' },
+    { value: 'Photograph', label: 'Photograph', description: 'Photography and photo art' },
+    { value: 'Sculpture', label: 'Sculpture', description: '3D artwork and sculptures' }
+  ]
+
+  // Get available sub-subtypes based on subtype selection
+  const getAvailableSubSubtypes = (subType: string) => {
+    switch (subType) {
+      case 'DigitalDocument':
+        return digitalDocumentSubtypes
+      case 'WebPage':
+        return webPageSubtypes
+      case 'SoftwareApplication':
+        return softwareApplicationSubtypes
+      case 'VisualArtwork':
+        return visualArtworkSubtypes
+      default:
+        return []
+    }
+  }
   
   // Get available subtypes based on main type selection
   const getAvailableSubtypes = (mainType: string) => {
@@ -5730,8 +5796,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
         return eventSubtypes
       case 'Organization':
         return organizationSubtypes
-      case 'Person':
-        return personSubtypes
       default:
         return []
     }
@@ -5739,6 +5803,9 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   
   const availableSubtypes = getAvailableSubtypes(selectedMainType)
   const showSubtypeDropdown = availableSubtypes.length > 0
+  
+  const availableSubSubtypes = getAvailableSubSubtypes(selectedSubType)
+  const showSubSubtypeDropdown = availableSubSubtypes.length > 0
   
   return (
     <div className="space-y-4">
@@ -5791,6 +5858,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
               onChange={(e) => {
                 setSelectedMainType(e.target.value)
                 setSelectedSubType('') // Reset subtype when main type changes
+                setSelectedSubSubType('') // Reset sub-subtype when main type changes
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -5816,7 +5884,10 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
               </label>
               <select
                 value={selectedSubType}
-                onChange={(e) => setSelectedSubType(e.target.value as SchemaOrgType)}
+                onChange={(e) => {
+                  setSelectedSubType(e.target.value as SchemaOrgType)
+                  setSelectedSubSubType('') // Reset third dropdown when second changes
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Use general type or select specific --</option>
@@ -5834,22 +5905,50 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             </div>
           )}
           
+          {/* Sub-subtype Dropdown (conditional) */}
+          {showSubSubtypeDropdown && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                More Specific Type <span className="text-gray-500 font-normal">(optional)</span>
+              </label>
+              <select
+                value={selectedSubSubType}
+                onChange={(e) => setSelectedSubSubType(e.target.value as SchemaOrgType)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Use {selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 'type'} or select more specific --</option>
+                {availableSubSubtypes.map((subSubtype) => (
+                  <option key={subSubtype.value} value={subSubtype.value}>
+                    {subSubtype.label}
+                  </option>
+                ))}
+              </select>
+              {selectedSubSubType && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {availableSubSubtypes.find(t => t.value === selectedSubSubType)?.description}
+                </p>
+              )}
+            </div>
+          )}
+          
           {/* Create Button */}
           <div className="pt-2">
             <button
               onClick={() => {
-                const typeToCreate = selectedSubType || selectedMainType as SchemaOrgType
+                const typeToCreate = selectedSubSubType || selectedSubType || selectedMainType as SchemaOrgType
                 if (typeToCreate) {
                   onCreateSchema(typeToCreate)
                   setIsCreating(false)
                   setSelectedMainType('')
                   setSelectedSubType('')
+                  setSelectedSubSubType('')
                 }
               }}
               disabled={!selectedMainType}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              Create {selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 
+              Create {selectedSubSubType ? availableSubSubtypes.find(t => t.value === selectedSubSubType)?.label : 
+                      selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 
                       selectedMainType ? mainSchemaTypes.find(t => t.value === selectedMainType)?.label : 'Object'}
             </button>
           </div>
