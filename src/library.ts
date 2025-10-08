@@ -3,7 +3,7 @@ export type LibraryItemStatus = 'supported' | 'planned' | 'deprecated' | 'advanc
 export type LibraryItem = {
   id: string
   label: string
-  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
+  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
   description?: string
   skin?: 'modern' | 'classic' | 'minimal' | 'accent'
   status: LibraryItemStatus
