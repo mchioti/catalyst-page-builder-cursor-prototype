@@ -38,6 +38,157 @@ type ModifiableWidget = {
   modificationReason?: string
 }
 
+// AI Content Generation Functions
+function generateAIContent(prompt: string): any[] {
+  // Parse the prompt to extract key information
+  const lowerPrompt = prompt.toLowerCase()
+  
+  // Extract number of articles (default to 3 if not specified)
+  const numberMatch = prompt.match(/(\d+)(?:\s+(?:to|or)\s+(\d+))?/)
+  const minCount = numberMatch ? parseInt(numberMatch[1]) : 3
+  const maxCount = numberMatch && numberMatch[2] ? parseInt(numberMatch[2]) : minCount
+  const articleCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount
+  
+  // Extract subject/topic (default to general science)
+  let subject = 'Science'
+  let subjectKeywords = ['research', 'analysis', 'study']
+  
+  if (lowerPrompt.includes('organic chemistry') || lowerPrompt.includes('chemistry')) {
+    subject = 'Organic Chemistry'
+    subjectKeywords = ['synthesis', 'catalysis', 'molecular', 'reaction', 'compound']
+  } else if (lowerPrompt.includes('physics')) {
+    subject = 'Physics'
+    subjectKeywords = ['quantum', 'mechanics', 'electromagnetic', 'particle', 'field']
+  } else if (lowerPrompt.includes('biology') || lowerPrompt.includes('biomedical')) {
+    subject = 'Biology'
+    subjectKeywords = ['cellular', 'molecular', 'genetic', 'protein', 'enzyme']
+  } else if (lowerPrompt.includes('computer science') || lowerPrompt.includes('ai') || lowerPrompt.includes('machine learning')) {
+    subject = 'Computer Science'
+    subjectKeywords = ['algorithm', 'neural', 'computational', 'artificial', 'machine']
+  }
+  
+  // Sample author pools for variety
+  const authorPools = [
+    { givenName: 'Sarah', familyName: 'Chen', affiliation: 'MIT' },
+    { givenName: 'Michael', familyName: 'Rodriguez', affiliation: 'Stanford University' },
+    { givenName: 'Elena', familyName: 'Petrov', affiliation: 'Harvard University' },
+    { givenName: 'David', familyName: 'Thompson', affiliation: 'UC Berkeley' },
+    { givenName: 'Priya', familyName: 'Sharma', affiliation: 'Oxford University' },
+    { givenName: 'James', familyName: 'Liu', affiliation: 'Cambridge University' },
+    { givenName: 'Maria', familyName: 'Garcia', affiliation: 'ETH Zurich' },
+    { givenName: 'Robert', familyName: 'Kim', affiliation: 'Caltech' },
+    { givenName: 'Anna', familyName: 'Volkov', affiliation: 'Max Planck Institute' },
+    { givenName: 'Carlos', familyName: 'Santos', affiliation: 'University of São Paulo' }
+  ]
+  
+  // Generate articles
+  const articles = []
+  for (let i = 0; i < articleCount; i++) {
+    // Random selection of 1-4 authors
+    const numAuthors = Math.floor(Math.random() * 4) + 1
+    const selectedAuthors = [...authorPools]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, numAuthors)
+      .map(author => ({
+        "@type": "Person",
+        "givenName": author.givenName,
+        "familyName": author.familyName,
+        "name": `${author.givenName} ${author.familyName}`,
+        "affiliation": {
+          "@type": "Organization",
+          "name": author.affiliation
+        }
+      }))
+    
+    // Generate title with subject keywords
+    const randomKeyword = subjectKeywords[Math.floor(Math.random() * subjectKeywords.length)]
+    const titleTemplates = [
+      `Novel ${randomKeyword} approaches in ${subject}`,
+      `Advanced ${randomKeyword} methods for ${subject} applications`,
+      `Investigating ${randomKeyword} mechanisms in ${subject}`,
+      `${randomKeyword.charAt(0).toUpperCase() + randomKeyword.slice(1)} insights into ${subject}`,
+      `Experimental ${randomKeyword} studies in ${subject}`
+    ]
+    const title = titleTemplates[Math.floor(Math.random() * titleTemplates.length)]
+    
+    // Generate DOI
+    const doi = `10.1021/ac${2024000 + i + Math.floor(Math.random() * 1000)}`
+    
+    // Generate abstract
+    const abstract = `This study presents ${randomKeyword} research in ${subject}, exploring innovative methodologies and their practical applications. Our findings demonstrate significant advances in the field and provide insights for future research directions.`
+    
+    // Generate publication date (within last 2 years)
+    const publishDate = new Date()
+    publishDate.setMonth(publishDate.getMonth() - Math.floor(Math.random() * 24))
+    
+    // Generate journal names
+    const journals = [
+      'Journal of Advanced Research',
+      'Scientific Reports',
+      'Nature Communications',
+      'PLOS ONE',
+      'Applied Sciences',
+      `${subject} Today`,
+      `International Journal of ${subject}`,
+      `${subject} Letters`
+    ]
+    const journal = journals[Math.floor(Math.random() * journals.length)]
+    
+    const article = {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "identifier": {
+        "@type": "PropertyValue",
+        "propertyID": "DOI",
+        "value": doi
+      },
+      "headline": title,
+      "name": title,
+      "abstract": abstract,
+      "description": abstract,
+      "author": selectedAuthors,
+      "datePublished": publishDate.toISOString().split('T')[0],
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "name": journal,
+        "volumeNumber": String(Math.floor(Math.random() * 50) + 1),
+        "issueNumber": String(Math.floor(Math.random() * 12) + 1),
+        "isPartOf": {
+          "@type": "Periodical",
+          "name": journal,
+          "issn": `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`
+        }
+      },
+      "pageStart": String(Math.floor(Math.random() * 500) + 1),
+      "pageEnd": String(Math.floor(Math.random() * 500) + 1 + Math.floor(Math.random() * 20) + 5),
+      "keywords": [
+        subject.toLowerCase(),
+        randomKeyword,
+        `${randomKeyword} methods`,
+        'research',
+        'experimental'
+      ],
+      "about": [
+        {
+          "@type": "DefinedTerm",
+          "name": subject,
+          "inDefinedTermSet": "Research Areas"
+        }
+      ]
+    }
+    
+    articles.push(article)
+  }
+  
+  return articles
+}
+
+function generateAISingleContent(prompt: string): any {
+  // For single publications, generate one item and return it
+  const articles = generateAIContent(prompt)
+  return articles[0] || null
+}
+
 // Notification System Components
 function NotificationToast({ notification, onClose }: { notification: Notification; onClose: (id: string) => void }) {
   const getNotificationStyles = (type: NotificationType) => {
@@ -4444,156 +4595,6 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
   return JSON.stringify(jsonLD, null, 2)
 }
 
-// AI Content Generation
-function generateAIContent(prompt: string): any[] {
-  // Parse the prompt to extract key information
-  const lowerPrompt = prompt.toLowerCase()
-  
-  // Extract number of articles (default to 3 if not specified)
-  const numberMatch = prompt.match(/(\d+)(?:\s+(?:to|or)\s+(\d+))?/)
-  const minCount = numberMatch ? parseInt(numberMatch[1]) : 3
-  const maxCount = numberMatch && numberMatch[2] ? parseInt(numberMatch[2]) : minCount
-  const articleCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount
-  
-  // Extract subject/topic (default to general science)
-  let subject = 'Science'
-  let subjectKeywords = ['research', 'analysis', 'study']
-  
-  if (lowerPrompt.includes('organic chemistry') || lowerPrompt.includes('chemistry')) {
-    subject = 'Organic Chemistry'
-    subjectKeywords = ['synthesis', 'catalysis', 'molecular', 'reaction', 'compound']
-  } else if (lowerPrompt.includes('physics')) {
-    subject = 'Physics'
-    subjectKeywords = ['quantum', 'mechanics', 'electromagnetic', 'particle', 'field']
-  } else if (lowerPrompt.includes('biology') || lowerPrompt.includes('biomedical')) {
-    subject = 'Biology'
-    subjectKeywords = ['cellular', 'molecular', 'genetic', 'protein', 'enzyme']
-  } else if (lowerPrompt.includes('computer science') || lowerPrompt.includes('ai') || lowerPrompt.includes('machine learning')) {
-    subject = 'Computer Science'
-    subjectKeywords = ['algorithm', 'neural', 'computational', 'artificial', 'machine']
-  }
-  
-  // Sample author pools for variety
-  const authorPools = [
-    { givenName: 'Sarah', familyName: 'Chen', affiliation: 'MIT' },
-    { givenName: 'Michael', familyName: 'Rodriguez', affiliation: 'Stanford University' },
-    { givenName: 'Elena', familyName: 'Petrov', affiliation: 'Harvard University' },
-    { givenName: 'David', familyName: 'Thompson', affiliation: 'UC Berkeley' },
-    { givenName: 'Priya', familyName: 'Sharma', affiliation: 'Oxford University' },
-    { givenName: 'James', familyName: 'Liu', affiliation: 'Cambridge University' },
-    { givenName: 'Maria', familyName: 'Garcia', affiliation: 'ETH Zurich' },
-    { givenName: 'Robert', familyName: 'Kim', affiliation: 'Caltech' },
-    { givenName: 'Anna', familyName: 'Volkov', affiliation: 'Max Planck Institute' },
-    { givenName: 'Carlos', familyName: 'Santos', affiliation: 'University of São Paulo' }
-  ]
-  
-  // Generate articles
-  const articles = []
-  for (let i = 0; i < articleCount; i++) {
-    // Random selection of 1-4 authors
-    const numAuthors = Math.floor(Math.random() * 4) + 1
-    const selectedAuthors = [...authorPools]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, numAuthors)
-      .map(author => ({
-        "@type": "Person",
-        "givenName": author.givenName,
-        "familyName": author.familyName,
-        "name": `${author.givenName} ${author.familyName}`,
-        "affiliation": {
-          "@type": "Organization",
-          "name": author.affiliation
-        }
-      }))
-    
-    // Generate title with subject keywords
-    const randomKeyword = subjectKeywords[Math.floor(Math.random() * subjectKeywords.length)]
-    const titleTemplates = [
-      `Novel ${randomKeyword} approaches in ${subject}`,
-      `Advanced ${randomKeyword} methods for ${subject} applications`,
-      `Investigating ${randomKeyword} mechanisms in ${subject}`,
-      `${randomKeyword.charAt(0).toUpperCase() + randomKeyword.slice(1)} insights into ${subject}`,
-      `Experimental ${randomKeyword} studies in ${subject}`
-    ]
-    const title = titleTemplates[Math.floor(Math.random() * titleTemplates.length)]
-    
-    // Generate DOI
-    const doi = `10.1021/ac${2024000 + i + Math.floor(Math.random() * 1000)}`
-    
-    // Generate abstract
-    const abstract = `This study presents ${randomKeyword} research in ${subject}, exploring innovative methodologies and their practical applications. Our findings demonstrate significant advances in the field and provide insights for future research directions.`
-    
-    // Generate publication date (within last 2 years)
-    const publishDate = new Date()
-    publishDate.setMonth(publishDate.getMonth() - Math.floor(Math.random() * 24))
-    
-    // Generate journal names
-    const journals = [
-      'Journal of Advanced Research',
-      'Scientific Reports',
-      'Nature Communications',
-      'PLOS ONE',
-      'Applied Sciences',
-      `${subject} Today`,
-      `International Journal of ${subject}`,
-      `${subject} Letters`
-    ]
-    const journal = journals[Math.floor(Math.random() * journals.length)]
-    
-    const article = {
-      "@context": "https://schema.org",
-      "@type": "ScholarlyArticle",
-      "identifier": {
-        "@type": "PropertyValue",
-        "propertyID": "DOI",
-        "value": doi
-      },
-      "headline": title,
-      "name": title,
-      "abstract": abstract,
-      "description": abstract,
-      "author": selectedAuthors,
-      "datePublished": publishDate.toISOString().split('T')[0],
-      "isPartOf": {
-        "@type": "PublicationIssue",
-        "name": journal,
-        "volumeNumber": String(Math.floor(Math.random() * 50) + 1),
-        "issueNumber": String(Math.floor(Math.random() * 12) + 1),
-        "isPartOf": {
-          "@type": "Periodical",
-          "name": journal,
-          "issn": `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`
-        }
-      },
-      "pageStart": String(Math.floor(Math.random() * 500) + 1),
-      "pageEnd": String(Math.floor(Math.random() * 500) + 1 + Math.floor(Math.random() * 20) + 5),
-      "keywords": [
-        subject.toLowerCase(),
-        randomKeyword,
-        `${randomKeyword} methods`,
-        'research',
-        'experimental'
-      ],
-      "about": [
-        {
-          "@type": "DefinedTerm",
-          "name": subject,
-          "inDefinedTermSet": "Research Areas"
-        }
-      ]
-    }
-    
-    articles.push(article)
-  }
-  
-  return articles
-}
-
-function generateAISingleContent(prompt: string): any {
-  // For single publications, generate one item and return it
-  const articles = generateAIContent(prompt)
-  return articles[0] || null
-}
 
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
