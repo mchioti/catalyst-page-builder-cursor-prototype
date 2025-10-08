@@ -4314,11 +4314,10 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
   const definition = SCHEMA_DEFINITIONS[schemaType]
   const [formData, setFormData] = useState<Record<string, any>>(initialData?.data || {})
   const [objectName, setObjectName] = useState(initialData?.name || '')
-  const [identifier, setIdentifier] = useState(initialData?.data?.identifier || '')
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
   const [tagInput, setTagInput] = useState('')
   
-  // Auto-generate identifier function
+  // Auto-generate identifier for JSON-LD (not user-editable)
   const generateIdentifier = () => {
     const timestamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 14) // YYYYMMDDHHMMSS
     const nonce = Math.floor(Math.random() * 1000).toString().padStart(3, '0') // 3-digit random
@@ -4331,8 +4330,8 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
     const jsonLD = {
       "@context": "https://schema.org",
       "@type": schemaType,
-      ...formData,
-      ...(identifier && { identifier })
+      "identifier": generateIdentifier(), // Auto-generated identifier
+      ...formData
     }
     return JSON.stringify(jsonLD, null, 2)
   }
@@ -4353,7 +4352,7 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
     onSave({
       type: schemaType,
       name: objectName || formData.name || `${definition.label} ${Date.now()}`,
-      data: { ...formData, ...(identifier && { identifier }) },
+      data: formData,
       jsonLD: generateJsonLD(),
       tags
     })
@@ -4476,30 +4475,6 @@ function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
             required
           />
           <p className="text-xs text-gray-500 mt-1">Internal name for managing this object</p>
-        </div>
-        
-        {/* Identifier */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Identifier <span className="text-gray-500">(identifier)</span>
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. blog-20251008101722-123"
-            />
-            <button
-              type="button"
-              onClick={() => setIdentifier(generateIdentifier())}
-              className="px-3 py-2 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200 whitespace-nowrap"
-            >
-              Auto Generate
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">Unique identifier for this object (DOI, ISBN, URL, etc.)</p>
         </div>
         
         {/* Schema Properties */}
