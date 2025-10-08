@@ -5643,8 +5643,51 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     { value: 'Event', label: 'Event', description: 'Events and happenings' },
     { value: 'Organization', label: 'Organization', description: 'Companies, institutions, groups' },
     { value: 'Person', label: 'Person', description: 'People and individuals' },
-    { value: 'Review', label: 'Review', description: 'Reviews and ratings' },
-    { value: 'CreativeWork', label: 'Creative Work', description: 'Articles, books, media, and other creative content' }
+    { value: 'CreativeWork', label: 'Other Creative Work', description: 'Articles, books, media, reviews and other creative content' }
+  ]
+
+  // Subtypes for Event
+  const eventSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'BusinessEvent', label: 'Business Event', description: 'Conferences, meetings, trade shows' },
+    { value: 'ChildrensEvent', label: 'Children\'s Event', description: 'Events designed for children' },
+    { value: 'ComedyEvent', label: 'Comedy Event', description: 'Comedy shows and performances' },
+    { value: 'CourseInstance', label: 'Course Instance', description: 'A specific instance of a course' },
+    { value: 'DanceEvent', label: 'Dance Event', description: 'Dance performances and classes' },
+    { value: 'DeliveryEvent', label: 'Delivery Event', description: 'Package or service delivery' },
+    { value: 'EducationEvent', label: 'Education Event', description: 'Educational workshops and seminars' },
+    { value: 'ExhibitionEvent', label: 'Exhibition Event', description: 'Art shows, museum exhibitions' },
+    { value: 'Festival', label: 'Festival', description: 'Cultural festivals and celebrations' },
+    { value: 'FoodEvent', label: 'Food Event', description: 'Food tastings, cooking classes' },
+    { value: 'LiteraryEvent', label: 'Literary Event', description: 'Book readings, poetry events' },
+    { value: 'MusicEvent', label: 'Music Event', description: 'Concerts and music performances' },
+    { value: 'PublicationEvent', label: 'Publication Event', description: 'Book launches, publication releases' },
+    { value: 'SaleEvent', label: 'Sale Event', description: 'Sales, promotions, discounts' },
+    { value: 'ScreeningEvent', label: 'Screening Event', description: 'Movie screenings, film festivals' },
+    { value: 'SocialEvent', label: 'Social Event', description: 'Parties, social gatherings' },
+    { value: 'SportsEvent', label: 'Sports Event', description: 'Sports games and competitions' },
+    { value: 'TheaterEvent', label: 'Theater Event', description: 'Plays, theatrical performances' },
+    { value: 'VisualArtsEvent', label: 'Visual Arts Event', description: 'Art exhibitions, gallery openings' }
+  ]
+
+  // Subtypes for Organization
+  const organizationSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'Corporation', label: 'Corporation', description: 'Business corporations and companies' },
+    { value: 'EducationalOrganization', label: 'Educational Organization', description: 'Schools, universities, training centers' },
+    { value: 'GovernmentOrganization', label: 'Government Organization', description: 'Government agencies and departments' },
+    { value: 'LibrarySystem', label: 'Library System', description: 'Libraries and library networks' },
+    { value: 'LocalBusiness', label: 'Local Business', description: 'Local shops, restaurants, services' },
+    { value: 'MedicalOrganization', label: 'Medical Organization', description: 'Hospitals, clinics, medical practices' },
+    { value: 'NewsMediaOrganization', label: 'News Media Organization', description: 'News outlets, journalism organizations' },
+    { value: 'NGO', label: 'Non-Governmental Organization', description: 'Non-profit organizations, NGOs' },
+    { value: 'PerformingGroup', label: 'Performing Group', description: 'Bands, theater groups, dance companies' },
+    { value: 'ResearchOrganization', label: 'Research Organization', description: 'Research institutes and labs' },
+    { value: 'SportsOrganization', label: 'Sports Organization', description: 'Sports teams, leagues, associations' },
+    { value: 'WorkersUnion', label: 'Workers Union', description: 'Labor unions and worker organizations' }
+  ]
+
+  // Subtypes for Person
+  const personSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
+    { value: 'Patient', label: 'Patient', description: 'Medical patients' }
   ]
 
   // Subtypes for CreativeWork (the more specific types)
@@ -5664,17 +5707,27 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
     { value: 'WebSite', label: 'Web Site', description: 'Complete websites' },
     { value: 'Course', label: 'Course', description: 'Educational courses and classes' },
     { value: 'Recipe', label: 'Recipe', description: 'Cooking recipes and instructions' },
+    { value: 'Review', label: 'Review', description: 'Reviews and ratings of products, services, or content' },
     { value: 'HowTo', label: 'How-To Guide', description: 'Step-by-step instructions' },
     { value: 'Game', label: 'Game', description: 'Games and interactive content' },
-    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' }
+    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' },
+    { value: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research articles' }
   ]
   
   // Get available subtypes based on main type selection
   const getAvailableSubtypes = (mainType: string) => {
-    if (mainType === 'CreativeWork') {
-      return creativeWorkSubtypes
+    switch (mainType) {
+      case 'CreativeWork':
+        return creativeWorkSubtypes
+      case 'Event':
+        return eventSubtypes
+      case 'Organization':
+        return organizationSubtypes
+      case 'Person':
+        return personSubtypes
+      default:
+        return []
     }
-    return []
   }
   
   const availableSubtypes = getAvailableSubtypes(selectedMainType)
