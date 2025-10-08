@@ -43,7 +43,7 @@ export type SchemaOrgType =
   | 'SportsOrganization'
   | 'WorkersUnion'
   // CreativeWork More Specific Types (comprehensive list)
-  | 'Blog'
+  | 'Article'
   | 'Certification'
   | 'Clip'
   | 'Collection'
@@ -78,12 +78,16 @@ export type SchemaOrgType =
   | 'WebPage'
   | 'WebPageElement'
   | 'WebSite'
-  // Sub-subtypes for DigitalDocument
-  | 'Article'
+  // Sub-subtypes for Article
   | 'BlogPosting'
   | 'NewsArticle'
   | 'ScholarlyArticle'
   | 'TechArticle'
+  // Sub-subtypes for DigitalDocument
+  | 'NoteDigitalDocument'
+  | 'PresentationDigitalDocument'
+  | 'SpreadsheetDigitalDocument'
+  | 'TextDigitalDocument'
   // Sub-subtypes for WebPage
   | 'AboutPage'
   | 'CheckoutPage'
@@ -792,7 +796,7 @@ export const SCHEMA_DEFINITIONS: Record<SchemaOrgType, SchemaDefinition> = {
   WorkersUnion: { type: 'WorkersUnion', label: 'Workers Union', description: 'Labor unions and worker organizations', category: 'organization', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Union Name', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'foundingDate', label: 'Founded Date', type: 'date', required: false }] },
 
   // New CreativeWork Types (comprehensive publishing-focused list)
-  Blog: { type: 'Blog', label: 'Blog', description: 'A blog or blogging website', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Blog Title', type: 'text', required: true }, { name: 'description', label: 'Blog Description', type: 'textarea', required: false }, { name: 'url', label: 'Blog URL', type: 'url', required: false }, { name: 'author', label: 'Blog Author', type: 'text', required: false }] },
+  Article: { type: 'Article', label: 'Article', description: 'Articles and written content', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'Article Title', type: 'text', required: true }, { name: 'description', label: 'Article Summary', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'datePublished', label: 'Publication Date', type: 'date', required: false }, { name: 'articleBody', label: 'Article Content', type: 'textarea', required: false }] },
   Certification: { type: 'Certification', label: 'Certification', description: 'Professional certifications and credentials', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Certification Name', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'credentialCategory', label: 'Category', type: 'text', required: false }, { name: 'recognizedBy', label: 'Recognized By', type: 'text', required: false }] },
   Clip: { type: 'Clip', label: 'Clip', description: 'Short audio or video clips', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Clip Title', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'contentUrl', label: 'Media URL', type: 'url', required: false }, { name: 'duration', label: 'Duration', type: 'text', required: false }] },
   Collection: { type: 'Collection', label: 'Collection', description: 'Collections of related works or items', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Collection Title', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'collectionSize', label: 'Number of Items', type: 'number', required: false }] },
@@ -821,12 +825,17 @@ export const SCHEMA_DEFINITIONS: Record<SchemaOrgType, SchemaDefinition> = {
   WebContent: { type: 'WebContent', label: 'Web Content', description: 'General web content and online materials', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Content Title', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'url', label: 'Content URL', type: 'url', required: false }, { name: 'datePublished', label: 'Date Published', type: 'date', required: false }] },
   WebPageElement: { type: 'WebPageElement', label: 'Web Page Element', description: 'Elements within web pages', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Element Name', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'cssSelector', label: 'CSS Selector', type: 'text', required: false }] },
 
-  // Sub-subtypes for DigitalDocument  
-  Article: { type: 'Article', label: 'Article', description: 'General articles and written pieces', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'Article Title', type: 'text', required: true }, { name: 'description', label: 'Article Summary', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'datePublished', label: 'Publication Date', type: 'date', required: false }, { name: 'articleBody', label: 'Article Content', type: 'textarea', required: false }] },
+  // Sub-subtypes for Article
   BlogPosting: { type: 'BlogPosting', label: 'Blog Posting', description: 'Blog posts and personal articles', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'Post Title', type: 'text', required: true }, { name: 'description', label: 'Post Summary', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'datePublished', label: 'Publication Date', type: 'date', required: false }, { name: 'articleBody', label: 'Post Content', type: 'textarea', required: false }] },
   NewsArticle: { type: 'NewsArticle', label: 'News Article', description: 'Journalism and news content', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'News Title', type: 'text', required: true }, { name: 'description', label: 'News Summary', type: 'textarea', required: false }, { name: 'author', label: 'Journalist', type: 'text', required: false }, { name: 'datePublished', label: 'Publication Date', type: 'date', required: false }, { name: 'dateline', label: 'Dateline/Location', type: 'text', required: false }] },
   ScholarlyArticle: { type: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'Paper Title', type: 'text', required: true }, { name: 'description', label: 'Abstract', type: 'textarea', required: false }, { name: 'author', label: 'Author(s)', type: 'text', required: false }, { name: 'datePublished', label: 'Publication Date', type: 'date', required: false }, { name: 'identifier', label: 'DOI/Identifier', type: 'text', required: false }] },
   TechArticle: { type: 'TechArticle', label: 'Technical Article', description: 'Technical documentation and guides', category: 'content', requiredProperties: ['headline'], properties: [{ name: 'headline', label: 'Article Title', type: 'text', required: true }, { name: 'description', label: 'Description', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'proficiencyLevel', label: 'Difficulty Level', type: 'text', required: false }] },
+
+  // Sub-subtypes for DigitalDocument
+  NoteDigitalDocument: { type: 'NoteDigitalDocument', label: 'Note Digital Document', description: 'Digital notes and memos', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Note Title', type: 'text', required: true }, { name: 'description', label: 'Note Content', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'dateCreated', label: 'Date Created', type: 'date', required: false }] },
+  PresentationDigitalDocument: { type: 'PresentationDigitalDocument', label: 'Presentation Digital Document', description: 'Slide presentations and decks', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Presentation Title', type: 'text', required: true }, { name: 'description', label: 'Presentation Description', type: 'textarea', required: false }, { name: 'author', label: 'Presenter/Author', type: 'text', required: false }, { name: 'numberOfSlides', label: 'Number of Slides', type: 'number', required: false }] },
+  SpreadsheetDigitalDocument: { type: 'SpreadsheetDigitalDocument', label: 'Spreadsheet Digital Document', description: 'Spreadsheets and data tables', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Spreadsheet Title', type: 'text', required: true }, { name: 'description', label: 'Spreadsheet Description', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'numberOfSheets', label: 'Number of Sheets', type: 'number', required: false }] },
+  TextDigitalDocument: { type: 'TextDigitalDocument', label: 'Text Digital Document', description: 'Text documents and files', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Document Title', type: 'text', required: true }, { name: 'description', label: 'Document Description', type: 'textarea', required: false }, { name: 'author', label: 'Author', type: 'text', required: false }, { name: 'wordCount', label: 'Word Count', type: 'number', required: false }] },
 
   // Sub-subtypes for WebPage
   AboutPage: { type: 'AboutPage', label: 'About Page', description: 'About us and information pages', category: 'content', requiredProperties: ['name'], properties: [{ name: 'name', label: 'Page Title', type: 'text', required: true }, { name: 'description', label: 'Page Description', type: 'textarea', required: false }, { name: 'url', label: 'Page URL', type: 'url', required: false }] },

@@ -5695,7 +5695,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
 
   // Subtypes for CreativeWork (comprehensive schema.org list)
   const creativeWorkSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'Blog', label: 'Blog', description: 'A blog or blog site' },
+    { value: 'Article', label: 'Article', description: 'Articles and written content' },
     { value: 'Certification', label: 'Certification', description: 'A certification or credential' },
     { value: 'Clip', label: 'Clip', description: 'A short video or audio clip' },
     { value: 'Collection', label: 'Collection', description: 'A collection of creative works' },
@@ -5733,12 +5733,18 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   ]
 
   // Sub-subtypes for CreativeWork types that have more specific types
-  const digitalDocumentSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'Article', label: 'Article', description: 'News articles and investigative reports' },
+  const articleSubtypes: { value: string; label: string; description: string }[] = [
     { value: 'BlogPosting', label: 'Blog Posting', description: 'Blog posts and personal articles' },
     { value: 'NewsArticle', label: 'News Article', description: 'Journalism and news content' },
     { value: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research' },
     { value: 'TechArticle', label: 'Technical Article', description: 'Technical documentation and guides' }
+  ]
+
+  const digitalDocumentSubtypes: { value: string; label: string; description: string }[] = [
+    { value: 'NoteDigitalDocument', label: 'Note Digital Document', description: 'Digital notes and memos' },
+    { value: 'PresentationDigitalDocument', label: 'Presentation Digital Document', description: 'Slide presentations and decks' },
+    { value: 'SpreadsheetDigitalDocument', label: 'Spreadsheet Digital Document', description: 'Spreadsheets and data tables' },
+    { value: 'TextDigitalDocument', label: 'Text Digital Document', description: 'Text documents and files' }
   ]
 
   const webPageSubtypes: { value: string; label: string; description: string }[] = [
@@ -5772,6 +5778,8 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   // Get available sub-subtypes based on subtype selection
   const getAvailableSubSubtypes = (subType: string) => {
     switch (subType) {
+      case 'Article':
+        return articleSubtypes
       case 'DigitalDocument':
         return digitalDocumentSubtypes
       case 'WebPage':
