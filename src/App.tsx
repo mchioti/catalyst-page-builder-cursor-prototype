@@ -197,8 +197,8 @@ function generateAIContent(prompt: string): any[] {
     const journal = journals[Math.floor(Math.random() * journals.length)]
     
     const article = {
-      "@context": "https://schema.org",
-      "@type": "ScholarlyArticle",
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
       "identifier": {
         "@type": "PropertyValue",
         "propertyID": "DOI",
@@ -210,8 +210,8 @@ function generateAIContent(prompt: string): any[] {
       "description": abstract,
       "author": selectedAuthors,
       "datePublished": publishDate.toISOString().split('T')[0],
-      "isPartOf": {
-        "@type": "PublicationIssue",
+    "isPartOf": {
+      "@type": "PublicationIssue",
         "name": journal,
         "volumeNumber": String(Math.floor(Math.random() * 50) + 1),
         "issueNumber": String(Math.floor(Math.random() * 12) + 1),
@@ -3391,11 +3391,11 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                           <div className="flex-1">
                             <div className="font-medium text-gray-900">{contentType.label}</div>
                             <div className="text-sm text-gray-600">{contentType.description}</div>
-                          </div>
+                  </div>
                         </label>
                       ))}
-                    </div>
-                  </div>
+                          </div>
+                        </div>
                   
                   {/* Subject Organization */}
                   <div className="mb-8">
@@ -3421,7 +3421,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
                           <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
-                          </div>
+                      </div>
                       </label>
                       
                       <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
@@ -3438,10 +3438,10 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">No</div>
                           <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
-                        </div>
+                      </div>
                       </label>
-                          </div>
-                        </div>
+                    </div>
+                  </div>
                   
                   {/* Selected Theme Preview */}
                   {selectedTheme && (
@@ -3456,7 +3456,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <div className="mt-4 pt-3 border-t border-blue-200">
                           <div className="text-sm text-blue-800 font-medium mb-2">
                             Recommended features for your content types:
-                        </div>
+                            </div>
                           <div className="text-sm text-blue-700 space-y-1">
                             {websiteData.purpose.contentTypes.includes('journals') && (
                               <div>• Article templates, peer-review workflows, citation management</div>
@@ -3470,18 +3470,18 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                             {websiteData.purpose.hasSubjectOrganization && (
                               <div>• Subject taxonomy, advanced filtering, topic-based navigation</div>
                             )}
+                          </div>
                       </div>
+                  )}
                     </div>
                   )}
-                      </div>
-                  )}
-                      </div>
-                      </div>
+                </div>
+              </div>
             )}
             
             {step === 3 && (
               <div className="space-y-6">
-                      <div>
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
                   <p className="text-gray-600 mb-6">
                     Complete your website setup with naming and optional branding customizations.
@@ -3490,7 +3490,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                   {/* Website Name */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
-                        <input
+                      <input
                           type="text"
                       value={websiteData.name}
                       onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
@@ -3500,21 +3500,21 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                     <p className="text-sm text-gray-500 mt-1">
                       Domain: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}
                     </p>
-                  </div>
+                    </div>
                   
                   {/* Theme Defaults Preview */}
                   {selectedTheme && (
                     <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                       <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
+                    <div>
                           <span className="font-medium text-gray-600">Primary Color:</span>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.primary}}></div>
                             <span className="text-gray-700">{selectedTheme.colors.primary}</span>
                             </div>
-                          </div>
-                        <div>
+                    </div>
+                    <div>
                           <span className="font-medium text-gray-600">Typography:</span>
                           <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
                       </div>
@@ -3547,18 +3547,18 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                     
                     {/* Only show primary color if selected theme allows it */}
                     {selectedTheme?.customizationRules.colors.canModifyPrimary && (
-                      <div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
                         <input
                           type="color"
                           value={websiteData.branding.primaryColor || selectedTheme.colors.primary}
-                          onChange={(e) => setWebsiteData({
-                            ...websiteData,
+                        onChange={(e) => setWebsiteData({
+                          ...websiteData,
                             branding: {...websiteData.branding, primaryColor: e.target.value}
                           })}
                           className="w-full h-10 border border-gray-300 rounded-md"
                         />
-                      </div>
+                    </div>
                     )}
                   </div>
                   
@@ -3568,7 +3568,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                         <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
                         You can set a logo, but color customization will be limited after website creation.
                       </p>
-                    </div>
+                      </div>
                   )}
                 </div>
                   
