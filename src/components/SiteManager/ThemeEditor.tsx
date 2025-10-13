@@ -423,21 +423,6 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
           </div>
         </div>
       )}
-      
-      {/* Website-level info - Only for website-level editing */}
-      {isWebsiteLevel && currentWebsite && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <div>
-              <h3 className="text-sm font-semibold text-green-900">Website Customization</h3>
-              <p className="text-sm text-green-700 mt-1">
-                Changes will be applied automatically to <strong>{currentWebsite.name}</strong> only.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
