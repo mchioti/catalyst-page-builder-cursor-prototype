@@ -4,7 +4,7 @@ import type { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardV
 import type { BaseTemplate, Website, Theme, Modification } from './templates'
 import type { SchemaObject, SchemaOrgType } from './schema'
 
-export type AppView = 'page-builder' | 'design-console'
+export type AppView = 'page-builder' | 'design-console' | 'mock-live-site'
 
 export type DesignConsoleView = 
   | 'overview' 
@@ -33,6 +33,16 @@ export type DesignConsoleView =
   | 'settings'
 
 export type EditingContext = 'template' | 'page' | 'website'
+
+// Mock Live Site routing
+export type MockLiveSiteRoute = 
+  | '/' 
+  | '/toc/cacm/current' 
+  | '/toc/jacm/current' 
+  | '/article/cacm/67/12/p45'
+  | '/journal/cacm'
+  | '/about'
+  | '/search'
 
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 
@@ -63,10 +73,12 @@ export type PageState = {
   siteManagerView: DesignConsoleView
   editingContext: EditingContext
   currentWebsiteId: string
+  mockLiveSiteRoute: MockLiveSiteRoute
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
   setCurrentWebsiteId: (websiteId: string) => void
+  setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void
   
   // Notifications & Issues
   notifications: Notification[]
