@@ -37,10 +37,10 @@ export type EditingContext = 'template' | 'page' | 'website'
 // Mock Live Site routing
 export type MockLiveSiteRoute = 
   | '/' 
-  | '/toc/cacm/current' 
-  | '/toc/jacm/current' 
-  | '/article/cacm/67/12/p45'
-  | '/journal/cacm'
+  | '/toc/advma/current' 
+  | '/toc/embo/current' 
+  | '/article/advma/67/12/p45'
+  | '/journal/advma'
   | '/about'
   | '/search'
 

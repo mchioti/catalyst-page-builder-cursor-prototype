@@ -8654,21 +8654,21 @@ function MockHomepage({ onEdit }: { onEdit: (context?: EditingContext) => void }
 
 function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: (context?: EditingContext) => void }) {
   const journalInfo = {
-    cacm: {
-      name: 'Communications of the ACM',
-      issn: '0001-0782',
-      onlineIssn: '1557-7317',
-      editor: 'Association for Computing Machinery and Morgan & Claypool'
+    advma: {
+      name: 'Advanced Materials',
+      issn: '0935-9648',
+      onlineIssn: '1521-4095',
+      editor: 'Wiley-VCH and Materials Research Society'
     },
-    jacm: {
-      name: 'Journal of the ACM', 
-      issn: '0004-5411',
-      onlineIssn: '1557-735X',
-      editor: 'ACM Publications Board'
+    embo: {
+      name: 'The EMBO Journal', 
+      issn: '0261-4189',
+      onlineIssn: '1460-2075',
+      editor: 'European Molecular Biology Organization'
     }
   }
 
-  const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.cacm
+  const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
 
   return (
     <div className="min-h-screen">
@@ -8712,20 +8712,20 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
         </div>
       </div>
 
-      {/* ACM Digital Library Navigation */}
-      <div className="bg-purple-600 text-white py-3 px-6">
+      {/* Wiley Online Library Navigation */}
+      <div className="bg-blue-700 text-white py-3 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="text-lg font-bold">ACM</div>
-            <div className="text-sm">DIGITAL LIBRARY</div>
+            <div className="text-lg font-bold">WILEY</div>
+            <div className="text-sm">ONLINE LIBRARY</div>
           </div>
           <nav className="flex space-x-6 text-sm">
-            <a href="#" className="hover:text-purple-200">Journal Home</a>
-            <a href="#" className="hover:text-purple-200">Current Issue</a>
-            <a href="#" className="hover:text-purple-200">Archive</a>
-            <a href="#" className="hover:text-purple-200">Subscribe/Renew</a>
-            <a href="#" className="hover:text-purple-200">About</a>
-            <a href="#" className="hover:text-purple-200">For Authors</a>
+            <a href="#" className="hover:text-blue-200">Journal Home</a>
+            <a href="#" className="hover:text-blue-200">Current Issue</a>
+            <a href="#" className="hover:text-blue-200">Archive</a>
+            <a href="#" className="hover:text-blue-200">Subscribe/Renew</a>
+            <a href="#" className="hover:text-blue-200">About</a>
+            <a href="#" className="hover:text-blue-200">For Authors</a>
           </nav>
         </div>
       </div>
@@ -8749,24 +8749,47 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
             <div className="bg-gray-50 p-4 rounded">
               <h3 className="font-semibold text-gray-900 mb-4">SECTIONS</h3>
               <div className="space-y-2 text-sm">
-                <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                  COLUMNFrom the President
-                </div>
-                <div className="text-gray-700">COLUMNCerf's Up</div>
-                <div className="text-gray-700">COLUMNCareers in Computing</div>
-                <div className="text-gray-700">DEPARTMENTLetters to the Editor</div>
-                <div className="text-gray-700">DEPARTMENTBLOG@ACM</div>
-                <div className="text-gray-700">COLUMNNews</div>
-                <div className="text-gray-700">COLUMNIn Memoriam</div>
-                <div className="text-gray-700">COLUMNThe Profession of IT</div>
-                <div className="text-gray-700">COLUMNOpinion</div>
-                <div className="text-blue-600 font-medium">COLUMNKode Vicious</div>
-                <div className="text-gray-700">COLUMNPrivacy</div>
-                <div className="text-gray-700">COLUMNOpinion</div>
-                <div className="text-gray-700">SECTIONPractice</div>
-                <div className="text-gray-700">SECTIONResearch and Advances</div>
-                <div className="text-gray-700">SECTIONResearch Highlights</div>
-                <div className="text-gray-700">COLUMNLast Byte</div>
+                {journalCode === 'advma' ? (
+                  <>
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                      Research Articles
+                    </div>
+                    <div className="text-gray-700">Progress Reports</div>
+                    <div className="text-gray-700">Feature Articles</div>
+                    <div className="text-gray-700">Communications</div>
+                    <div className="text-gray-700">Reviews</div>
+                    <div className="text-gray-700">Advanced Materials Interfaces</div>
+                    <div className="text-gray-700">Energy & Environmental Materials</div>
+                    <div className="text-gray-700">Biomedical Applications</div>
+                    <div className="text-gray-700">Electronic & Photonic Materials</div>
+                    <div className="text-blue-600 font-medium">Emerging Technologies</div>
+                    <div className="text-gray-700">Nanomaterials</div>
+                    <div className="text-gray-700">2D Materials</div>
+                    <div className="text-gray-700">Quantum Materials</div>
+                    <div className="text-gray-700">Soft Materials</div>
+                    <div className="text-gray-700">Sustainability</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                      Research Papers
+                    </div>
+                    <div className="text-gray-700">Review Articles</div>
+                    <div className="text-gray-700">Scientific Reports</div>
+                    <div className="text-gray-700">Tools & Resources</div>
+                    <div className="text-gray-700">Molecular Systems Biology</div>
+                    <div className="text-gray-700">Cell Biology</div>
+                    <div className="text-gray-700">Developmental Biology</div>
+                    <div className="text-gray-700">Genome Biology</div>
+                    <div className="text-blue-600 font-medium">Neuroscience</div>
+                    <div className="text-gray-700">Structural Biology</div>
+                    <div className="text-gray-700">Biochemistry</div>
+                    <div className="text-gray-700">Immunology</div>
+                    <div className="text-gray-700">Cancer Research</div>
+                    <div className="text-gray-700">Stem Cells</div>
+                    <div className="text-gray-700">Metabolism</div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -8774,21 +8797,31 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
           {/* Center Content - Articles */}
           <div className="flex-1">
             <div className="space-y-8">
-              {/* Column from the President */}
+              {/* Research Articles Section */}
               <section>
                 <h2 className="text-xl font-bold text-gray-900 mb-4 border-b-2 border-red-500 pb-2">
-                  COLUMNFROM THE PRESIDENT
+                  {journalCode === 'advma' ? 'RESEARCH ARTICLES' : 'RESEARCH PAPERS'}
                 </h2>
                 <article className="border-b pb-6">
                   <div className="flex items-start mb-2">
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-3">Full Access</span>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        The 5<sup>th</sup> Paradigm: AI-Driven Scientific Discovery
+                        {journalCode === 'advma' 
+                          ? 'Perovskite Solar Cells: Advanced Tandem Architectures for Enhanced Efficiency'
+                          : 'CRISPR-Cas9 Mediated Gene Editing in Human Embryonic Stem Cells'
+                        }
                       </h3>
-                      <p className="text-sm text-gray-600 mb-2">Yannis Ioannidis</p>
-                      <p className="text-xs text-gray-500">pp. 5-5 • Published Online: 02 December 2024</p>
-                      <a href="#" className="text-blue-600 text-xs hover:underline">https://doi.org/10.1145/3702970</a>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {journalCode === 'advma' 
+                          ? 'Sarah Chen, Michael Rodriguez, Elena Petrov, James Wilson'
+                          : 'Maria Andersson, Hiroshi Tanaka, Jennifer Liu'
+                        }
+                      </p>
+                      <p className="text-xs text-gray-500">pp. 2401234 • Published Online: 02 December 2024</p>
+                      <a href="#" className="text-blue-600 text-xs hover:underline">
+                        {journalCode === 'advma' ? 'https://doi.org/10.1002/adma.202401234' : 'https://doi.org/10.15252/embj.2024114567'}
+                      </a>
                     </div>
                   </div>
                   <div className="flex space-x-2 mt-3">
@@ -8801,19 +8834,28 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
                 </article>
               </section>
 
-              {/* Cerf's Up */}
+              {/* Second Article */}
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4 border-b-2 border-red-500 pb-2">
-                  COLUMNCERF'S UP  
-                </h2>
                 <article className="border-b pb-6">
                   <div className="flex items-start mb-2">
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-3">Full Access</span>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Warnings!!</h3>
-                      <p className="text-sm text-gray-600 mb-2">Vinton G. Cerf</p>
-                      <p className="text-xs text-gray-500">pp. 7-7 • Published Online: 02 December 2024</p>
-                      <a href="#" className="text-blue-600 text-xs hover:underline">https://doi.org/10.1145/3701556</a>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {journalCode === 'advma' 
+                          ? 'Machine Learning-Guided Discovery of 2D Materials for Energy Storage'
+                          : 'Mitochondrial Dynamics in Neurodegeneration: New Therapeutic Targets'
+                        }
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {journalCode === 'advma' 
+                          ? 'Dr. Alex Kumar, Prof. Lisa Zhang, Dr. Robert Thompson'
+                          : 'Prof. Anna Schmidt, Dr. Kenji Nakamura, Dr. Sophie Dubois'
+                        }
+                      </p>
+                      <p className="text-xs text-gray-500">pp. 2401235 • Published Online: 02 December 2024</p>
+                      <a href="#" className="text-blue-600 text-xs hover:underline">
+                        {journalCode === 'advma' ? 'https://doi.org/10.1002/adma.202401235' : 'https://doi.org/10.15252/embj.2024114568'}
+                      </a>
                     </div>
                   </div>
                   <div className="flex space-x-2 mt-3">
@@ -8825,21 +8867,31 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
                 </article>
               </section>
 
-              {/* Careers in Computing */}
+              {/* Reviews Section */}
               <section>
                 <h2 className="text-xl font-bold text-gray-900 mb-4 border-b-2 border-red-500 pb-2">
-                  COLUMNCAREERS IN COMPUTING
+                  {journalCode === 'advma' ? 'PROGRESS REPORTS' : 'REVIEW ARTICLES'}
                 </h2>
                 <article className="border-b pb-6">
                   <div className="flex items-start mb-2">
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-3">Full Access</span>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        From Dot Matrix to Data: A Journey through Technology and Leadership
+                        {journalCode === 'advma' 
+                          ? 'Flexible Electronics: From Lab to Market - Current Challenges and Future Prospects'
+                          : 'The Evolution of Single-Cell RNA Sequencing: From Method to Medicine'
+                        }
                       </h3>
-                      <p className="text-sm text-gray-600 mb-2">Wei Lu</p>
-                      <p className="text-xs text-gray-500">pp. 9-9 • Published Online: 02 December 2024</p>
-                      <a href="#" className="text-blue-600 text-xs hover:underline">https://doi.org/10.1145/3701267</a>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {journalCode === 'advma' 
+                          ? 'Prof. David Park, Dr. Michelle Foster'
+                          : 'Prof. Oliver Johnson, Dr. Yuki Sato, Dr. Isabella Martinez'
+                        }
+                      </p>
+                      <p className="text-xs text-gray-500">pp. 2401236 • Published Online: 02 December 2024</p>
+                      <a href="#" className="text-blue-600 text-xs hover:underline">
+                        {journalCode === 'advma' ? 'https://doi.org/10.1002/adma.202401236' : 'https://doi.org/10.15252/embj.2024114569'}
+                      </a>
                     </div>
                   </div>
                   <div className="flex space-x-2 mt-3">
@@ -8859,11 +8911,14 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
               <h3 className="font-bold text-gray-900 mb-4">CURRENT ISSUE</h3>
               <div className="mb-4">
                 <img 
-                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&h=400&fit=crop" 
-                  alt="Communications of the ACM Cover"
+                  src={journalCode === 'advma' 
+                    ? "https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=300&h=400&fit=crop" 
+                    : "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=400&fit=crop"
+                  }
+                  alt={`${journal.name} Cover`}
                   className="w-full h-64 object-cover rounded"
                 />
-                <p className="text-center text-sm text-gray-600 mt-2">Volume 67 • Issue 12 • Dec 2024</p>
+                <p className="text-center text-sm text-gray-600 mt-2">Volume 35 • Issue 48 • Dec 2024</p>
               </div>
             </div>
           </div>
@@ -8890,21 +8945,35 @@ function MockArticlePage({ onEdit }: { onEdit: (context?: EditingContext) => voi
 }
 
 function MockJournalHomepage({ journalCode, onEdit }: { journalCode: string; onEdit: (context?: EditingContext) => void }) {
+  const journalInfo = {
+    advma: {
+      name: 'Advanced Materials',
+      description: 'The leading international journal covering all aspects of materials science, from synthesis and characterization to applications in electronics, energy, and healthcare.',
+      volume: '35, Issue 48'
+    },
+    embo: {
+      name: 'The EMBO Journal', 
+      description: 'A peer-reviewed scientific journal publishing research in molecular biology. It is published by John Wiley & Sons on behalf of the European Molecular Biology Organization.',
+      volume: '42, Issue 24'
+    }
+  }
+
+  const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto py-12 px-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Communications of the ACM</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">{journal.name}</h1>
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">About This Journal</h2>
             <p className="text-gray-600 mb-6">
-              Communications of the ACM is the premier publication for computing professionals, 
-              delivering cutting-edge technical content and industry insights.
+              {journal.description}
             </p>
           </div>
           <div className="bg-gray-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Latest Issue</h3>
-            <p className="text-sm text-gray-600">Volume 67, Issue 12 - December 2024</p>
+            <p className="text-sm text-gray-600">Volume {journal.volume} - December 2024</p>
           </div>
         </div>
       </div>
@@ -8935,12 +9004,16 @@ function MockSearchPage({ onEdit }: { onEdit: (context?: EditingContext) => void
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Search Results</h1>
         <div className="space-y-6">
           <div className="border-b pb-4">
-            <h3 className="text-lg font-semibold text-blue-600 mb-2">Machine Learning Applications in Healthcare</h3>
-            <p className="text-gray-600 text-sm">Published in Journal of Medical Informatics - Volume 45, Issue 3</p>
+            <h3 className="text-lg font-semibold text-blue-600 mb-2">Perovskite Solar Cells: Advanced Tandem Architectures for Enhanced Efficiency</h3>
+            <p className="text-gray-600 text-sm">Published in Advanced Materials - Volume 35, Issue 48</p>
           </div>
           <div className="border-b pb-4">
-            <h3 className="text-lg font-semibold text-blue-600 mb-2">Quantum Computing: Current State and Future Prospects</h3>
-            <p className="text-gray-600 text-sm">Published in Communications of the ACM - Volume 67, Issue 11</p>
+            <h3 className="text-lg font-semibold text-blue-600 mb-2">CRISPR-Cas9 Mediated Gene Editing in Human Embryonic Stem Cells</h3>
+            <p className="text-gray-600 text-sm">Published in The EMBO Journal - Volume 42, Issue 24</p>
+          </div>
+          <div className="border-b pb-4">
+            <h3 className="text-lg font-semibold text-blue-600 mb-2">Machine Learning-Guided Discovery of 2D Materials for Energy Storage</h3>
+            <p className="text-gray-600 text-sm">Published in Advanced Materials - Volume 35, Issue 47</p>
           </div>
         </div>
       </div>
@@ -8961,12 +9034,12 @@ function MockLiveSite() {
     switch (mockLiveSiteRoute) {
       case '/':
         return 'Edit Homepage'
-      case '/toc/cacm/current':
-      case '/toc/jacm/current':
+      case '/toc/advma/current':
+      case '/toc/embo/current':
         return 'Edit TOC Template'
-      case '/article/cacm/67/12/p45':
+      case '/article/advma/67/12/p45':
         return 'Edit Article Template'
-      case '/journal/cacm':
+      case '/journal/advma':
         return 'Edit Journal Template'
       case '/about':
         return 'Edit About Page'
@@ -8981,14 +9054,14 @@ function MockLiveSite() {
     switch (mockLiveSiteRoute) {
       case '/':
         return <MockHomepage onEdit={handleEditPage} />
-      case '/toc/cacm/current':
-        return <MockJournalTOC journalCode="cacm" onEdit={handleEditPage} />
-      case '/toc/jacm/current':
-        return <MockJournalTOC journalCode="jacm" onEdit={handleEditPage} />
-      case '/article/cacm/67/12/p45':
+      case '/toc/advma/current':
+        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} />
+      case '/toc/embo/current':
+        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} />
+      case '/article/advma/67/12/p45':
         return <MockArticlePage onEdit={handleEditPage} />
-      case '/journal/cacm':
-        return <MockJournalHomepage journalCode="cacm" onEdit={handleEditPage} />
+      case '/journal/advma':
+        return <MockJournalHomepage journalCode="advma" onEdit={handleEditPage} />
       case '/about':
         return <MockAboutPage onEdit={handleEditPage} />
       case '/search':
@@ -9013,20 +9086,20 @@ function MockLiveSite() {
                 Home
               </button>
               <button
-                onClick={() => setMockLiveSiteRoute('/toc/cacm/current')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/cacm/current' ? 'text-blue-300' : ''}`}
+                onClick={() => setMockLiveSiteRoute('/toc/advma/current')}
+                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/advma/current' ? 'text-blue-300' : ''}`}
               >
-                CACM TOC
+                Adv Materials TOC
               </button>
               <button
-                onClick={() => setMockLiveSiteRoute('/toc/jacm/current')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/jacm/current' ? 'text-blue-300' : ''}`}
+                onClick={() => setMockLiveSiteRoute('/toc/embo/current')}
+                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/embo/current' ? 'text-blue-300' : ''}`}
               >
-                JACM TOC
+                EMBO Journal TOC
               </button>
               <button
-                onClick={() => setMockLiveSiteRoute('/journal/cacm')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/cacm' ? 'text-blue-300' : ''}`}
+                onClick={() => setMockLiveSiteRoute('/journal/advma')}
+                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
               >
                 Journal Home
               </button>
