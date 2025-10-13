@@ -3149,7 +3149,7 @@ const themePreviewImages = {
 
 // Website Creation Wizard Component
 function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
-  const { themes, addWebsite } = usePageStore()
+  const { addWebsite } = usePageStore()
   const [step, setStep] = useState(1)
   const [websiteData, setWebsiteData] = useState({
     name: '',
@@ -3169,7 +3169,8 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
   })
   
   const totalSteps = 3
-  const selectedTheme = themes.find(t => t.id === websiteData.themeId)
+  const { themes: availableThemes } = usePageStore()
+  const selectedTheme = availableThemes.find(t => t.id === websiteData.themeId)
   
   const handleCreate = () => {
     const themeBranding = selectedTheme ? {
@@ -3283,7 +3284,7 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                   <p className="text-gray-600 mb-6">Select a complete theme package for your publishing platform</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
-                    {themes.map((theme) => (
+                    {availableThemes.map((theme) => (
                       <div 
                         key={theme.id}
                         onClick={() => setWebsiteData({...websiteData, themeId: theme.id})}
@@ -3529,33 +3530,47 @@ function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
                     </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Always show logo - not restricted by theme */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
                       <input
-                        type="color"
-                        value={websiteData.branding.primaryColor}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, primaryColor: e.target.value}
-                        })}
-                          className="w-full h-10 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
-                      <input
-                          type="url"
+                        type="url"
                         value={websiteData.branding.logoUrl}
                         onChange={(e) => setWebsiteData({
                           ...websiteData,
                           branding: {...websiteData.branding, logoUrl: e.target.value}
                         })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="https://example.com/logo.svg"
+                        placeholder="https://example.com/logo.svg"
                       />
                     </div>
-                    </div>
+                    
+                    {/* Only show primary color if selected theme allows it */}
+                    {selectedTheme?.customizationRules.colors.canModifyPrimary && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
+                        <input
+                          type="color"
+                          value={websiteData.branding.primaryColor || selectedTheme.colors.primary}
+                          onChange={(e) => setWebsiteData({
+                            ...websiteData,
+                            branding: {...websiteData.branding, primaryColor: e.target.value}
+                          })}
+                          className="w-full h-10 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
                   </div>
+                  
+                  {selectedTheme && !selectedTheme.customizationRules.colors.canModifyPrimary && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-amber-700 text-sm">
+                        <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
+                        You can set a logo, but color customization will be limited after website creation.
+                      </p>
+                    </div>
+                  )}
+                </div>
                   
                   {/* Website Summary */}
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -6832,8 +6847,9 @@ function PageBuilder() {
 
 // Website Settings Component
 function WebsiteSettings({ websiteId }: { websiteId: string }) {
-  const { websites, updateWebsite } = usePageStore()
+  const { websites, updateWebsite, themes } = usePageStore()
   const website = websites.find(w => w.id === websiteId)
+  const currentTheme = website ? themes.find(t => t.id === website.themeId) : null
   
   if (!website) {
     return (
@@ -7043,75 +7059,129 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
 
       {/* Branding Customizations */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Branding & Visual Identity</h3>
-        <p className="text-gray-600 mb-6">Customize colors, fonts, and visual elements to match your brand identity.</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Primary Brand Color</label>
-            <div className="flex gap-3">
-              <input
-                type="color"
-                value={website.branding.primaryColor || '#3B82F6'}
-                onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
-                className="w-12 h-10 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                value={website.branding.primaryColor || ''}
-                onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
-                placeholder="e.g., #3B82F6"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Branding & Visual Identity</h3>
+            <p className="text-gray-600 mt-2">
+              Quick brand customization - logo and basic colors. For advanced styling, use Theme Customization below.
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
-            <div className="flex gap-3">
-              <input
-                type="color"
-                value={website.branding.secondaryColor || '#64748B'}
-                onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
-                className="w-12 h-10 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                value={website.branding.secondaryColor || ''}
-                onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
-                placeholder="e.g., #64748B"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
-            <input
-              type="url"
-              value={website.branding.logoUrl || ''}
-              onChange={(e) => handleBrandingUpdate('logoUrl', e.target.value)}
-              placeholder="https://example.com/logo.svg"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Custom Font Family</label>
-            <input
-              type="text"
-              value={website.branding.fontFamily || ''}
-              onChange={(e) => handleBrandingUpdate('fontFamily', e.target.value)}
-              placeholder="e.g., 'Inter', 'Roboto', 'Arial'"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
+            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+            <span className="text-xs font-medium text-blue-700">Basic</span>
           </div>
         </div>
+        
+        {currentTheme ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Always show logo - not restricted by theme */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+              <input
+                type="url"
+                value={website.branding.logoUrl || ''}
+                onChange={(e) => handleBrandingUpdate('logoUrl', e.target.value)}
+                placeholder="https://example.com/logo.svg"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            {/* Only show primary color if theme allows it */}
+            {currentTheme.customizationRules.colors.canModifyPrimary && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Brand Color</label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={website.branding.primaryColor || currentTheme.colors.primary}
+                    onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
+                    className="w-12 h-10 border border-gray-300 rounded-md"
+                  />
+                  <input
+                    type="text"
+                    value={website.branding.primaryColor || ''}
+                    onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
+                    placeholder={`Default: ${currentTheme.colors.primary}`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Only show secondary color if theme allows it */}
+            {currentTheme.customizationRules.colors.canModifySecondary && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={website.branding.secondaryColor || currentTheme.colors.secondary}
+                    onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
+                    className="w-12 h-10 border border-gray-300 rounded-md"
+                  />
+                  <input
+                    type="text"
+                    value={website.branding.secondaryColor || ''}
+                    onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
+                    placeholder={`Default: ${currentTheme.colors.secondary}`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Only show font family if theme allows typography changes */}
+            {(currentTheme.customizationRules.typography.canModifyHeadingFont || 
+              currentTheme.customizationRules.typography.canModifyBodyFont) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Custom Font Family</label>
+                <input
+                  type="text"
+                  value={website.branding.fontFamily || ''}
+                  onChange={(e) => handleBrandingUpdate('fontFamily', e.target.value)}
+                  placeholder={`Default: ${currentTheme.typography.bodyFont}`}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">Theme not found. Cannot determine available branding options.</p>
+        )}
+        
+        {currentTheme && (
+          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-700 text-sm">
+              <strong>Theme Restrictions:</strong> Your "{currentTheme.name}" theme has specific design guidelines. 
+              {!currentTheme.customizationRules.colors.canModifyPrimary && 
+               !currentTheme.customizationRules.colors.canModifySecondary ? (
+                " Color customization is locked to maintain theme integrity."
+              ) : currentTheme.customizationRules.colors.canModifyPrimary && 
+                     currentTheme.customizationRules.colors.canModifySecondary ? (
+                " Full color customization is available."
+              ) : (
+                " Limited color customization is available."
+              )}
+              {" "}Use the "Theme Customization" section below for advanced styling options.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Theme Customization */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Theme Customization</h3>
-        <p className="text-gray-600 text-sm mb-6">
-          Customize the visual appearance of this website. Changes can be applied to this website only or to all websites using the same theme.
-        </p>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Theme Customization</h3>
+            <p className="text-gray-600 text-sm mt-2">
+              Advanced styling controls with scope selection. Changes can be applied to this website only or to all websites using the same theme.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full">
+            <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+            <span className="text-xs font-medium text-purple-700">Advanced</span>
+          </div>
+        </div>
         <ThemeEditor 
           usePageStore={usePageStore} 
           themeId={website.themeId} 
