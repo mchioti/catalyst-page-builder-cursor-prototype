@@ -241,32 +241,60 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
   const currentTheme = themes.find(t => t.id === selectedTheme)
   const currentWebsite = websiteId ? websites.find(w => w.id === websiteId) : null
   
-  // State for pending changes and scope selection
+  // State for pending changes and scope selection (only for theme-level editing)
   const [pendingChanges, setPendingChanges] = useState<{
     colors?: Partial<Theme['colors']>
     typography?: Partial<Theme['typography']>
     spacing?: Partial<Theme['spacing']>
     components?: Partial<Theme['components']>
   }>({})
-  const [changeScope, setChangeScope] = useState<'website' | 'theme'>('website')
+  const [changeScope, setChangeScope] = useState<'website' | 'theme'>('theme')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  
+  // Determine if this is website-level (automatic) or theme-level (needs scope selection)
+  const isWebsiteLevel = Boolean(websiteId)
+  const isThemeLevel = !websiteId
   
   const updateThemeColors = (colors: Partial<Theme['colors']>) => {
     if (!currentTheme) return
-    setPendingChanges(prev => ({
-      ...prev,
-      colors: { ...prev.colors, ...colors }
-    }))
-    setHasUnsavedChanges(true)
+    
+    if (isWebsiteLevel && websiteId && currentWebsite) {
+      // Website-level: Apply changes immediately to website overrides
+      updateWebsite(websiteId, {
+        themeOverrides: {
+          ...currentWebsite.themeOverrides,
+          colors: { ...currentWebsite.themeOverrides?.colors, ...colors }
+        }
+      })
+    } else if (isThemeLevel) {
+      // Theme-level: Store as pending changes for batch save
+      setPendingChanges(prev => ({
+        ...prev,
+        colors: { ...prev.colors, ...colors }
+      }))
+      setHasUnsavedChanges(true)
+    }
   }
   
   const updateThemeTypography = (typography: Partial<Theme['typography']>) => {
     if (!currentTheme) return
-    setPendingChanges(prev => ({
-      ...prev,
-      typography: { ...prev.typography, ...typography }
-    }))
-    setHasUnsavedChanges(true)
+    
+    if (isWebsiteLevel && websiteId && currentWebsite) {
+      // Website-level: Apply changes immediately to website overrides
+      updateWebsite(websiteId, {
+        themeOverrides: {
+          ...currentWebsite.themeOverrides,
+          typography: { ...currentWebsite.themeOverrides?.typography, ...typography }
+        }
+      })
+    } else if (isThemeLevel) {
+      // Theme-level: Store as pending changes for batch save
+      setPendingChanges(prev => ({
+        ...prev,
+        typography: { ...prev.typography, ...typography }
+      }))
+      setHasUnsavedChanges(true)
+    }
   }
   
   const saveChanges = () => {
@@ -342,25 +370,13 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
 
   return (
     <div className="space-y-8">
-      {/* Scope Selector and Save Controls */}
-      {websiteId && (
+      {/* Scope Selector and Save Controls - Only for theme-level editing */}
+      {isThemeLevel && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">Theme Customization Scope</h3>
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">Theme Modification Scope</h3>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="website"
-                    checked={changeScope === 'website'}
-                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
-                    className="text-blue-600"
-                  />
-                  <span>Apply to this website only</span>
-                  <span className="text-xs text-gray-500">({currentWebsite?.name})</span>
-                </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="radio"
@@ -370,8 +386,20 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                     onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
                     className="text-blue-600"
                   />
-                  <span>Apply to all websites using this theme</span>
+                  <span>Modify the global theme</span>
                   <span className="text-xs text-red-600">({websiteCount} websites will be affected)</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="website"
+                    checked={changeScope === 'website'}
+                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
+                    className="text-blue-600"
+                  />
+                  <span>Create website-specific version</span>
+                  <span className="text-xs text-gray-500">(requires selecting a specific website)</span>
                 </label>
               </div>
             </div>
@@ -386,12 +414,27 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 </button>
                 <button
                   onClick={saveChanges}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
                 >
-                  Save Changes
+                  Apply Changes
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Website-level info - Only for website-level editing */}
+      {isWebsiteLevel && currentWebsite && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <div>
+              <h3 className="text-sm font-semibold text-green-900">Website Customization</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Changes will be applied automatically to <strong>{currentWebsite.name}</strong> only.
+              </p>
+            </div>
           </div>
         </div>
       )}
