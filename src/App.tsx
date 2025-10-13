@@ -6687,13 +6687,30 @@ function PageBuilder() {
           <div className="border-b bg-white px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
-              <button
-                onClick={() => setCurrentView('design-console')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Design System Console
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    const { addNotification, setCurrentView } = usePageStore.getState()
+                    addNotification({
+                      type: 'success',
+                      title: 'Changes Published',
+                      message: 'Your changes have been published to the live site'
+                    })
+                    setCurrentView('mock-live-site')
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Publish Changes
+                </button>
+                <button
+                  onClick={() => setCurrentView('design-console')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  Design System Console
+                </button>
+              </div>
             </div>
           </div>
 
@@ -8940,6 +8957,26 @@ function MockLiveSite() {
     setCurrentView('page-builder')
   }
 
+  const getEditButtonText = () => {
+    switch (mockLiveSiteRoute) {
+      case '/':
+        return 'Edit Homepage'
+      case '/toc/cacm/current':
+      case '/toc/jacm/current':
+        return 'Edit TOC Template'
+      case '/article/cacm/67/12/p45':
+        return 'Edit Article Template'
+      case '/journal/cacm':
+        return 'Edit Journal Template'
+      case '/about':
+        return 'Edit About Page'
+      case '/search':
+        return 'Edit Search Template'
+      default:
+        return 'Edit This Page'
+    }
+  }
+
   const renderPage = () => {
     switch (mockLiveSiteRoute) {
       case '/':
@@ -9016,15 +9053,24 @@ function MockLiveSite() {
       {/* Page Content */}
       {renderPage()}
 
-      {/* Floating Admin Button */}
-      <div className="fixed bottom-6 right-6">
+      {/* Floating Admin Buttons */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
         <button
-          onClick={() => handleEditPage()}
-          className="w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center font-bold text-lg"
-          title="Edit This Page"
+          onClick={() => handleEditPage('page')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
+          title={getEditButtonText()}
         >
-          A
+          {getEditButtonText()}
         </button>
+        {(mockLiveSiteRoute.includes('/toc/') || mockLiveSiteRoute.includes('/journal/') || mockLiveSiteRoute.includes('/article/')) && (
+          <button
+            onClick={() => handleEditPage('template')}
+            className="px-4 py-2 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 text-sm font-medium whitespace-nowrap"
+            title="Switch to Template Mode"
+          >
+            Template Mode
+          </button>
+        )}
       </div>
     </div>
   )
