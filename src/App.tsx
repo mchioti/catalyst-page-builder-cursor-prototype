@@ -7057,136 +7057,55 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
         </div>
       </div>
 
-      {/* Branding Customizations */}
+      {/* Combined Theme & Branding */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Branding & Visual Identity</h3>
-            <p className="text-gray-600 mt-2">
-              Quick brand customization - logo and basic colors. For advanced styling, use Theme Customization below.
+            <h3 className="text-lg font-semibold text-gray-900">Theme & Branding</h3>
+            <p className="text-gray-600 text-sm mt-2">
+              Customize your website's visual appearance including logo, colors, typography, and advanced styling options.
             </p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
-            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span className="text-xs font-medium text-blue-700">Basic</span>
           </div>
         </div>
         
         {currentTheme ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Always show logo - not restricted by theme */}
+          <div className="space-y-6">
+            {/* Logo Section - Always Available */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
-              <input
-                type="url"
-                value={website.branding.logoUrl || ''}
-                onChange={(e) => handleBrandingUpdate('logoUrl', e.target.value)}
-                placeholder="https://example.com/logo.svg"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span>Branding</span>
+                <div className="h-px flex-1 bg-gray-200"></div>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                  <input
+                    type="url"
+                    value={website.branding.logoUrl || ''}
+                    onChange={(e) => handleBrandingUpdate('logoUrl', e.target.value)}
+                    placeholder="https://example.com/logo.svg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
             </div>
             
-            {/* Only show primary color if theme allows it */}
-            {currentTheme.customizationRules.colors.canModifyPrimary && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Brand Color</label>
-                <div className="flex gap-3">
-                  <input
-                    type="color"
-                    value={website.branding.primaryColor || currentTheme.colors.primary}
-                    onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
-                    className="w-12 h-10 border border-gray-300 rounded-md"
-                  />
-                  <input
-                    type="text"
-                    value={website.branding.primaryColor || ''}
-                    onChange={(e) => handleBrandingUpdate('primaryColor', e.target.value)}
-                    placeholder={`Default: ${currentTheme.colors.primary}`}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Only show secondary color if theme allows it */}
-            {currentTheme.customizationRules.colors.canModifySecondary && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
-                <div className="flex gap-3">
-                  <input
-                    type="color"
-                    value={website.branding.secondaryColor || currentTheme.colors.secondary}
-                    onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
-                    className="w-12 h-10 border border-gray-300 rounded-md"
-                  />
-                  <input
-                    type="text"
-                    value={website.branding.secondaryColor || ''}
-                    onChange={(e) => handleBrandingUpdate('secondaryColor', e.target.value)}
-                    placeholder={`Default: ${currentTheme.colors.secondary}`}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Only show font family if theme allows typography changes */}
-            {(currentTheme.customizationRules.typography.canModifyHeadingFont || 
-              currentTheme.customizationRules.typography.canModifyBodyFont) && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Custom Font Family</label>
-                <input
-                  type="text"
-                  value={website.branding.fontFamily || ''}
-                  onChange={(e) => handleBrandingUpdate('fontFamily', e.target.value)}
-                  placeholder={`Default: ${currentTheme.typography.bodyFont}`}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            )}
+            {/* Theme Customization Section */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span>Theme Customization</span>
+                <div className="h-px flex-1 bg-gray-200"></div>
+              </h4>
+              <ThemeEditor 
+                usePageStore={usePageStore} 
+                themeId={website.themeId} 
+                websiteId={website.id} 
+              />
+            </div>
           </div>
         ) : (
-          <p className="text-gray-500 italic">Theme not found. Cannot determine available branding options.</p>
+          <p className="text-gray-500 italic">Theme not found. Cannot load customization options.</p>
         )}
-        
-        {currentTheme && (
-          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-amber-700 text-sm">
-              <strong>Theme Restrictions:</strong> Your "{currentTheme.name}" theme has specific design guidelines. 
-              {!currentTheme.customizationRules.colors.canModifyPrimary && 
-               !currentTheme.customizationRules.colors.canModifySecondary ? (
-                " Color customization is locked to maintain theme integrity."
-              ) : currentTheme.customizationRules.colors.canModifyPrimary && 
-                     currentTheme.customizationRules.colors.canModifySecondary ? (
-                " Full color customization is available."
-              ) : (
-                " Limited color customization is available."
-              )}
-              {" "}Use the "Theme Customization" section below for advanced styling options.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Theme Customization */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Theme Customization</h3>
-            <p className="text-gray-600 text-sm mt-2">
-              Advanced styling controls with scope selection. Changes can be applied to this website only or to all websites using the same theme.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full">
-            <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-            <span className="text-xs font-medium text-purple-700">Advanced</span>
-          </div>
-        </div>
-        <ThemeEditor 
-          usePageStore={usePageStore} 
-          themeId={website.themeId} 
-          websiteId={website.id} 
-        />
       </div>
 
       {/* Current Configuration Summary */}
