@@ -1785,6 +1785,36 @@ const usePageStore = create<PageState>((set, get) => ({
           focusColor: '#0066cc'
         }
       },
+      
+      // Modern theme: Maximum flexibility for digital-first design
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true,
+          canModifyText: false, // Text color locked to maintain readability
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: true,
+          canModifyBodyFont: true,
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: true, // Modern allows border radius changes
+          canModifyButtonWeight: true,
+          canModifyCardRadius: true,
+          canModifyCardShadow: true,
+          canModifyFormRadius: true
+        }
+      },
+      
       globalSections: {
         header: PREFAB_SECTIONS['header-section'],
         footer: PREFAB_SECTIONS['footer-section']
@@ -1914,6 +1944,36 @@ const usePageStore = create<PageState>((set, get) => ({
           border: '2px solid #e2e8f0'
         }
       },
+      
+      // Classic theme: Restrictive customization to maintain scholarly tradition
+      customizationRules: {
+        colors: {
+          canModifyPrimary: false, // Primary color locked to maintain scholarly identity
+          canModifySecondary: true,
+          canModifyAccent: true, // Allow accent color changes for some flexibility
+          canModifyBackground: false, // Background locked to maintain readability
+          canModifyText: false, // Text color locked for accessibility
+          canModifyMuted: false // Muted text locked for consistency
+        },
+        typography: {
+          canModifyHeadingFont: false, // Serif fonts are locked for tradition
+          canModifyBodyFont: false, // Body font locked to maintain scholarly appearance
+          canModifyBaseSize: true, // Allow size adjustments for accessibility
+          canModifyScale: false // Scale locked to maintain hierarchy
+        },
+        spacing: {
+          canModifyBase: false, // Base spacing locked for consistency
+          canModifyScale: false // Scale locked for traditional layout
+        },
+        components: {
+          canModifyButtonRadius: false, // No rounded buttons - maintains formal look
+          canModifyButtonWeight: false, // Font weight locked for consistency
+          canModifyCardRadius: false, // Card styling locked for uniformity
+          canModifyCardShadow: false, // Shadow locked to prevent over-styling
+          canModifyFormRadius: false // Form styling locked for professionalism
+        }
+      },
+      
       globalSections: {
         header: PREFAB_SECTIONS['header-section'],
         footer: PREFAB_SECTIONS['footer-section']
@@ -1995,6 +2055,36 @@ const usePageStore = create<PageState>((set, get) => ({
           focusColor: '#ef4444'
         }
       },
+      
+      // Curator theme: Balanced customization for artistic flexibility
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true, // Allow primary color changes for artistic expression
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true, // Background customization for visual impact
+          canModifyText: false, // Text color locked for readability over images
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: true, // Allow font changes for artistic expression
+          canModifyBodyFont: false, // Body font locked to maintain readability
+          canModifyBaseSize: true,
+          canModifyScale: true // Allow scale changes for visual hierarchy
+        },
+        spacing: {
+          canModifyBase: true, // Allow spacing changes for artistic layouts
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: false, // Sharp edges maintained for modern aesthetic
+          canModifyButtonWeight: true, // Allow weight changes for emphasis
+          canModifyCardRadius: false, // Sharp cards maintained for gallery feel
+          canModifyCardShadow: true, // Allow shadow customization for depth
+          canModifyFormRadius: false // Sharp forms for consistency
+        }
+      },
+      
       globalSections: {
         header: PREFAB_SECTIONS['header-section'],
         footer: PREFAB_SECTIONS['footer-section']

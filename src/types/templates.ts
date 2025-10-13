@@ -122,6 +122,35 @@ export type Theme = {
     form: Record<string, any>
   }
   
+  // Theme-specific customization rules (what can/cannot be modified)
+  customizationRules: {
+    colors: {
+      canModifyPrimary: boolean
+      canModifySecondary: boolean
+      canModifyAccent: boolean
+      canModifyBackground: boolean
+      canModifyText: boolean
+      canModifyMuted: boolean
+    }
+    typography: {
+      canModifyHeadingFont: boolean
+      canModifyBodyFont: boolean
+      canModifyBaseSize: boolean
+      canModifyScale: boolean
+    }
+    spacing: {
+      canModifyBase: boolean
+      canModifyScale: boolean
+    }
+    components: {
+      canModifyButtonRadius: boolean
+      canModifyButtonWeight: boolean
+      canModifyCardRadius: boolean
+      canModifyCardShadow: boolean
+      canModifyFormRadius: boolean
+    }
+  }
+  
   // Global sections
   globalSections: {
     header: WidgetSection

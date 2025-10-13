@@ -168,6 +168,35 @@ type Theme = {
     form: Record<string, any>
   }
   
+  // Theme-specific customization rules (what can/cannot be modified)
+  customizationRules: {
+    colors: {
+      canModifyPrimary: boolean
+      canModifySecondary: boolean
+      canModifyAccent: boolean
+      canModifyBackground: boolean
+      canModifyText: boolean
+      canModifyMuted: boolean
+    }
+    typography: {
+      canModifyHeadingFont: boolean
+      canModifyBodyFont: boolean
+      canModifyBaseSize: boolean
+      canModifyScale: boolean
+    }
+    spacing: {
+      canModifyBase: boolean
+      canModifyScale: boolean
+    }
+    components: {
+      canModifyButtonRadius: boolean
+      canModifyButtonWeight: boolean
+      canModifyCardRadius: boolean
+      canModifyCardShadow: boolean
+      canModifyFormRadius: boolean
+    }
+  }
+  
   globalSections: {
     header: any
     footer: any
@@ -243,52 +272,123 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
             </div>
           </div>
           <div className="space-y-3">
-            <ColorInput
-              label="Primary Color"
-              value={currentTheme.colors.primary}
-              onChange={(value) => updateThemeColors({ primary: value })}
-              backgroundColor={currentTheme.colors.background}
-              description="Used for buttons, links, and key interactive elements"
-            />
+            {currentTheme.customizationRules.colors.canModifyPrimary ? (
+              <ColorInput
+                label="Primary Color"
+                value={currentTheme.colors.primary}
+                onChange={(value) => updateThemeColors({ primary: value })}
+                backgroundColor={currentTheme.colors.background}
+                description="Used for buttons, links, and key interactive elements"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Primary Color (Locked)"
+                  value={currentTheme.colors.primary}
+                  onChange={() => {}} // No-op for locked colors
+                  backgroundColor={currentTheme.colors.background}
+                  description="This color is locked to maintain theme identity"
+                />
+              </div>
+            )}
             
-            <ColorInput
-              label="Secondary Color"
-              value={currentTheme.colors.secondary}
-              onChange={(value) => updateThemeColors({ secondary: value })}
-              backgroundColor={currentTheme.colors.background}
-              description="Supporting color for borders, dividers, and secondary elements"
-            />
+            {currentTheme.customizationRules.colors.canModifySecondary ? (
+              <ColorInput
+                label="Secondary Color"
+                value={currentTheme.colors.secondary}
+                onChange={(value) => updateThemeColors({ secondary: value })}
+                backgroundColor={currentTheme.colors.background}
+                description="Supporting color for borders, dividers, and secondary elements"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Secondary Color (Locked)"
+                  value={currentTheme.colors.secondary}
+                  onChange={() => {}}
+                  backgroundColor={currentTheme.colors.background}
+                  description="This color is locked to maintain theme consistency"
+                />
+              </div>
+            )}
             
-            <ColorInput
-              label="Accent Color"
-              value={currentTheme.colors.accent}
-              onChange={(value) => updateThemeColors({ accent: value })}
-              backgroundColor={currentTheme.colors.background}
-              description="Highlight color for notifications, badges, and emphasis"
-            />
+            {currentTheme.customizationRules.colors.canModifyAccent ? (
+              <ColorInput
+                label="Accent Color"
+                value={currentTheme.colors.accent}
+                onChange={(value) => updateThemeColors({ accent: value })}
+                backgroundColor={currentTheme.colors.background}
+                description="Highlight color for notifications, badges, and emphasis"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Accent Color (Locked)"
+                  value={currentTheme.colors.accent}
+                  onChange={() => {}}
+                  backgroundColor={currentTheme.colors.background}
+                  description="This color is locked to maintain theme consistency"
+                />
+              </div>
+            )}
             
-            <ColorInput
-              label="Text Color"
-              value={currentTheme.colors.text}
-              onChange={(value) => updateThemeColors({ text: value })}
-              backgroundColor={currentTheme.colors.background}
-              description="Main text color - should have high contrast with background"
-            />
+            {currentTheme.customizationRules.colors.canModifyText ? (
+              <ColorInput
+                label="Text Color"
+                value={currentTheme.colors.text}
+                onChange={(value) => updateThemeColors({ text: value })}
+                backgroundColor={currentTheme.colors.background}
+                description="Main text color - should have high contrast with background"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Text Color (Locked)"
+                  value={currentTheme.colors.text}
+                  onChange={() => {}}
+                  backgroundColor={currentTheme.colors.background}
+                  description="This color is locked for accessibility and readability"
+                />
+              </div>
+            )}
             
-            <ColorInput
-              label="Background Color"
-              value={currentTheme.colors.background}
-              onChange={(value) => updateThemeColors({ background: value })}
-              description="Main background color for pages and content areas"
-            />
+            {currentTheme.customizationRules.colors.canModifyBackground ? (
+              <ColorInput
+                label="Background Color"
+                value={currentTheme.colors.background}
+                onChange={(value) => updateThemeColors({ background: value })}
+                description="Main background color for pages and content areas"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Background Color (Locked)"
+                  value={currentTheme.colors.background}
+                  onChange={() => {}}
+                  description="This color is locked to maintain readability"
+                />
+              </div>
+            )}
             
-            <ColorInput
-              label="Muted Color"
-              value={currentTheme.colors.muted}
-              onChange={(value) => updateThemeColors({ muted: value })}
-              backgroundColor={currentTheme.colors.background}
-              description="Subtle text color for captions, metadata, and secondary information"
-            />
+            {currentTheme.customizationRules.colors.canModifyMuted ? (
+              <ColorInput
+                label="Muted Color"
+                value={currentTheme.colors.muted}
+                onChange={(value) => updateThemeColors({ muted: value })}
+                backgroundColor={currentTheme.colors.background}
+                description="Subtle text color for captions, metadata, and secondary information"
+              />
+            ) : (
+              <div className="opacity-60">
+                <ColorInput
+                  label="Muted Color (Locked)"
+                  value={currentTheme.colors.muted}
+                  onChange={() => {}}
+                  backgroundColor={currentTheme.colors.background}
+                  description="This color is locked to maintain consistency"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -297,11 +397,21 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Typography</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Heading Font {!currentTheme.customizationRules.typography.canModifyHeadingFont && "(Locked)"}
+              </label>
               <select
                 value={currentTheme.typography.headingFont}
-                onChange={(e) => updateThemeTypography({ headingFont: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={currentTheme.customizationRules.typography.canModifyHeadingFont 
+                  ? (e) => updateThemeTypography({ headingFont: e.target.value })
+                  : undefined
+                }
+                disabled={!currentTheme.customizationRules.typography.canModifyHeadingFont}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !currentTheme.customizationRules.typography.canModifyHeadingFont 
+                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
+                    : ''
+                }`}
               >
                 {fontOptions.map(font => (
                   <option key={font} value={font} style={{ fontFamily: font }}>
@@ -309,14 +419,27 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
                   </option>
                 ))}
               </select>
+              {!currentTheme.customizationRules.typography.canModifyHeadingFont && (
+                <p className="text-xs text-gray-500 mt-1">This font is locked to maintain theme identity</p>
+              )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Body Font {!currentTheme.customizationRules.typography.canModifyBodyFont && "(Locked)"}
+              </label>
               <select
                 value={currentTheme.typography.bodyFont}
-                onChange={(e) => updateThemeTypography({ bodyFont: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={currentTheme.customizationRules.typography.canModifyBodyFont
+                  ? (e) => updateThemeTypography({ bodyFont: e.target.value })
+                  : undefined
+                }
+                disabled={!currentTheme.customizationRules.typography.canModifyBodyFont}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !currentTheme.customizationRules.typography.canModifyBodyFont 
+                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
+                    : ''
+                }`}
               >
                 {fontOptions.map(font => (
                   <option key={font} value={font} style={{ fontFamily: font }}>
@@ -324,34 +447,61 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
                   </option>
                 ))}
               </select>
+              {!currentTheme.customizationRules.typography.canModifyBodyFont && (
+                <p className="text-xs text-gray-500 mt-1">This font is locked to maintain readability</p>
+              )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base Font Size</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Base Font Size {!currentTheme.customizationRules.typography.canModifyBaseSize && "(Locked)"}
+              </label>
               <select
                 value={currentTheme.typography.baseSize}
-                onChange={(e) => updateThemeTypography({ baseSize: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={currentTheme.customizationRules.typography.canModifyBaseSize
+                  ? (e) => updateThemeTypography({ baseSize: e.target.value })
+                  : undefined
+                }
+                disabled={!currentTheme.customizationRules.typography.canModifyBaseSize}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !currentTheme.customizationRules.typography.canModifyBaseSize 
+                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
+                    : ''
+                }`}
               >
                 {fontSizeOptions.map(size => (
                   <option key={size} value={size}>{size}</option>
                 ))}
               </select>
+              {!currentTheme.customizationRules.typography.canModifyBaseSize && (
+                <p className="text-xs text-gray-500 mt-1">Font size is locked for consistency</p>
+              )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Scale Ratio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Scale Ratio {!currentTheme.customizationRules.typography.canModifyScale && "(Locked)"}
+              </label>
               <input
                 type="range"
                 min="1.0"
                 max="1.5"
                 step="0.1"
                 value={currentTheme.typography.scale}
-                onChange={(e) => updateThemeTypography({ scale: parseFloat(e.target.value) })}
-                className="w-full"
+                onChange={currentTheme.customizationRules.typography.canModifyScale
+                  ? (e) => updateThemeTypography({ scale: parseFloat(e.target.value) })
+                  : undefined
+                }
+                disabled={!currentTheme.customizationRules.typography.canModifyScale}
+                className={`w-full ${
+                  !currentTheme.customizationRules.typography.canModifyScale 
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : ''
+                }`}
               />
               <div className="text-xs text-gray-500 mt-1">
                 Current: {currentTheme.typography.scale.toFixed(1)}
+                {!currentTheme.customizationRules.typography.canModifyScale && " (Locked for hierarchy consistency)"}
               </div>
             </div>
           </div>
