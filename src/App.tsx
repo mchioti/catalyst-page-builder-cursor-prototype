@@ -7106,6 +7106,19 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
         </div>
       </div>
 
+      {/* Theme Customization */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Theme Customization</h3>
+        <p className="text-gray-600 text-sm mb-6">
+          Customize the visual appearance of this website. Changes can be applied to this website only or to all websites using the same theme.
+        </p>
+        <ThemeEditor 
+          usePageStore={usePageStore} 
+          themeId={website.themeId} 
+          websiteId={website.id} 
+        />
+      </div>
+
       {/* Current Configuration Summary */}
       <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
         <h3 className="text-lg font-semibold text-blue-900 mb-4">Current Configuration Summary</h3>

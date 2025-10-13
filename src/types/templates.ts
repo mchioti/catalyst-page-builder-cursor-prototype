@@ -69,6 +69,14 @@ export type Website = {
     fontFamily?: string
   }
   
+  // Theme customizations specific to this website (overrides global theme)
+  themeOverrides?: {
+    colors?: Partial<Theme['colors']>
+    typography?: Partial<Theme['typography']>
+    spacing?: Partial<Theme['spacing']>
+    components?: Partial<Theme['components']>
+  }
+  
   // Website purpose configuration
   purpose?: {
     contentTypes: string[]

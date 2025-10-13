@@ -209,34 +209,112 @@ type Theme = {
 // Store hook type
 type UsePageStore = {
   themes: Theme[]
+  websites: Website[]
   updateTheme: (id: string, theme: Partial<Theme>) => void
+  updateWebsite: (id: string, updates: Partial<Website>) => void
+}
+
+// Additional type for website
+type Website = {
+  id: string
+  name: string
+  themeId: string
+  themeOverrides?: {
+    colors?: Partial<Theme['colors']>
+    typography?: Partial<Theme['typography']>
+    spacing?: Partial<Theme['spacing']>  
+    components?: Partial<Theme['components']>
+  }
 }
 
 // Props
 interface ThemeEditorProps {
   usePageStore: () => UsePageStore
   themeId?: string // Optional theme ID to start with
+  websiteId?: string // If provided, editing for specific website
 }
 
-export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
-  const { themes, updateTheme } = usePageStore()
+export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorProps) {
+  const { themes, updateTheme, websites, updateWebsite } = usePageStore()
   const selectedTheme = themeId || 'modernist-theme'
   
   const currentTheme = themes.find(t => t.id === selectedTheme)
+  const currentWebsite = websiteId ? websites.find(w => w.id === websiteId) : null
+  
+  // State for pending changes and scope selection
+  const [pendingChanges, setPendingChanges] = useState<{
+    colors?: Partial<Theme['colors']>
+    typography?: Partial<Theme['typography']>
+    spacing?: Partial<Theme['spacing']>
+    components?: Partial<Theme['components']>
+  }>({})
+  const [changeScope, setChangeScope] = useState<'website' | 'theme'>('website')
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   
   const updateThemeColors = (colors: Partial<Theme['colors']>) => {
     if (!currentTheme) return
-    updateTheme(selectedTheme, {
-      colors: { ...currentTheme.colors, ...colors }
-    })
+    setPendingChanges(prev => ({
+      ...prev,
+      colors: { ...prev.colors, ...colors }
+    }))
+    setHasUnsavedChanges(true)
   }
   
   const updateThemeTypography = (typography: Partial<Theme['typography']>) => {
     if (!currentTheme) return
-    updateTheme(selectedTheme, {
-      typography: { ...currentTheme.typography, ...typography }
-    })
+    setPendingChanges(prev => ({
+      ...prev,
+      typography: { ...prev.typography, ...typography }
+    }))
+    setHasUnsavedChanges(true)
   }
+  
+  const saveChanges = () => {
+    if (!currentTheme) return
+    
+    if (changeScope === 'theme') {
+      // Apply changes to the global theme (affects all websites)
+      updateTheme(selectedTheme, {
+        ...(pendingChanges.colors && { colors: { ...currentTheme.colors, ...pendingChanges.colors } }),
+        ...(pendingChanges.typography && { typography: { ...currentTheme.typography, ...pendingChanges.typography } }),
+        ...(pendingChanges.spacing && { spacing: { ...currentTheme.spacing, ...pendingChanges.spacing } }),
+        ...(pendingChanges.components && { components: { ...currentTheme.components, ...pendingChanges.components } })
+      })
+    } else if (websiteId && currentWebsite) {
+      // Apply changes only to this website
+      updateWebsite(websiteId, {
+        themeOverrides: {
+          ...currentWebsite.themeOverrides,
+          ...pendingChanges
+        }
+      })
+    }
+    
+    setPendingChanges({})
+    setHasUnsavedChanges(false)
+  }
+  
+  const cancelChanges = () => {
+    setPendingChanges({})
+    setHasUnsavedChanges(false)
+  }
+  
+  // Get effective theme values (base theme + website overrides + pending changes)
+  const getEffectiveThemeValues = () => {
+    if (!currentTheme) return null
+    
+    const baseTheme = currentTheme
+    const websiteOverrides = currentWebsite?.themeOverrides || {}
+    
+    return {
+      colors: { ...baseTheme.colors, ...websiteOverrides.colors, ...pendingChanges.colors },
+      typography: { ...baseTheme.typography, ...websiteOverrides.typography, ...pendingChanges.typography },
+      spacing: { ...baseTheme.spacing, ...websiteOverrides.spacing, ...pendingChanges.spacing },
+      components: { ...baseTheme.components, ...websiteOverrides.components, ...pendingChanges.components }
+    }
+  }
+  
+  const effectiveTheme = getEffectiveThemeValues()
   
   const fontOptions = [
     'Inter, sans-serif',
@@ -256,12 +334,67 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
   
   const fontSizeOptions = ['14px', '16px', '18px', '20px', '22px']
   
-  if (!currentTheme) {
+  if (!currentTheme || !effectiveTheme) {
     return <div>Theme not found</div>
   }
+  
+  const websiteCount = websites.filter(w => w.themeId === selectedTheme).length
 
   return (
     <div className="space-y-8">
+      {/* Scope Selector and Save Controls */}
+      {websiteId && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">Theme Customization Scope</h3>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="website"
+                    checked={changeScope === 'website'}
+                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
+                    className="text-blue-600"
+                  />
+                  <span>Apply to this website only</span>
+                  <span className="text-xs text-gray-500">({currentWebsite?.name})</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="theme"
+                    checked={changeScope === 'theme'}
+                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
+                    className="text-blue-600"
+                  />
+                  <span>Apply to all websites using this theme</span>
+                  <span className="text-xs text-red-600">({websiteCount} websites will be affected)</span>
+                </label>
+              </div>
+            </div>
+            
+            {hasUnsavedChanges && (
+              <div className="flex gap-2">
+                <button
+                  onClick={cancelChanges}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveChanges}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -272,122 +405,63 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
             </div>
           </div>
           <div className="space-y-3">
-            {currentTheme.customizationRules.colors.canModifyPrimary ? (
+            {currentTheme.customizationRules.colors.canModifyPrimary && (
               <ColorInput
                 label="Primary Color"
-                value={currentTheme.colors.primary}
+                value={effectiveTheme.colors.primary}
                 onChange={(value) => updateThemeColors({ primary: value })}
-                backgroundColor={currentTheme.colors.background}
+                backgroundColor={effectiveTheme.colors.background}
                 description="Used for buttons, links, and key interactive elements"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Primary Color (Locked)"
-                  value={currentTheme.colors.primary}
-                  onChange={() => {}} // No-op for locked colors
-                  backgroundColor={currentTheme.colors.background}
-                  description="This color is locked to maintain theme identity"
-                />
-              </div>
             )}
             
-            {currentTheme.customizationRules.colors.canModifySecondary ? (
+            {currentTheme.customizationRules.colors.canModifySecondary && (
               <ColorInput
                 label="Secondary Color"
-                value={currentTheme.colors.secondary}
+                value={effectiveTheme.colors.secondary}
                 onChange={(value) => updateThemeColors({ secondary: value })}
-                backgroundColor={currentTheme.colors.background}
+                backgroundColor={effectiveTheme.colors.background}
                 description="Supporting color for borders, dividers, and secondary elements"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Secondary Color (Locked)"
-                  value={currentTheme.colors.secondary}
-                  onChange={() => {}}
-                  backgroundColor={currentTheme.colors.background}
-                  description="This color is locked to maintain theme consistency"
-                />
-              </div>
             )}
             
-            {currentTheme.customizationRules.colors.canModifyAccent ? (
+            {currentTheme.customizationRules.colors.canModifyAccent && (
               <ColorInput
                 label="Accent Color"
-                value={currentTheme.colors.accent}
+                value={effectiveTheme.colors.accent}
                 onChange={(value) => updateThemeColors({ accent: value })}
-                backgroundColor={currentTheme.colors.background}
+                backgroundColor={effectiveTheme.colors.background}
                 description="Highlight color for notifications, badges, and emphasis"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Accent Color (Locked)"
-                  value={currentTheme.colors.accent}
-                  onChange={() => {}}
-                  backgroundColor={currentTheme.colors.background}
-                  description="This color is locked to maintain theme consistency"
-                />
-              </div>
             )}
             
-            {currentTheme.customizationRules.colors.canModifyText ? (
+            {currentTheme.customizationRules.colors.canModifyText && (
               <ColorInput
                 label="Text Color"
-                value={currentTheme.colors.text}
+                value={effectiveTheme.colors.text}
                 onChange={(value) => updateThemeColors({ text: value })}
-                backgroundColor={currentTheme.colors.background}
+                backgroundColor={effectiveTheme.colors.background}
                 description="Main text color - should have high contrast with background"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Text Color (Locked)"
-                  value={currentTheme.colors.text}
-                  onChange={() => {}}
-                  backgroundColor={currentTheme.colors.background}
-                  description="This color is locked for accessibility and readability"
-                />
-              </div>
             )}
             
-            {currentTheme.customizationRules.colors.canModifyBackground ? (
+            {currentTheme.customizationRules.colors.canModifyBackground && (
               <ColorInput
                 label="Background Color"
-                value={currentTheme.colors.background}
+                value={effectiveTheme.colors.background}
                 onChange={(value) => updateThemeColors({ background: value })}
                 description="Main background color for pages and content areas"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Background Color (Locked)"
-                  value={currentTheme.colors.background}
-                  onChange={() => {}}
-                  description="This color is locked to maintain readability"
-                />
-              </div>
             )}
             
-            {currentTheme.customizationRules.colors.canModifyMuted ? (
+            {currentTheme.customizationRules.colors.canModifyMuted && (
               <ColorInput
                 label="Muted Color"
-                value={currentTheme.colors.muted}
+                value={effectiveTheme.colors.muted}
                 onChange={(value) => updateThemeColors({ muted: value })}
-                backgroundColor={currentTheme.colors.background}
+                backgroundColor={effectiveTheme.colors.background}
                 description="Subtle text color for captions, metadata, and secondary information"
               />
-            ) : (
-              <div className="opacity-60">
-                <ColorInput
-                  label="Muted Color (Locked)"
-                  value={currentTheme.colors.muted}
-                  onChange={() => {}}
-                  backgroundColor={currentTheme.colors.background}
-                  description="This color is locked to maintain consistency"
-                />
-              </div>
             )}
           </div>
         </div>
@@ -396,114 +470,72 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Typography</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Heading Font {!currentTheme.customizationRules.typography.canModifyHeadingFont && "(Locked)"}
-              </label>
-              <select
-                value={currentTheme.typography.headingFont}
-                onChange={currentTheme.customizationRules.typography.canModifyHeadingFont 
-                  ? (e) => updateThemeTypography({ headingFont: e.target.value })
-                  : undefined
-                }
-                disabled={!currentTheme.customizationRules.typography.canModifyHeadingFont}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  !currentTheme.customizationRules.typography.canModifyHeadingFont 
-                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
-                    : ''
-                }`}
-              >
-                {fontOptions.map(font => (
-                  <option key={font} value={font} style={{ fontFamily: font }}>
-                    {font.split(',')[0]}
-                  </option>
-                ))}
-              </select>
-              {!currentTheme.customizationRules.typography.canModifyHeadingFont && (
-                <p className="text-xs text-gray-500 mt-1">This font is locked to maintain theme identity</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Body Font {!currentTheme.customizationRules.typography.canModifyBodyFont && "(Locked)"}
-              </label>
-              <select
-                value={currentTheme.typography.bodyFont}
-                onChange={currentTheme.customizationRules.typography.canModifyBodyFont
-                  ? (e) => updateThemeTypography({ bodyFont: e.target.value })
-                  : undefined
-                }
-                disabled={!currentTheme.customizationRules.typography.canModifyBodyFont}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  !currentTheme.customizationRules.typography.canModifyBodyFont 
-                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
-                    : ''
-                }`}
-              >
-                {fontOptions.map(font => (
-                  <option key={font} value={font} style={{ fontFamily: font }}>
-                    {font.split(',')[0]}
-                  </option>
-                ))}
-              </select>
-              {!currentTheme.customizationRules.typography.canModifyBodyFont && (
-                <p className="text-xs text-gray-500 mt-1">This font is locked to maintain readability</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Base Font Size {!currentTheme.customizationRules.typography.canModifyBaseSize && "(Locked)"}
-              </label>
-              <select
-                value={currentTheme.typography.baseSize}
-                onChange={currentTheme.customizationRules.typography.canModifyBaseSize
-                  ? (e) => updateThemeTypography({ baseSize: e.target.value })
-                  : undefined
-                }
-                disabled={!currentTheme.customizationRules.typography.canModifyBaseSize}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  !currentTheme.customizationRules.typography.canModifyBaseSize 
-                    ? 'opacity-60 cursor-not-allowed bg-gray-50' 
-                    : ''
-                }`}
-              >
-                {fontSizeOptions.map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-              {!currentTheme.customizationRules.typography.canModifyBaseSize && (
-                <p className="text-xs text-gray-500 mt-1">Font size is locked for consistency</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Scale Ratio {!currentTheme.customizationRules.typography.canModifyScale && "(Locked)"}
-              </label>
-              <input
-                type="range"
-                min="1.0"
-                max="1.5"
-                step="0.1"
-                value={currentTheme.typography.scale}
-                onChange={currentTheme.customizationRules.typography.canModifyScale
-                  ? (e) => updateThemeTypography({ scale: parseFloat(e.target.value) })
-                  : undefined
-                }
-                disabled={!currentTheme.customizationRules.typography.canModifyScale}
-                className={`w-full ${
-                  !currentTheme.customizationRules.typography.canModifyScale 
-                    ? 'opacity-60 cursor-not-allowed' 
-                    : ''
-                }`}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                Current: {currentTheme.typography.scale.toFixed(1)}
-                {!currentTheme.customizationRules.typography.canModifyScale && " (Locked for hierarchy consistency)"}
+            {currentTheme.customizationRules.typography.canModifyHeadingFont && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+                <select
+                  value={effectiveTheme.typography.headingFont}
+                  onChange={(e) => updateThemeTypography({ headingFont: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {fontOptions.map(font => (
+                    <option key={font} value={font} style={{ fontFamily: font }}>
+                      {font.split(',')[0]}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+            )}
+            
+            {currentTheme.customizationRules.typography.canModifyBodyFont && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
+                <select
+                  value={effectiveTheme.typography.bodyFont}
+                  onChange={(e) => updateThemeTypography({ bodyFont: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {fontOptions.map(font => (
+                    <option key={font} value={font} style={{ fontFamily: font }}>
+                      {font.split(',')[0]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            {currentTheme.customizationRules.typography.canModifyBaseSize && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Base Font Size</label>
+                <select
+                  value={effectiveTheme.typography.baseSize}
+                  onChange={(e) => updateThemeTypography({ baseSize: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {fontSizeOptions.map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            {currentTheme.customizationRules.typography.canModifyScale && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scale Ratio</label>
+                <input
+                  type="range"
+                  min="1.0"
+                  max="1.5"
+                  step="0.1"
+                  value={effectiveTheme.typography.scale}
+                  onChange={(e) => updateThemeTypography({ scale: parseFloat(e.target.value) })}
+                  className="w-full"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  Current: {effectiveTheme.typography.scale.toFixed(1)}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -514,34 +546,34 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
         <div 
           className="p-6 border border-gray-200 rounded"
           style={{
-            '--theme-color-primary': currentTheme.colors.primary,
-            '--theme-color-secondary': currentTheme.colors.secondary,
-            '--theme-color-accent': currentTheme.colors.accent,
-            '--theme-color-text': currentTheme.colors.text,
-            '--theme-color-background': currentTheme.colors.background,
-            '--theme-color-muted': currentTheme.colors.muted,
-            '--theme-heading-font': currentTheme.typography.headingFont,
-            '--theme-body-font': currentTheme.typography.bodyFont,
-            '--theme-base-size': currentTheme.typography.baseSize,
-            backgroundColor: currentTheme.colors.background,
-            color: currentTheme.colors.text,
-            fontFamily: currentTheme.typography.bodyFont,
-            fontSize: currentTheme.typography.baseSize
+            '--theme-color-primary': effectiveTheme.colors.primary,
+            '--theme-color-secondary': effectiveTheme.colors.secondary,
+            '--theme-color-accent': effectiveTheme.colors.accent,
+            '--theme-color-text': effectiveTheme.colors.text,
+            '--theme-color-background': effectiveTheme.colors.background,
+            '--theme-color-muted': effectiveTheme.colors.muted,
+            '--theme-heading-font': effectiveTheme.typography.headingFont,
+            '--theme-body-font': effectiveTheme.typography.bodyFont,
+            '--theme-base-size': effectiveTheme.typography.baseSize,
+            backgroundColor: effectiveTheme.colors.background,
+            color: effectiveTheme.colors.text,
+            fontFamily: effectiveTheme.typography.bodyFont,
+            fontSize: effectiveTheme.typography.baseSize
           } as React.CSSProperties}
         >
           <h1 style={{ 
-            fontFamily: currentTheme.typography.headingFont, 
-            fontSize: `calc(${currentTheme.typography.baseSize} * ${Math.pow(currentTheme.typography.scale, 3)})`,
+            fontFamily: effectiveTheme.typography.headingFont, 
+            fontSize: `calc(${effectiveTheme.typography.baseSize} * ${Math.pow(effectiveTheme.typography.scale, 3)})`,
             marginBottom: '1rem',
-            color: currentTheme.colors.text
+            color: effectiveTheme.colors.text
           }}>
             Sample Heading 1
           </h1>
           <h2 style={{ 
-            fontFamily: currentTheme.typography.headingFont, 
-            fontSize: `calc(${currentTheme.typography.baseSize} * ${Math.pow(currentTheme.typography.scale, 2)})`,
+            fontFamily: effectiveTheme.typography.headingFont, 
+            fontSize: `calc(${effectiveTheme.typography.baseSize} * ${Math.pow(effectiveTheme.typography.scale, 2)})`,
             marginBottom: '0.75rem',
-            color: currentTheme.colors.text
+            color: effectiveTheme.colors.text
           }}>
             Sample Heading 2
           </h2>
@@ -550,12 +582,12 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
           </p>
           <button 
             style={{ 
-              backgroundColor: currentTheme.colors.primary, 
+              backgroundColor: effectiveTheme.colors.primary, 
               color: 'white', 
               padding: '8px 16px', 
               borderRadius: '6px', 
               border: 'none',
-              fontFamily: currentTheme.typography.bodyFont,
+              fontFamily: effectiveTheme.typography.bodyFont,
               marginRight: '0.5rem'
             }}
           >
@@ -563,17 +595,17 @@ export function ThemeEditor({ usePageStore, themeId }: ThemeEditorProps) {
           </button>
           <button 
             style={{ 
-              backgroundColor: currentTheme.colors.accent, 
+              backgroundColor: effectiveTheme.colors.accent, 
               color: 'white', 
               padding: '8px 16px', 
               borderRadius: '6px', 
               border: 'none',
-              fontFamily: currentTheme.typography.bodyFont
+              fontFamily: effectiveTheme.typography.bodyFont
             }}
           >
             Accent Button
           </button>
-          <p style={{ marginTop: '1rem', color: currentTheme.colors.muted, fontSize: '0.875em' }}>
+          <p style={{ marginTop: '1rem', color: effectiveTheme.colors.muted, fontSize: '0.875em' }}>
             This is muted text using the selected muted color.
           </p>
         </div>
