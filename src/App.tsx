@@ -10,6 +10,7 @@ import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
 import { MockLiveSite } from './components/MockLiveSite'
+import { TemplateCanvas } from './components/Templates/TemplateCanvas'
 import { create } from 'zustand'
 import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
 
@@ -6168,7 +6169,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
 
 function PageBuilder() {
   const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute } = usePageStore()
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
@@ -6212,6 +6213,16 @@ function PageBuilder() {
     selectSchemaObject(null)
   }
   
+  // Template sections handler
+  const handleTemplateSectionsLoad = (sections: WidgetSection[]) => {
+    console.log('🏗️ Loading template sections:', sections)
+    replaceCanvasItems(sections)
+    addNotification({
+      type: 'success',
+      title: 'Template Loaded',
+      message: `Loaded ${sections.length} template sections with AI-generated content`
+    })
+  }
   
   const handleSetActiveSectionToolbar = (value: string | null) => {
     setActiveSectionToolbar(value)
@@ -6689,7 +6700,7 @@ function PageBuilder() {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
               <div className="flex items-center gap-3">
-                <button
+              <button
                   onClick={() => {
                     const { addNotification, setCurrentView } = usePageStore.getState()
                     addNotification({
@@ -6706,11 +6717,11 @@ function PageBuilder() {
                 </button>
                 <button
                   onClick={() => setCurrentView('design-console')}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
                   Design System Console
-                </button>
+              </button>
               </div>
             </div>
           </div>
@@ -6749,6 +6760,13 @@ function PageBuilder() {
                 </div>
               </div>
             )}
+
+            {/* Template Canvas - Handles loading template sections */}
+            <TemplateCanvas
+              editingContext={editingContext}
+              mockLiveSiteRoute={mockLiveSiteRoute}
+              onSectionsLoad={handleTemplateSectionsLoad}
+            />
             
             {/* Regular Page Editing Context - Show minimal info */}
             {usePageStore(state => state.editingContext) === 'page' && (
