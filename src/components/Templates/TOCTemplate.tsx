@@ -102,14 +102,14 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       ]
     },
 
-    // Main Content Section (2-column)
+    // Main Content Section (2/3 + 1/3 columns)
     {
       id: 'toc-main-content-section',
       name: 'Main Content',
       type: 'content',
-      layout: 'two-column',
+      layout: 'one-third-right',
       areas: [
-        // Left Column - Issue TOC
+        // Left Column (2/3 width) - Issue TOC
         {
           id: 'toc-content-left',
           name: 'Issue Table of Contents',
@@ -144,7 +144,7 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
             }
           ]
         },
-        // Right Column - Cover Image
+        // Right Column (1/3 width) - Cover Image  
         {
           id: 'toc-content-right',
           name: 'Current Issue Cover',
