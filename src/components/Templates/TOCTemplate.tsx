@@ -19,7 +19,13 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
             {
               id: 'toc-site-header',
               type: 'navbar',
-              skin: 'default'
+              skin: 'default',
+              links: [
+                { label: 'Home', href: '/' },
+                { label: 'Browse Journals', href: '/journals' },
+                { label: 'About', href: '/about' },
+                { label: 'Search', href: '/search' }
+              ]
             }
           ]
         }
@@ -66,7 +72,7 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               id: 'toc-journal-menu-widget',
               type: 'navbar',
               skin: 'journal',
-              items: getJournalMenuItems(journalCode)
+              links: getJournalMenuLinks(journalCode)
             }
           ]
         }
@@ -188,14 +194,14 @@ function getJournalBannerText(journalCode: string): string {
   return journalInfo[journalCode as keyof typeof journalInfo] || 'Journal Issue'
 }
 
-function getJournalMenuItems(journalCode: string): string[] {
+function getJournalMenuLinks(journalCode: string): Array<{ label: string; href: string }> {
   return [
-    'Journal Home',
-    'Current Issue', 
-    'Archive',
-    'Subscribe/Renew',
-    'About',
-    'For Authors'
+    { label: 'Journal Home', href: `/journal/${journalCode}` },
+    { label: 'Current Issue', href: `/toc/${journalCode}/current` },
+    { label: 'Archive', href: `/journal/${journalCode}/archive` },
+    { label: 'Subscribe/Renew', href: `/journal/${journalCode}/subscribe` },
+    { label: 'About', href: `/journal/${journalCode}/about` },
+    { label: 'For Authors', href: `/journal/${journalCode}/authors` }
   ]
 }
 
