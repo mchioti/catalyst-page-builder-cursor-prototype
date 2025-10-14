@@ -706,9 +706,9 @@ export function MockLiveSite({
         return 'Edit Homepage'
       case '/toc/advma/current':
       case '/toc/embo/current':
-        return 'Edit TOC Template'
+        return 'Edit this Current Issue'
       case '/article/advma/67/12/p45':
-        return 'Edit Article Template'
+        return 'Edit this Article'
       case '/journal/advma':
       case '/journal/embo':
         return 'Edit this Journal Home'
