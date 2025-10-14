@@ -2,6 +2,13 @@ import React from 'react'
 import type { WidgetSection, EditingContext, MockLiveSiteRoute } from '../../types'
 import { TemplateManager, getTemplateTypeFromRoute, getJournalCodeFromRoute, getTemplateInfo } from './TemplateManager'
 
+// Access to usePageStore for navigation
+declare global {
+  interface Window {
+    usePageStore: any
+  }
+}
+
 export interface TemplateCanvasProps {
   editingContext: EditingContext
   mockLiveSiteRoute: MockLiveSiteRoute
@@ -52,24 +59,29 @@ export const TemplateCanvas: React.FC<TemplateCanvasProps> = ({
 
   return (
     <div className="template-canvas-container">
-      {/* Template Context Bar */}
+      {/* Single Clean Template Banner */}
       {templateInfo && (
-        <div className="bg-orange-600 text-white px-6 py-3 border-b">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse"></div>
-                <div>
-                  <h3 className="font-semibold text-sm">Template Mode</h3>
-                  <p className="text-orange-100 text-xs">
-                    Editing: {templateInfo.templateName} for {templateInfo.journalName}
-                  </p>
-                </div>
-              </div>
-              <div className="text-xs text-orange-200">
-                Changes affect all pages of this type
+        <div className="bg-amber-50 border border-amber-200 rounded-lg mb-4 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+              <div>
+                <span className="text-sm font-medium text-amber-800">
+                  Template Mode • AI Generated Content
+                </span>
               </div>
             </div>
+            <button
+              onClick={() => {
+                const { setCurrentView, setSiteManagerView, setEditingContext } = window.usePageStore.getState()
+                setCurrentView('design-console')
+                setSiteManagerView('modernist-theme-templates')
+                setEditingContext('page')
+              }}
+              className="text-xs text-amber-600 hover:text-amber-800 underline font-medium"
+            >
+              Back to Templates
+            </button>
           </div>
         </div>
       )}
@@ -81,18 +93,6 @@ export const TemplateCanvas: React.FC<TemplateCanvasProps> = ({
         journalCode={journalCode}
         onTemplateLoad={handleTemplateLoad}
       />
-
-      {/* Template Instructions */}
-      {templateInfo && (
-        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3">
-          <div className="max-w-6xl mx-auto">
-            <p className="text-sm text-orange-800">
-              <strong>Template Editing:</strong> {templateInfo.description}. 
-              Use AI-generated mock content for preview. Changes will apply to all issues/pages of this type.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

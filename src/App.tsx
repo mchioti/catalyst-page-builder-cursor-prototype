@@ -6217,11 +6217,7 @@ function PageBuilder() {
   const handleTemplateSectionsLoad = (sections: WidgetSection[]) => {
     console.log('🏗️ Loading template sections:', sections)
     replaceCanvasItems(sections)
-    addNotification({
-      type: 'success',
-      title: 'Template Loaded',
-      message: `Loaded ${sections.length} template sections with AI-generated content`
-    })
+    // Removed notification toast - banner shows template status instead
   }
   
   const handleSetActiveSectionToolbar = (value: string | null) => {
@@ -6727,39 +6723,7 @@ function PageBuilder() {
           </div>
 
           <div className="flex-1 p-6 bg-slate-50" onClick={() => selectWidget(null)}>
-            {/* Template Context Bar - Only show in template editing mode */}
-            {usePageStore(state => state.editingContext) === 'template' && (
-              <div className="mb-3 flex items-center justify-between py-2 px-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-amber-600">✨ Template Mode</span>
-                  <span className="text-amber-500">•</span>
-                  <span className="text-amber-600">Modification indicators visible</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const { setCurrentView, setSiteManagerView, setEditingContext } = usePageStore.getState()
-                      setCurrentView('design-console')
-                      setSiteManagerView('modernist-theme-templates')
-                      setEditingContext('page')
-                    }}
-                    className="text-xs text-amber-600 hover:text-amber-800 underline"
-                  >
-                    Back to Templates
-                  </button>
-                  <span className="text-amber-400">|</span>
-                  <button
-                    onClick={() => {
-                      const { setEditingContext } = usePageStore.getState()
-                      setEditingContext('page')
-                    }}
-                    className="text-xs text-amber-600 hover:text-amber-800 underline"
-                  >
-                    Switch to Page Mode
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Removed redundant template banner - handled by TemplateCanvas */}
 
             {/* Template Canvas - Handles loading template sections */}
             <TemplateCanvas
