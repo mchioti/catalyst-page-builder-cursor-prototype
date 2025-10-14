@@ -7707,13 +7707,7 @@ function SectionRenderer({
           </div>
         )}
         
-        {!isSpecialSection && (
-          <div className="flex items-center gap-2 mb-2 px-2">
-            <span className="text-xs font-medium text-purple-700">Content Block</span>
-            <span className="text-xs text-purple-600">{section.layout}</span>
-            <span className="text-xs text-gray-500">(Click section to show toolbar)</span>
-          </div>
-        )}
+        {/* Removed repetitive section info - cleaner UI */}
       
       <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
         {section.areas.map((area) => {
