@@ -710,13 +710,29 @@ export function MockLiveSite({
       case '/article/advma/67/12/p45':
         return 'Edit Article Template'
       case '/journal/advma':
-        return 'Edit Journal Template'
+      case '/journal/embo':
+        return 'Edit this Journal Home'
       case '/about':
         return 'Edit About Page'
       case '/search':
         return 'Edit Search Template'
       default:
         return 'Edit This Page'
+    }
+  }
+
+  const getTemplateButtonText = () => {
+    switch (mockLiveSiteRoute) {
+      case '/toc/advma/current':
+      case '/toc/embo/current':
+        return 'TOC Template'
+      case '/article/advma/67/12/p45':
+        return 'Article Template'
+      case '/journal/advma':
+      case '/journal/embo':
+        return 'Journal Home Template'
+      default:
+        return 'Template Mode'
     }
   }
 
@@ -805,9 +821,9 @@ export function MockLiveSite({
           <button
             onClick={() => handleEditPage('template')}
             className="px-4 py-2 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 text-sm font-medium whitespace-nowrap"
-            title="Switch to Template Mode"
+            title={`Switch to ${getTemplateButtonText()}`}
           >
-            Template Mode
+            {getTemplateButtonText()}
           </button>
         )}
       </div>
