@@ -25,13 +25,12 @@ function MockHomepage({ onEdit }: { onEdit: (context?: EditingContext) => void }
       {/* Main Navigation */}
       <div className="bg-white border-b px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="text-2xl font-bold text-blue-600">University <span className="text-blue-400">Publications</span></div>
+          <div className="text-2xl font-bold text-blue-600">Wiley <span className="text-blue-400">Online Library</span></div>
           <nav className="flex space-x-8 text-sm font-medium">
             <a href="#" className="text-gray-700 hover:text-blue-600">Journals</a>
             <a href="#" className="text-gray-700 hover:text-blue-600">Books</a>
             <a href="#" className="text-gray-700 hover:text-blue-600">Proceedings</a>
             <a href="#" className="text-gray-700 hover:text-blue-600">Blogs</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600">Abstract</a>
           </nav>
         </div>
       </div>
@@ -378,33 +377,255 @@ function MockJournalHomepage({ journalCode, onEdit }: { journalCode: string; onE
   const journalInfo = {
     advma: {
       name: 'Advanced Materials',
+      issn: '0935-9648',
+      onlineIssn: '1521-4095',
       description: 'The leading international journal covering all aspects of materials science, from synthesis and characterization to applications in electronics, energy, and healthcare.',
-      volume: '35, Issue 48'
+      editor: 'Association for Computing Machinery and Morgan & Claypool',
+      totalIssues: '35',
+      oldestVolume: 'Volume 1 Issue 1 (January 1989)',
+      latestVolume: 'Volume 35 Issue 48 (December 2024)',
+      image: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=300&h=400&fit=crop'
     },
     embo: {
       name: 'The EMBO Journal', 
+      issn: '0261-4189',
+      onlineIssn: '1460-2075',
       description: 'A peer-reviewed scientific journal publishing research in molecular biology. It is published by John Wiley & Sons on behalf of the European Molecular Biology Organization.',
-      volume: '42, Issue 24'
+      editor: 'European Molecular Biology Organization',
+      totalIssues: '42',
+      oldestVolume: 'Volume 1 Issue 1 (January 1982)',
+      latestVolume: 'Volume 42 Issue 24 (December 2024)',
+      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=400&fit=crop'
     }
   }
 
   const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto py-12 px-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">{journal.name}</h1>
-        <div className="grid md:grid-cols-2 gap-8">
+    <div className="min-h-screen">
+      {/* University Publications Header */}
+      <div className="bg-black text-white py-2 px-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
+          <div className="text-gray-300">brought to you by Atypon</div>
+          <div className="flex items-center space-x-4">
+            <select className="bg-gray-800 text-white text-xs px-2 py-1 rounded">
+              <option>ANYWHERE</option>
+            </select>
+            <input type="text" placeholder="Enter search phrase/DOI" className="bg-gray-800 text-white text-xs px-2 py-1 rounded w-48" />
+            <button className="bg-red-600 text-white px-2 py-1 text-xs rounded">🔍</button>
+            <button className="text-white text-xs">Advanced Search</button>
+            <button className="text-white text-xs">🛒</button>
+            <button className="text-white text-xs">Maria Chioti</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Journal Hero Banner */}
+      <div 
+        className="bg-cover bg-center text-white py-12 px-6 relative"
+        style={{ 
+          backgroundImage: 'url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=400&fit=crop)',
+          backgroundSize: 'cover'
+        }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div className="max-w-6xl mx-auto relative z-10">
+          <h1 className="text-4xl font-bold mb-2">{journal.name}</h1>
+          <p className="text-lg mb-2">
+            ISSN (online): {journal.onlineIssn}
+          </p>
+          <p className="text-sm mb-2">
+            Total number of issues: {journal.totalIssues} • Oldest volume {journal.oldestVolume} • Latest volume {journal.latestVolume}
+          </p>
+          <p className="text-sm mb-6">Editor: {journal.editor}</p>
+          <div className="flex space-x-4">
+            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBSCRIBE/RENEW</button>
+            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">RECOMMEND TO A LIBRARIAN</button>
+            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBMIT AN ARTICLE</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Wiley Online Library Navigation */}
+      <div className="bg-blue-700 text-white py-3 px-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="text-lg font-bold">WILEY</div>
+            <div className="text-sm">ONLINE LIBRARY</div>
+          </div>
+          <nav className="flex space-x-6 text-sm">
+            <a href="#" className="hover:text-blue-200">Journal Home</a>
+            <a href="#" className="hover:text-blue-200">Current Issue</a>
+            <a href="#" className="hover:text-blue-200">Archive</a>
+            <a href="#" className="hover:text-blue-200">Subscribe/Renew</a>
+            <a href="#" className="hover:text-blue-200">About</a>
+            <a href="#" className="hover:text-blue-200">For Authors</a>
+          </nav>
+        </div>
+      </div>
+
+      {/* Breadcrumb */}
+      <div className="bg-white py-2 px-6 border-b">
+        <div className="max-w-6xl mx-auto text-sm text-gray-600">
+          <a href="#" className="hover:text-blue-600">Home</a>
+          <span className="mx-2">→</span>
+          <span>{journal.name}</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="py-8 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Left Content */}
+            <div className="lg:col-span-2">
+              {/* Latest Articles */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">LATEST</h2>
+                  <h2 className="text-xl font-bold text-gray-900">MOST CITED</h2>
+                </div>
+                
+                <div className="space-y-6">
+                  <article className="border-b pb-6">
+                    <h3 className="text-lg font-semibold text-blue-600 mb-2 hover:underline cursor-pointer">
+                      {journalCode === 'advma' 
+                        ? 'Perovskite Solar Cells: Advanced Tandem Architectures for Enhanced Efficiency'
+                        : 'CRISPR-Cas9 Mediated Gene Editing in Human Embryonic Stem Cells'
+                      }
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {journalCode === 'advma' 
+                        ? 'Sarah Chen, Michael Rodriguez, Elena Petrov, James Wilson'
+                        : 'Maria Andersson, Hiroshi Tanaka, Jennifer Liu'
+                      }
+                    </p>
+                    <p className="text-xs text-gray-500 mb-2">Just Accepted</p>
+                  </article>
+
+                  <article className="border-b pb-6">
+                    <h3 className="text-lg font-semibold text-blue-600 mb-2 hover:underline cursor-pointer">
+                      {journalCode === 'advma' 
+                        ? 'Machine Learning-Guided Discovery of 2D Materials for Energy Storage'
+                        : 'Mitochondrial Dynamics in Neurodegeneration: New Therapeutic Targets'
+                      }
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {journalCode === 'advma' 
+                        ? 'Dr. Alex Kumar, Prof. Lisa Zhang, Dr. Robert Thompson'
+                        : 'Prof. Anna Schmidt, Dr. Kenji Nakamura, Dr. Sophie Dubois'
+                      }
+                    </p>
+                    <p className="text-xs text-gray-500 mb-2">Just Accepted</p>
+                  </article>
+                </div>
+              </div>
+
+              {/* About Section */}
+              <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Interested in learning more about {journal.name}?
+                </h2>
+                <p className="text-gray-600 mb-4">{journal.description}</p>
+                <button className="bg-red-600 text-white px-6 py-2 rounded font-medium">Subscribe/Renew</button>
+              </div>
+
+              {/* Most Read */}
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">MOST READ</h2>
+                <p className="text-gray-500 text-sm">There are no results at this time</p>
+              </div>
+            </div>
+
+            {/* Right Sidebar */}
+            <div className="lg:col-span-1">
+              {/* Current Issue */}
+              <div className="bg-white border rounded p-4 mb-6">
+                <h3 className="font-bold text-gray-900 mb-4">CURRENT ISSUE</h3>
+                <div className="mb-4">
+                  <img 
+                    src={journal.image}
+                    alt={`${journal.name} Cover`}
+                    className="w-full h-64 object-cover rounded mb-3"
+                  />
+                  <p className="text-center text-sm text-gray-600 font-medium">
+                    Volume {journal.totalIssues} • Issue {journalCode === 'advma' ? '48' : '24'} • Dec 2024
+                  </p>
+                </div>
+              </div>
+
+              {/* Journal Metrics */}
+              <div className="bg-gray-50 p-4 rounded mb-6">
+                <h3 className="font-bold text-gray-900 mb-3">Journal Metrics</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Impact Factor:</span>
+                    <span className="font-medium">{journalCode === 'advma' ? '32.086' : '12.779'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CiteScore:</span>
+                    <span className="font-medium">{journalCode === 'advma' ? '58.5' : '24.3'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Downloads (2023):</span>
+                    <span className="font-medium">{journalCode === 'advma' ? '2.8M' : '892K'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div className="bg-white border rounded p-4">
+                <h3 className="font-bold text-gray-900 mb-3">Quick Links</h3>
+                <div className="space-y-2 text-sm">
+                  <a href="#" className="block text-blue-600 hover:underline">Author Guidelines</a>
+                  <a href="#" className="block text-blue-600 hover:underline">Submission Site</a>
+                  <a href="#" className="block text-blue-600 hover:underline">Editorial Board</a>
+                  <a href="#" className="block text-blue-600 hover:underline">Special Issues</a>
+                  <a href="#" className="block text-blue-600 hover:underline">Contact Us</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-gray-900 text-white py-8 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">About This Journal</h2>
-            <p className="text-gray-600 mb-6">
-              {journal.description}
-            </p>
+            <h4 className="font-bold mb-3">About</h4>
+            <div className="space-y-2 text-sm">
+              <a href="#" className="block hover:text-gray-300">University Publications</a>
+              <a href="#" className="block hover:text-gray-300">Terms and Conditions</a>
+              <a href="#" className="block hover:text-gray-300">Privacy</a>
+            </div>
           </div>
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Latest Issue</h3>
-            <p className="text-sm text-gray-600">Volume {journal.volume} - December 2024</p>
+          <div>
+            <h4 className="font-bold mb-3">Collections</h4>
+            <div className="space-y-2 text-sm">
+              <a href="#" className="block hover:text-gray-300">Browse Journals</a>
+              <a href="#" className="block hover:text-gray-300">Authors</a>
+              <a href="#" className="block hover:text-gray-300">Librarians</a>
+            </div>
           </div>
+          <div>
+            <h4 className="font-bold mb-3">Information</h4>
+            <div className="space-y-2 text-sm">
+              <a href="#" className="block hover:text-gray-300">Help / FAQs</a>
+              <a href="#" className="block hover:text-gray-300">Contact us</a>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-bold mb-3">Follow us on Social</h4>
+            <div className="space-y-2 text-sm">
+              <a href="#" className="block hover:text-gray-300">📘 Facebook</a>
+              <a href="#" className="block hover:text-gray-300">🐦 X (formerly twitter)</a>
+              <a href="#" className="block hover:text-gray-300">💼 LinkedIn</a>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-gray-700 text-center text-sm text-gray-400">
+          © 2025 Atypon UX Design Studio • Privacy Policy • Terms of Use • Wiley <span className="text-blue-400">Online Library</span>
         </div>
       </div>
     </div>
@@ -502,6 +723,8 @@ export function MockLiveSite({
         return <MockArticlePage onEdit={handleEditPage} />
       case '/journal/advma':
         return <MockJournalHomepage journalCode="advma" onEdit={handleEditPage} />
+      case '/journal/embo':
+        return <MockJournalHomepage journalCode="embo" onEdit={handleEditPage} />
       case '/about':
         return <MockAboutPage onEdit={handleEditPage} />
       case '/search':
@@ -526,22 +749,16 @@ export function MockLiveSite({
                 Home
               </button>
               <button
-                onClick={() => setMockLiveSiteRoute('/toc/advma/current')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/advma/current' ? 'text-blue-300' : ''}`}
-              >
-                Adv Materials TOC
-              </button>
-              <button
-                onClick={() => setMockLiveSiteRoute('/toc/embo/current')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/toc/embo/current' ? 'text-blue-300' : ''}`}
-              >
-                EMBO Journal TOC
-              </button>
-              <button
                 onClick={() => setMockLiveSiteRoute('/journal/advma')}
                 className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
               >
-                Journal Home
+                Advanced Materials
+              </button>
+              <button
+                onClick={() => setMockLiveSiteRoute('/journal/embo')}
+                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/embo' ? 'text-blue-300' : ''}`}
+              >
+                EMBO Journal
               </button>
               <button
                 onClick={() => setMockLiveSiteRoute('/about')}

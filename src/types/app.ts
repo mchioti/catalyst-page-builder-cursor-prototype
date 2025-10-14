@@ -41,6 +41,7 @@ export type MockLiveSiteRoute =
   | '/toc/embo/current' 
   | '/article/advma/67/12/p45'
   | '/journal/advma'
+  | '/journal/embo'
   | '/about'
   | '/search'
 
