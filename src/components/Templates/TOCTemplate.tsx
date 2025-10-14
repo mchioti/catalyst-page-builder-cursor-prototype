@@ -119,12 +119,29 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               id: 'toc-widget',
               type: 'publication-list',
               skin: 'toc',
-              contentSource: 'context', // Reads from URL context
-              layout: 'detailed',
-              showMetadata: true,
-              groupBy: 'section',
-              sortBy: 'order'
-            } as Widget
+              contentSource: 'ai-generated',
+              publications: generateMockTOCContent(journalCode),
+              cardConfig: {
+                showAbstract: true,
+                showAuthors: true,
+                showDate: true,
+                showTags: false,
+                showMetrics: true,
+                showDOI: true,
+                showDownload: true,
+                showSave: false,
+                showShare: false,
+                variant: 'detailed'
+              },
+              layout: 'list',
+              maxItems: 15,
+              // AI generation for template preview
+              aiSource: {
+                prompt: `Generate ${journalCode === 'advma' ? 'materials science' : 'molecular biology'} articles for current issue TOC`,
+                generatedContent: generateMockTOCContent(journalCode),
+                lastGenerated: new Date()
+              }
+            }
           ]
         },
         // Right Column - Cover Image
@@ -226,65 +243,161 @@ function getIssueInfoText(journalCode: string): string {
   return issueInfo[journalCode as keyof typeof issueInfo] || 'Current Issue'
 }
 
-// AI-generated mock articles for template preview
+// AI-generated mock articles for template preview (schema.org format)
 export const generateMockTOCContent = (journalCode: string) => {
   const mockArticles = {
     'advma': [
       {
-        id: 'advma-art-1',
-        title: 'Perovskite Solar Cells: Advanced Tandem Architectures for Enhanced Efficiency',
-        authors: ['Sarah Chen', 'Michael Rodriguez', 'Elena Petrov', 'James Wilson'],
-        section: 'Research Articles',
-        pages: '2401234',
-        doi: 'https://doi.org/10.1002/adma.202401234',
-        abstract: 'Novel tandem perovskite architectures demonstrate unprecedented efficiency improvements...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "Perovskite Solar Cells: Advanced Tandem Architectures for Enhanced Efficiency",
+        "author": [
+          { "@type": "Person", "name": "Sarah Chen", "affiliation": { "@type": "Organization", "name": "MIT Materials Science" } },
+          { "@type": "Person", "name": "Michael Rodriguez", "affiliation": { "@type": "Organization", "name": "Stanford University" } },
+          { "@type": "Person", "name": "Elena Petrov", "affiliation": { "@type": "Organization", "name": "Harvard University" } },
+          { "@type": "Person", "name": "James Wilson", "affiliation": { "@type": "Organization", "name": "UC Berkeley" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "48",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "35",
+            "isPartOf": { "@type": "Periodical", "name": "Advanced Materials" }
+          }
+        },
+        "pageStart": "2401234",
+        "abstract": "Novel tandem perovskite architectures demonstrate unprecedented efficiency improvements in solar cell technology, opening new pathways for renewable energy applications.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.1002/adma.202401234" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Research Articles"
       },
       {
-        id: 'advma-art-2', 
-        title: 'Machine Learning-Guided Discovery of 2D Materials for Energy Storage',
-        authors: ['Dr. Alex Kumar', 'Prof. Lisa Zhang', 'Dr. Robert Thompson'],
-        section: 'Research Articles',
-        pages: '2401235',
-        doi: 'https://doi.org/10.1002/adma.202401235',
-        abstract: 'AI-driven materials discovery accelerates identification of promising 2D materials...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "Machine Learning-Guided Discovery of 2D Materials for Energy Storage",
+        "author": [
+          { "@type": "Person", "name": "Alex Kumar", "affiliation": { "@type": "Organization", "name": "MIT Computer Science" } },
+          { "@type": "Person", "name": "Lisa Zhang", "affiliation": { "@type": "Organization", "name": "Stanford AI Lab" } },
+          { "@type": "Person", "name": "Robert Thompson", "affiliation": { "@type": "Organization", "name": "UC San Diego" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "48",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "35",
+            "isPartOf": { "@type": "Periodical", "name": "Advanced Materials" }
+          }
+        },
+        "pageStart": "2401235",
+        "abstract": "AI-driven materials discovery accelerates identification of promising 2D materials for next-generation energy storage applications.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.1002/adma.202401235" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Research Articles"
       },
       {
-        id: 'advma-art-3',
-        title: 'Flexible Electronics: From Lab to Market - Current Challenges and Future Prospects',
-        authors: ['Prof. David Park', 'Dr. Michelle Foster'],
-        section: 'Progress Reports',
-        pages: '2401236', 
-        doi: 'https://doi.org/10.1002/adma.202401236',
-        abstract: 'Comprehensive review of flexible electronics commercialization challenges...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "Flexible Electronics: From Lab to Market - Current Challenges and Future Prospects",
+        "author": [
+          { "@type": "Person", "name": "David Park", "affiliation": { "@type": "Organization", "name": "Seoul National University" } },
+          { "@type": "Person", "name": "Michelle Foster", "affiliation": { "@type": "Organization", "name": "Cambridge University" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "48",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "35",
+            "isPartOf": { "@type": "Periodical", "name": "Advanced Materials" }
+          }
+        },
+        "pageStart": "2401236",
+        "abstract": "Comprehensive review of flexible electronics commercialization challenges and emerging solutions for scalable manufacturing.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.1002/adma.202401236" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Progress Reports"
       }
     ],
     'embo': [
       {
-        id: 'embo-art-1',
-        title: 'CRISPR-Cas9 Mediated Gene Editing in Human Embryonic Stem Cells',
-        authors: ['Maria Andersson', 'Hiroshi Tanaka', 'Jennifer Liu'],
-        section: 'Research Papers',
-        pages: 'e114567',
-        doi: 'https://doi.org/10.15252/embj.2024114567',
-        abstract: 'Precise gene editing protocols for human embryonic stem cell applications...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "CRISPR-Cas9 Mediated Gene Editing in Human Embryonic Stem Cells",
+        "author": [
+          { "@type": "Person", "name": "Maria Andersson", "affiliation": { "@type": "Organization", "name": "Karolinska Institute" } },
+          { "@type": "Person", "name": "Hiroshi Tanaka", "affiliation": { "@type": "Organization", "name": "University of Tokyo" } },
+          { "@type": "Person", "name": "Jennifer Liu", "affiliation": { "@type": "Organization", "name": "Harvard Medical School" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "24",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "42",
+            "isPartOf": { "@type": "Periodical", "name": "The EMBO Journal" }
+          }
+        },
+        "pageStart": "e114567",
+        "abstract": "Precise gene editing protocols for human embryonic stem cell applications demonstrate enhanced efficiency and reduced off-target effects.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.15252/embj.2024114567" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Research Papers"
       },
       {
-        id: 'embo-art-2',
-        title: 'Mitochondrial Dynamics in Neurodegeneration: New Therapeutic Targets',
-        authors: ['Prof. Anna Schmidt', 'Dr. Kenji Nakamura', 'Dr. Sophie Dubois'],
-        section: 'Research Papers', 
-        pages: 'e114568',
-        doi: 'https://doi.org/10.15252/embj.2024114568',
-        abstract: 'Investigation of mitochondrial dysfunction in neurodegenerative diseases...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "Mitochondrial Dynamics in Neurodegeneration: New Therapeutic Targets",
+        "author": [
+          { "@type": "Person", "name": "Anna Schmidt", "affiliation": { "@type": "Organization", "name": "Max Planck Institute" } },
+          { "@type": "Person", "name": "Kenji Nakamura", "affiliation": { "@type": "Organization", "name": "RIKEN Institute" } },
+          { "@type": "Person", "name": "Sophie Dubois", "affiliation": { "@type": "Organization", "name": "Institut Pasteur" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "24",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "42",
+            "isPartOf": { "@type": "Periodical", "name": "The EMBO Journal" }
+          }
+        },
+        "pageStart": "e114568",
+        "abstract": "Investigation of mitochondrial dysfunction in neurodegenerative diseases reveals novel therapeutic intervention points.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.15252/embj.2024114568" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Research Papers"
       },
       {
-        id: 'embo-art-3',
-        title: 'The Evolution of Single-Cell RNA Sequencing: From Method to Medicine',
-        authors: ['Prof. Oliver Johnson', 'Dr. Yuki Sato', 'Dr. Isabella Martinez'],
-        section: 'Review Articles',
-        pages: 'e114569',
-        doi: 'https://doi.org/10.15252/embj.2024114569',
-        abstract: 'Comprehensive review of single-cell RNA sequencing technological advances...'
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "The Evolution of Single-Cell RNA Sequencing: From Method to Medicine",
+        "author": [
+          { "@type": "Person", "name": "Oliver Johnson", "affiliation": { "@type": "Organization", "name": "Oxford University" } },
+          { "@type": "Person", "name": "Yuki Sato", "affiliation": { "@type": "Organization", "name": "University of Kyoto" } },
+          { "@type": "Person", "name": "Isabella Martinez", "affiliation": { "@type": "Organization", "name": "Barcelona Institute of Science" } }
+        ],
+        "datePublished": "2024-12-15",
+        "isPartOf": {
+          "@type": "PublicationIssue",
+          "issueNumber": "24",
+          "isPartOf": {
+            "@type": "PublicationVolume",
+            "volumeNumber": "42",
+            "isPartOf": { "@type": "Periodical", "name": "The EMBO Journal" }
+          }
+        },
+        "pageStart": "e114569",
+        "abstract": "Comprehensive review of single-cell RNA sequencing technological advances and their clinical applications in precision medicine.",
+        "identifier": { "@type": "PropertyValue", "name": "DOI", "value": "https://doi.org/10.15252/embj.2024114569" },
+        "accessMode": "FULL_ACCESS",
+        "contentType": "Review Articles"
       }
     ]
   }
