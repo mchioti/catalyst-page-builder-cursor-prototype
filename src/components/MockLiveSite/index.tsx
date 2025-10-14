@@ -373,7 +373,11 @@ function MockArticlePage({ onEdit }: { onEdit: (context?: EditingContext) => voi
   )
 }
 
-function MockJournalHomepage({ journalCode, onEdit }: { journalCode: string; onEdit: (context?: EditingContext) => void }) {
+function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: { 
+  journalCode: string; 
+  onEdit: (context?: EditingContext) => void;
+  setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void;
+}) {
   const journalInfo = {
     advma: {
       name: 'Advanced Materials',
@@ -455,7 +459,12 @@ function MockJournalHomepage({ journalCode, onEdit }: { journalCode: string; onE
           </div>
           <nav className="flex space-x-6 text-sm">
             <a href="#" className="hover:text-blue-200">Journal Home</a>
-            <a href="#" className="hover:text-blue-200">Current Issue</a>
+            <button 
+              onClick={() => setMockLiveSiteRoute(`/toc/${journalCode}/current` as MockLiveSiteRoute)}
+              className="hover:text-blue-200 cursor-pointer"
+            >
+              Current Issue
+            </button>
             <a href="#" className="hover:text-blue-200">Archive</a>
             <a href="#" className="hover:text-blue-200">Subscribe/Renew</a>
             <a href="#" className="hover:text-blue-200">About</a>
@@ -722,9 +731,9 @@ export function MockLiveSite({
       case '/article/advma/67/12/p45':
         return <MockArticlePage onEdit={handleEditPage} />
       case '/journal/advma':
-        return <MockJournalHomepage journalCode="advma" onEdit={handleEditPage} />
+        return <MockJournalHomepage journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} />
       case '/journal/embo':
-        return <MockJournalHomepage journalCode="embo" onEdit={handleEditPage} />
+        return <MockJournalHomepage journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} />
       case '/about':
         return <MockAboutPage onEdit={handleEditPage} />
       case '/search':
