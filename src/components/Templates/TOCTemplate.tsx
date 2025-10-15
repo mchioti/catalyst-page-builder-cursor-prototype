@@ -48,10 +48,14 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               id: 'toc-issue-details-widget',
               type: 'publication-details',
               skin: 'journal',
-              contentSource: 'context', // Reads issue from URL context
+              contentSource: 'ai-generated', // Use AI mock data for template preview
               layout: 'hero',
-              // Issue metadata will be populated based on journalCode context
-              publication: getIssueMetadataForContext(journalCode)
+              // AI generation for template preview
+              aiSource: {
+                prompt: `Generate issue metadata for ${journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'} current issue`,
+                generatedContent: getIssueMetadataForContext(journalCode),
+                lastGenerated: new Date()
+              }
             }
           ]
         },
