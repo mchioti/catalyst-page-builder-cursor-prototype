@@ -2,13 +2,20 @@ import React, { useState, useEffect } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import { 
-  Widget, 
   WidgetSection, 
   isSection 
 } from '../../types/widgets'
 
-// Temporary type definitions to fix import issues
+// Temporary type definitions to fix import issues - widget system exports are broken
 type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical'
+
+// Basic widget types needed for section rendering
+type Widget = {
+  id: string
+  type: string
+  sectionId?: string
+  [key: string]: any // Allow additional properties
+}
 
 type LayoutArea = {
   id: string
