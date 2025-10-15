@@ -5226,7 +5226,7 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
             <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Background</h4>
             
             {/* Background Type */}
-            <div>
+          <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
               <select
                 value={backgroundType}
@@ -5283,8 +5283,8 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
                     })}
                     className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
                   />
-                  <input
-                    type="text"
+            <input
+              type="text"
                     value={section.background?.color || '#ffffff'}
                     onChange={(e) => updateSection({
                       background: {
@@ -8240,14 +8240,14 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               style={{ color: card.style.metaColor }}
                             >
                               Ahead of Print
-                            </div>
+              </div>
                           </div>
                         </div>
                         
                         {/* Action buttons for detailed layouts */}
                         {card.style.layout === 'detailed' && (
                           <div className="flex items-center gap-2 mt-3">
-                            <button 
+              <button
                               className="px-3 py-1 text-xs rounded border"
                               style={{ 
                                 borderColor: card.style.accentColor,
@@ -8255,19 +8255,19 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               }}
                             >
                               Abstract
-                            </button>
-                            <button 
+              </button>
+              <button
                               className="px-3 py-1 text-xs rounded text-white"
                               style={{ backgroundColor: card.style.accentColor }}
-                            >
+              >
                               Full Text
-                            </button>
-                            <button 
+              </button>
+              <button
                               className="px-3 py-1 text-xs rounded border border-gray-300 text-gray-600"
                             >
                               PDF
-                            </button>
-                          </div>
+              </button>
+          </div>
                         )}
                       </>
                     )}
@@ -8287,7 +8287,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                                 card.style.layout === 'featured' ? 'w-20 h-26' : 'w-12 h-16'
                               }`}
                             />
-                          </div>
+          </div>
                           
                           <div className="flex-1">
                             <h4 
@@ -8315,7 +8315,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'Smith, Johnson, Davis' :
                                card.id.includes('classic') ? 'Druehl, Elmaghraby, Shier, Greenberg' :
                                'Russell & Norvig'}
-                            </div>
+              </div>
                             
                             <div 
                               className="text-sm mb-2"
@@ -8324,7 +8324,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? '2024 • ISBN: 978-0-262-04567-8' :
                                card.id.includes('classic') ? '1 Nov 2020 • ISBN: 978-0-9906153-4-7' :
                                '2024 • ISBN: 978-0-13-461099-3'}
-                            </div>
+              </div>
                             
                             {/* Publisher */}
                             <div 
@@ -8334,9 +8334,9 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'MIT Press' :
                                card.id.includes('classic') ? 'INFORMS' :
                                'Pearson'}
-                            </div>
-                          </div>
-                        </div>
+          </div>
+      </div>
+      </div>
                       </>
                     )}
 
@@ -8354,9 +8354,9 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               className={`object-cover rounded border ${
                                 card.style.layout === 'banner' ? 'w-24 h-32' : 'w-16 h-20'
                               }`}
-                            />
-                          </div>
-                          
+                />
+              </div>
+              
                           <div className="flex-1">
                             <h4 
                               className="mb-2"
@@ -8378,7 +8378,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'Volume 5, Number 3 • 30 Sep 2024' :
                                card.id.includes('classic') ? 'Vol. 14, Issue 1234 • 15 Nov 2024' :
                                'Volume 15, Number 2 • Mar 2024'}
-                            </div>
+            </div>
                             <div 
                               className="text-sm mb-2"
                               style={{ color: card.style.metaColor }}
@@ -8386,7 +8386,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'ISSN (online): 2639-0175' :
                                card.id.includes('classic') ? 'ISSN: 2045-2322' :
                                'ISSN: 1946-6226'}
-                            </div>
+          </div>
                             <a 
                               href="#" 
                               className="text-sm inline-block"
@@ -8396,7 +8396,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                                card.id.includes('classic') ? 'http://doi.org/10.1038/s41598-024-xyz' :
                                'http://doi.org/10.1145/CompEd.2024'}
                             </a>
-                          </div>
+        </div>
                         </div>
                       </>
                     )}

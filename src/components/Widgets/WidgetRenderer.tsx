@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget } from '../../types'
+import { PublicationCard } from '../Publications/PublicationCard'
 
 // Widget skin wrapper component
 const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin, children }) => {
@@ -177,12 +178,52 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   )
 }
 
-// Placeholder for Publication List Widget (keeping existing logic)
+// Publication List Widget with full implementation
 const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget }> = ({ widget }) => {
+  // Get publications based on content source
+  let publications: any[] = []
+  
+  // For now, use default publications as fallback
+  // TODO: Need to pass schemaObjects and generateAIContent as props
+  publications = widget.publications || []
+  
+  const displayedPublications = widget.maxItems 
+    ? publications.slice(0, widget.maxItems)
+    : publications
+
   return (
-    <div>
-      <p className="text-gray-500">Publication List Widget - See App.tsx for full implementation</p>
-      <p className="text-xs text-gray-400">Content Source: {widget.contentSource}</p>
+    <div className="space-y-6">
+      {/* Publication list */}
+      <div className={`${
+        widget.layout === 'grid' 
+          ? 'grid grid-cols-1 md:grid-cols-2 gap-6' 
+          : 'space-y-6'
+      }`}>
+        {displayedPublications.map((article: any, index: number) => (
+          <PublicationCard
+            key={`${widget.id}-${index}`}
+            article={article}
+            config={widget.cardConfig}
+          />
+        ))}
+      </div>
+
+      {/* Show more indicator if there are more articles */}
+      {widget.maxItems && publications.length > widget.maxItems && (
+        <div className="text-center pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-500">
+            Showing {widget.maxItems} of {publications.length} publications
+          </p>
+        </div>
+      )}
+      
+      {/* Show message if no publications */}
+      {publications.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>No publications found.</p>
+          <p className="text-sm mt-1">Check your configuration or add some content.</p>
+        </div>
+      )}
     </div>
   )
 }

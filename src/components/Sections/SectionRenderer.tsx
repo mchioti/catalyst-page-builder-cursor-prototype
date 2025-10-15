@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import { 
-  Widget,
-  WidgetSection, 
-  LayoutArea,
-  ContentBlockLayout,
+  type Widget,
+  type WidgetSection, 
+  type LayoutArea,
+  type ContentBlockLayout,
   isSection 
 } from '../../types/widgets'
+
+// Force module refresh after fixing duplicate schema keys
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 
 // Component for draggable widgets within sections
