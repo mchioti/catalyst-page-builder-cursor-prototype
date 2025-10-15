@@ -4,12 +4,17 @@ import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import { 
   Widget, 
   WidgetSection, 
-  LayoutArea, 
   isSection 
 } from '../../types/widgets'
 
-// Temporary type definition to fix import issue
+// Temporary type definitions to fix import issues
 type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical'
+
+type LayoutArea = {
+  id: string
+  name: string
+  widgets: Widget[]
+}
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 
 // Component for draggable widgets within sections
