@@ -166,16 +166,40 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               contentSource: 'ai-generated',
               publications: generateMockTOCContent(journalCode),
               cardConfig: {
-                showAbstract: false,
+                // Content Identification
+                showContentTypeLabel: true,
+                showTitle: true, // Always shown
+                showSubtitle: false,
+                showThumbnail: true,
+                thumbnailPosition: 'left',
+                
+                // Publication Context 
+                showPublicationTitle: true, // Journal name for articles
+                showVolumeIssue: false, // Already shown in banner
+                showBookSeriesTitle: false, // Not applicable for articles
+                showChapterPages: false, // Not applicable for articles
+                showPublicationDate: true,
+                showDOI: true,
+                showISSN: false, // Already shown in banner
+                showISBN: false, // Not applicable for articles
+                
+                // Author Information
                 showAuthors: true,
-                showDate: true,
-                showTags: false,
-                showMetrics: false,
-                showDOI: false,
-                showDownload: false,
-                showSave: false,
-                showShare: false,
-                variant: 'compact'
+                authorStyle: 'full',
+                showAffiliations: false,
+                
+                // Content Summary
+                showAbstract: false, // Keep compact for TOC
+                abstractLength: 'short',
+                showKeywords: false,
+                
+                // Access & Usage
+                showAccessStatus: true,
+                showViewDownloadOptions: true,
+                showUsageMetrics: false,
+                
+                // Display Configuration
+                titleStyle: 'medium'
               },
               layout: 'list',
               maxItems: 6,

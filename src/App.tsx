@@ -430,7 +430,46 @@ function IssuesSidebar() {
 
 
 // Publication Card component - Schema.org CreativeWork compliant
-function PublicationCard({ article, config }: { article: any, config: PublicationCardConfig }) {
+function PublicationCard({ article, config }: { article: any, config?: PublicationCardConfig }) {
+  // Import content-type-aware configuration
+  const { getConfigForPublication, getContentType } = (() => {
+    try {
+      return require('./utils/publicationCardConfigs')
+    } catch {
+      // Fallback if utils not available
+      return {
+        getConfigForPublication: () => ({
+          showContentTypeLabel: true,
+          showTitle: true,
+          showSubtitle: false,
+          showThumbnail: true,
+          thumbnailPosition: 'left',
+          showPublicationTitle: true,
+          showVolumeIssue: false,
+          showBookSeriesTitle: false,
+          showChapterPages: false,
+          showPublicationDate: true,
+          showDOI: true,
+          showISSN: false,
+          showISBN: false,
+          showAuthors: true,
+          authorStyle: 'full',
+          showAffiliations: false,
+          showAbstract: false,
+          abstractLength: 'short',
+          showKeywords: false,
+          showAccessStatus: true,
+          showViewDownloadOptions: true,
+          showUsageMetrics: false,
+          titleStyle: 'medium'
+        }),
+        getContentType: () => 'article'
+      }
+    }
+  })()
+  
+  // Use provided config or generate one based on content type
+  const finalConfig = config || getConfigForPublication(article)
   
   // Helper to get title from various schema.org properties
   const getTitle = (item: any) => {
@@ -503,13 +542,13 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
     }
     
     // Add volume/issue info for academic content
-    if (config.showVolumeIssue && article.isPartOf?.isPartOf?.volumeNumber) {
+    if (finalConfig.showVolumeIssue && article.isPartOf?.isPartOf?.volumeNumber) {
       parts.push(`Vol. ${article.isPartOf.isPartOf.volumeNumber}`)
     }
-    if (config.showVolumeIssue && article.isPartOf?.issueNumber) {
+    if (finalConfig.showVolumeIssue && article.isPartOf?.issueNumber) {
       parts.push(`Issue ${article.isPartOf.issueNumber}`)
     }
-    if (config.showChapterPages && article.pageStart && article.pageEnd) {
+    if (finalConfig.showChapterPages && article.pageStart && article.pageEnd) {
       parts.push(`pp. ${article.pageStart}-${article.pageEnd}`)
     }
     
@@ -552,61 +591,61 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
       {/* Header with type label and access status */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          {config.showContentTypeLabel && (
+          {finalConfig.showContentTypeLabel && (
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
               {getContentType(article)}
             </span>
           )}
-          {config.showAccessStatus && (
+          {finalConfig.showAccessStatus && (
             getAccessStatusBadge(article.accessMode)
           )}
         </div>
       </div>
 
       {/* Article/Chapter Title */}
-      {config.showTitle && (
+      {finalConfig.showTitle && (
         <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
           {getTitle(article)}
         </h3>
       )}
       
       {/* Subtitle */}
-      {config.showSubtitle && getSubtitle(article) && (
+      {finalConfig.showSubtitle && getSubtitle(article) && (
         <p className="text-blue-600 text-sm font-medium mb-3">
           {getSubtitle(article)}
         </p>
       )}
 
       {/* Authors */}
-      {config.showAuthors && article.author && (
+      {finalConfig.showAuthors && article.author && (
         <p className="text-gray-700 text-sm mb-2">
           {formatAuthors(article.author)}
         </p>
       )}
 
       {/* Publication Information (Journal/Book Title) */}
-      {config.showPublicationTitle && (
+      {finalConfig.showPublicationTitle && (
         <p className="text-gray-600 text-sm mb-3">
           {formatPublicationInfo(article)}
         </p>
       )}
 
       {/* Publication Date */}
-      {config.showPublicationDate && article.datePublished && (
+      {finalConfig.showPublicationDate && article.datePublished && (
         <p className="text-gray-500 text-sm mb-4">
           Published: {formatDate(article.datePublished)}
         </p>
       )}
 
       {/* Abstract */}
-      {config.showAbstract && getDescription(article) && (
+      {finalConfig.showAbstract && getDescription(article) && (
         <p className="text-gray-700 text-sm mb-4 leading-relaxed">
           {getDescription(article).length > 150 ? `${getDescription(article).substring(0, 150)}...` : getDescription(article)}
         </p>
       )}
 
       {/* Keywords and Subjects (Schema.org common properties) */}
-      {config.showKeywords && (article.keywords || article.about) && (
+      {finalConfig.showKeywords && (article.keywords || article.about) && (
         <div className="mb-4">
           <div className="flex flex-wrap gap-1">
             {/* Keywords (free text) */}
@@ -638,7 +677,7 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
 
       {/* Action buttons and DOI */}
       <div className="flex flex-col gap-3">
-        {config.showViewDownloadOptions && (
+        {finalConfig.showViewDownloadOptions && (
           <div className="flex gap-2">
             <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
               Abstract
@@ -652,7 +691,7 @@ function PublicationCard({ article, config }: { article: any, config: Publicatio
           </div>
         )}
         
-        {config.showDOI && getIdentifier(article) && (
+        {finalConfig.showDOI && getIdentifier(article) && (
           <a 
             href={getIdentifier(article)} 
             className="text-blue-500 text-xs hover:text-blue-700 break-all"
