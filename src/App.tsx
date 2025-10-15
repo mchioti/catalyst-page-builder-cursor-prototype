@@ -431,8 +431,8 @@ function IssuesSidebar() {
 
 // Publication Card component - Schema.org CreativeWork compliant
 function PublicationCard({ article, config }: { article: any, config?: PublicationCardConfig }) {
-  // Import content-type-aware configuration
-  const { getConfigForPublication, getContentType } = (() => {
+  // Import content-type-aware configuration (without getContentType to avoid conflict)
+  const { getConfigForPublication } = (() => {
     try {
       return require('./utils/publicationCardConfigs')
     } catch {
@@ -462,8 +462,7 @@ function PublicationCard({ article, config }: { article: any, config?: Publicati
           showViewDownloadOptions: true,
           showUsageMetrics: false,
           titleStyle: 'medium'
-        }),
-        getContentType: () => 'article'
+        })
       }
     }
   })()
