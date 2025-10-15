@@ -13,6 +13,7 @@ export const DEFAULT_PUBLICATION_CARD_CONFIG: PublicationCardConfig = {
   // Publication Context
   showPublicationTitle: true,
   showVolumeIssue: true,
+  showNumberOfIssues: true,
   showBookSeriesTitle: false,
   showChapterPages: true,
   showPublicationDate: true,

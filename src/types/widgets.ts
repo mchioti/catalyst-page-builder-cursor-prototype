@@ -155,7 +155,8 @@ export type CustomSection = {
   id: string
   name: string
   description?: string
-  widgets: Widget[]  // Keep this simple for now - CustomSections still use flat widget lists
+  widgets: Widget[]  // Keep this for metadata/counting
+  section: WidgetSection  // Full section structure for reconstruction
   createdAt: Date
 }
 

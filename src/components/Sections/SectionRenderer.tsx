@@ -92,7 +92,7 @@ export function DraggableWidgetInSection({
                 const { replaceCanvasItems, canvasItems } = usePageStore.getState()
                 const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
                 
-                const updatedCanvasItems = canvasItems.map(canvasItem => {
+                const updatedCanvasItems = canvasItems.map((canvasItem: any) => {
                   if (isSection(canvasItem)) {
                     return {
                       ...canvasItem,
@@ -147,7 +147,8 @@ export function DraggableWidgetInSection({
       {/* Make widget content non-interactive in edit mode */}
       <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
         <WidgetRenderer 
-          widget={widget} 
+          widget={widget}
+          schemaObjects={usePageStore.getState().schemaObjects || []}
         />
       </div>
     </div>
@@ -300,7 +301,7 @@ export function SectionRenderer({
 
   const handleDuplicateSection = () => {
     const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-    const sectionIndex = canvasItems.findIndex(item => item.id === section.id)
+    const sectionIndex = canvasItems.findIndex((item: any) => item.id === section.id)
     
     if (sectionIndex !== -1) {
       const duplicatedSection = JSON.parse(JSON.stringify(section))
@@ -384,7 +385,7 @@ export function SectionRenderer({
                 onClick={(e) => {
                   e.stopPropagation()
                   const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const newCanvasItems = canvasItems.filter(item => item.id !== section.id)
+                  const newCanvasItems = canvasItems.filter((item: any) => item.id !== section.id)
                   replaceCanvasItems(newCanvasItems)
                 }}
                 className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"

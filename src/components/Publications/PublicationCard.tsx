@@ -1,47 +1,37 @@
-import React from 'react'
 import type { PublicationCardConfig } from '../../types/widgets'
 
 // Publication Card component - Schema.org CreativeWork compliant
 export function PublicationCard({ article, config }: { article: any, config?: PublicationCardConfig }) {
-  // Import content-type-aware configuration (without getContentType to avoid conflict)
-  const { getConfigForPublication } = (() => {
-    try {
-      return require('../../utils/publicationCardConfigs')
-    } catch {
-      // Fallback if utils not available
-      return {
-        getConfigForPublication: () => ({
-          showContentTypeLabel: true,
-          showTitle: true,
-          showSubtitle: false,
-          showThumbnail: true,
-          thumbnailPosition: 'left',
-          showPublicationTitle: true,
-          showVolumeIssue: false,
-          showBookSeriesTitle: false,
-          showChapterPages: false,
-          showNumberOfIssues: false,
-          showPublicationDate: true,
-          showDOI: true,
-          showISSN: false,
-          showISBN: false,
-          showAuthors: true,
-          authorStyle: 'full',
-          showAffiliations: false,
-          showAbstract: false,
-          abstractLength: 'short',
-          showKeywords: false,
-          showAccessStatus: true,
-          showViewDownloadOptions: true,
-          showUsageMetrics: false,
-          titleStyle: 'medium'
-        })
-      }
-    }
-  })()
+  // Fallback configuration for publications
+  const getConfigForPublication = () => ({
+    showContentTypeLabel: true,
+    showTitle: true,
+    showSubtitle: false,
+    showThumbnail: true,
+    thumbnailPosition: 'left',
+    showPublicationTitle: true,
+    showVolumeIssue: false,
+    showBookSeriesTitle: false,
+    showChapterPages: false,
+    showNumberOfIssues: false,
+    showPublicationDate: true,
+    showDOI: true,
+    showISSN: false,
+    showISBN: false,
+    showAuthors: true,
+    authorStyle: 'full',
+    showAffiliations: false,
+    showAbstract: false,
+    abstractLength: 'short',
+    showKeywords: false,
+    showAccessStatus: true,
+    showViewDownloadOptions: true,
+    showUsageMetrics: false,
+    titleStyle: 'medium'
+  })
   
   // Use provided config or generate one based on content type
-  const finalConfig = config || getConfigForPublication(article)
+  const finalConfig = config || getConfigForPublication()
   
   // Helper to get title from various schema.org properties
   const getTitle = (item: any) => {
@@ -64,9 +54,17 @@ export function PublicationCard({ article, config }: { article: any, config?: Pu
       const found = item.identifier.find((id: any) => 
         id.propertyID === type || id.name?.includes(type.toLowerCase())
       )
-      return found?.value || found?.identifier
+      if (found) {
+        // Extract string value from identifier object
+        return found.value || found.identifier || String(found)
+      }
+      return null
     }
-    return item.identifier
+    // Handle single identifier
+    if (typeof item.identifier === 'object' && item.identifier !== null) {
+      return item.identifier.value || item.identifier.identifier || String(item.identifier)
+    }
+    return item.identifier || null
   }
 
   // Helper to format authors from schema.org Person objects
@@ -74,12 +72,20 @@ export function PublicationCard({ article, config }: { article: any, config?: Pu
     if (!authors) return ''
     
     if (Array.isArray(authors)) {
-      return authors.map((author: any) => 
-        typeof author === 'string' ? author : author.name || author.givenName + ' ' + author.familyName
-      ).join(', ')
+      return authors.map((author: any) => {
+        if (typeof author === 'string') return author
+        if (typeof author === 'object' && author !== null) {
+          return author.name || `${author.givenName || ''} ${author.familyName || ''}`.trim() || 'Unknown Author'
+        }
+        return String(author)
+      }).join(', ')
     }
     
-    return typeof authors === 'string' ? authors : authors.name || authors.givenName + ' ' + authors.familyName
+    if (typeof authors === 'string') return authors
+    if (typeof authors === 'object' && authors !== null) {
+      return authors.name || `${authors.givenName || ''} ${authors.familyName || ''}`.trim() || 'Unknown Author'
+    }
+    return String(authors)
   }
 
   // Helper to get content type from schema.org @type
@@ -102,29 +108,29 @@ export function PublicationCard({ article, config }: { article: any, config?: Pu
   const formatPublicationInfo = (item: any) => {
     const parts: string[] = []
     
-    // Publication Title (Journal/Book Name)
-    if (item.isPartOf?.name) {
+    // Publication Title (Journal/Book Name) - ensure we get strings
+    if (item.isPartOf?.name && typeof item.isPartOf.name === 'string') {
       parts.push(item.isPartOf.name)
-    } else if (item.isPartOf?.isPartOf?.name) {
+    } else if (item.isPartOf?.isPartOf?.name && typeof item.isPartOf.isPartOf.name === 'string') {
       // For articles, get the journal name from isPartOf.isPartOf
       parts.push(item.isPartOf.isPartOf.name)
-    } else if (item.publisher?.name) {
+    } else if (item.publisher?.name && typeof item.publisher.name === 'string') {
       // Fallback to publisher name if no specific publication title
       parts.push(item.publisher.name)
     }
 
-    // Add volume/issue info for academic content
+    // Add volume/issue info for academic content - ensure string conversion
     if (finalConfig.showVolumeIssue && item.isPartOf?.isPartOf?.volumeNumber) {
-      parts.push(`Vol. ${item.isPartOf.isPartOf.volumeNumber}`)
+      parts.push(`Vol. ${String(item.isPartOf.isPartOf.volumeNumber)}`)
     }
     if (finalConfig.showVolumeIssue && item.isPartOf?.issueNumber) {
-      parts.push(`Issue ${item.isPartOf.issueNumber}`)
+      parts.push(`Issue ${String(item.isPartOf.issueNumber)}`)
     }
     if (finalConfig.showChapterPages && item.pageStart && item.pageEnd) {
-      parts.push(`pp. ${item.pageStart}-${item.pageEnd}`)
+      parts.push(`pp. ${String(item.pageStart)}-${String(item.pageEnd)}`)
     }
     if (finalConfig.showNumberOfIssues && item.numberOfIssues) {
-      parts.push(`${item.numberOfIssues} issues published`)
+      parts.push(`${String(item.numberOfIssues)} issues published`)
     }
     
     return parts.join(', ')
@@ -233,15 +239,18 @@ export function PublicationCard({ article, config }: { article: any, config?: Pu
       {/* DOI/ISBN */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-4">
-          {finalConfig.showDOI && getIdentifier(article, 'DOI') && (
-            <span>DOI: {getIdentifier(article, 'DOI')}</span>
-          )}
-          {finalConfig.showISBN && getIdentifier(article, 'ISBN') && (
-            <span>ISBN: {getIdentifier(article, 'ISBN')}</span>
-          )}
-          {finalConfig.showISSN && getIdentifier(article, 'ISSN') && (
-            <span>ISSN: {getIdentifier(article, 'ISSN')}</span>
-          )}
+          {finalConfig.showDOI && (() => {
+            const doi = getIdentifier(article, 'DOI')
+            return doi ? <span>DOI: {String(doi)}</span> : null
+          })()}
+          {finalConfig.showISBN && (() => {
+            const isbn = getIdentifier(article, 'ISBN')
+            return isbn ? <span>ISBN: {String(isbn)}</span> : null
+          })()}
+          {finalConfig.showISSN && (() => {
+            const issn = getIdentifier(article, 'ISSN')
+            return issn ? <span>ISSN: {String(issn)}</span> : null
+          })()}
         </div>
 
         {/* View/Download Options */}

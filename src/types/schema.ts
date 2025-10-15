@@ -67,6 +67,12 @@ export type SchemaOrgType =
   | 'Poster'
   | 'Quotation'
   | 'Review'
+  | 'Book'
+  | 'Movie'
+  | 'TVSeries'
+  | 'MusicRecording'
+  | 'Recipe'
+  | 'Game'
   | 'ShortStory'
   | 'SoftwareApplication'
   | 'SoftwareSourceCode'
@@ -82,7 +88,6 @@ export type SchemaOrgType =
   | 'BlogPosting'
   | 'NewsArticle'
   | 'ScholarlyArticle'
-  | 'TechArticle'
   // Sub-subtypes for DigitalDocument
   | 'NoteDigitalDocument'
   | 'PresentationDigitalDocument'
@@ -105,15 +110,9 @@ export type SchemaOrgType =
   | 'VideoGame'
   | 'WebApplication'
   // Sub-subtypes for VisualArtwork
-  | 'CoverArt'
-  | 'ComicStory'
   | 'Painting'
   | 'Photograph'
   | 'Sculpture'
-  // Sub-subtypes for LearningResource
-  | 'Course'
-  | 'Quiz'
-  | 'Syllabus'
 
 export type SchemaPropertyType = 
   | 'text' 
@@ -134,7 +133,7 @@ export interface SchemaProperty {
   label: string
   type: SchemaPropertyType
   required: boolean
-  description: string
+  description?: string
   options?: string[] // for select fields
   placeholder?: string
   pattern?: string // regex pattern for validation

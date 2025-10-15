@@ -1,32 +1,32 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import React from 'react'
-import { DndContext, closestCenter, closestCorners, rectIntersection, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronDown, Code, Lightbulb, Building2, Info, BookOpen, Settings, X, Plus, Check, Home, Palette, FileText, Globe, Users, Cog, ArrowLeft, Copy, Trash2, Edit, List, AlertTriangle, CheckCircle, XIcon } from 'lucide-react'
+import { arrayMove } from '@dnd-kit/sortable'
+import { ChevronDown, Building2, Settings, X, Plus, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Trash2, Info } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
 import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
-import { SectionRenderer } from './components/Sections/SectionRenderer'
+import { PublicationCard } from './components/Publications/PublicationCard'
+import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
+import { DraggableLibraryWidget } from './components/Canvas/DraggableLibraryWidget'
+import { WebsiteCreationWizard } from './components/Wizards/WebsiteCreation'
+import { PageBuilder } from './components/PageBuilder'
 import { create } from 'zustand'
-import { LIBRARY_CONFIG, type LibraryItem as SpecItem, type LibraryCategory as SpecCategory } from './library'
+import { type LibraryItem as SpecItem } from './library'
 
 // Import specific types and constants from organized directories
 import { 
   // Widget types
-  type Widget, type WidgetSection, type LayoutArea, type CanvasItem, isSection, 
-  type CustomSection, type PublicationCardVariant, type PublicationCardConfig, type ContentBlockLayout,
+  type Widget, type WidgetSection, type CanvasItem, isSection, 
   type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
-  type TemplateCategory, type TemplateStatus, type Modification, type BaseTemplate, type Website, type Theme,
+  type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
   // App types
-  type AppView, type DesignConsoleView, type EditingContext, type PageState, type Notification, type PageIssue, type NotificationType, type MockLiveSiteRoute,
+  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType,
   // Schema.org types
-  type SchemaObject, type SchemaOrgType, type SchemaDefinition, SCHEMA_DEFINITIONS
+  type SchemaObject, type SchemaOrgType, SCHEMA_DEFINITIONS
 } from './types'
 import { 
   MOCK_SCHOLARLY_ARTICLES, 
@@ -35,13 +35,11 @@ import {
   INITIAL_CANVAS_ITEMS 
 } from './constants'
 
-// Widget extension types for template modification tracking
-type ModifiableWidget = {
-  isModified?: boolean
-  modificationReason?: string
-}
 
-// AI Content Generation Functions
+// NOTE: AI Content Generation functions moved to src/utils/aiContentGeneration.ts
+
+// OLD DUPLICATE FUNCTIONS REMOVED - now imported from utils
+/*
 function generateAIContent(prompt: string): any[] {
   // Parse the prompt to extract key information
   const lowerPrompt = prompt.toLowerCase()
@@ -202,8 +200,8 @@ function generateAIContent(prompt: string): any[] {
     const article = {
     "@context": "https://schema.org",
     "@type": "ScholarlyArticle",
-      "identifier": {
-        "@type": "PropertyValue",
+    "identifier": {
+      "@type": "PropertyValue",
         "propertyID": "DOI",
         "value": doi
       },
@@ -253,6 +251,7 @@ function generateAISingleContent(prompt: string): any {
   const articles = generateAIContent(prompt)
   return articles[0] || null
 }
+*/
 
 // Notification System Components
 function NotificationToast({ notification, onClose }: { notification: Notification; onClose: (id: string) => void }) {
@@ -318,7 +317,7 @@ function NotificationContainer() {
   const { notifications, removeNotification } = usePageStore()
   
   if (notifications.length === 0) return null
-  
+
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
       {notifications.map((notification) => (
@@ -328,7 +327,7 @@ function NotificationContainer() {
           onClose={removeNotification}
         />
       ))}
-    </div>
+        </div>
   )
 }
 
@@ -363,7 +362,7 @@ function IssuesSidebar() {
             {errorCount > 0 && warningCount > 0 && ', '}
             {warningCount > 0 && `${warningCount} warnings`}
           </span>
-        </div>
+          </div>
       </button>
       
       {isOpen && (
@@ -399,8 +398,8 @@ function IssuesSidebar() {
                               <li key={idx}>{suggestion}</li>
                             ))}
                           </ul>
-                        )}
-                      </div>
+        )}
+      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -430,292 +429,11 @@ function IssuesSidebar() {
 
 
 
-// Publication Card component - Schema.org CreativeWork compliant
-function PublicationCard({ article, config }: { article: any, config?: PublicationCardConfig }) {
-  // Import content-type-aware configuration (without getContentType to avoid conflict)
-  const { getConfigForPublication } = (() => {
-    try {
-      return require('./utils/publicationCardConfigs')
-    } catch {
-      // Fallback if utils not available
-      return {
-        getConfigForPublication: () => ({
-          showContentTypeLabel: true,
-          showTitle: true,
-          showSubtitle: false,
-          showThumbnail: true,
-          thumbnailPosition: 'left',
-          showPublicationTitle: true,
-          showVolumeIssue: false,
-          showBookSeriesTitle: false,
-          showChapterPages: false,
-          showPublicationDate: true,
-          showDOI: true,
-          showISSN: false,
-          showISBN: false,
-          showAuthors: true,
-          authorStyle: 'full',
-          showAffiliations: false,
-          showAbstract: false,
-          abstractLength: 'short',
-          showKeywords: false,
-          showAccessStatus: true,
-          showViewDownloadOptions: true,
-          showUsageMetrics: false,
-          titleStyle: 'medium'
-        })
-      }
-    }
-  })()
-  
-  // Use provided config or generate one based on content type
-  const finalConfig = config || getConfigForPublication(article)
-  
-  // Helper to get title from various schema.org properties
-  const getTitle = (item: any) => {
-    return item.headline || item.name || item.title || 'Untitled'
-  }
-  
-  // Helper to get subtitle from various schema.org properties  
-  const getSubtitle = (item: any) => {
-    return item.alternativeHeadline || item.subtitle || ''
-  }
-  
-  // Helper to get description/abstract from various schema.org properties
-  const getDescription = (item: any) => {
-    return item.abstract || item.description || ''
-  }
-  
-  // Helper to get identifier (DOI, ISBN, etc.) from schema.org
-  const getIdentifier = (item: any) => {
-    if (item.identifier) {
-      // Handle both string and PropertyValue formats
-      if (typeof item.identifier === 'string') return item.identifier
-      if (item.identifier.value) return item.identifier.value
-      if (Array.isArray(item.identifier)) {
-        const doi = item.identifier.find((id: any) => 
-          id.name === 'DOI' || id['@type'] === 'DOI' || (typeof id === 'string' && id.includes('doi.org'))
-        )
-        return doi?.value || doi || item.identifier[0]?.value || item.identifier[0]
-      }
-    }
-    return item.doi || '' // Fallback to legacy doi field
-  }
-  
-  const getAccessStatusBadge = (accessMode: string) => {
-    switch (accessMode) {
-      case 'FULL_ACCESS':
-        return <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">FULL ACCESS</span>
-      case 'OPEN_ACCESS':
-        return <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">OPEN ACCESS</span>
-      case 'SUBSCRIPTION_REQUIRED':
-        return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">SUBSCRIPTION</span>
-      default:
-        return null
-    }
-  }
+// NOTE: PublicationCard component moved to src/components/Publications/PublicationCard.tsx
 
-  const formatAuthors = (authors: any[]) => {
-    if (!authors || authors.length === 0) return ''
-    if (authors.length === 1) return authors[0].name
-    if (authors.length === 2) return `${authors[0].name} and ${authors[1].name}`
-    return `${authors[0].name}, et al.`
-  }
-
-  // Helper to get publication context (Journal, Blog, Book series, etc.)
-  const formatPublicationInfo = (article: any) => {
-    const parts = []
-    
-    // Handle different CreativeWork types
-    if (article['@type'] === 'BlogPosting' && article.isPartOf?.name) {
-      // For blog posts, show blog name
-      parts.push(article.isPartOf.name)
-    } else if (article['@type'] === 'Book' && article.publisher?.name) {
-      // For books, show publisher
-      parts.push(article.publisher.name)
-    } else if (article.isPartOf?.isPartOf?.isPartOf?.name) {
-      // For scholarly articles, show journal name
-      parts.push(article.isPartOf.isPartOf.isPartOf.name)
-    } else if (article.isPartOf?.name) {
-      // Generic container name
-      parts.push(article.isPartOf.name)
-    }
-    
-    // Add volume/issue info for academic content
-    if (finalConfig.showVolumeIssue && article.isPartOf?.isPartOf?.volumeNumber) {
-      parts.push(`Vol. ${article.isPartOf.isPartOf.volumeNumber}`)
-    }
-    if (finalConfig.showVolumeIssue && article.isPartOf?.issueNumber) {
-      parts.push(`Issue ${article.isPartOf.issueNumber}`)
-    }
-    if (finalConfig.showChapterPages && article.pageStart && article.pageEnd) {
-      parts.push(`pp. ${article.pageStart}-${article.pageEnd}`)
-    }
-    
-    return parts.join(', ')
-  }
-  
-  // Helper to get content type from schema.org @type
-  const getContentType = (item: any) => {
-    const schemaType = item['@type'] || item.type || ''
-    const customType = item.contentType || ''
-    
-    // Map schema.org types to readable labels
-    const typeMap: { [key: string]: string } = {
-      'ScholarlyArticle': 'Research Article',
-      'BlogPosting': 'Blog Post', 
-      'NewsArticle': 'News Article',
-      'Article': 'Article',
-      'Book': 'Book',
-      'Course': 'Course',
-      'Event': 'Event',
-      'Person': 'Profile',
-      'Organization': 'Organization',
-      'Review': 'Review'
-    }
-    
-    return customType || typeMap[schemaType] || schemaType || 'Content'
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: '2-digit' 
-    })
-  }
-
-  return (
-    <div className="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
-      {/* Header with type label and access status */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {finalConfig.showContentTypeLabel && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
-              {getContentType(article)}
-            </span>
-          )}
-          {finalConfig.showAccessStatus && (
-            getAccessStatusBadge(article.accessMode)
-          )}
-        </div>
-      </div>
-
-      {/* Article/Chapter Title */}
-      {finalConfig.showTitle && (
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
-          {getTitle(article)}
-        </h3>
-      )}
-      
-      {/* Subtitle */}
-      {finalConfig.showSubtitle && getSubtitle(article) && (
-        <p className="text-blue-600 text-sm font-medium mb-3">
-          {getSubtitle(article)}
-        </p>
-      )}
-
-      {/* Authors */}
-      {finalConfig.showAuthors && article.author && (
-        <p className="text-gray-700 text-sm mb-2">
-          {formatAuthors(article.author)}
-        </p>
-      )}
-
-      {/* Publication Information (Journal/Book Title) */}
-      {finalConfig.showPublicationTitle && (
-        <p className="text-gray-600 text-sm mb-3">
-          {formatPublicationInfo(article)}
-        </p>
-      )}
-
-      {/* Publication Date */}
-      {finalConfig.showPublicationDate && article.datePublished && (
-        <p className="text-gray-500 text-sm mb-4">
-          Published: {formatDate(article.datePublished)}
-        </p>
-      )}
-
-      {/* Abstract */}
-      {finalConfig.showAbstract && getDescription(article) && (
-        <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-          {getDescription(article).length > 150 ? `${getDescription(article).substring(0, 150)}...` : getDescription(article)}
-        </p>
-      )}
-
-      {/* Keywords and Subjects (Schema.org common properties) */}
-      {finalConfig.showKeywords && (article.keywords || article.about) && (
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-1">
-            {/* Keywords (free text) */}
-            {article.keywords && (
-              Array.isArray(article.keywords) 
-                ? article.keywords.map((keyword: string, index: number) => (
-                    <span key={`keyword-${index}`} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                      {keyword}
-                    </span>
-                  ))
-                : article.keywords.split(',').map((keyword: string, index: number) => (
-                    <span key={`keyword-${index}`} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                      {keyword.trim()}
-                    </span>
-                  ))
-            )}
-            
-            {/* Subjects (controlled vocabulary) */}
-            {article.about && Array.isArray(article.about) && (
-              article.about.map((subject: any, index: number) => (
-                <span key={`subject-${index}`} className="text-xs bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200">
-                  {typeof subject === 'string' ? subject : subject.name || subject.value}
-                </span>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Action buttons and DOI */}
-      <div className="flex flex-col gap-3">
-        {finalConfig.showViewDownloadOptions && (
-          <div className="flex gap-2">
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              Abstract
-            </button>
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              Full Text
-            </button>
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              PDF
-            </button>
-          </div>
-        )}
-        
-        {finalConfig.showDOI && getIdentifier(article) && (
-          <a 
-            href={getIdentifier(article)} 
-            className="text-blue-500 text-xs hover:text-blue-700 break-all"
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            {getIdentifier(article)}
-          </a>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function WidgetRenderer({ 
-  widget, 
-  dragAttributes, 
-  dragListeners, 
-  onWidgetClick,
-  activeSectionToolbar,
-  setActiveSectionToolbar,
-  activeWidgetToolbar,
-  setActiveWidgetToolbar
-}: {
+// Interactive Widget Renderer with drag & drop for Page Builder Editor
+function InteractiveWidgetRenderer({ 
+  widget}: {
   widget: Widget
   dragAttributes?: any
   dragListeners?: any
@@ -729,81 +447,7 @@ function WidgetRenderer({
   const canvasItems = usePageStore((s) => s.canvasItems)
   const replaceCanvasItems = usePageStore((s) => s.replaceCanvasItems)
   
-  // For standalone widgets, wrap with action toolbar
-  const renderWithToolbar = (content: JSX.Element) => {
-    if (!dragAttributes || !dragListeners || !onWidgetClick || !setActiveSectionToolbar || !setActiveWidgetToolbar) {
-      return content // No toolbar for widgets within sections
-    }
-    
-    return (
-      <div 
-        onClick={(e) => {
-          e.stopPropagation()
-          // Close any section toolbar and toggle widget toolbar
-          setActiveSectionToolbar?.(null)
-          setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
-          onWidgetClick(widget.id, e)
-        }}
-        className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all relative"
-      >
-        {/* Standalone Widget Action Toolbar - appears on click */}
-        {activeWidgetToolbar === widget.id && (
-          <div className="absolute -top-2 -right-2 transition-opacity z-20">
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-              <div 
-                {...dragAttributes}
-                {...dragListeners}
-                className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
-                title="Drag to reorder"
-              >
-                <GripVertical className="w-3 h-3" />
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Duplicate standalone widget
-                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const itemIndex = canvasItems.findIndex(canvasItem => canvasItem.id === widget.id)
-                  if (itemIndex !== -1) {
-                    const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
-                    const newCanvasItems = [...canvasItems]
-                    newCanvasItems.splice(itemIndex + 1, 0, duplicatedWidget)
-                    replaceCanvasItems(newCanvasItems)
-                  }
-                }}
-                className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                title="Duplicate widget"
-              >
-                <Copy className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onWidgetClick(widget.id, e)
-                }}
-                className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
-                title="Properties"
-              >
-                <Edit className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const { deleteWidget } = usePageStore.getState()
-                  deleteWidget(widget.id)
-                }}
-                className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                title="Delete widget"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        )}
-        {content}
-      </div>
-    )
-  }
+  // NOTE: renderWithToolbar function removed - functionality moved to SortableItem component
   
   switch (widget.type) {
     case 'navbar': {
@@ -1174,7 +818,6 @@ function WidgetRenderer({
       return (
         <SkinWrap skin={widget.skin}>
           <div className="space-y-6">
-            {/* Publication list */}
             <div className={`${
               publicationWidget.layout === 'grid' 
                 ? 'grid grid-cols-1 md:grid-cols-2 gap-6' 
@@ -1189,7 +832,6 @@ function WidgetRenderer({
               ))}
             </div>
 
-            {/* Show more indicator if there are more articles */}
             {publicationWidget.maxItems && publications.length > publicationWidget.maxItems && (
               <div className="text-center pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
@@ -1198,7 +840,6 @@ function WidgetRenderer({
               </div>
             )}
             
-            {/* Show message if no publications from schema objects */}
             {publicationWidget.contentSource === 'schema-objects' && publications.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <p>No schema objects found for the current selection.</p>
@@ -1905,8 +1546,8 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       globalSections: {
-        header: PREFAB_SECTIONS['header-section'],
-        footer: PREFAB_SECTIONS['footer-section']
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
     },
@@ -2064,8 +1705,8 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       globalSections: {
-        header: PREFAB_SECTIONS['header-section'],
-        footer: PREFAB_SECTIONS['footer-section']
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
     },
@@ -2175,8 +1816,8 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       globalSections: {
-        header: PREFAB_SECTIONS['header-section'],
-        footer: PREFAB_SECTIONS['footer-section']
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
     }
@@ -2313,7 +1954,7 @@ const usePageStore = create<PageState>((set, get) => ({
     const website = state.websites.find(w => w.id === websiteId)
     if (!website) return 0
     
-    const template = state.templates.find(t => t.id === website.templateId)
+    const template = state.templates.find(t => t.id === website.themeId)
     if (!template) return 0
     
     // Simple scoring: each modification adds points based on impact
@@ -2442,419 +2083,10 @@ function SkinWrap({ skin, children }: { skin: Skin; children: ReactNode }) {
 
 
 // Template Creation Wizard Component
-function TemplateCreationWizard({ onClose }: { onClose: () => void }) {
-  const { addTemplate, canvasItems } = usePageStore()
-  const [step, setStep] = useState(1)
-  const [templateData, setTemplateData] = useState({
-    name: '',
-    description: '',
-    category: 'website' as TemplateCategory,
-    tags: [] as string[],
-    allowedModifications: [] as string[],
-    lockedElements: [] as string[],
-    fromCurrentPage: false,
-    includeContent: true
-  })
-  
-  const totalSteps = 4
-  
-  const handleCreate = () => {
-    const newTemplate: BaseTemplate = {
-      id: crypto.randomUUID(),
-      name: templateData.name,
-      description: templateData.description,
-      category: templateData.category,
-      status: 'draft',
-      version: '1.0.0',
-      author: 'Current User',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      tags: templateData.tags,
-      sections: templateData.fromCurrentPage ? canvasItems.filter(item => 'layout' in item) : [],
-      globalStyles: {
-        primaryColor: '#1e40af',
-        fontFamily: 'Inter, sans-serif',
-        borderRadius: '8px'
-      },
-      layout: {
-        header: true,
-        footer: true,
-        sidebar: 'none',
-        maxWidth: '1200px',
-        spacing: 'comfortable'
-      },
-      allowedModifications: templateData.allowedModifications,
-      lockedElements: templateData.lockedElements,
-      defaultModificationScope: 'Website (this)',
-      broadenModificationOptions: [],
-      narrowModificationOptions: []
-    }
-    
-    addTemplate(newTemplate)
-    onClose()
-  }
-  
-  const nextStep = () => setStep(Math.min(step + 1, totalSteps))
-  const prevStep = () => setStep(Math.max(step - 1, 1))
-  
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">Create New Template</h3>
-              <p className="text-gray-600 mt-1">Step {step} of {totalSteps}</p>
-            </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex items-center">
-              {Array.from({ length: totalSteps }, (_, i) => (
-                <div key={i} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {i + 1}
-                  </div>
-                  {i < totalSteps - 1 && (
-                    <div className={`h-1 w-16 mx-2 ${
-                      i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex mt-2">
-              <div className="text-xs text-gray-600 w-8 text-center">Basic</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Source</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Rules</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Review</div>
-            </div>
-          </div>
-          
-          {/* Step Content */}
-          <div className="min-h-[400px]">
-            {step === 1 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
-                      <input
-                        type="text"
-                        value={templateData.name}
-                        onChange={(e) => setTemplateData({...templateData, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g., Academic Journal Template"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                      <select
-                        value={templateData.category}
-                        onChange={(e) => setTemplateData({...templateData, category: e.target.value as TemplateCategory})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="theme">Theme</option>
-                        <option value="website">Website Pages</option>
-                        <option value="publication">Publication Pages</option>
-                        <option value="supporting">Supporting Pages</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea
-                      value={templateData.description}
-                      onChange={(e) => setTemplateData({...templateData, description: e.target.value})}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="Describe the purpose and features of this template..."
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma separated)</label>
-                    <input
-                      type="text"
-                      onChange={(e) => setTemplateData({...templateData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g., journal, academic, research, publications"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {step === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Template Source</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        id="blank"
-                        name="source"
-                        checked={!templateData.fromCurrentPage}
-                        onChange={() => setTemplateData({...templateData, fromCurrentPage: false})}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <label htmlFor="blank" className="flex-1">
-                        <div className="font-medium text-gray-900">Start from Blank Template</div>
-                        <div className="text-sm text-gray-500">Create a new template with standard sections (header, hero, footer)</div>
-                      </label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        id="current"
-                        name="source"
-                        checked={templateData.fromCurrentPage}
-                        onChange={() => setTemplateData({...templateData, fromCurrentPage: true})}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <label htmlFor="current" className="flex-1">
-                        <div className="font-medium text-gray-900">Use Current Page as Base</div>
-                        <div className="text-sm text-gray-500">Convert the current page design into a reusable template</div>
-                        <div className="text-xs text-blue-600 mt-1">{canvasItems.length} sections will be included</div>
-                      </label>
-                    </div>
-                    
-                    {templateData.fromCurrentPage && (
-                      <div className="ml-7 space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            id="includeContent"
-                            checked={templateData.includeContent}
-                            onChange={(e) => setTemplateData({...templateData, includeContent: e.target.checked})}
-                            className="w-4 h-4 text-blue-600"
-                          />
-                          <label htmlFor="includeContent" className="text-sm text-gray-700">
-                            Include actual content (recommended: uncheck to create placeholder content)
-                          </label>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Customization Rules</h4>
-                  <p className="text-gray-600 mb-6">Define what can be customized when websites use this template</p>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <span className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          Allowed Customizations
-                        </span>
-                      </label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                        {[
-                          'branding.logo',
-                          'branding.colors',
-                          'typography.headingFont',
-                          'typography.bodyFont',
-                          'sections.hero.title',
-                          'sections.hero.subtitle',
-                          'sections.footer.content'
-                        ].map((path) => (
-                          <label key={path} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={templateData.allowedModifications.includes(path)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setTemplateData({
-                                    ...templateData, 
-                                    allowedModifications: [...templateData.allowedModifications, path]
-                                  })
-                                } else {
-                                  setTemplateData({
-                                    ...templateData, 
-                                    allowedModifications: templateData.allowedModifications.filter(p => p !== path)
-                                  })
-                                }
-                              }}
-                              className="w-4 h-4 text-green-600"
-                            />
-                            <span className="text-sm font-mono text-gray-700">{path}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <span className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                          Locked Elements
-                        </span>
-                      </label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                        {[
-                          'layout.structure',
-                          'navigation.main',
-                          'compliance.elements',
-                          'structure.main',
-                          'navigation.primary',
-                          'footer.copyright',
-                          'header.navigation'
-                        ].map((path) => (
-                          <label key={path} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={templateData.lockedElements.includes(path)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setTemplateData({
-                                    ...templateData, 
-                                    lockedElements: [...templateData.lockedElements, path]
-                                  })
-                                } else {
-                                  setTemplateData({
-                                    ...templateData, 
-                                    lockedElements: templateData.lockedElements.filter(p => p !== path)
-                                  })
-                                }
-                              }}
-                              className="w-4 h-4 text-red-600"
-                            />
-                            <span className="text-sm font-mono text-gray-700">{path}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Info className="w-5 h-5 text-yellow-600 mt-0.5" />
-                      <div>
-                        <h5 className="font-medium text-yellow-800">Customization Rules</h5>
-                        <p className="text-sm text-yellow-700 mt-1">
-                          <strong>Allowed:</strong> Low-risk customizations (5 points each)<br />
-                          <strong>Locked:</strong> High-risk if overridden (20 points each)<br />
-                          <strong>Other:</strong> Medium-risk customizations (10 points each)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {step === 4 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Review & Create</h4>
-                  
-                  <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Template Name</label>
-                        <p className="font-medium text-gray-900">{templateData.name || 'Untitled Template'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Category</label>
-                        <p className="font-medium text-gray-900 capitalize">{templateData.category}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-sm font-medium text-gray-500">Description</label>
-                        <p className="text-gray-900">{templateData.description || 'No description provided'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Source</label>
-                        <p className="text-gray-900">
-                          {templateData.fromCurrentPage ? `Current Page (${canvasItems.length} sections)` : 'Blank Template'}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Tags</label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {templateData.tags.map((tag) => (
-                            <span key={tag} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                          {templateData.tags.length === 0 && <span className="text-gray-500 text-sm">No tags</span>}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Allowed Customizations</label>
-                        <p className="text-gray-900">{templateData.allowedModifications.length} elements</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Locked Elements</label>
-                        <p className="text-gray-900">{templateData.lockedElements.length} elements</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Navigation */}
-          <div className="flex justify-between items-center mt-8 pt-6 border-t">
-            <div className="flex gap-2">
-              {step > 1 && (
-                <button
-                  onClick={prevStep}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              {step < totalSteps ? (
-                <button
-                  onClick={nextStep}
-                  disabled={step === 1 && !templateData.name}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  onClick={handleCreate}
-                  disabled={!templateData.name}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create Template
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Design System Console Websites component  
 function SiteManagerWebsites() {
-  const { websites, themes, addModification, removeModification, updateWebsite, addWebsite } = usePageStore()
+  const { websites, themes, removeModification, updateWebsite } = usePageStore()
   const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
   const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
@@ -3097,7 +2329,7 @@ function SiteManagerWebsites() {
         </div>
       </div>
       
-      {/* Modification Analysis Modal */}
+      // Modification Analysis Modal
       {showModificationAnalysis && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -3126,7 +2358,7 @@ function SiteManagerWebsites() {
                 if (!website) return <div>Website not found</div>
                 
                 const modificationsByImpact = website.modifications.reduce((acc, modification) => {
-                  const impact = getModificationImpact(modification, theme)
+                  const impact = getModificationImpact(modification, theme ?? null)
                   if (!acc[impact]) acc[impact] = []
                   acc[impact].push(modification)
                   return acc
@@ -3134,7 +2366,7 @@ function SiteManagerWebsites() {
                 
                 return (
                   <div className="space-y-6">
-                    {/* Summary */}
+                    // Summary
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div className="flex items-center gap-2">
@@ -3164,7 +2396,7 @@ function SiteManagerWebsites() {
                       </div>
                     </div>
                     
-                    {/* Modification Details */}
+                    // Modification Details
                     <div className="space-y-4">
                       {['high', 'medium', 'low'].map((impact) => {
                         const modifications = modificationsByImpact[impact] || []
@@ -3223,8 +2455,8 @@ function SiteManagerWebsites() {
         </div>
       )}
       
-      {/* Website Creation Wizard */}
-      {showCreateWebsite && <WebsiteCreationWizard onClose={() => setShowCreateWebsite(false)} />}
+      // Website Creation Wizard
+      {showCreateWebsite && <WebsiteCreationWizard onClose={() => setShowCreateWebsite(false)} usePageStore={usePageStore} themePreviewImages={themePreviewImages} />}
     </div>
   )
 }
@@ -3236,547 +2468,11 @@ const themePreviewImages = {
   'curator-theme': '/theme-previews/lumina-press.png'               // Artistic overlays - "ART • VISION • CREATION"
 }
 
-// Website Creation Wizard Component
-function WebsiteCreationWizard({ onClose }: { onClose: () => void }) {
-  const { addWebsite } = usePageStore()
-  const [step, setStep] = useState(1)
-  const [websiteData, setWebsiteData] = useState({
-    name: '',
-    themeId: '',
-    purpose: {
-      contentTypes: [] as string[],
-      hasSubjectOrganization: false,
-      publishingTypes: [] as string[]
-    },
-    branding: {
-      primaryColor: '',
-      secondaryColor: '',
-      logoUrl: '',
-      fontFamily: ''
-    },
-    customizations: [] as Array<{path: string, value: string, reason: string}>
-  })
-  
-  const totalSteps = 3
-  const { themes: availableThemes } = usePageStore()
-  const selectedTheme = availableThemes.find(t => t.id === websiteData.themeId)
-  
-  const handleCreate = () => {
-    const themeBranding = selectedTheme ? {
-      primaryColor: selectedTheme.colors.primary,
-      secondaryColor: selectedTheme.colors.secondary,
-      logoUrl: '',
-      fontFamily: selectedTheme.typography.headingFont
-    } : websiteData.branding
-
-    const newWebsite: Website = {
-      id: crypto.randomUUID(),
-      name: websiteData.name,
-      domain: `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com`, // Auto-generate from name
-      themeId: websiteData.themeId,
-      status: 'staging',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      modifications: websiteData.customizations.map(c => ({
-        path: c.path,
-        originalValue: getDefaultValueForPath(c.path),
-        modifiedValue: c.value,
-        modifiedAt: 'website' as const,
-        modifiedBy: 'Current User',
-        timestamp: new Date(),
-        reason: c.reason
-      })),
-      customSections: [],
-      branding: {
-        ...themeBranding,
-        ...Object.fromEntries(
-          Object.entries(websiteData.branding).filter(([_, value]) => value !== '')
-        )
-      },
-      // Store the purpose configuration for future use
-      purpose: websiteData.purpose,
-      deviationScore: calculateInitialDeviation(websiteData.customizations, selectedTheme),
-      lastThemeSync: new Date()
-    }
-    
-    addWebsite(newWebsite)
-    onClose()
-  }
-  
-  const getDefaultValueForPath = (path: string) => {
-    // Simple mapping of paths to default values
-    const defaults: Record<string, any> = {
-      'branding.logo': '/default-logo.svg',
-      'branding.primaryColor': '#1e40af',
-      'typography.headingFont': 'Inter, sans-serif',
-      'sections.hero.title': 'Welcome to Our Site'
-    }
-    return defaults[path] || 'default-value'
-  }
-  
-  const calculateInitialDeviation = (customizations: any[], theme: Theme | undefined) => {
-    if (!theme) return 0
-    let score = 0
-    // For themes, we calculate deviation based on how many customizations diverge from theme standards
-    score = customizations.length * 10 // Simple scoring for now
-    return Math.min(score, 100)
-  }
-  
-  const nextStep = () => setStep(Math.min(step + 1, totalSteps))
-  const prevStep = () => setStep(Math.max(step - 1, 1))
-  
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">Create New Website</h3>
-              <p className="text-gray-600 mt-1">Step {step} of {totalSteps}</p>
-            </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex items-center">
-              {Array.from({ length: totalSteps }, (_, i) => (
-                <div key={i} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {i + 1}
-                  </div>
-                  {i < totalSteps - 1 && (
-                    <div className={`h-1 w-16 mx-2 ${
-                      i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex mt-2">
-              <div className="text-xs text-gray-600 w-8 text-center">Theme</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Purpose</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Details</div>
-            </div>
-          </div>
-          
-          {/* Step Content */}
-          <div className="min-h-[400px]">
-            {step === 1 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Choose Publishing Theme</h4>
-                  <p className="text-gray-600 mb-6">Select a complete theme package for your publishing platform</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
-                    {availableThemes.map((theme) => (
-                      <div 
-                        key={theme.id}
-                        onClick={() => setWebsiteData({...websiteData, themeId: theme.id})}
-                        className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
-                          websiteData.themeId === theme.id 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="h-32 rounded mb-4 overflow-hidden border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 relative">
-                          <img 
-                            src={themePreviewImages[theme.id as keyof typeof themePreviewImages]} 
-                            alt={`${theme.name} theme preview (designed by Gemini)`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback to showing theme info if image fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
-                          <div className="absolute inset-0 hidden items-center justify-center flex-col text-gray-500">
-                            <Palette className="w-8 h-8 mb-2" />
-                            <span className="text-xs font-medium">{theme.name} Theme</span>
-                          </div>
-                        </div>
-                        <h5 className="font-medium text-gray-900 text-lg">{theme.name}</h5>
-                        <p className="text-sm text-gray-600 mt-1 mb-3">{theme.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`px-2 py-1 text-xs rounded-full bg-green-100 text-green-800`}>
-                              {theme.publishingType}
-                            </div>
-                            <span className="text-xs text-gray-500">v{theme.version}</span>
-                          </div>
-                          <span className="text-xs text-gray-500">{theme.templates.length} templates</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {selectedTheme && (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <Palette className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h6 className="font-medium text-blue-900">{selectedTheme.name}</h6>
-                          <p className="text-sm text-blue-700 mt-1">{selectedTheme.description}</p>
-                          <div className="mt-3">
-                            <div className="text-xs font-medium text-blue-800 mb-2">Included Templates:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {selectedTheme.templates.map((template) => (
-                                <span key={template.id} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                  {template.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {step === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Define the Website's Purpose</h4>
-                  <p className="text-gray-600 mb-6">
-                    Help us configure your website by telling us about the content you'll be publishing and how you want to organize it.
-                  </p>
-                  
-                  {/* Content Type Selection */}
-                  <div className="mb-8">
-                    <label className="block text-base font-medium text-gray-900 mb-4">
-                      What type of content will you be publishing?
-                    </label>
-                    <p className="text-sm text-gray-600 mb-4">Select all that apply. This will enable the appropriate templates and features.</p>
-                    
-                    <div className="space-y-3">
-                      {[
-                        { id: 'journals', label: 'Journals', description: 'Academic journals, research articles, and peer-reviewed content' },
-                        { id: 'books', label: 'Books', description: 'eBooks, textbooks, monographs, and book series' },
-                        { id: 'conferences', label: 'Conference Proceedings', description: 'Conference papers, abstracts, and presentation materials' }
-                      ].map((contentType) => (
-                        <label key={contentType.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <input
-                            type="checkbox"
-                            checked={websiteData.purpose.contentTypes.includes(contentType.id)}
-                            onChange={(e) => {
-                              const newContentTypes = e.target.checked
-                                ? [...websiteData.purpose.contentTypes, contentType.id]
-                                : websiteData.purpose.contentTypes.filter(type => type !== contentType.id)
-                              setWebsiteData({
-                                ...websiteData, 
-                                purpose: {...websiteData.purpose, contentTypes: newContentTypes}
-                              })
-                            }}
-                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{contentType.label}</div>
-                            <div className="text-sm text-gray-600">{contentType.description}</div>
-                  </div>
-                        </label>
-                      ))}
-                          </div>
-                        </div>
-                  
-                  {/* Subject Organization */}
-                  <div className="mb-8">
-                    <label className="block text-base font-medium text-gray-900 mb-4">
-                      Will your site organize content by subject area?
-                    </label>
-                    <p className="text-sm text-gray-600 mb-4">
-                      This enables taxonomy features like subject browsing, categorization, and filtering.
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="subjectOrganization"
-                          checked={websiteData.purpose.hasSubjectOrganization === true}
-                          onChange={() => setWebsiteData({
-                            ...websiteData, 
-                            purpose: {...websiteData.purpose, hasSubjectOrganization: true}
-                          })}
-                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
-                          <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
-                      </div>
-                      </label>
-                      
-                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="subjectOrganization"
-                          checked={websiteData.purpose.hasSubjectOrganization === false}
-                          onChange={() => setWebsiteData({
-                            ...websiteData, 
-                            purpose: {...websiteData.purpose, hasSubjectOrganization: false}
-                          })}
-                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">No</div>
-                          <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
-                      </div>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {/* Selected Theme Preview */}
-                  {selectedTheme && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Palette className="w-5 h-5 text-blue-600" />
-                        <h5 className="font-medium text-blue-900">Selected Theme: {selectedTheme.name}</h5>
-                        </div>
-                      <p className="text-sm text-blue-700 mb-3">{selectedTheme.description}</p>
-                      
-                      {websiteData.purpose.contentTypes.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-blue-200">
-                          <div className="text-sm text-blue-800 font-medium mb-2">
-                            Recommended features for your content types:
-                            </div>
-                          <div className="text-sm text-blue-700 space-y-1">
-                            {websiteData.purpose.contentTypes.includes('journals') && (
-                              <div>• Article templates, peer-review workflows, citation management</div>
-                            )}
-                            {websiteData.purpose.contentTypes.includes('books') && (
-                              <div>• Chapter navigation, table of contents, book series organization</div>
-                            )}
-                            {websiteData.purpose.contentTypes.includes('conferences') && (
-                              <div>• Proceedings organization, presentation materials, abstract browsing</div>
-                            )}
-                            {websiteData.purpose.hasSubjectOrganization && (
-                              <div>• Subject taxonomy, advanced filtering, topic-based navigation</div>
-                            )}
-                          </div>
-                      </div>
-                  )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
-                  <p className="text-gray-600 mb-6">
-                    Complete your website setup with naming and optional branding customizations.
-                  </p>
-                  
-                  {/* Website Name */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Website Name *</label>
-                      <input
-                          type="text"
-                      value={websiteData.name}
-                      onChange={(e) => setWebsiteData({...websiteData, name: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g., Journal of Advanced Materials"
-                        />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Domain: {websiteData.name ? `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com` : 'your-site-name.wiley.com'}
-                    </p>
-                    </div>
-                  
-                  {/* Theme Defaults Preview */}
-                  {selectedTheme && (
-                    <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                          <span className="font-medium text-gray-600">Primary Color:</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.primary}}></div>
-                            <span className="text-gray-700">{selectedTheme.colors.primary}</span>
-                            </div>
-                    </div>
-                    <div>
-                          <span className="font-medium text-gray-600">Typography:</span>
-                          <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
-                      </div>
-                </div>
-              </div>
-            )}
-            
-                  {/* Optional Branding Customizations */}
-                  <div className="mb-6">
-                    <h5 className="font-medium text-gray-900 mb-3">Custom Branding (Optional)</h5>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Customize your brand colors and logo. Leave blank to use theme defaults.
-                    </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Always show logo - not restricted by theme */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
-                      <input
-                        type="url"
-                        value={websiteData.branding.logoUrl}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                          branding: {...websiteData.branding, logoUrl: e.target.value}
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="https://example.com/logo.svg"
-                      />
-                    </div>
-                    
-                    {/* Only show primary color if selected theme allows it */}
-                    {selectedTheme?.customizationRules.colors.canModifyPrimary && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
-                        <input
-                          type="color"
-                          value={websiteData.branding.primaryColor || selectedTheme.colors.primary}
-                        onChange={(e) => setWebsiteData({
-                          ...websiteData,
-                            branding: {...websiteData.branding, primaryColor: e.target.value}
-                          })}
-                          className="w-full h-10 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                    )}
-                  </div>
-                  
-                  {selectedTheme && !selectedTheme.customizationRules.colors.canModifyPrimary && (
-                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-amber-700 text-sm">
-                        <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
-                        You can set a logo, but color customization will be limited after website creation.
-                      </p>
-                      </div>
-                  )}
-                </div>
-                  
-                  {/* Website Summary */}
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h5 className="font-medium text-blue-900 mb-4">Website Summary</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-blue-800">Name:</span> 
-                        <span className="text-blue-700 ml-2">{websiteData.name || 'Untitled Website'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-800">Theme:</span> 
-                        <span className="text-blue-700 ml-2">{selectedTheme?.name || 'None selected'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-800">Content Types:</span> 
-                        <span className="text-blue-700 ml-2">
-                          {websiteData.purpose.contentTypes.length > 0 
-                            ? websiteData.purpose.contentTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1)).join(', ')
-                            : 'None selected'
-                          }
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-800">Subject Organization:</span> 
-                        <span className="text-blue-700 ml-2">
-                          {websiteData.purpose.hasSubjectOrganization ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-800">Templates:</span> 
-                        <span className="text-blue-700 ml-2">{selectedTheme?.templates.length || 0} included</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-800">Status:</span> 
-                        <span className="text-blue-700 ml-2">Ready to launch</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Navigation */}
-          <div className="flex justify-between items-center mt-8 pt-6 border-t">
-            <div className="flex gap-2">
-              {step > 1 && (
-                <button
-                  onClick={prevStep}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              {step < totalSteps ? (
-                <button
-                  onClick={nextStep}
-                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && websiteData.purpose.contentTypes.length === 0)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  onClick={handleCreate}
-                  disabled={!websiteData.name || !websiteData.themeId}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create Website
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+// NOTE: WebsiteCreationWizard component moved to src/components/Wizards/WebsiteCreation.tsx
 
 
 // Theme Provider component that applies theme variables to canvas only
-function CanvasThemeProvider({ children }: { children: React.ReactNode }) {
-  const { themes } = usePageStore()
-  const currentTheme = themes.find(t => t.id === 'modernist-theme') // Default theme for now
-  
-  if (!currentTheme) {
-    return <>{children}</>
-  }
-
-  return (
-    <div 
-      className="theme-canvas"
-      style={{
-        '--theme-color-primary': currentTheme.colors.primary,
-        '--theme-color-secondary': currentTheme.colors.secondary,
-        '--theme-color-accent': currentTheme.colors.accent,
-        '--theme-color-text': currentTheme.colors.text,
-        '--theme-color-background': currentTheme.colors.background,
-        '--theme-color-muted': currentTheme.colors.muted,
-        '--theme-heading-font': currentTheme.typography.headingFont,
-        '--theme-body-font': currentTheme.typography.bodyFont,
-        '--theme-base-size': currentTheme.typography.baseSize,
-        '--theme-scale': currentTheme.typography.scale
-      } as React.CSSProperties}
-    >
-      {children}
-    </div>
-  )
-}
+// NOTE: CanvasThemeProvider component moved to src/components/Canvas/CanvasThemeProvider.tsx
 
 function DesignConsole() {
   const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
@@ -3814,7 +2510,6 @@ function DesignConsole() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <div className="bg-white shadow-sm border-b border-slate-200">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
@@ -3840,11 +2535,9 @@ function DesignConsole() {
       </div>
 
       <div className="flex h-[calc(100vh-73px)]">
-        {/* Sidebar */}
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
           <nav className="p-4">
-            {/* Overview */}
-              <button
+            <button
               onClick={() => setSiteManagerView('overview')}
                 className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                 siteManagerView === 'overview'
@@ -3856,7 +2549,6 @@ function DesignConsole() {
               Overview
               </button>
 
-            {/* Themes Section */}
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Themes
@@ -3865,7 +2557,6 @@ function DesignConsole() {
             <div className="space-y-1">
               {usedThemes.map((theme) => (
                 <div key={theme.id}>
-                  {/* Theme Header - Clickable to expand/collapse */}
                   <button
                     onClick={() => toggleTheme(theme.id)}
                     className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
@@ -3879,7 +2570,6 @@ function DesignConsole() {
                     }`} />
                   </button>
 
-                  {/* Theme Sub-menu - Only show when expanded */}
                   {isThemeExpanded(theme.id) && (
                     <div className="ml-6 mt-1 space-y-1">
                       <button
@@ -3923,7 +2613,6 @@ function DesignConsole() {
               ))}
             </div>
 
-            {/* Websites Section */}
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Websites
@@ -3932,7 +2621,6 @@ function DesignConsole() {
             <div className="space-y-1">
               {websites.map((website) => (
                 <div key={website.id}>
-                  {/* Website Header - Clickable to expand/collapse */}
                   <button
                     onClick={() => toggleWebsite(website.id)}
                     className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
@@ -3946,7 +2634,6 @@ function DesignConsole() {
                     }`} />
                   </button>
 
-                  {/* Website Sub-menu - Only show when expanded */}
                   {isWebsiteExpanded(website.id) && (
                     <div className="ml-6 mt-1 space-y-1">
                       <button
@@ -3989,7 +2676,6 @@ function DesignConsole() {
                 </div>
               ))}
               
-              {/* All Websites Overview Link */}
               <button
                 onClick={() => setSiteManagerView('websites')}
                 className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors mt-2 ${
@@ -4003,7 +2689,6 @@ function DesignConsole() {
               </button>
             </div>
 
-            {/* System Section */}
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 System
@@ -4025,7 +2710,6 @@ function DesignConsole() {
           </nav>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 p-6 bg-slate-50">
           {siteManagerView === 'overview' && (
             <div>
@@ -4096,11 +2780,10 @@ function DesignConsole() {
                     View All Websites →
                   </button>
                 </div>
-              </div>
-            </div>
+                </div>
+                </div>
           )}
           
-          {/* Modernist Theme Views */}
           {siteManagerView === 'modernist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -4127,7 +2810,6 @@ function DesignConsole() {
             <SiteManagerTemplates themeId="modernist-theme" />
           )}
           
-          {/* Classicist Theme Views */}
           {siteManagerView === 'classicist-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -4154,15 +2836,14 @@ function DesignConsole() {
             <SiteManagerTemplates themeId="classicist-theme" />
           )}
           
-          {/* Curator Theme Views */}
           {siteManagerView === 'curator-theme-theme-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
-              </div>
+        </div>
               <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
-            </div>
+      </div>
           )}
           {siteManagerView === 'curator-theme-publication-cards' && (
             <div>
@@ -4172,7 +2853,7 @@ function DesignConsole() {
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
                   <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Curator theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                </div>
+    </div>
               </div>
               <ThemePublicationCards themeId="curator-theme" />
             </div>
@@ -4181,8 +2862,8 @@ function DesignConsole() {
             <SiteManagerTemplates themeId="curator-theme" />
           )}
 
-          {/* Website-Specific Views */}
-          {/* Wiley Online Library */}
+          // Website-Specific Views
+          // Wiley Online Library
           {siteManagerView === 'wiley-main-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -4214,13 +2895,13 @@ function DesignConsole() {
             </div>
           )}
 
-          {/* Wiley Research Hub */}
+          // Wiley Research Hub
           {siteManagerView === 'research-hub-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
                 <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-              </div>
+        </div>
               <WebsiteSettings websiteId="research-hub" />
             </div>
           )}
@@ -4246,22 +2927,22 @@ function DesignConsole() {
               </div>
           )}
 
-          {/* Journal of Advanced Science */}
+          // Journal of Advanced Science
           {siteManagerView === 'journal-of-science-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Website Settings</h2>
                 <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-              </div>
+        </div>
               <WebsiteSettings websiteId="journal-of-science" />
-            </div>
+      </div>
           )}
           {siteManagerView === 'journal-of-science-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design publication cards optimized for scientific journals and conferences with taxonomy features</p>
-              </div>
+    </div>
               <PublicationCards usePageStore={usePageStore} />
             </div>
           )}
@@ -4279,10 +2960,8 @@ function DesignConsole() {
           )}
 
 
-          {/* Implementation Views */}
           {siteManagerView === 'websites' && <SiteManagerWebsites />}
           
-          {/* System Views */}
           {siteManagerView === 'settings' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">System Settings</h2>
@@ -4296,196 +2975,15 @@ function DesignConsole() {
 }
 
 // Left sidebar tabs
-type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
+// LeftSidebarTab type moved to PageBuilder component
 
 // Layout picker component
-function LayoutPicker({ onSelectLayout, onClose }: { onSelectLayout: (layout: ContentBlockLayout) => void; onClose: () => void }) {
-  const layouts = [
-    { id: 'flexible' as ContentBlockLayout, name: 'Flexible', description: 'Responsive layout' },
-    { id: 'one-column' as ContentBlockLayout, name: 'One Column', description: 'Full width column' },
-    { id: 'two-columns' as ContentBlockLayout, name: 'Two Columns', description: 'Equal columns' },
-    { id: 'three-columns' as ContentBlockLayout, name: 'Three Columns', description: 'Equal columns' },
-    { id: 'one-third-left' as ContentBlockLayout, name: 'One-Third Left', description: '1/3 + 2/3 columns' },
-    { id: 'one-third-right' as ContentBlockLayout, name: 'One-Third Right', description: '2/3 + 1/3 columns' },
-    { id: 'vertical' as ContentBlockLayout, name: 'Vertical Section', description: 'Stacked rows' }
-  ]
+// NOTE: LayoutPicker component moved to src/components/Canvas/LayoutPicker.tsx
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Choose Layout</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <div className="space-y-2">
-          {layouts.map((layout) => (
-            <button
-              key={layout.id}
-              onClick={() => onSelectLayout(layout.id)}
-              className="w-full text-left p-3 rounded-md border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-            >
-              <div className="font-medium text-gray-900">{layout.name}</div>
-              <div className="text-sm text-gray-500">{layout.description}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Draggable Library Widget Component
-function DraggableLibraryWidget({ item, isDIY = false }: { item: SpecItem; isDIY?: boolean }) {
-  const { addWidget } = usePageStore()
-  const [dragStarted, setDragStarted] = useState(false)
-  
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: `library-${item.id}`,
-    data: {
-      type: 'library-widget',
-      item: item
-    }
-  })
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined
-
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent click if drag was started
-    if (dragStarted) {
-      e.preventDefault()
-      setDragStarted(false)
-      return
-    }
-    
-    const newWidget = buildWidget(item)
-    addWidget(newWidget)
-  }
-
-  const handlePointerDown = () => {
-    setDragStarted(false)
-  }
-
-  const handleDragStart = () => {
-    setDragStarted(true)
-    console.log('📦 Library widget drag started:', item.label)
-  }
-
-  return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      onClick={handleClick}
-      onPointerDown={handlePointerDown}
-      {...attributes}
-      {...listeners}
-      className={`block w-full text-left rounded transition-colors cursor-grab active:cursor-grabbing ${
-        isDIY 
-          ? 'p-3 border border-orange-200 bg-orange-50 hover:bg-orange-100' 
-          : 'p-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-      } ${isDragging ? 'opacity-50' : ''}`}
-      title="Click to add to canvas, or drag to drop into a section"
-    >
-      {isDIY ? (
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Code className="w-4 h-4 text-orange-600" />
-            <span className="font-medium text-gray-900">{item.label}</span>
-          </div>
-          <p className="text-sm text-gray-600">{item.description}</p>
-        </div>
-      ) : (
-        <div>
-      {item.label}
-      {item.status === 'planned' && (
-        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
-          )}
-        </div>
-      )}
-    </button>
-  )
-}
+// NOTE: DraggableLibraryWidget component moved to src/components/Canvas/DraggableLibraryWidget.tsx
 
 // Library component to show widgets and sections with collapsible categories
-function WidgetLibrary() {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['core']) // Expand Core category by default to show HTML Block widget
-  )
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId)
-      } else {
-        newSet.add(categoryId)
-      }
-      return newSet
-    })
-  }
-
-  return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-gray-900">Widget Library</h3>
-      <div className="space-y-3">
-        {LIBRARY_CONFIG.map((category: any) => {
-          const isExpanded = expandedCategories.has(category.id)
-          
-          return (
-            <div key={category.id} className="border border-gray-200 rounded-lg">
-              {/* Category Header - Clickable to toggle */}
-              <button
-                onClick={() => toggleCategory(category.id)}
-                className="w-full p-3 bg-gray-50 border-b flex items-center justify-between hover:bg-gray-100 transition-colors"
-              >
-                <h4 className="font-medium text-gray-900">{category.name}</h4>
-                <ChevronDown 
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    isExpanded ? 'transform rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {/* Category Content - Collapsible */}
-              {isExpanded && (
-                <div className="p-3 space-y-2">
-                  {category.groups?.map((group: any) => (
-                    <div key={group.id}>
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">{group.name}</h5>
-                      <div className="space-y-1">
-                        {group.items?.map((item: any) => (
-                          <DraggableLibraryWidget key={item.id} item={item} />
-                        ))}
-                      </div>
-                    </div>
-                  )) || (
-                    // Handle categories with direct items (no groups)
-                    category.items?.map((item: any) => (
-                      <DraggableLibraryWidget key={item.id} item={item} />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+// NOTE: WidgetLibrary component moved to src/components/Library/WidgetLibrary.tsx
 
 // NOTE: PREFAB_SECTIONS is now defined at the top of the file to avoid hoisting issues
 
@@ -4495,19 +2993,19 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
   
   const handleAddPrefabSection = (sectionKey: keyof typeof PREFAB_SECTIONS) => {
     const prefab = PREFAB_SECTIONS[sectionKey]
-    const newSection: WidgetSection = {
+    const newSection = {
+      ...prefab,
       id: crypto.randomUUID(),
-      ...prefab.template,
       // Ensure all nested items have unique IDs
-      areas: prefab.template.areas.map(area => ({
+      areas: prefab.areas.map(area => ({
         ...area,
         id: crypto.randomUUID(),
         widgets: area.widgets.map(widget => ({
           ...widget,
           id: crypto.randomUUID()
-        }))
+        })) as any
       }))
-    }
+    } as WidgetSection
     addSection(newSection)
   }
 
@@ -4525,7 +3023,6 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
         <h3 className="font-semibold text-gray-900 mb-4">Sections</h3>
         <p className="text-sm text-gray-600 mb-4">Pre-fabricated layout patterns to accelerate page design</p>
         
-        {/* Pre-fabricated Sections by Category */}
         {Object.entries(sectionsByCategory).map(([categoryName, sections]) => (
           <div key={categoryName} className="space-y-3 mb-6">
             <h4 className="font-medium text-gray-700">{categoryName}</h4>
@@ -4547,7 +3044,6 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
           </div>
         ))}
         
-        {/* Custom Sections (User-saved sections) */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-gray-700">Custom Sections</h4>
@@ -4576,10 +3072,10 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
                     <button 
                       onClick={() => {
                         const { addSection } = usePageStore.getState()
-                        // Create a copy of the section with new ID
+                        // Create a copy of the section with new IDs
                         const newSectionId = crypto.randomUUID()
-                        const sectionCopy = {
-                          ...section.section,
+                        const sectionCopy: WidgetSection = {
+                          ...section.section, // Use the saved section structure
                           id: newSectionId,
                           areas: section.section.areas.map(area => ({
                             ...area,
@@ -4587,14 +3083,14 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
                             widgets: area.widgets.map(widget => ({
                               ...widget,
                               id: crypto.randomUUID(),
-                              sectionId: newSectionId // Fixed: Use new section ID
+                              sectionId: newSectionId
                             }))
                           }))
                         }
                         addSection(sectionCopy)
                         
                         // Show success notification
-                        const widgetCount = sectionCopy.areas.reduce((count, area) => count + area.widgets.length, 0)
+                        const widgetCount = section.widgets.length
                         showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
                       }}
                       className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
@@ -4620,7 +3116,7 @@ function SectionsContent({ showToast }: { showToast: (message: string, type: 'su
 
 // DIY Zone component
 function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
-  const { addWidget, customSections, addCustomSection, removeCustomSection } = usePageStore()
+  const { addWidget, customSections, removeCustomSection } = usePageStore()
   
   const handleAddDIYWidget = (type: string) => {
     let widget: Widget
@@ -4657,7 +3153,6 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
         <h3 className="font-semibold text-gray-900 mb-4">DIY Zone</h3>
         <p className="text-sm text-gray-600 mb-4">Advanced tools for creating custom content</p>
         
-        {/* DIY Widgets */}
         <div className="space-y-3 mb-6">
           <h4 className="font-medium text-gray-700">DIY Widgets</h4>
           <div className="space-y-2">
@@ -4670,6 +3165,8 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
                 status: 'supported'
               }}
               isDIY={true}
+              usePageStore={usePageStore}
+              buildWidget={buildWidget}
             />
             <button
               onClick={() => handleAddDIYWidget('code-block')}
@@ -4700,7 +3197,6 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
           </div>
         </div>
         
-        {/* Custom Sections */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-gray-700">Custom Sections</h4>
@@ -4729,10 +3225,10 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
                     <button 
                       onClick={() => {
                         const { addSection } = usePageStore.getState()
-                        // Create a copy of the section with new ID
+                        // Create a copy of the section with new IDs
                         const newSectionId = crypto.randomUUID()
-                        const sectionCopy = {
-                          ...section.section,
+                        const sectionCopy: WidgetSection = {
+                          ...section.section, // Use the saved section structure
                           id: newSectionId,
                           areas: section.section.areas.map(area => ({
                             ...area,
@@ -4740,14 +3236,14 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
                             widgets: area.widgets.map(widget => ({
                               ...widget,
                               id: crypto.randomUUID(),
-                              sectionId: newSectionId // Fixed: Use new section ID
+                              sectionId: newSectionId
                             }))
                           }))
                         }
                         addSection(sectionCopy)
                         
                         // Show success notification
-                        const widgetCount = sectionCopy.areas.reduce((count, area) => count + area.widgets.length, 0)
+                        const widgetCount = section.widgets.length
                         showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
                       }}
                       className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
@@ -4772,61 +3268,6 @@ function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'suc
 }
 
 // Publication Cards configuration component
-function PublicationCardsContent() {
-  const { publicationCardVariants, addPublicationCardVariant, removePublicationCardVariant } = usePageStore()
-  
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-4">Publication Cards</h3>
-        <p className="text-sm text-gray-600 mb-4">Configure how publication metadata is displayed</p>
-        
-        {/* Saved Variants */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-700">Saved Variants</h4>
-            <span className="text-xs text-gray-500">{publicationCardVariants.length} variants</span>
-          </div>
-          
-          <div className="space-y-2">
-            {publicationCardVariants.map((variant) => (
-              <div key={variant.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white">
-                <div>
-                  <div className="font-medium text-gray-900">{variant.name}</div>
-                  {variant.description && (
-                    <div className="text-sm text-gray-500">{variant.description}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
-                    Configure
-                  </button>
-                  <button 
-                    onClick={() => removePublicationCardVariant(variant.id)}
-                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Live Preview */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-700">Live Preview</h4>
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <PublicationCard 
-              article={MOCK_SCHOLARLY_ARTICLES[0]}
-              config={DEFAULT_PUBLICATION_CARD_CONFIG}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Schema Form Editor component
 function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
@@ -4986,7 +3427,6 @@ const handleSubmit = (e: React.FormEvent) => {
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Object Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Object Name <span className="text-red-500">*</span>
@@ -5002,7 +3442,6 @@ const handleSubmit = (e: React.FormEvent) => {
           <p className="text-xs text-gray-500 mt-1">Internal name for managing this object</p>
         </div>
         
-        {/* Schema Properties */}
         {definition.properties.map((property) => (
           <div key={property.name}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -5016,7 +3455,7 @@ const handleSubmit = (e: React.FormEvent) => {
           </div>
         ))}
         
-        {/* Tags */}
+        // Tags
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
           <div className="flex gap-2 mb-2">
@@ -5057,7 +3496,6 @@ const handleSubmit = (e: React.FormEvent) => {
           )}
         </div>
         
-        {/* JSON-LD Preview */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">JSON-LD Preview</label>
           <pre className="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-xs overflow-auto max-h-40">
@@ -5065,7 +3503,6 @@ const handleSubmit = (e: React.FormEvent) => {
           </pre>
         </div>
         
-        {/* Actions */}
         <div className="flex gap-2">
           <button
             type="submit"
@@ -5086,978 +3523,13 @@ const handleSubmit = (e: React.FormEvent) => {
   )
 }
 
-// Properties Panel component
-function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchema, onCancelSchema }: {
-  creatingSchemaType: SchemaOrgType | null
-  selectedSchemaObject: SchemaObject | null
-  onSaveSchema: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onCancelSchema: () => void
-}) {
-  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects } = usePageStore()
-  
-  // Show schema form if creating or editing schema
-  if (creatingSchemaType || selectedSchemaObject) {
-    const schemaType = creatingSchemaType || selectedSchemaObject?.type
-    if (schemaType) {
-      return (
-        <SchemaFormEditor
-          schemaType={schemaType}
-          initialData={selectedSchemaObject || undefined}
-          onSave={onSaveSchema}
-          onCancel={onCancelSchema}
-        />
-      )
-    }
-  }
-  
-  if (!selectedWidget) {
-    return (
-      <div className="p-4">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Select a widget or section to edit its properties</p>
-        </div>
-      </div>
-    )
-  }
-  
-  // Find selected widget/section - check both canvas items and widgets within sections
-  let selectedItem: CanvasItem | Widget | undefined = canvasItems.find(item => item.id === selectedWidget)
-  
-  // If not found at canvas level, search within section areas
-  if (!selectedItem) {
-    for (const canvasItem of canvasItems) {
-      if (isSection(canvasItem)) {
-        for (const area of canvasItem.areas) {
-          const foundWidget = area.widgets.find(w => w.id === selectedWidget)
-          if (foundWidget) {
-            selectedItem = foundWidget
-            break
-          }
-        }
-        if (selectedItem) break
-      }
-    }
-  }
-  
-  if (!selectedItem) {
-    console.log('🔍 Properties Panel - Selected item not found:', { 
-      selectedWidget, 
-      canvasItemIds: canvasItems.map(item => item.id),
-      sectionWidgetIds: canvasItems.flatMap(item => 
-        isSection(item) ? item.areas.flatMap(area => area.widgets.map(w => w.id)) : []
-      )
-    })
-    return (
-      <div className="p-4">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Selected item not found</p>
-        </div>
-      </div>
-    )
-  }
-  
-  console.log('🎯 Properties Panel - Found selected item:', { 
-    id: selectedItem.id, 
-    type: selectedItem.type,
-    isSection: isSection(selectedItem)
-  })
-  
-  const updateWidget = (updates: Partial<Widget>) => {
-    const updatedCanvasItems = canvasItems.map(item => {
-      if (isSection(item)) {
-        return {
-          ...item,
-          areas: item.areas.map(area => ({
-            ...area,
-            widgets: area.widgets.map(w => 
-              w.id === selectedWidget ? { ...w, ...updates } : w
-            )
-          }))
-        }
-      } else {
-        return item.id === selectedWidget ? { ...item, ...updates } : item
-      }
-    })
-    replaceCanvasItems(updatedCanvasItems)
-  }
-  
-  const updateSection = (updates: Partial<WidgetSection>) => {
-    const updatedCanvasItems = canvasItems.map(item => {
-      if (isSection(item) && item.id === selectedWidget) {
-        return { ...item, ...updates }
-      }
-      return item
-    })
-    replaceCanvasItems(updatedCanvasItems)
-  }
-  
-  if (isSection(selectedItem)) {
-    const section = selectedItem as WidgetSection
-    const backgroundType = section.background?.type || 'none'
-    
-    return (
-      <div className="p-4 space-y-4">
-        <h3 className="font-semibold text-gray-900">Section Properties</h3>
-        
-        {/* Section Type Indicator */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
-            <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">
-              {section.name}
-            </span>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          {/* Basic Properties */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-            <input
-              type="text"
-              value={section.layout}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
-            />
-          </div>
-          
-          {/* Background Configuration */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Background</h4>
-            
-            {/* Background Type */}
-          <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
-              <select
-                value={backgroundType}
-                onChange={(e) => {
-                  const newType = e.target.value as 'color' | 'image' | 'gradient' | 'none'
-                  updateSection({
-                    background: newType === 'none' ? undefined : {
-                      type: newType,
-                      ...(newType === 'color' && { color: '#ffffff' }),
-                      ...(newType === 'image' && { 
-                        image: { 
-                          url: '', 
-                          position: 'center', 
-                          repeat: 'no-repeat', 
-                          size: 'cover' 
-                        } 
-                      }),
-                      ...(newType === 'gradient' && { 
-                        gradient: { 
-                          type: 'linear', 
-                          direction: 'to right',
-                          stops: [
-                            { color: '#ffffff', position: '0%' },
-                            { color: '#f3f4f6', position: '100%' }
-                          ]
-                        } 
-                      })
-                    }
-                  })
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="none">None</option>
-                <option value="color">Solid Color</option>
-                <option value="image">Background Image</option>
-                <option value="gradient">Gradient</option>
-              </select>
-            </div>
-            
-            {/* Color Background Options */}
-            {backgroundType === 'color' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    value={section.background?.color || '#ffffff'}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'color',
-                        color: e.target.value
-                      }
-                    })}
-                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                  />
-            <input
-              type="text"
-                    value={section.background?.color || '#ffffff'}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'color',
-                        color: e.target.value
-                      }
-                    })}
-                    placeholder="#ffffff"
-                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-mono"
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Image Background Options */}
-            {backgroundType === 'image' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
-                  <input
-                    type="url"
-                    value={section.background?.image?.url || ''}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'image',
-                        image: {
-                          ...section.background?.image,
-                          url: e.target.value,
-                          position: section.background?.image?.position || 'center',
-                          repeat: section.background?.image?.repeat || 'no-repeat',
-                          size: section.background?.image?.size || 'cover'
-                        }
-                      }
-                    })}
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                    <select
-                      value={section.background?.image?.position || 'center'}
-                      onChange={(e) => updateSection({
-                        background: {
-                          ...section.background,
-                          type: 'image',
-                          image: {
-                            ...section.background?.image,
-                            url: section.background?.image?.url || '',
-                            position: e.target.value as any,
-                            repeat: section.background?.image?.repeat || 'no-repeat',
-                            size: section.background?.image?.size || 'cover'
-                          }
-                        }
-                      })}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                    >
-                      <option value="center">Center</option>
-                      <option value="top">Top</option>
-                      <option value="bottom">Bottom</option>
-                      <option value="left">Left</option>
-                      <option value="right">Right</option>
-                      <option value="cover">Cover</option>
-                      <option value="contain">Contain</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
-                    <select
-                      value={section.background?.image?.size || 'cover'}
-                      onChange={(e) => updateSection({
-                        background: {
-                          ...section.background,
-                          type: 'image',
-                          image: {
-                            ...section.background?.image,
-                            url: section.background?.image?.url || '',
-                            position: section.background?.image?.position || 'center',
-                            repeat: section.background?.image?.repeat || 'no-repeat',
-                            size: e.target.value
-                          }
-                        }
-                      })}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                    >
-                      <option value="cover">Cover</option>
-                      <option value="contain">Contain</option>
-                      <option value="auto">Auto</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
-                  <select
-                    value={section.background?.image?.repeat || 'no-repeat'}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'image',
-                        image: {
-                          ...section.background?.image,
-                          url: section.background?.image?.url || '',
-                          position: section.background?.image?.position || 'center',
-                          repeat: e.target.value as any,
-                          size: section.background?.image?.size || 'cover'
-                        }
-                      }
-                    })}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                  >
-                    <option value="no-repeat">No Repeat</option>
-                    <option value="repeat">Repeat</option>
-                    <option value="repeat-x">Repeat X</option>
-                    <option value="repeat-y">Repeat Y</option>
-                  </select>
-                </div>
-              </div>
-            )}
-            
-            {/* Background Opacity */}
-            {backgroundType !== 'none' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Background Opacity: {Math.round((section.background?.opacity || 1) * 100)}%
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={section.background?.opacity || 1}
-                  onChange={(e) => updateSection({
-                    background: {
-                      ...section.background,
-                      type: backgroundType as any,
-                      opacity: parseFloat(e.target.value)
-                    }
-                  })}
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-  
-  // Widget properties
-  const widget = selectedItem as Widget
-  
-  return (
-    <div className="p-4 space-y-4">
-      <h3 className="font-semibold text-gray-900">Widget Properties</h3>
-      
-      {/* Widget Type Indicator */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
-          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-            widget.type === 'publication-details' ? 'bg-blue-100 text-blue-700' :
-            widget.type === 'publication-list' ? 'bg-green-100 text-green-700' :
-            widget.type === 'button' ? 'bg-orange-100 text-orange-700' :
-            widget.type === 'text' ? 'bg-purple-100 text-purple-700' :
-            widget.type === 'image' ? 'bg-pink-100 text-pink-700' :
-            widget.type === 'navbar' ? 'bg-indigo-100 text-indigo-700' :
-            widget.type === 'heading' ? 'bg-yellow-100 text-yellow-700' :
-            widget.type === 'html' ? 'bg-red-100 text-red-700' :
-            'bg-gray-100 text-gray-700'
-          }`}>
-            {widget.type === 'publication-details' ? 'Publication Details' :
-             widget.type === 'publication-list' ? 'Publication List' :
-             widget.type === 'button' ? 'Button' :
-             widget.type === 'text' ? 'Text' :
-             widget.type === 'image' ? 'Image' :
-             widget.type === 'navbar' ? 'Navigation' :
-             widget.type === 'heading' ? 'Heading' :
-             widget.type === 'html' ? 'HTML Block' :
-             widget.type.charAt(0).toUpperCase() + widget.type.slice(1)
-            } Widget
-          </span>
-        </div>
-      </div>
-      
-      {widget.type === 'text' && (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
-            <textarea
-              value={widget.text}
-              onChange={(e) => updateWidget({ text: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-              rows={3}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
-            <select
-              value={widget.align || 'left'}
-              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
-          </div>
-        </div>
-      )}
-      
-      {widget.type === 'heading' && (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
-            <input
-              type="text"
-              value={(widget as HeadingWidget).text}
-              onChange={(e) => updateWidget({ text: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-            <select
-              value={(widget as HeadingWidget).level}
-              onChange={(e) => updateWidget({ level: parseInt(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value={1}>H1</option>
-              <option value={2}>H2</option>
-              <option value={3}>H3</option>
-              <option value={4}>H4</option>
-              <option value={5}>H5</option>
-              <option value={6}>H6</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
-            <select
-              value={(widget as HeadingWidget).align || 'left'}
-              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
-          </div>
-        </div>
-      )}
-      
-      {widget.type === 'html' && (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content</label>
-            <textarea
-              value={(widget as HTMLWidget).htmlContent}
-              onChange={(e) => updateWidget({ htmlContent: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm resize-none"
-              rows={6}
-              placeholder="Enter your HTML code here..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload HTML File</label>
-            <input
-              type="file"
-              accept=".html,.htm"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) {
-                  const reader = new FileReader()
-                  reader.onload = (e) => {
-                    const content = e.target?.result as string
-                    updateWidget({ htmlContent: content })
-                  }
-                  reader.readAsText(file)
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          
-          {/* Widget Promotion for HTML widgets */}
-          {(widget as HTMLWidget).htmlContent && (
-            <div className="border-t pt-4 mt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <h4 className="font-medium text-gray-700">Widget Promotion</h4>
-                <div className="relative group">
-                  <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                    Share your creation with the community or suggest it for the platform library
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <button className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
-                  Suggest for Library
-                </button>
-                <button className="w-full px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors">
-                  Promote to Wiley
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      
-      {widget.type === 'publication-list' && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
-            <select
-              value={(widget as PublicationListWidget).contentSource}
-              onChange={(e) => {
-                const newContentSource = e.target.value as 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
-                updateWidget({ 
-                  contentSource: newContentSource,
-                  // Reset source-specific config when changing content source
-                  ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
-                    schemaSource: {
-                      selectionType: 'by-type',
-                      selectedType: '',
-                      selectedIds: []
-                    }
-                  }),
-                  ...(newContentSource !== 'ai-generated' ? { aiSource: undefined } : {
-                    aiSource: {
-                      prompt: '',
-                      lastGenerated: undefined,
-                      generatedContent: undefined
-                    }
-                  })
-                })
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="dynamic-query">Dynamic Query</option>
-              <option value="doi-list">DOI List</option>
-              <option value="ai-generated">AI Generated</option>
-              <option value="schema-objects">Schema Objects</option>
-            </select>
-          </div>
-          
-          {/* Schema Objects Selection (conditional) */}
-          {(widget as PublicationListWidget).contentSource === 'schema-objects' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Selection Method</label>
-                <select
-                  value={(widget as PublicationListWidget).schemaSource?.selectionType || 'by-type'}
-                  onChange={(e) => {
-                    const selectionType = e.target.value as 'by-id' | 'by-type'
-                    updateWidget({ 
-                      schemaSource: {
-                        selectionType,
-                        selectedIds: [],
-                        selectedType: ''
-                      }
-                    })
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="by-type">By Type (All objects of a type)</option>
-                  <option value="by-id">By ID (Specific objects)</option>
-                </select>
-              </div>
-
-              {(widget as PublicationListWidget).schemaSource?.selectionType === 'by-type' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Schema Type</label>
-                  <select
-                    value={(widget as PublicationListWidget).schemaSource?.selectedType || ''}
-                    onChange={(e) => {
-                      const currentSchemaSource = (widget as PublicationListWidget).schemaSource
-                      updateWidget({ 
-                        schemaSource: {
-                          selectionType: currentSchemaSource?.selectionType || 'by-type',
-                          selectedType: e.target.value,
-                          selectedIds: currentSchemaSource?.selectedIds || []
-                        }
-                      })
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">-- Select type --</option>
-                    <option value="Article">Articles</option>
-                    <option value="BlogPosting">Blog Posts</option>
-                    <option value="NewsArticle">News Articles</option>
-                    <option value="Event">Events</option>
-                    <option value="Organization">Organizations</option>
-                    <option value="Person">People</option>
-                    <option value="Book">Books</option>
-                    <option value="Movie">Movies</option>
-                    <option value="Review">Reviews</option>
-                    <option value="Course">Courses</option>
-                    <option value="Recipe">Recipes</option>
-                    <option value="HowTo">How-To Guides</option>
-                  </select>
-                  
-                  {(widget as PublicationListWidget).schemaSource?.selectedType && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Will show all {schemaObjects.filter(obj => 
-                        obj.type === (widget as PublicationListWidget).schemaSource?.selectedType
-                      ).length} objects of type "{(widget as PublicationListWidget).schemaSource?.selectedType}"
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {(widget as PublicationListWidget).schemaSource?.selectionType === 'by-id' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Objects</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
-                    {schemaObjects.length === 0 ? (
-                      <p className="text-sm text-gray-500 p-2">No schema objects created yet</p>
-                    ) : (
-                      schemaObjects.map((obj) => (
-                        <label key={obj.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
-                          <input
-                            type="checkbox"
-                            checked={(widget as PublicationListWidget).schemaSource?.selectedIds?.includes(obj.id) || false}
-                            onChange={(e) => {
-                              const currentIds = (widget as PublicationListWidget).schemaSource?.selectedIds || []
-                              const newIds = e.target.checked
-                                ? [...currentIds, obj.id]
-                                : currentIds.filter(id => id !== obj.id)
-                              const currentSchemaSource = (widget as PublicationListWidget).schemaSource
-                              updateWidget({ 
-                                schemaSource: {
-                                  selectionType: currentSchemaSource?.selectionType || 'by-id',
-                                  selectedType: currentSchemaSource?.selectedType || '',
-                                  selectedIds: newIds
-                                }
-                              })
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium">{obj.name}</div>
-                            <div className="text-xs text-gray-500">{obj.type}</div>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {(widget as PublicationListWidget).schemaSource?.selectedIds?.length || 0} objects selected
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* AI Generation Prompt (conditional) */}
-          {(widget as PublicationListWidget).contentSource === 'ai-generated' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
-              <textarea
-                value={(widget as PublicationListWidget).aiSource?.prompt || ''}
-                onChange={(e) => updateWidget({ 
-                  aiSource: { 
-                    ...(widget as PublicationListWidget).aiSource,
-                    prompt: e.target.value
-                  }
-                })}
-                placeholder="e.g., generate 6 articles on Organic chemistry with variable length titles written by 1, 2 up to 6 authors"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                rows={3}
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => {
-                    const prompt = (widget as PublicationListWidget).aiSource?.prompt
-                    if (prompt) {
-                      try {
-                        const generatedContent = generateAIContent(prompt)
-                        updateWidget({
-                          aiSource: {
-                            prompt,
-                            lastGenerated: new Date(),
-                            generatedContent
-                          }
-                        })
-                      } catch (error) {
-                        console.error('Error generating content:', error)
-                      }
-                    }
-                  }}
-                  disabled={!(widget as PublicationListWidget).aiSource?.prompt?.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  🤖 Generate
-                </button>
-                {(widget as PublicationListWidget).aiSource?.lastGenerated && (
-                  <span className="text-xs text-gray-500 self-center">
-                    Last generated: {(widget as PublicationListWidget).aiSource.lastGenerated.toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Use "generate X articles", "variable length titles", and "written by 1, 2 up to X authors" for progressive authorship
-              </p>
-            </div>
-          )}
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
-            <select
-              value={(widget as PublicationListWidget).layout}
-              onChange={(e) => updateWidget({ 
-                layout: e.target.value as 'list' | 'grid' | 'featured' 
-              })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="list">List</option>
-              <option value="grid">Grid</option>
-              <option value="featured">Featured</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Items: {(widget as PublicationListWidget).maxItems || 6}
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={(widget as PublicationListWidget).maxItems || 6}
-              onChange={(e) => updateWidget({ maxItems: parseInt(e.target.value) })}
-              className="w-full"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
-            <select
-              value={(widget as PublicationListWidget).cardVariantId || 'default'}
-              onChange={(e) => {
-                const variantId = e.target.value === 'default' ? undefined : e.target.value
-                const selectedVariant = publicationCardVariants.find(v => v.id === variantId)
-                const cardConfig = selectedVariant ? selectedVariant.config : DEFAULT_PUBLICATION_CARD_CONFIG
-                updateWidget({ 
-                  cardVariantId: variantId,
-                  cardConfig: cardConfig
-                })
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
-            >
-              <option value="default">Default</option>
-              {publicationCardVariants.map(variant => (
-                <option key={variant.id} value={variant.id}>{variant.name}</option>
-              ))}
-            </select>
-            <button 
-              onClick={() => {
-                const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
-                setCurrentView('design-console')
-                // Navigate to the specific website's publication cards based on current editing context
-                setSiteManagerView(`${currentWebsiteId}-publication-cards` as DesignConsoleView)
-              }}
-              className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
-            >
-              → Configure Publication Cards
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {widget.type === 'publication-details' && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
-            <select
-              value={(widget as PublicationDetailsWidget).contentSource}
-              onChange={(e) => {
-                const newContentSource = e.target.value as 'doi' | 'ai-generated' | 'schema-objects' | 'context'
-                updateWidget({ 
-                  contentSource: newContentSource,
-                  // Reset source-specific config when changing content source
-                  ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
-                    schemaSource: { selectedId: '' }
-                  }),
-                  ...(newContentSource !== 'doi' ? { doiSource: undefined } : {
-                    doiSource: { doi: '' }
-                  }),
-                  ...(newContentSource !== 'ai-generated' ? { aiSource: undefined } : {
-                    aiSource: {
-                      prompt: '',
-                      lastGenerated: undefined,
-                      generatedContent: undefined
-                    }
-                  })
-                })
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="context">Page Context</option>
-              <option value="doi">DOI</option>
-              <option value="ai-generated">AI Generated</option>
-              <option value="schema-objects">Schema Objects</option>
-            </select>
-          </div>
-          
-          {/* DOI Input (conditional) */}
-          {(widget as PublicationDetailsWidget).contentSource === 'doi' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">DOI</label>
-              <input
-                type="text"
-                value={(widget as PublicationDetailsWidget).doiSource?.doi || ''}
-                onChange={(e) => updateWidget({ 
-                  doiSource: { doi: e.target.value }
-                })}
-                placeholder="10.1145/3695868"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <p className="text-xs text-gray-500 mt-1">Enter the DOI to fetch publication details</p>
-            </div>
-          )}
-          
-          {/* Schema Objects Selection (conditional) */}
-          {(widget as PublicationDetailsWidget).contentSource === 'schema-objects' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Publication</label>
-              <select
-                value={(widget as PublicationDetailsWidget).schemaSource?.selectedId || ''}
-                onChange={(e) => updateWidget({ 
-                  schemaSource: { selectedId: e.target.value }
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="">-- Select publication --</option>
-                {schemaObjects.map((obj) => (
-                  <option key={obj.id} value={obj.id}>
-                    {obj.name} ({obj.type})
-                  </option>
-                ))}
-              </select>
-              
-              {(widget as PublicationDetailsWidget).schemaSource?.selectedId && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Selected: {schemaObjects.find(obj => 
-                    obj.id === (widget as PublicationDetailsWidget).schemaSource?.selectedId
-                  )?.name}
-                </p>
-              )}
-              
-              {schemaObjects.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">No schema objects available. Create some in the Schema Content tab.</p>
-              )}
-            </div>
-          )}
-          
-          {/* AI Generation Prompt (conditional) */}
-          {(widget as PublicationDetailsWidget).contentSource === 'ai-generated' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
-              <textarea
-                value={(widget as PublicationDetailsWidget).aiSource?.prompt || ''}
-                onChange={(e) => updateWidget({ 
-                  aiSource: { 
-                    ...(widget as PublicationDetailsWidget).aiSource,
-                    prompt: e.target.value
-                  }
-                })}
-                placeholder="e.g., generate an article on quantum computing with a long title by 3 Stanford researchers"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                rows={3}
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => {
-                    const prompt = (widget as PublicationDetailsWidget).aiSource?.prompt
-                    if (prompt) {
-                      try {
-                        const generatedContent = generateAISingleContent(prompt)
-                        updateWidget({
-                          aiSource: {
-                            prompt,
-                            lastGenerated: new Date(),
-                            generatedContent
-                          }
-                        })
-                      } catch (error) {
-                        console.error('Error generating content:', error)
-                      }
-                    }
-                  }}
-                  disabled={!(widget as PublicationDetailsWidget).aiSource?.prompt?.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  🤖 Generate
-                </button>
-                {(widget as PublicationDetailsWidget).aiSource?.lastGenerated && (
-                  <span className="text-xs text-gray-500 self-center">
-                    Last generated: {(widget as PublicationDetailsWidget).aiSource.lastGenerated.toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Specify subject, title length ("long title"), and exact author count ("by 3 researchers") for better results
-              </p>
-            </div>
-          )}
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
-            <select
-              value={(widget as PublicationDetailsWidget).layout}
-              onChange={(e) => updateWidget({ 
-                layout: e.target.value as 'default' | 'compact' | 'hero' | 'sidebar'
-              })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="default">Default</option>
-              <option value="compact">Compact</option>
-              <option value="hero">Hero</option>
-              <option value="sidebar">Sidebar</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
-            <select
-              value={(widget as PublicationDetailsWidget).cardVariantId || 'default'}
-              onChange={(e) => {
-                const variantId = e.target.value === 'default' ? undefined : e.target.value
-                const selectedVariant = publicationCardVariants.find(v => v.id === variantId)
-                const cardConfig = selectedVariant ? selectedVariant.config : DEFAULT_PUBLICATION_CARD_CONFIG
-                updateWidget({ 
-                  cardVariantId: variantId,
-                  cardConfig: cardConfig
-                })
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
-            >
-              <option value="default">Default</option>
-              {publicationCardVariants.map(variant => (
-                <option key={variant.id} value={variant.id}>{variant.name}</option>
-              ))}
-            </select>
-            <button 
-              onClick={() => {
-                const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
-                setCurrentView('design-console')
-                setSiteManagerView(`${currentWebsiteId}-publication-cards` as DesignConsoleView)
-              }}
-              className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
-            >
-              → Configure Publication Cards
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+// NOTE: PropertiesPanel component moved to src/components/Properties/PropertiesPanel.tsx
 
 // Schema Content Tab component
 function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrgType) => void }) {
   const { 
     schemaObjects, 
     selectedSchemaObject, 
-    addSchemaObject, 
-    updateSchemaObject, 
     removeSchemaObject, 
     selectSchemaObject,
     addNotification 
@@ -6287,7 +3759,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Schema Content</h3>
@@ -6302,7 +3773,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
         </button>
       </div>
       
-      {/* Search */}
       <div className="relative">
         <input
           type="text"
@@ -6313,7 +3783,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
         />
       </div>
       
-      {/* Type Selector (shown when creating) */}
       {isCreating && (
         <div className="p-4 bg-gray-50 rounded-lg border space-y-4">
           <div className="flex items-center justify-between">
@@ -6326,7 +3795,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             </button>
           </div>
           
-          {/* Main Type Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Content Type
@@ -6354,7 +3822,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             )}
           </div>
           
-          {/* Subtype Dropdown (conditional) */}
           {showSubtypeDropdown && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -6383,7 +3850,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             </div>
           )}
           
-          {/* Sub-subtype Dropdown (conditional) */}
           {showSubSubtypeDropdown && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -6409,7 +3875,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
             </div>
           )}
           
-          {/* Create Button */}
           <div className="pt-2">
             <button
               onClick={() => {
@@ -6433,7 +3898,6 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
         </div>
       )}
       
-      {/* Schema Objects Archive */}
       {!isCreating && (
         <div className="space-y-3">
           <h4 className="font-medium text-gray-900">
@@ -6511,694 +3975,7 @@ function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrg
   )
 }
 
-function PageBuilder() {
-  const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute } = usePageStore()
-  const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
-  const [showLayoutPicker, setShowLayoutPicker] = useState(false)
-  const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
-  const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
-  const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  
-  // Schema editing state
-  const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
-  
-  const handleCreateSchema = (type: SchemaOrgType) => {
-    setCreatingSchemaType(type)
-    selectWidget(null) // Clear widget selection
-    selectSchemaObject(null) // Clear schema selection to trigger new form
-  }
-  
-  const handleSaveSchema = (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (selectedSchemaObject) {
-      // Updating existing schema
-      updateSchemaObject(selectedSchemaObject.id, data)
-      addNotification({
-        type: 'success',
-        title: 'Schema Updated',
-        message: `${data.name} has been updated successfully`
-      })
-    } else {
-      // Creating new schema
-      addSchemaObject(data)
-      addNotification({
-        type: 'success',
-        title: 'Schema Created',
-        message: `${data.name} has been created successfully`
-      })
-    }
-    setCreatingSchemaType(null)
-    selectSchemaObject(null)
-  }
-  
-  const handleCancelSchema = () => {
-    setCreatingSchemaType(null)
-    selectSchemaObject(null)
-  }
-  
-  // Template sections handler
-  const handleTemplateSectionsLoad = (sections: WidgetSection[]) => {
-    console.log('🏗️ Loading template sections:', sections)
-    replaceCanvasItems(sections)
-    // Removed notification toast - banner shows template status instead
-  }
-  
-  const handleSetActiveSectionToolbar = (value: string | null) => {
-    setActiveSectionToolbar(value)
-  }
-  
-  // Show toast notification
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000) // Auto-hide after 3 seconds
-  }
-  
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 3,
-      },
-    })
-  )
-  
-  // Custom collision detection that prioritizes section-area drop zones
-  const customCollisionDetection = (args: any) => {
-    // First try to find section-area collisions
-    const sectionAreaCollisions = rectIntersection({
-      ...args,
-      droppableContainers: args.droppableContainers.filter((container: any) => 
-        container.data?.current?.type === 'section-area'
-      )
-    })
-    
-    if (sectionAreaCollisions.length > 0) {
-      return sectionAreaCollisions
-    }
-    
-    // Fall back to default collision detection
-    return closestCenter(args)
-  }
-  
-  const handleDragStart = (event: DragStartEvent) => {
-    console.log('🚀 Drag Start:', {
-      activeId: event.active.id,
-      activeType: event.active.data?.current?.type,
-      activeData: event.active.data?.current
-    })
-    
-    // Log all available drop zones for debugging
-    const dropZones = document.querySelectorAll('[data-droppable="true"]')
-    console.log('📍 Available drop zones:', Array.from(dropZones).map(zone => ({
-      id: zone.getAttribute('data-droppable-id') || zone.id,
-      classes: zone.className,
-      rect: zone.getBoundingClientRect()
-    })))
-  }
-  
-  const handleDragOver = (event: DragOverEvent) => {
-    if (event.over) {
-      // Highlight section-area drop zones
-      if (event.over.data?.current?.type === 'section-area') {
-        const dropZoneId = event.over.id as string
-        if (activeDropZone !== dropZoneId) {
-          setActiveDropZone(dropZoneId)
-          console.log('🎯 Drop zone detected:', {
-            activeId: event.active.id,
-            activeType: event.active.data?.current?.type,
-            dropZone: dropZoneId,
-            sectionId: event.over.data?.current?.sectionId,
-            areaId: event.over.data?.current?.areaId
-          })
-        }
-      } else {
-        // Clear highlight when not over a section-area
-        if (activeDropZone) {
-          setActiveDropZone(null)
-        }
-      }
-    } else {
-      // Clear highlight when not over anything
-      if (activeDropZone) {
-        setActiveDropZone(null)
-      }
-    }
-  }
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    
-    // Clear drop zone highlighting
-    setActiveDropZone(null)
-    
-    console.log('🎯 Drag End Event:', {
-      activeId: active.id,
-      activeType: active.data?.current?.type,
-      overId: over?.id,
-      overType: over?.data?.current?.type,
-      hasOver: !!over,
-      isLibraryWidget: active.data?.current?.type === 'library-widget',
-      isSortableItem: !active.data?.current?.type || active.data?.current?.type === 'sortable'
-    })
-
-    if (!over) {
-      console.log('❌ No drop target found')
-      return
-    }
-
-    // Handle library widget drop into section area
-    if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'section-area') {
-      console.log('✅ Library widget dropped into section area!')
-      const libraryItem = active.data.current.item
-      const sectionId = over.data.current.sectionId
-      const areaId = over.data.current.areaId
-      
-      // Create new widget from library item
-      const newWidget = buildWidget(libraryItem)
-      newWidget.sectionId = sectionId
-      
-      // Add widget to the specific section area
-      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      const updatedCanvasItems = canvasItems.map(canvasItem => {
-        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
-          return {
-            ...canvasItem,
-            areas: canvasItem.areas.map(area => 
-              area.id === areaId 
-                ? { ...area, widgets: [...area.widgets, newWidget] }
-                : area
-            )
-          }
-        }
-        return canvasItem
-      })
-      replaceCanvasItems(updatedCanvasItems)
-      return
-    }
-    
-    // Handle library widget drop onto main canvas (as standalone widget)
-    if (active.data?.current?.type === 'library-widget' && over?.id && !over.data?.current?.type) {
-      console.log('✅ Library widget dropped onto main canvas!')
-      const libraryItem = active.data.current.item
-      const targetId = over.id
-      
-      // Create new widget from library item (no sectionId - standalone widget)
-      const newWidget = buildWidget(libraryItem)
-      
-      // Add widget to canvas at specific position
-      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      const targetIndex = canvasItems.findIndex(item => item.id === targetId)
-      
-      if (targetIndex !== -1) {
-        // Insert after target item
-        const newCanvasItems = [...canvasItems]
-        newCanvasItems.splice(targetIndex + 1, 0, newWidget)
-        replaceCanvasItems(newCanvasItems)
-      } else {
-        // Add to end if target not found
-        replaceCanvasItems([...canvasItems, newWidget])
-      }
-      return
-    }
-    
-    // Handle standalone widget drop into section area (the missing scenario!)
-    if ((active.data?.current?.type === 'standalone-widget' || 
-         !active.data?.current?.type || 
-         active.data?.current?.type === 'sortable') && 
-        over.data?.current?.type === 'section-area') {
-      console.log('✅ Standalone widget dropped into section area!')
-      
-      // Get widget from drag data if available, otherwise find by ID
-      let widget: Widget
-      if (active.data?.current?.type === 'standalone-widget') {
-        widget = active.data.current.widget
-      } else {
-        const widgetId = active.id as string
-        const { canvasItems } = usePageStore.getState()
-        const foundWidget = canvasItems.find(item => item.id === widgetId && !isSection(item))
-        if (!foundWidget) {
-          console.log('❌ Standalone widget not found')
-          return
-        }
-        widget = foundWidget as Widget
-      }
-      
-      const sectionId = over.data.current.sectionId
-      const areaId = over.data.current.areaId
-      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      
-      // Remove widget from canvas and add to section area
-      const newCanvasItems = canvasItems.filter(item => item.id !== widget.id)
-      const updatedCanvasItems = newCanvasItems.map(canvasItem => {
-        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
-          const updatedWidget = { ...widget, sectionId: sectionId }
-          return {
-            ...canvasItem,
-            areas: canvasItem.areas.map(area => 
-              area.id === areaId 
-                ? { ...area, widgets: [...area.widgets, updatedWidget] }
-                : area
-            )
-          }
-        }
-        return canvasItem
-      })
-      replaceCanvasItems(updatedCanvasItems)
-      return
-    }
-    
-    // Handle section widget movement - PRIORITY: section-widget drags should never go to canvas reordering
-    if (active.data?.current?.type === 'section-widget') {
-      console.log('🚀 Section widget detected, checking drop location...', { 
-        overId: over?.id, 
-        overType: over?.data?.current?.type,
-        overData: over?.data?.current 
-      })
-      
-      // Case 1: Dropped on specific section area (preferred)
-      if (over?.data?.current?.type === 'section-area') {
-        console.log('✅ Moving widget to specific section area!')
-        const draggedWidget = active.data.current.widget
-        const fromSectionId = active.data.current.fromSectionId
-        const fromAreaId = active.data.current.fromAreaId
-        const toSectionId = over.data.current.sectionId
-        const toAreaId = over.data.current.areaId
-        
-        // Don't do anything if dropping in the same area
-        if (fromAreaId === toAreaId) {
-          console.log('⚠️ Same area, no action needed')
-          return
-        }
-        
-        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-        const updatedCanvasItems = canvasItems.map(canvasItem => {
-          if (canvasItem.type === 'content-block') {
-            return {
-              ...canvasItem,
-              areas: canvasItem.areas.map(area => {
-                // Remove from source area
-                if (area.id === fromAreaId) {
-                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
-                }
-                // Add to target area with updated sectionId
-                if (area.id === toAreaId) {
-                  const updatedWidget = { ...draggedWidget, sectionId: toSectionId }
-                  return { ...area, widgets: [...area.widgets, updatedWidget] }
-                }
-                return area
-              })
-            }
-          }
-          return canvasItem
-        })
-        replaceCanvasItems(updatedCanvasItems)
-        console.log('✅ Widget moved between sections!')
-        return
-      }
-      
-      // Case 2: Dropped on section itself (find first available area)
-      if (over?.id && typeof over.id === 'string' && over.id.endsWith('-section')) {
-        console.log('✅ Moving widget to section (first available area)!', { targetSectionId: over.id })
-        const draggedWidget = active.data.current.widget
-        const fromSectionId = active.data.current.fromSectionId
-        const fromAreaId = active.data.current.fromAreaId
-        const targetSectionId = over.id
-        
-        console.log('🎯 Cross-section move details:', {
-          widgetId: draggedWidget.id,
-          fromSectionId,
-          fromAreaId,
-          targetSectionId,
-          isSameSection: fromSectionId === targetSectionId
-        })
-        
-        // If dropping in the same section, don't do anything
-        if (fromSectionId === targetSectionId) {
-          console.log('⚠️ Same section, no action needed')
-          return
-        }
-        
-        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-        
-        // Find the target section and its first area
-        const targetSection = canvasItems.find(item => item.id === targetSectionId && item.type === 'content-block') as WidgetSection
-        if (!targetSection || !targetSection.areas.length) {
-          console.log('❌ Target section not found or has no areas')
-          return
-        }
-        
-        const firstAreaId = targetSection.areas[0].id
-        console.log('🎯 Target section found, first area:', firstAreaId)
-        
-        const updatedCanvasItems = canvasItems.map(canvasItem => {
-          if (canvasItem.type === 'content-block') {
-            return {
-              ...canvasItem,
-              areas: canvasItem.areas.map(area => {
-                // Remove from source area
-                if (area.id === fromAreaId) {
-                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
-                }
-                // Add to target area (first area of target section)
-                if (area.id === firstAreaId) {
-                  const updatedWidget = { ...draggedWidget, sectionId: targetSectionId }
-                  return { ...area, widgets: [...area.widgets, updatedWidget] }
-                }
-                return area
-              })
-            }
-          }
-          return canvasItem
-        })
-        replaceCanvasItems(updatedCanvasItems)
-        console.log('✅ Widget moved to section first area!')
-        return
-      }
-      
-      // Case 3: Section widget dropped somewhere invalid - just return without doing anything
-      console.log('⚠️ Section widget dropped in invalid location, ignoring')
-      return
-    }
-
-    // Handle existing canvas item reordering (sections and standalone widgets) - EXCLUDE section-widgets!
-    if (!active.data?.current?.type || 
-        active.data?.current?.type === 'canvas-section' ||
-        active.data?.current?.type === 'canvas-widget' ||
-        active.data?.current?.type === 'standalone-widget' ||
-        (active.data?.current?.type !== 'library-widget' && 
-         active.data?.current?.type !== 'section-widget')) {
-      console.log('🔄 Attempting canvas item reordering for canvas items')
-      
-      // For standalone-widget type, use the original sortable ID for comparison
-      const activeItemId = active.data?.current?.type === 'standalone-widget' 
-        ? active.data.current.originalSortableId 
-        : active.id
-      
-      // If dropping over a section area, get the section ID instead of the drop zone ID
-      let targetId = over.id
-      if (over.data?.current?.type === 'section-area' && over.data?.current?.sectionId) {
-        targetId = over.data.current.sectionId
-        console.log('🎯 Section dragged over section area, using section ID:', targetId)
-      }
-      
-      if (activeItemId !== targetId) {
-        const { moveItem } = usePageStore.getState()
-        const oldIndex = canvasItems.findIndex((item) => item.id === activeItemId)
-        const newIndex = canvasItems.findIndex((item) => item.id === targetId)
-        
-        console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, targetId, originalOverId: over.id })
-        
-        if (oldIndex !== -1 && newIndex !== -1) {
-          console.log('✅ Canvas item reordered!')
-          moveItem(oldIndex, newIndex)
-        } else {
-          console.log('❌ Canvas item reorder failed - items not found')
-        }
-      }
-    }
-  }
-
-  const handleAddSection = (relativeTo: string, position: 'above' | 'below') => {
-    setInsertPosition({ relativeTo, position })
-    setShowLayoutPicker(true)
-  }
-
-  const handleSelectLayout = (layout: ContentBlockLayout) => {
-    createContentBlockWithLayout(layout)
-    setShowLayoutPicker(false)
-  }
-
-  const handleSectionClick = (sectionId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    // Close any widget toolbar and toggle section toolbar
-    setActiveWidgetToolbar(null)
-    handleSetActiveSectionToolbar(activeSectionToolbar === sectionId ? null : sectionId)
-    selectWidget(sectionId)
-  }
-
-  const handleWidgetClick = (widgetId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    
-    console.log('🖱️ Widget clicked for properties:', { widgetId })
-    
-    // Find the widget to check its sectionId - use same logic as Properties Panel
-    let widget: Widget | undefined = canvasItems.find(item => item.id === widgetId && !isSection(item)) as Widget
-    
-    // If not found at canvas level, search within section areas
-    if (!widget) {
-      for (const canvasItem of canvasItems) {
-        if (isSection(canvasItem)) {
-          for (const area of canvasItem.areas) {
-            const foundWidget = area.widgets.find(w => w.id === widgetId)
-            if (foundWidget) {
-              widget = foundWidget
-              break
-            }
-          }
-          if (widget) break
-        }
-      }
-    }
-    
-    if (widget) {
-      console.log('📋 Widget found for properties:', { 
-        id: widget.id, 
-        type: widget.type,
-        sectionId: widget.sectionId || 'standalone'
-      })
-    } else {
-      console.log('❌ Widget not found for properties:', { widgetId })
-    }
-    
-    // Only close section toolbar if widget is not part of the currently active section
-    if (!widget?.sectionId || activeSectionToolbar !== widget.sectionId) {
-      handleSetActiveSectionToolbar(null)
-    }
-    
-    setActiveWidgetToolbar(activeWidgetToolbar === widgetId ? null : widgetId)
-    selectWidget(widgetId)
-  }
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={customCollisionDetection}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div 
-        className="h-screen bg-slate-50 flex overflow-hidden"
-        onClick={(e) => {
-          // Only close toolbars if clicking directly on this div, not on children
-          if (e.target === e.currentTarget) {
-            handleSetActiveSectionToolbar(null)
-            setActiveWidgetToolbar(null)
-          }
-        }}
-      >
-        {/* Left Sidebar - Sticky */}
-        <div className="w-80 bg-slate-100 shadow-sm border-r border-slate-200 flex sticky top-0 h-screen">
-          {/* Vertical Tabs */}
-          <div className="w-16 border-r border-slate-200 bg-slate-50">
-            <div className="flex flex-col">
-              {[
-                { id: 'library', label: 'Library', icon: BookOpen },
-                { id: 'sections', label: 'Sections', icon: Plus },
-                { id: 'diy-zone', label: 'DIY Zone', icon: Lightbulb },
-                { id: 'schema-content', label: 'Schema', icon: FileText }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setLeftSidebarTab(tab.id as LeftSidebarTab)}
-                  className={`flex flex-col items-center gap-1 px-2 py-4 text-xs font-medium border-l-2 transition-colors ${
-                    leftSidebarTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-slate-100'
-                  }`}
-                  title={tab.label}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  <span className="leading-none">{tab.label.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Tab Content */}
-          <div className="flex-1 flex flex-col overflow-y-auto p-4">
-            {leftSidebarTab === 'library' && <WidgetLibrary />}
-            {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
-            {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
-            {leftSidebarTab === 'schema-content' && <SchemaContentTab onCreateSchema={handleCreateSchema} />}
-          </div>
-        </div>
-
-        {/* Main Canvas Area - Scrollable */}
-        <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-          <div className="border-b bg-white px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
-              <div className="flex items-center gap-3">
-              <button
-                  onClick={() => {
-                    const { addNotification, setCurrentView } = usePageStore.getState()
-                    addNotification({
-                      type: 'success',
-                      title: 'Changes Published',
-                      message: 'Your changes have been published to the live site'
-                    })
-                    setCurrentView('mock-live-site')
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Publish Changes
-                </button>
-                <button
-                  onClick={() => setCurrentView('design-console')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                  Design System Console
-              </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 p-6 bg-slate-50" onClick={() => selectWidget(null)}>
-            {/* Removed redundant template banner - handled by TemplateCanvas */}
-
-            {/* Template Canvas - Handles loading template sections */}
-            <TemplateCanvas
-              editingContext={editingContext}
-              mockLiveSiteRoute={mockLiveSiteRoute}
-              onSectionsLoad={handleTemplateSectionsLoad}
-            />
-            
-            {/* Regular Page Editing Context - Show minimal info */}
-            {usePageStore(state => state.editingContext) === 'page' && (
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Editing: <strong>Wiley Online Library Homepage</strong>
-                </div>
-                <button
-                  onClick={() => {
-                    const { setEditingContext } = usePageStore.getState()
-                    setEditingContext('template')
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
-                >
-                  Switch to Template Mode
-                </button>
-              </div>
-            )}
-            
-            <CanvasThemeProvider>
-              <div className="bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm">
-              {canvasItems.length === 0 ? (
-                <div className="flex items-center justify-center h-96">
-                  <div className="text-center text-gray-500">
-                    <p className="text-lg mb-2">Start building your page</p>
-                    <p className="text-sm">Drag widgets from the library to get started</p>
-                  </div>
-                </div>
-              ) : (
-                <SortableContext items={canvasItems} strategy={verticalListSortingStrategy}>
-                  <div className="relative">
-                    {canvasItems.map((item, index) => (
-                      <div key={item.id} className="relative group">
-                        {/* Add Section Button Above */}
-                        {item.id !== 'header-section' && (
-                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button
-                              onClick={() => handleAddSection(item.id, 'above')}
-                              className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
-                            >
-                              Add Section
-                            </button>
-                          </div>
-                        )}
-                        
-                        <SortableItem 
-                          item={item} 
-                          isSelected={selectedWidget === item.id}
-                          onSectionClick={handleSectionClick}
-                          onWidgetClick={handleWidgetClick}
-                          activeSectionToolbar={activeSectionToolbar}
-                          setActiveSectionToolbar={handleSetActiveSectionToolbar}
-                          activeWidgetToolbar={activeWidgetToolbar}
-                          setActiveWidgetToolbar={setActiveWidgetToolbar}
-                          activeDropZone={activeDropZone}
-                          showToast={showToast}
-                          instanceId={instanceId}
-                        />
-                        
-                        {/* Add Section Button Below */}
-                        {index === canvasItems.length - 1 && (
-                          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button
-                              onClick={() => handleAddSection(item.id, 'below')}
-                              className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
-                            >
-                              Add Section
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
-            </div>
-            </CanvasThemeProvider>
-          </div>
-        </div>
-
-      {/* Right Sidebar - Properties Panel - Sticky */}
-      <div className="w-80 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen">
-        <div className="border-b border-slate-200 p-4">
-          <h2 className="font-semibold text-slate-800">Properties</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <PropertiesPanel 
-            creatingSchemaType={creatingSchemaType}
-            selectedSchemaObject={selectedSchemaObject}
-            onSaveSchema={handleSaveSchema}
-            onCancelSchema={handleCancelSchema}
-          />
-        </div>
-      </div>
-
-      {/* Layout Picker Modal */}
-      {showLayoutPicker && (
-        <LayoutPicker
-          onSelectLayout={handleSelectLayout}
-          onClose={() => setShowLayoutPicker(false)}
-        />
-      )}
-      
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all transform ${
-          toast.type === 'success' 
-            ? 'bg-green-500 text-white' 
-            : 'bg-red-500 text-white'
-        }`}>
-          <div className="flex items-center gap-2">
-            {toast.type === 'success' ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <X className="w-4 h-4" />
-            )}
-            <span className="text-sm font-medium">{toast.message}</span>
-          </div>
-        </div>
-      )}
-      </div>
-    </DndContext>
-  )
-}
+// PageBuilder component extracted to src/components/PageBuilder/index.tsx
 
 // Website Settings Component
 function WebsiteSettings({ websiteId }: { websiteId: string }) {
@@ -7239,14 +4016,6 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
     handlePurposeUpdate('contentTypes', newTypes)
   }
 
-  const handlePublishingTypeToggle = (publishingType: string) => {
-    const currentTypes = website.purpose?.publishingTypes || []
-    const newTypes = currentTypes.includes(publishingType)
-      ? currentTypes.filter(type => type !== publishingType)
-      : [...currentTypes, publishingType]
-    
-    handlePurposeUpdate('publishingTypes', newTypes)
-  }
 
   const handleBrandingUpdate = (field: string, value: string) => {
     const updatedWebsite = {
@@ -7299,8 +4068,8 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
               value={website.name}
               onChange={(e) => handleBasicUpdate('name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          />
+        </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Domain</label>
             <input
@@ -7350,7 +4119,7 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{type.label}</div>
                   <div className="text-sm text-gray-600">{type.description}</div>
-                </div>
+            </div>
               </label>
             ))}
           </div>
@@ -7372,11 +4141,11 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{contentType.label}</div>
                   <div className="text-xs text-gray-600">{contentType.description}</div>
-                </div>
+          </div>
               </label>
             ))}
-          </div>
         </div>
+    </div>
 
         {/* Subject Organization */}
         <div className="mb-6">
@@ -7420,7 +4189,7 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
             <p className="text-gray-600 text-sm mt-2">
               Customize your website's visual appearance including logo, colors, typography, and advanced styling options.
             </p>
-          </div>
+    </div>
         </div>
         
         {currentTheme ? (
@@ -7492,7 +4261,7 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
             <span className="text-blue-700 ml-2">
               {website.purpose?.hasSubjectOrganization ? 'Enabled' : 'Simple'}
             </span>
-          </div>
+        </div>
           <div>
             <span className="font-medium text-blue-800">Status:</span>
             <span className="text-blue-700 ml-2 capitalize">{website.status}</span>
@@ -7511,227 +4280,9 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
   )
 }
 
-function SortableItem({ 
-  item, 
-  isSelected, 
-  onSectionClick, 
-  onWidgetClick,
-  activeSectionToolbar,
-  setActiveSectionToolbar,
-  activeWidgetToolbar,
-  setActiveWidgetToolbar,
-  activeDropZone,
-  showToast,
-  instanceId
-}: { 
-  item: CanvasItem
-  isSelected: boolean
-  onSectionClick: (id: string, e: React.MouseEvent) => void
-  onWidgetClick: (id: string, e: React.MouseEvent) => void
-  activeSectionToolbar: string | null
-  setActiveSectionToolbar: (value: string | null) => void
-  activeWidgetToolbar: string | null
-  setActiveWidgetToolbar: (value: string | null) => void
-  activeDropZone: string | null
-  showToast: (message: string, type: 'success' | 'error') => void
-  instanceId: string
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ 
-    id: item.id,
-    data: {
-      type: isSection(item) ? 'canvas-section' : 'canvas-widget',
-      item: item
-    }
-  })
+// NOTE: SortableItem component moved to src/components/Canvas/SortableItem.tsx
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
-  const getSectionName = (item: WidgetSection) => {
-    const specialSections: Record<string, string> = {
-      'header-section': 'Header',
-      'hero-section': 'Hero', 
-      'footer-section': 'Footer',
-      'features-section': 'Features'
-    }
-    return specialSections[item.id] || 'Section'
-  }
-
-  return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      className={`group relative border-2 transition-all ${
-        isSelected 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-transparent hover:border-gray-200'
-      }`}
-    >
-      
-      {isSection(item) ? (
-        <div 
-          onClick={(e) => onSectionClick(item.id, e)}
-          className="cursor-pointer"
-        >
-          {/* Section Selection Indicator */}
-          {isSelected && (
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-          )}
-          {isSelected && (
-            <div className="absolute -left-16 top-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium z-10">
-              {getSectionName(item)}
-            </div>
-          )}
-          
-          <SectionRenderer 
-            section={item} 
-            onWidgetClick={onWidgetClick}
-            dragAttributes={attributes}
-            dragListeners={listeners}
-            activeSectionToolbar={activeSectionToolbar}
-            setActiveSectionToolbar={setActiveSectionToolbar}
-            activeWidgetToolbar={activeWidgetToolbar}
-            setActiveWidgetToolbar={setActiveWidgetToolbar}
-            activeDropZone={activeDropZone}
-            showToast={showToast}
-            instanceId={instanceId}
-            usePageStore={usePageStore}
-          />
-        </div>
-      ) : (
-        <div className="cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all relative">
-          {/* Overlay to capture clicks on interactive widgets */}
-          <div 
-            className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
-            style={{ pointerEvents: 'auto' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              console.log('🎯 Standalone overlay click detected:', { 
-                widgetId: item.id, 
-                widgetType: item.type 
-              })
-              // Close any section toolbar and toggle widget toolbar
-              setActiveSectionToolbar?.(null)
-              setActiveWidgetToolbar(activeWidgetToolbar === item.id ? null : item.id)
-              onWidgetClick(item.id, e)
-            }}
-          />
-          {/* Standalone Widget Action Toolbar - appears on click */}
-          {activeWidgetToolbar === item.id && (
-            <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-              <StandaloneWidgetDragHandle 
-                widget={item}
-                sortableAttributes={attributes}
-                sortableListeners={listeners}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Duplicate standalone widget
-                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const itemIndex = canvasItems.findIndex(canvasItem => canvasItem.id === item.id)
-                  if (itemIndex !== -1) {
-                    const duplicatedWidget = { ...item, id: crypto.randomUUID() }
-                    const newCanvasItems = [...canvasItems]
-                    newCanvasItems.splice(itemIndex + 1, 0, duplicatedWidget)
-                    replaceCanvasItems(newCanvasItems)
-                  }
-                }}
-                className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                title="Duplicate widget"
-              >
-                <Copy className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onWidgetClick(item.id, e)
-                }}
-                className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
-                title="Properties"
-              >
-                <Edit className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const { deleteWidget } = usePageStore.getState()
-                  deleteWidget(item.id)
-                }}
-                className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                title="Delete widget"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-          )}
-          
-          {/* Make widget content non-interactive in edit mode */}
-          <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
-            <WidgetRenderer 
-              widget={item}
-              dragAttributes={attributes}
-              dragListeners={listeners}
-              onWidgetClick={onWidgetClick}
-              activeSectionToolbar={activeSectionToolbar}
-              setActiveSectionToolbar={setActiveSectionToolbar}
-              activeWidgetToolbar={activeWidgetToolbar}
-              setActiveWidgetToolbar={setActiveWidgetToolbar}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Standalone Widget Drag Handle - uses useDraggable for section drops AND canvas reordering
-function StandaloneWidgetDragHandle({ 
-  widget, 
-  sortableAttributes, 
-  sortableListeners 
-}: {
-  widget: Widget
-  sortableAttributes: any
-  sortableListeners: any
-}) {
-  // Use draggable instead of sortable to enable section drops
-  const drag = useDraggable({
-    id: `standalone-widget-${widget.id}`,
-    data: {
-      type: 'standalone-widget',
-      widget: widget,
-      originalSortableId: widget.id // Keep reference for canvas reordering
-    }
-  })
-  
-  return (
-    <div 
-      ref={drag.setNodeRef}
-      style={drag.transform ? {
-        transform: `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0)`,
-      } : undefined}
-      className={`p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors ${
-        drag.isDragging ? 'opacity-50' : ''
-      }`}
-      title="Drag to reorder or move to section"
-      {...drag.attributes}
-      {...drag.listeners}
-    >
-      <GripVertical className="w-3 h-3" />
-    </div>
-  )
-}
+// NOTE: StandaloneWidgetDragHandle component moved to src/components/Canvas/StandaloneWidgetDragHandle.tsx
 
 // Theme Publication Cards component - shows predefined OOB cards for each theme
 function ThemePublicationCards({ themeId }: { themeId: string }) {
@@ -8471,7 +5022,17 @@ export default function App() {
   
   return (
     <>
-      <PageBuilder />
+      <PageBuilder 
+        usePageStore={usePageStore}
+        buildWidget={buildWidget}
+        SectionsContent={SectionsContent}
+        DIYZoneContent={DIYZoneContent}
+        SchemaContentTab={SchemaContentTab}
+        SchemaFormEditor={SchemaFormEditor}
+        TemplateCanvas={TemplateCanvas}
+        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+        isSection={isSection}
+      />
       <NotificationContainer />
       <IssuesSidebar />
     </>
