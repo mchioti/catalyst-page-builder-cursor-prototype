@@ -37,6 +37,7 @@ export type PublicationCardConfig = {
   showVolumeIssue: boolean
   showBookSeriesTitle: boolean
   showChapterPages: boolean
+  showNumberOfIssues: boolean
   showPublicationDate: boolean
   showDOI: boolean
   showISSN: boolean

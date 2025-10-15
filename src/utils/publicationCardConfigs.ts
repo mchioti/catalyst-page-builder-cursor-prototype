@@ -28,6 +28,7 @@ const baseConfig: PublicationCardConfig = {
   showVolumeIssue: true,
   showBookSeriesTitle: true,
   showChapterPages: true,
+  showNumberOfIssues: true,
   showPublicationDate: true,
   showDOI: true,
   showISSN: true,
@@ -62,6 +63,7 @@ export function getArticleConfig(): PublicationCardConfig {
     showVolumeIssue: true,
     showBookSeriesTitle: false, // N/A for articles
     showChapterPages: false, // N/A for articles
+    showNumberOfIssues: false, // N/A for articles
     showISSN: true,
     showISBN: false, // N/A for articles
     
@@ -85,6 +87,7 @@ export function getChapterConfig(): PublicationCardConfig {
     showVolumeIssue: false, // N/A for chapters
     showBookSeriesTitle: true, // If part of a series
     showChapterPages: true, // Page numbers within book
+    showNumberOfIssues: false, // N/A for chapters
     showISSN: false, // N/A for chapters
     showISBN: true, // Book ISBN
     
@@ -108,6 +111,7 @@ export function getJournalConfig(): PublicationCardConfig {
     showVolumeIssue: false, // N/A for journal metadata
     showBookSeriesTitle: false, // N/A for journals
     showChapterPages: false, // N/A for journals
+    showNumberOfIssues: true, // Show total number of issues published
     showISSN: true,
     showISBN: false, // N/A for journals
     
@@ -131,6 +135,7 @@ export function getBookConfig(): PublicationCardConfig {
     showVolumeIssue: false, // N/A for books
     showBookSeriesTitle: true, // If part of a series
     showChapterPages: false, // N/A for entire books
+    showNumberOfIssues: false, // N/A for books
     showISSN: false, // N/A for books
     showISBN: true,
     
@@ -154,6 +159,7 @@ export function getIssueConfig(): PublicationCardConfig {
     showVolumeIssue: false, // Issue IS the volume/issue
     showBookSeriesTitle: false, // N/A for issues
     showChapterPages: false, // N/A for issues
+    showNumberOfIssues: false, // N/A for issues
     showISSN: true, // Journal ISSN
     showISBN: false, // N/A for issues
     
@@ -177,6 +183,7 @@ export function getBookSeriesConfig(): PublicationCardConfig {
     showVolumeIssue: false, // N/A for series
     showBookSeriesTitle: false, // Series IS the title
     showChapterPages: false, // N/A for series
+    showNumberOfIssues: false, // N/A for series
     showISSN: true, // Series can have ISSN
     showISBN: false, // Individual books have ISBN, not series
     
@@ -241,6 +248,7 @@ export function getAvailableOptionsForContentType(contentType: string) {
     volumeIssue: contentType === 'article',
     bookSeriesTitle: contentType === 'chapter' || contentType === 'book',
     chapterPages: contentType === 'chapter',
+    numberOfIssues: contentType === 'journal', // Only available for journals
     publicationDate: true, // Available for all
     doi: true, // Available for all
     issn: contentType === 'article' || contentType === 'issue' || contentType === 'journal' || contentType === 'book-series',

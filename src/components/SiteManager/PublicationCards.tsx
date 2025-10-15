@@ -117,6 +117,7 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
       issn: '0935-9648 (print), 1521-4095 (online)', 
       editor: 'Wiley-VCH and Materials Research Society',
       date: 'Founded: 1989',
+      numberOfIssues: '1,847 issues published',
       impactFactor: '32.086',
       thumbnail: 'AM'
     }
@@ -197,15 +198,20 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
               <p className="text-gray-600 text-sm">{(data as any).volume}</p>
             )}
             
-            {/* Chapter/Pages */}
-            {editingConfig.showChapterPages && (data as any).pages && (
-              <p className="text-gray-600 text-sm">{(data as any).pages}</p>
-            )}
-            
-            {/* Publication Date */}
-            {editingConfig.showPublicationDate && data.date && (
-              <p className="text-gray-500 text-sm">{data.date}</p>
-            )}
+             {/* Chapter/Pages */}
+             {editingConfig.showChapterPages && (data as any).pages && (
+               <p className="text-gray-600 text-sm">{(data as any).pages}</p>
+             )}
+             
+             {/* Number of Issues */}
+             {editingConfig.showNumberOfIssues && (data as any).numberOfIssues && (
+               <p className="text-gray-600 text-sm">{(data as any).numberOfIssues}</p>
+             )}
+             
+             {/* Publication Date */}
+             {editingConfig.showPublicationDate && data.date && (
+               <p className="text-gray-500 text-sm">{data.date}</p>
+             )}
             
             {/* Abstract */}
             {editingConfig.showAbstract && ((data as any).abstract || (data as any).description) && (
@@ -351,19 +357,20 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
               )}
 
               {/* Publication Context */}
-              <ConfigSection 
-                title="Publication Context"
-                options={[
-                  { key: 'showPublicationTitle', label: 'Publication Title', disabled: !availableOptions.publicationTitle },
-                  { key: 'showVolumeIssue', label: 'Volume & Issue', disabled: !availableOptions.volumeIssue },
-                  { key: 'showBookSeriesTitle', label: 'Book Series Title', disabled: !availableOptions.bookSeriesTitle },
-                  { key: 'showChapterPages', label: 'Chapter/Page Numbers', disabled: !availableOptions.chapterPages },
-                  { key: 'showPublicationDate', label: 'Publication Date' },
-                  { key: 'showDOI', label: 'DOI' },
-                  { key: 'showISSN', label: 'ISSN/eISSN', disabled: !availableOptions.issn },
-                  { key: 'showISBN', label: 'ISBN/eISBN', disabled: !availableOptions.isbn }
-                ]}
-              />
+               <ConfigSection 
+                 title="Publication Context"
+                 options={[
+                   { key: 'showPublicationTitle', label: 'Publication Title', disabled: !availableOptions.publicationTitle },
+                   { key: 'showVolumeIssue', label: 'Volume & Issue', disabled: !availableOptions.volumeIssue },
+                   { key: 'showBookSeriesTitle', label: 'Book Series Title', disabled: !availableOptions.bookSeriesTitle },
+                   { key: 'showChapterPages', label: 'Chapter/Page Numbers', disabled: !availableOptions.chapterPages },
+                   { key: 'showNumberOfIssues', label: 'Number of Issues', disabled: !availableOptions.numberOfIssues },
+                   { key: 'showPublicationDate', label: 'Publication Date' },
+                   { key: 'showDOI', label: 'DOI' },
+                   { key: 'showISSN', label: 'ISSN/eISSN', disabled: !availableOptions.issn },
+                   { key: 'showISBN', label: 'ISBN/eISBN', disabled: !availableOptions.isbn }
+                 ]}
+               />
 
               {/* Author Information */}
               <ConfigSection 
