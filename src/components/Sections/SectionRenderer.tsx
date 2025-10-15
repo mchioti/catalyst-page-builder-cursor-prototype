@@ -7,7 +7,7 @@ import {
   ContentBlockLayout, 
   LayoutArea, 
   isSection 
-} from '../../types'
+} from '../../types/widgets'
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 
 // Component for draggable widgets within sections
