@@ -19,7 +19,7 @@ import {
   // Widget types
   type Widget, type WidgetSection, type LayoutArea, type CanvasItem, isSection, 
   type CustomSection, type PublicationCardVariant, type PublicationCardConfig, type ContentBlockLayout,
-  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type PublicationListWidget, type PublicationDetailsWidget,
+  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type BaseTemplate, type Website, type Theme,
   // App types
@@ -1233,6 +1233,42 @@ function WidgetRenderer({
                 <p>No publication data available</p>
                 <p className="text-sm mt-1">Please configure the data source or select a publication</p>
               </div>
+            )}
+          </div>
+        </SkinWrap>
+      )
+      
+    case 'button':
+      const buttonWidget = widget as ButtonWidget
+      const variantClasses = {
+        solid: 'bg-red-600 text-white hover:bg-red-700',
+        outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white',
+        ghost: 'text-red-600 hover:bg-red-50'
+      }
+      
+      const sizeClasses = {
+        small: 'px-3 py-1.5 text-sm',
+        medium: 'px-4 py-2 text-base',
+        large: 'px-6 py-3 text-lg'
+      }
+      
+      const buttonClasses = `
+        font-medium rounded transition-colors duration-200 cursor-pointer inline-block
+        ${variantClasses[buttonWidget.variant] || variantClasses.solid}
+        ${sizeClasses[buttonWidget.size] || sizeClasses.medium}
+      `.trim()
+      
+      return (
+        <SkinWrap skin={widget.skin}>
+          <div className="flex items-center justify-center p-2">
+            {buttonWidget.url ? (
+              <a href={buttonWidget.url} className={buttonClasses}>
+                {buttonWidget.text}
+              </a>
+            ) : (
+              <button className={buttonClasses} onClick={() => buttonWidget.onClick && eval(buttonWidget.onClick)}>
+                {buttonWidget.text}
+              </button>
             )}
           </div>
         </SkinWrap>
