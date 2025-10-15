@@ -1,6 +1,6 @@
 // Widget types for the page builder system
 
-export type Skin = 'minimal' | 'modern' | 'classic' | 'accent'
+export type Skin = 'minimal' | 'modern' | 'classic' | 'accent' | 'hero' | 'journal' | 'primary' | 'dark' | 'muted' | 'center' | 'footer' | 'compact' | 'raw'
 
 export type WidgetBase = {
   id: string
@@ -14,6 +14,14 @@ export type ImageWidget = WidgetBase & { type: 'image'; src: string; alt: string
 export type NavbarWidget = WidgetBase & { type: 'navbar'; links: Array<{ label: string; href: string }> }
 export type HTMLWidget = WidgetBase & { type: 'html'; htmlContent: string; title?: string }
 export type HeadingWidget = WidgetBase & { type: 'heading'; text: string; level: 1 | 2 | 3 | 4 | 5 | 6; align?: 'left'|'center'|'right' }
+export type ButtonWidget = WidgetBase & { 
+  type: 'button'; 
+  text: string; 
+  variant: 'solid' | 'outline' | 'ghost';
+  size: 'small' | 'medium' | 'large';
+  url?: string;
+  onClick?: string;
+}
 
 // Publication Card configuration types
 export type PublicationCardConfig = {
@@ -97,7 +105,7 @@ export type PublicationDetailsWidget = WidgetBase & {
   }
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | PublicationListWidget | PublicationDetailsWidget
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical'

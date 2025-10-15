@@ -35,7 +35,7 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
           { id: 'text', label: 'Text', type: 'text', description: 'Paragraph or rich text', skin: 'minimal', status: 'supported' },
           { id: 'heading', label: 'Heading', type: 'heading', description: 'Structured heading styles', skin: 'minimal', status: 'supported' },
           { id: 'image', label: 'Image', type: 'image', description: 'Static image', skin: 'minimal', status: 'supported' },
-          { id: 'button', label: 'Button', type: 'button', description: 'Links and actions', status: 'planned' },
+          { id: 'button', label: 'Button', type: 'button', description: 'Links and actions', skin: 'minimal', status: 'supported' },
           { id: 'link', label: 'Link', type: 'link', description: 'Simple hyperlink', status: 'planned' },
           { id: 'divider', label: 'Divider', type: 'divider', description: 'Horizontal rule', status: 'planned' },
           { id: 'spacer', label: 'Spacer', type: 'spacer', description: 'Vertical space', status: 'planned' },

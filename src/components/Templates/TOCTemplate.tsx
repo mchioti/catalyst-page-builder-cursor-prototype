@@ -31,24 +31,62 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       ]
     },
 
-    // Journal Banner Section
+    // Journal Banner Section (Publication Details + 3 CTA Buttons)
     {
       id: 'toc-journal-banner-section',
       name: 'Journal Banner',
       type: 'hero',
-      layout: 'single-column',
+      layout: 'vertical',
       areas: [
+        // Top area - Journal metadata
         {
-          id: 'toc-journal-banner-area',
-          name: 'Journal Banner Content',
+          id: 'toc-journal-metadata-area',
+          name: 'Journal Metadata',
           maxWidgets: 1,
           widgets: [
             {
-              id: 'toc-journal-banner-widget',
-              type: 'heading',
-              skin: 'hero',
-              text: getJournalName(journalCode),
-              level: 1
+              id: 'toc-journal-details-widget',
+              type: 'publication-details',
+              skin: 'journal',
+              contentSource: 'context', // Reads journal from URL context
+              layout: 'hero',
+              // Journal metadata will be populated based on journalCode context
+              publication: getJournalMetadataForContext(journalCode)
+            }
+          ]
+        },
+        // Bottom area - CTA buttons (grouped in 1 row)
+        {
+          id: 'toc-journal-cta-area',
+          name: 'Journal CTA Buttons',
+          maxWidgets: 3,
+          widgets: [
+            {
+              id: 'toc-subscribe-button',
+              type: 'button',
+              skin: 'primary',
+              text: 'SUBSCRIBE/RENEW',
+              variant: 'solid',
+              size: 'medium',
+              url: `/journal/${journalCode}/subscribe`
+            },
+            {
+              id: 'toc-librarian-button',
+              type: 'button',
+              skin: 'primary',
+              text: 'RECOMMEND TO A LIBRARIAN',
+              variant: 'solid',
+              size: 'medium',
+              url: `/journal/${journalCode}/recommend`
+            },
+            {
+              id: 'toc-submit-button',
+              type: 'button',
+              skin: 'primary',
+              text: 'SUBMIT AN ARTICLE',
+              variant: 'solid',
+              size: 'medium',
+              url: `/journal/${journalCode}/submit`
             }
           ]
         }
@@ -237,6 +275,78 @@ function getJournalMetrics(journalCode: string): string {
     'embo': 'Impact Factor: 12.779 | CiteScore: 24.3 | Downloads: 892K'
   }
   return metrics[journalCode as keyof typeof metrics] || 'Journal Metrics'
+}
+
+// Generate journal metadata in schema.org format for Publication Details widget
+function getJournalMetadataForContext(journalCode: string): any {
+  const journalData = {
+    'advma': {
+      '@context': 'https://schema.org',
+      '@type': 'PublicationIssue',
+      'issueNumber': '12',
+      'volumeNumber': '67',
+      'datePublished': '2024-12-01',
+      'isPartOf': {
+        '@type': 'PublicationVolume',
+        'volumeNumber': '67',
+        'isPartOf': {
+          '@type': 'Periodical',
+          'name': 'Advanced Materials',
+          'issn': ['0935-9648', '1521-4095'],
+          'editor': {
+            '@type': 'Organization',
+            'name': 'Wiley-VCH and Materials Research Society'
+          }
+        }
+      },
+      'identifier': [
+        {
+          '@type': 'PropertyValue',
+          'name': 'ISSN (print)',
+          'value': '0935-9648'
+        },
+        {
+          '@type': 'PropertyValue', 
+          'name': 'ISSN (online)',
+          'value': '1521-4095'
+        }
+      ]
+    },
+    'embo': {
+      '@context': 'https://schema.org',
+      '@type': 'PublicationIssue',
+      'issueNumber': '24',
+      'volumeNumber': '42',
+      'datePublished': '2024-12-01',
+      'isPartOf': {
+        '@type': 'PublicationVolume',
+        'volumeNumber': '42',
+        'isPartOf': {
+          '@type': 'Periodical',
+          'name': 'The EMBO Journal',
+          'issn': ['0261-4189', '1460-2075'],
+          'editor': {
+            '@type': 'Organization',
+            'name': 'European Molecular Biology Organization'
+          }
+        }
+      },
+      'identifier': [
+        {
+          '@type': 'PropertyValue',
+          'name': 'ISSN (print)',
+          'value': '0261-4189'
+        },
+        {
+          '@type': 'PropertyValue',
+          'name': 'ISSN (online)', 
+          'value': '1460-2075'
+        }
+      ]
+    }
+  }
+  
+  return journalData[journalCode as keyof typeof journalData] || journalData.advma
 }
 
 // AI-generated mock articles for template preview (schema.org format)

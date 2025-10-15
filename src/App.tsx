@@ -1294,6 +1294,16 @@ function buildWidget(item: SpecItem): Widget {
         ]
       } as NavbarWidget;
     
+    case 'button':
+      return {
+        ...baseWidget,
+        type: 'button',
+        text: 'Button Text',
+        variant: 'solid',
+        size: 'medium',
+        url: '#'
+      } as ButtonWidget;
+    
     case 'html-block':
       return {
         ...baseWidget,
