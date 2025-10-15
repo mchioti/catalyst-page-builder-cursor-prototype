@@ -5180,28 +5180,258 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
     replaceCanvasItems(updatedCanvasItems)
   }
   
+  const updateSection = (updates: Partial<WidgetSection>) => {
+    const updatedCanvasItems = canvasItems.map(item => {
+      if (isSection(item) && item.id === selectedWidget) {
+        return { ...item, ...updates }
+      }
+      return item
+    })
+    replaceCanvasItems(updatedCanvasItems)
+  }
+  
   if (isSection(selectedItem)) {
+    const section = selectedItem as WidgetSection
+    const backgroundType = section.background?.type || 'none'
+    
     return (
       <div className="p-4 space-y-4">
         <h3 className="font-semibold text-gray-900">Section Properties</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input
-              type="text"
-              value={selectedItem.name}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-            />
+        
+        {/* Section Type Indicator */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
+            <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">
+              {section.name}
+            </span>
           </div>
+        </div>
+        
+        <div className="space-y-4">
+          {/* Basic Properties */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Layout</label>
             <input
               type="text"
-              value={selectedItem.layout}
+              value={section.layout}
               readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
             />
+          </div>
+          
+          {/* Background Configuration */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Background</h4>
+            
+            {/* Background Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
+              <select
+                value={backgroundType}
+                onChange={(e) => {
+                  const newType = e.target.value as 'color' | 'image' | 'gradient' | 'none'
+                  updateSection({
+                    background: newType === 'none' ? undefined : {
+                      type: newType,
+                      ...(newType === 'color' && { color: '#ffffff' }),
+                      ...(newType === 'image' && { 
+                        image: { 
+                          url: '', 
+                          position: 'center', 
+                          repeat: 'no-repeat', 
+                          size: 'cover' 
+                        } 
+                      }),
+                      ...(newType === 'gradient' && { 
+                        gradient: { 
+                          type: 'linear', 
+                          direction: 'to right',
+                          stops: [
+                            { color: '#ffffff', position: '0%' },
+                            { color: '#f3f4f6', position: '100%' }
+                          ]
+                        } 
+                      })
+                    }
+                  })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="none">None</option>
+                <option value="color">Solid Color</option>
+                <option value="image">Background Image</option>
+                <option value="gradient">Gradient</option>
+              </select>
+            </div>
+            
+            {/* Color Background Options */}
+            {backgroundType === 'color' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={section.background?.color || '#ffffff'}
+                    onChange={(e) => updateSection({
+                      background: {
+                        ...section.background,
+                        type: 'color',
+                        color: e.target.value
+                      }
+                    })}
+                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={section.background?.color || '#ffffff'}
+                    onChange={(e) => updateSection({
+                      background: {
+                        ...section.background,
+                        type: 'color',
+                        color: e.target.value
+                      }
+                    })}
+                    placeholder="#ffffff"
+                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-mono"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Image Background Options */}
+            {backgroundType === 'image' && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+                  <input
+                    type="url"
+                    value={section.background?.image?.url || ''}
+                    onChange={(e) => updateSection({
+                      background: {
+                        ...section.background,
+                        type: 'image',
+                        image: {
+                          ...section.background?.image,
+                          url: e.target.value,
+                          position: section.background?.image?.position || 'center',
+                          repeat: section.background?.image?.repeat || 'no-repeat',
+                          size: section.background?.image?.size || 'cover'
+                        }
+                      }
+                    })}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <select
+                      value={section.background?.image?.position || 'center'}
+                      onChange={(e) => updateSection({
+                        background: {
+                          ...section.background,
+                          type: 'image',
+                          image: {
+                            ...section.background?.image,
+                            url: section.background?.image?.url || '',
+                            position: e.target.value as any,
+                            repeat: section.background?.image?.repeat || 'no-repeat',
+                            size: section.background?.image?.size || 'cover'
+                          }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="center">Center</option>
+                      <option value="top">Top</option>
+                      <option value="bottom">Bottom</option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                    <select
+                      value={section.background?.image?.size || 'cover'}
+                      onChange={(e) => updateSection({
+                        background: {
+                          ...section.background,
+                          type: 'image',
+                          image: {
+                            ...section.background?.image,
+                            url: section.background?.image?.url || '',
+                            position: section.background?.image?.position || 'center',
+                            repeat: section.background?.image?.repeat || 'no-repeat',
+                            size: e.target.value
+                          }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                      <option value="auto">Auto</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+                  <select
+                    value={section.background?.image?.repeat || 'no-repeat'}
+                    onChange={(e) => updateSection({
+                      background: {
+                        ...section.background,
+                        type: 'image',
+                        image: {
+                          ...section.background?.image,
+                          url: section.background?.image?.url || '',
+                          position: section.background?.image?.position || 'center',
+                          repeat: e.target.value as any,
+                          size: section.background?.image?.size || 'cover'
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="no-repeat">No Repeat</option>
+                    <option value="repeat">Repeat</option>
+                    <option value="repeat-x">Repeat X</option>
+                    <option value="repeat-y">Repeat Y</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            
+            {/* Background Opacity */}
+            {backgroundType !== 'none' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Background Opacity: {Math.round((section.background?.opacity || 1) * 100)}%
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={section.background?.opacity || 1}
+                  onChange={(e) => updateSection({
+                    background: {
+                      ...section.background,
+                      type: backgroundType as any,
+                      opacity: parseFloat(e.target.value)
+                    }
+                  })}
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -7694,6 +7924,69 @@ function SectionRenderer({
     }
   }
 
+  // Generate background styles based on section background configuration
+  const getSectionBackgroundStyles = (section: WidgetSection) => {
+    const background = section.background
+    if (!background || background.type === 'none') {
+      return {}
+    }
+
+    const styles: React.CSSProperties = {}
+    const opacity = background.opacity !== undefined ? background.opacity : 1
+
+    switch (background.type) {
+      case 'color':
+        if (background.color) {
+          styles.backgroundColor = background.color
+          styles.opacity = opacity
+        }
+        break
+        
+      case 'image':
+        if (background.image?.url) {
+          styles.backgroundImage = `url(${background.image.url})`
+          styles.backgroundPosition = background.image.position || 'center'
+          styles.backgroundRepeat = background.image.repeat || 'no-repeat'
+          styles.backgroundSize = background.image.size || 'cover'
+          styles.opacity = opacity
+        }
+        break
+        
+      case 'gradient':
+        if (background.gradient?.stops && background.gradient.stops.length >= 2) {
+          const { type, direction, stops } = background.gradient
+          const gradientStops = stops.map(stop => `${stop.color} ${stop.position}`).join(', ')
+          
+          if (type === 'linear') {
+            styles.backgroundImage = `linear-gradient(${direction || 'to right'}, ${gradientStops})`
+          } else if (type === 'radial') {
+            styles.backgroundImage = `radial-gradient(circle, ${gradientStops})`
+          }
+          styles.opacity = opacity
+        }
+        break
+    }
+
+    return styles
+  }
+
+  // Get section container classes with background awareness
+  const getSectionContainerClasses = (section: WidgetSection) => {
+    const hasBackground = section.background && section.background.type !== 'none'
+    const baseClasses = 'group transition-all relative cursor-grab active:cursor-grabbing'
+    
+    if (isSpecialSection) {
+      return `${baseClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''}`
+    } else {
+      // If section has custom background, use more neutral styling
+      if (hasBackground) {
+        return `${baseClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20`
+      } else {
+        return `${baseClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
+      }
+    }
+  }
+
   const isSpecialSection = ['header-section', 'hero-section', 'footer-section', 'features-section'].includes(section.id)
 
   const handleSaveSection = () => {
@@ -7754,7 +8047,8 @@ function SectionRenderer({
   return (
     <>
       <div 
-        className={`group ${isSpecialSection ? 'p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200' : 'border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100'} transition-all relative cursor-grab active:cursor-grabbing`}
+        className={getSectionContainerClasses(section)}
+        style={getSectionBackgroundStyles(section)}
         onClick={(e) => {
           e.stopPropagation()
           const newValue = activeSectionToolbar === section.id ? null : section.id

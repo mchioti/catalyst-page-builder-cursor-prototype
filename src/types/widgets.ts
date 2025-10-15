@@ -123,6 +123,24 @@ export type WidgetSection = {
   type: string
   layout: ContentBlockLayout
   areas: LayoutArea[]
+  
+  // Background configuration
+  background?: {
+    type: 'color' | 'image' | 'gradient' | 'none'
+    color?: string // Hex color for solid background
+    image?: {
+      url: string
+      position: 'center' | 'top' | 'bottom' | 'left' | 'right' | 'cover' | 'contain'
+      repeat: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
+      size: 'cover' | 'contain' | 'auto' | string
+    }
+    gradient?: {
+      type: 'linear' | 'radial'
+      direction?: string // e.g., 'to right', '45deg'
+      stops: Array<{ color: string; position: string }> // e.g., [{ color: '#ff0000', position: '0%' }]
+    }
+    opacity?: number // 0-1 for background opacity
+  }
 }
 
 // Canvas item can be either an individual widget or a section
