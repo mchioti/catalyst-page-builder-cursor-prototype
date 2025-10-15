@@ -5215,6 +5215,35 @@ function PropertiesPanel({ creatingSchemaType, selectedSchemaObject, onSaveSchem
     <div className="p-4 space-y-4">
       <h3 className="font-semibold text-gray-900">Widget Properties</h3>
       
+      {/* Widget Type Indicator */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
+          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+            widget.type === 'publication-details' ? 'bg-blue-100 text-blue-700' :
+            widget.type === 'publication-list' ? 'bg-green-100 text-green-700' :
+            widget.type === 'button' ? 'bg-orange-100 text-orange-700' :
+            widget.type === 'text' ? 'bg-purple-100 text-purple-700' :
+            widget.type === 'image' ? 'bg-pink-100 text-pink-700' :
+            widget.type === 'navbar' ? 'bg-indigo-100 text-indigo-700' :
+            widget.type === 'heading' ? 'bg-yellow-100 text-yellow-700' :
+            widget.type === 'html' ? 'bg-red-100 text-red-700' :
+            'bg-gray-100 text-gray-700'
+          }`}>
+            {widget.type === 'publication-details' ? 'Publication Details' :
+             widget.type === 'publication-list' ? 'Publication List' :
+             widget.type === 'button' ? 'Button' :
+             widget.type === 'text' ? 'Text' :
+             widget.type === 'image' ? 'Image' :
+             widget.type === 'navbar' ? 'Navigation' :
+             widget.type === 'heading' ? 'Heading' :
+             widget.type === 'html' ? 'HTML Block' :
+             widget.type.charAt(0).toUpperCase() + widget.type.slice(1)
+            } Widget
+          </span>
+        </div>
+      </div>
+      
       {widget.type === 'text' && (
         <div className="space-y-3">
           <div>
