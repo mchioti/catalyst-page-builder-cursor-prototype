@@ -45,13 +45,13 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
           maxWidgets: 1,
           widgets: [
             {
-              id: 'toc-journal-details-widget',
+              id: 'toc-issue-details-widget',
               type: 'publication-details',
               skin: 'journal',
-              contentSource: 'context', // Reads journal from URL context
+              contentSource: 'context', // Reads issue from URL context
               layout: 'hero',
-              // Journal metadata will be populated based on journalCode context
-              publication: getJournalMetadataForContext(journalCode)
+              // Issue metadata will be populated based on journalCode context
+              publication: getIssueMetadataForContext(journalCode)
             }
           ]
         },
@@ -301,15 +301,17 @@ function getJournalMetrics(journalCode: string): string {
   return metrics[journalCode as keyof typeof metrics] || 'Journal Metrics'
 }
 
-// Generate journal metadata in schema.org format for Publication Details widget
-function getJournalMetadataForContext(journalCode: string): any {
-  const journalData = {
+// Generate issue metadata in schema.org format for Publication Details widget
+function getIssueMetadataForContext(journalCode: string): any {
+  const issueData = {
     'advma': {
       '@context': 'https://schema.org',
       '@type': 'PublicationIssue',
       'issueNumber': '12',
       'volumeNumber': '67',
       'datePublished': '2024-12-01',
+      'name': 'Volume 67 • Issue 12',
+      'description': 'This issue features groundbreaking research in perovskite solar cells, quantum materials, and sustainable energy technologies.',
       'isPartOf': {
         '@type': 'PublicationVolume',
         'volumeNumber': '67',
@@ -342,6 +344,8 @@ function getJournalMetadataForContext(journalCode: string): any {
       'issueNumber': '24',
       'volumeNumber': '42',
       'datePublished': '2024-12-01',
+      'name': 'Volume 42 • Issue 24',
+      'description': 'This issue explores cutting-edge molecular biology research including CRISPR applications, protein structures, and cellular mechanisms.',
       'isPartOf': {
         '@type': 'PublicationVolume',
         'volumeNumber': '42',
@@ -370,7 +374,7 @@ function getJournalMetadataForContext(journalCode: string): any {
     }
   }
   
-  return journalData[journalCode as keyof typeof journalData] || journalData.advma
+  return issueData[journalCode as keyof typeof issueData] || issueData.advma
 }
 
 // AI-generated mock articles for template preview (schema.org format)

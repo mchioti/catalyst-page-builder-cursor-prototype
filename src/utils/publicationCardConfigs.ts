@@ -8,7 +8,8 @@ export function getContentType(publication: any): string {
   if (type === 'Chapter') return 'chapter' 
   if (type === 'Book') return 'book'
   if (type === 'BookSeries') return 'book-series'
-  if (type === 'Periodical' || type === 'PublicationIssue') return 'journal'
+  if (type === 'PublicationIssue') return 'issue'
+  if (type === 'Periodical') return 'journal'
   
   return 'article' // Default fallback
 }
@@ -143,6 +144,29 @@ export function getBookConfig(): PublicationCardConfig {
   }
 }
 
+// Issue-specific configuration (for journal issues)
+export function getIssueConfig(): PublicationCardConfig {
+  return {
+    ...baseConfig,
+    
+    // Publication Context - Issue specifics
+    showPublicationTitle: true, // Journal name
+    showVolumeIssue: false, // Issue IS the volume/issue
+    showBookSeriesTitle: false, // N/A for issues
+    showChapterPages: false, // N/A for issues
+    showISSN: true, // Journal ISSN
+    showISBN: false, // N/A for issues
+    
+    // Content Summary
+    showAbstract: true, // Issue description
+    showKeywords: false, // N/A for issues
+    
+    // Author Information
+    showAuthors: false, // Issues have editors, not authors
+    showAffiliations: false // N/A for issues
+  }
+}
+
 // Book Series-specific configuration
 export function getBookSeriesConfig(): PublicationCardConfig {
   return {
@@ -179,6 +203,10 @@ export function getConfigForContentType(contentType: string): PublicationCardCon
     case 'book':
       return getBookConfig()
       
+    case 'issue':
+    case 'publication-issue':
+      return getIssueConfig()
+      
     case 'book-series':
       return getBookSeriesConfig()
       
@@ -209,13 +237,13 @@ export function getAvailableOptionsForContentType(contentType: string) {
     thumbnailImage: true,
     
     // Publication Context - varies by type
-    publicationTitle: contentType === 'article' || contentType === 'chapter',
+    publicationTitle: contentType === 'article' || contentType === 'chapter' || contentType === 'issue',
     volumeIssue: contentType === 'article',
     bookSeriesTitle: contentType === 'chapter' || contentType === 'book',
     chapterPages: contentType === 'chapter',
     publicationDate: true, // Available for all
     doi: true, // Available for all
-    issn: contentType === 'article' || contentType === 'journal' || contentType === 'book-series',
+    issn: contentType === 'article' || contentType === 'issue' || contentType === 'journal' || contentType === 'book-series',
     isbn: contentType === 'chapter' || contentType === 'book',
     
     // Author Information - varies by type
@@ -224,7 +252,7 @@ export function getAvailableOptionsForContentType(contentType: string) {
     
     // Content Summary - mostly available
     abstract: true, // Available for all
-    keywords: contentType !== 'journal' && contentType !== 'chapter',
+    keywords: contentType !== 'journal' && contentType !== 'chapter' && contentType !== 'issue',
     
     // Access & Usage - always available
     accessStatus: true,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, Check } from 'lucide-react'
+import { X } from 'lucide-react'
 import { getAvailableOptionsForContentType, getConfigForContentType } from '../../utils/publicationCardConfigs'
 import type { PublicationCardConfig } from '../../types'
 
@@ -14,7 +14,7 @@ interface PublicationCardsProps {
   usePageStore: () => UsePageStore
 }
 
-type ContentType = 'article' | 'chapter' | 'book' | 'journal'
+type ContentType = 'article' | 'chapter' | 'book' | 'issue' | 'journal'
 
 export function PublicationCards({ usePageStore }: PublicationCardsProps) {
   const { publicationCardVariants, addPublicationCardVariant, removePublicationCardVariant } = usePageStore()
@@ -97,6 +97,18 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
       isbn: '978-3-031-98765-4',
       thumbnail: 'QC'
     },
+    issue: {
+      type: 'Current Issue',
+      title: 'Volume 67 • Issue 12',
+      subtitle: 'December 2024',
+      description: 'This issue features groundbreaking research in perovskite solar cells, quantum materials, and sustainable energy technologies.',
+      journal: 'Advanced Materials',
+      issn: '0935-9648 (print), 1521-4095 (online)', 
+      editor: 'Wiley-VCH and Materials Research Society',
+      date: 'Published: December 2024',
+      articleCount: '28 articles',
+      thumbnail: 'V67'
+    },
     journal: {
       type: 'Journal',
       title: 'Advanced Materials',
@@ -121,6 +133,7 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
             selectedTab === 'article' ? 'bg-blue-100 text-blue-800' :
             selectedTab === 'chapter' ? 'bg-green-100 text-green-800' :
             selectedTab === 'book' ? 'bg-purple-100 text-purple-800' :
+            selectedTab === 'issue' ? 'bg-yellow-100 text-yellow-800' :
             'bg-orange-100 text-orange-800'
           }`}>
             {data.type}
@@ -134,11 +147,13 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
               selectedTab === 'article' ? 'bg-blue-100' :
               selectedTab === 'chapter' ? 'bg-green-100' :
               selectedTab === 'book' ? 'bg-purple-100' :
+              selectedTab === 'issue' ? 'bg-yellow-100' :
               'bg-orange-100'
             } rounded flex items-center justify-center text-lg font-bold ${
               selectedTab === 'article' ? 'text-blue-800' :
               selectedTab === 'chapter' ? 'text-green-800' :
               selectedTab === 'book' ? 'text-purple-800' :
+              selectedTab === 'issue' ? 'text-yellow-800' :
               'text-orange-800'
             }`}>
               {data.thumbnail}
@@ -158,32 +173,33 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
               </p>
             )}
             
-            {/* Authors */}
-            {editingConfig.showAuthors && data.authors && (
-              <p className="text-gray-700 text-sm">
-                {data.authors}
-              </p>
-            )}
+             {/* Authors */}
+             {editingConfig.showAuthors && (data as any).authors && (
+               <p className="text-gray-700 text-sm">
+                 {(data as any).authors}
+               </p>
+             )}
             
-            {/* Publication Context */}
-            {editingConfig.showPublicationTitle && (
-              <p className="text-gray-600 text-sm">
-                {selectedTab === 'article' ? data.journal :
-                 selectedTab === 'chapter' ? data.book :
-                 selectedTab === 'book' ? data.series :
-                 'N/A'
-                }
-              </p>
-            )}
+             {/* Publication Context */}
+             {editingConfig.showPublicationTitle && (
+               <p className="text-gray-600 text-sm">
+                 {selectedTab === 'article' ? (data as any).journal :
+                  selectedTab === 'chapter' ? (data as any).book :
+                  selectedTab === 'book' ? (data as any).series :
+                  selectedTab === 'issue' ? (data as any).journal :
+                  'N/A'
+                 }
+               </p>
+             )}
             
             {/* Volume & Issue */}
-            {editingConfig.showVolumeIssue && data.volume && (
-              <p className="text-gray-600 text-sm">{data.volume}</p>
+            {editingConfig.showVolumeIssue && (data as any).volume && (
+              <p className="text-gray-600 text-sm">{(data as any).volume}</p>
             )}
             
             {/* Chapter/Pages */}
-            {editingConfig.showChapterPages && data.pages && (
-              <p className="text-gray-600 text-sm">{data.pages}</p>
+            {editingConfig.showChapterPages && (data as any).pages && (
+              <p className="text-gray-600 text-sm">{(data as any).pages}</p>
             )}
             
             {/* Publication Date */}
@@ -192,36 +208,36 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
             )}
             
             {/* Abstract */}
-            {editingConfig.showAbstract && (data.abstract || data.description) && (
+            {editingConfig.showAbstract && ((data as any).abstract || (data as any).description) && (
               <p className="text-gray-700 text-sm leading-relaxed">
-                {(data.abstract || data.description)?.substring(0, 150)}...
+                {((data as any).abstract || (data as any).description)?.substring(0, 150)}...
               </p>
             )}
             
             {/* Metadata */}
             <div className="flex items-center gap-4 text-xs text-gray-500">
-              {editingConfig.showDOI && data.doi && (
-                <span>DOI: {data.doi.replace('https://doi.org/', '')}</span>
+              {editingConfig.showDOI && (data as any).doi && (
+                <span>DOI: {(data as any).doi.replace('https://doi.org/', '')}</span>
               )}
               
-              {editingConfig.showISSN && data.issn && (
-                <span>ISSN: {data.issn}</span>
+              {editingConfig.showISSN && (data as any).issn && (
+                <span>ISSN: {(data as any).issn}</span>
               )}
               
-              {editingConfig.showISBN && data.isbn && (
-                <span>ISBN: {data.isbn}</span>
+              {editingConfig.showISBN && (data as any).isbn && (
+                <span>ISBN: {(data as any).isbn}</span>
               )}
             </div>
             
             {/* Access & Actions */}
-            {editingConfig.showAccessStatus && data.accessType && (
+            {editingConfig.showAccessStatus && (data as any).accessType && (
               <div className="flex items-center justify-between">
                 <span className={`text-xs px-2 py-1 rounded ${
-                  data.accessType === 'FULL ACCESS' ? 'bg-green-100 text-green-800' :
-                  data.accessType === 'PREVIEW ACCESS' ? 'bg-yellow-100 text-yellow-800' :
+                  (data as any).accessType === 'FULL ACCESS' ? 'bg-green-100 text-green-800' :
+                  (data as any).accessType === 'PREVIEW ACCESS' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
                 }`}>
-                  {data.accessType}
+                  {(data as any).accessType}
                 </span>
                 
                 {editingConfig.showViewDownloadOptions && (
@@ -285,7 +301,7 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
 
             {/* Content Type Tabs */}
             <div className="flex space-x-1 mb-6 border-b">
-              {(['article', 'chapter', 'book', 'journal'] as ContentType[]).map((tab) => (
+              {(['article', 'chapter', 'book', 'issue', 'journal'] as ContentType[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
