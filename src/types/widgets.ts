@@ -10,10 +10,40 @@ export type WidgetBase = {
 }
 
 export type TextWidget = WidgetBase & { type: 'text'; text: string; align?: 'left'|'center'|'right' }
-export type ImageWidget = WidgetBase & { type: 'image'; src: string; alt: string; ratio?: string }
+export type ImageWidget = WidgetBase & { 
+  type: 'image'; 
+  src: string; 
+  alt: string; 
+  ratio?: '1:1' | '4:3' | '3:4' | '16:9' | 'auto';
+  caption?: string;
+  link?: string;
+  alignment?: 'left' | 'center' | 'right';
+  width?: 'auto' | 'full' | 'small' | 'medium' | 'large';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+}
 export type NavbarWidget = WidgetBase & { type: 'navbar'; links: Array<{ label: string; href: string }> }
 export type HTMLWidget = WidgetBase & { type: 'html'; htmlContent: string; title?: string }
-export type HeadingWidget = WidgetBase & { type: 'heading'; text: string; level: 1 | 2 | 3 | 4 | 5 | 6; align?: 'left'|'center'|'right' }
+export type HeadingWidget = WidgetBase & { 
+  type: 'heading'; 
+  text: string; 
+  level: 1 | 2 | 3 | 4 | 5 | 6; 
+  align?: 'left' | 'center' | 'right';
+  style?: 'default' | 'bordered-left' | 'underlined' | 'highlighted' | 'decorated' | 'gradient';
+  color?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted';
+  size?: 'small' | 'medium' | 'large' | 'xl' | 'auto';
+  fontStyle?: {
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strikethrough?: boolean;
+  };
+  icon?: {
+    enabled?: boolean;
+    position?: 'left' | 'right';
+    emoji?: string;
+  };
+  spacing?: 'tight' | 'normal' | 'loose';
+}
 export type ButtonWidget = WidgetBase & { 
   type: 'button'; 
   text: string; 

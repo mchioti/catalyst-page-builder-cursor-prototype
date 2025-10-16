@@ -7,6 +7,7 @@ import {
   type SchemaObject, 
   type SchemaOrgType,
   type HTMLWidget,
+  type ImageWidget,
   type HeadingWidget,
   type PublicationListWidget,
   type PublicationDetailsWidget,
@@ -453,42 +454,383 @@ export function PropertiesPanel({
       )}
       
       {widget.type === 'heading' && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Heading Text</label>
             <input
               type="text"
               value={(widget as HeadingWidget).text}
               onChange={(e) => updateWidget({ text: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Enter your heading text"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             />
           </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Semantic Level</label>
+              <select
+                value={(widget as HeadingWidget).level}
+                onChange={(e) => updateWidget({ level: parseInt(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value={1}>H1 (Main Title)</option>
+                <option value={2}>H2 (Section)</option>
+                <option value={3}>H3 (Subsection)</option>
+                <option value={4}>H4 (Subheading)</option>
+                <option value={5}>H5 (Minor Head)</option>
+                <option value={6}>H6 (Small Head)</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+              <select
+                value={(widget as HeadingWidget).align || 'left'}
+                onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Style Variant</label>
             <select
-              value={(widget as HeadingWidget).level}
-              onChange={(e) => updateWidget({ level: parseInt(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              value={(widget as HeadingWidget).style || 'default'}
+              onChange={(e) => updateWidget({ style: e.target.value as HeadingWidget['style'] })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value={1}>H1</option>
-              <option value={2}>H2</option>
-              <option value={3}>H3</option>
-              <option value={4}>H4</option>
-              <option value={5}>H5</option>
-              <option value={6}>H6</option>
+              <option value="default">Default</option>
+              <option value="bordered-left">Bordered Left</option>
+              <option value="underlined">Underlined</option>
+              <option value="highlighted">Highlighted Background</option>
+              <option value="decorated">Decorated</option>
+              <option value="gradient">Gradient Text</option>
             </select>
           </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Color Theme</label>
+              <select
+                value={(widget as HeadingWidget).color || 'default'}
+                onChange={(e) => updateWidget({ color: e.target.value as HeadingWidget['color'] })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="default">Default</option>
+                <option value="primary">Primary Blue</option>
+                <option value="secondary">Secondary Green</option>
+                <option value="accent">Accent Orange</option>
+                <option value="muted">Muted Gray</option>
+              </select>
+            </div>
+            
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Size Override</label>
             <select
-              value={(widget as HeadingWidget).align || 'left'}
-              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              value={(widget as HeadingWidget).size || 'auto'}
+              onChange={(e) => updateWidget({ size: e.target.value as HeadingWidget['size'] })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
+              <option value="auto">
+                Auto ({
+                  (widget as HeadingWidget).level === 1 ? 'Extra Large' :
+                  (widget as HeadingWidget).level === 2 ? 'Large' :
+                  (widget as HeadingWidget).level === 3 ? 'Medium' :
+                  'Small'
+                })
+              </option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="xl">Extra Large</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Auto uses semantic defaults: H1=XL, H2=Large, H3=Medium, H4-H6=Small
+            </p>
+          </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Font Styling</label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as HeadingWidget).fontStyle?.bold ?? false}
+                  onChange={(e) => updateWidget({ 
+                    fontStyle: { 
+                      ...((widget as HeadingWidget).fontStyle || {}), 
+                      bold: e.target.checked 
+                    }
+                  })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm font-bold">Bold</span>
+              </label>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as HeadingWidget).fontStyle?.italic ?? false}
+                  onChange={(e) => updateWidget({ 
+                    fontStyle: { 
+                      ...((widget as HeadingWidget).fontStyle || {}), 
+                      italic: e.target.checked 
+                    }
+                  })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm italic">Italic</span>
+              </label>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as HeadingWidget).fontStyle?.underline ?? false}
+                  onChange={(e) => updateWidget({ 
+                    fontStyle: { 
+                      ...((widget as HeadingWidget).fontStyle || {}), 
+                      underline: e.target.checked 
+                    }
+                  })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm underline">Underline</span>
+              </label>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as HeadingWidget).fontStyle?.strikethrough ?? false}
+                  onChange={(e) => updateWidget({ 
+                    fontStyle: { 
+                      ...((widget as HeadingWidget).fontStyle || {}), 
+                      strikethrough: e.target.checked 
+                    }
+                  })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm line-through">Strikethrough</span>
+              </label>
+            </div>
+          </div>
+          
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">Icon</label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as HeadingWidget).icon?.enabled ?? false}
+                  onChange={(e) => updateWidget({ 
+                    icon: { 
+                      ...((widget as HeadingWidget).icon || {}), 
+                      enabled: e.target.checked 
+                    }
+                  })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">Enable Icon</span>
+              </label>
+            </div>
+            
+            {(widget as HeadingWidget).icon?.enabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon Emoji</label>
+                  <input
+                    type="text"
+                    value={(widget as HeadingWidget).icon?.emoji || '🎯'}
+                    onChange={(e) => updateWidget({ 
+                      icon: { 
+                        ...((widget as HeadingWidget).icon || {}), 
+                        emoji: e.target.value 
+                      }
+                    })}
+                    placeholder="🎯"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-center"
+                    maxLength={2}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter any emoji</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                  <select
+                    value={(widget as HeadingWidget).icon?.position || 'left'}
+                    onChange={(e) => updateWidget({ 
+                      icon: { 
+                        ...((widget as HeadingWidget).icon || {}), 
+                        position: e.target.value as 'left' | 'right' 
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Spacing</label>
+            <select
+              value={(widget as HeadingWidget).spacing || 'normal'}
+              onChange={(e) => updateWidget({ spacing: e.target.value as HeadingWidget['spacing'] })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="tight">Tight</option>
+              <option value="normal">Normal</option>
+              <option value="loose">Loose</option>
+            </select>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-800">
+              <p className="font-medium mb-1">Heading Best Practices</p>
+              <ul className="text-xs space-y-1">
+                <li>• Use semantic levels (H1→H2→H3) for proper structure</li>
+                <li>• Auto sizing creates visual hierarchy: H1=XL, H2=Large, etc.</li>
+                <li>• Keep headings concise and descriptive</li>
+                <li>• Override size only when needed for design consistency</li>
+                <li>• Consider accessibility when choosing colors</li>
+              </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'image' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Image Source URL</label>
+            <input
+              type="url"
+              value={(widget as ImageWidget).src}
+              onChange={(e) => updateWidget({ src: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
+            <input
+              type="text"
+              value={(widget as ImageWidget).alt}
+              onChange={(e) => updateWidget({ alt: e.target.value })}
+              placeholder="Descriptive text for accessibility"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Caption (Optional)</label>
+            <input
+              type="text"
+              value={(widget as ImageWidget).caption || ''}
+              onChange={(e) => updateWidget({ caption: e.target.value })}
+              placeholder="Image caption or description"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Link URL (Optional)</label>
+            <input
+              type="url"
+              value={(widget as ImageWidget).link || ''}
+              onChange={(e) => updateWidget({ link: e.target.value })}
+              placeholder="https://example.com (make image clickable)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio</label>
+              <select
+                value={(widget as ImageWidget).ratio || 'auto'}
+                onChange={(e) => updateWidget({ ratio: e.target.value as ImageWidget['ratio'] })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="auto">Auto</option>
+                <option value="1:1">Square (1:1)</option>
+                <option value="4:3">Landscape (4:3)</option>
+                <option value="3:4">Portrait (3:4)</option>
+                <option value="16:9">Widescreen (16:9)</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+              <select
+                value={(widget as ImageWidget).alignment || 'center'}
+                onChange={(e) => updateWidget({ alignment: e.target.value as ImageWidget['alignment'] })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Width</label>
+              <select
+                value={(widget as ImageWidget).width || 'full'}
+                onChange={(e) => updateWidget({ width: e.target.value as ImageWidget['width'] })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="auto">Auto</option>
+                <option value="small">Small (25%)</option>
+                <option value="medium">Medium (50%)</option>
+                <option value="large">Large (75%)</option>
+                <option value="full">Full Width</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Object Fit</label>
+              <select
+                value={(widget as ImageWidget).objectFit || 'cover'}
+                onChange={(e) => updateWidget({ objectFit: e.target.value as ImageWidget['objectFit'] })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="cover">Cover</option>
+                <option value="contain">Contain</option>
+                <option value="fill">Fill</option>
+                <option value="scale-down">Scale Down</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">Image Best Practices</p>
+                <ul className="text-xs space-y-1">
+                  <li>• Use descriptive alt text for accessibility</li>
+                  <li>• Optimize images for web (WebP, JPEG, PNG)</li>
+                  <li>• Consider loading performance for large images</li>
+                  <li>• Use appropriate aspect ratios for your design</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       )}

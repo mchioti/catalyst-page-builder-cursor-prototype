@@ -267,12 +267,44 @@ function InteractiveWidgetRenderer({
       )
     }
     case 'heading': {
-      const headingWidget = widget as HeadingWidget
-      const align = headingWidget.align ?? 'left'
-      const alignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+      const h = widget as HeadingWidget
+      
+      // Style mappings (keeping concise for App.tsx)
+      const alignClasses = { left: 'text-left', center: 'text-center', right: 'text-right' }
+      const colorClasses = { 
+        default: 'text-gray-900', primary: 'text-blue-600', 
+        secondary: 'text-green-600', accent: 'text-orange-600', muted: 'text-gray-500' 
+      }
+      const sizeClasses = { small: 'text-lg', medium: 'text-xl', large: 'text-2xl', xl: 'text-4xl', auto: '' }
+      const spacingClasses = { tight: 'mb-2', normal: 'mb-4', loose: 'mb-6' }
+      
+      // Semantic size defaults based on heading level
+      const getSemanticDefaultSize = (level: number): 'small' | 'medium' | 'large' | 'xl' => {
+        switch (level) {
+          case 1: return 'xl'      // H1 → Extra Large
+          case 2: return 'large'   // H2 → Large  
+          case 3: return 'medium'  // H3 → Medium
+          case 4: return 'small'   // H4 → Small
+          case 5: return 'small'   // H5 → Small
+          case 6: return 'small'   // H6 → Small
+          default: return 'medium'
+        }
+      }
+      
+      const getStyleClasses = () => {
+        const style = h.style || 'default'
+        switch (style) {
+          case 'bordered-left': return 'border-l-4 border-current pl-4'
+          case 'underlined': return 'border-b-2 border-current pb-2 inline-block'
+          case 'highlighted': return 'bg-gradient-to-r from-yellow-100 to-yellow-50 px-3 py-2 rounded'
+          case 'decorated': return 'relative'
+          case 'gradient': return 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'
+          default: return ''
+        }
+      }
       
       const HeadingComponent = ({ children, ...props }: any) => {
-        switch (headingWidget.level) {
+        switch (h.level) {
           case 1: return <h1 {...props}>{children}</h1>
           case 2: return <h2 {...props}>{children}</h2>
           case 3: return <h3 {...props}>{children}</h3>
@@ -283,23 +315,36 @@ function InteractiveWidgetRenderer({
         }
       }
       
+      const getFontStyleClasses = () => {
+        const styles = []
+        if (h.fontStyle?.bold) styles.push('font-bold')
+        if (h.fontStyle?.italic) styles.push('italic')
+        if (h.fontStyle?.underline) styles.push('underline')
+        if (h.fontStyle?.strikethrough) styles.push('line-through')
+        return styles.join(' ')
+      }
+      
+      const headingClasses = [
+        getStyleClasses(),
+        getFontStyleClasses(),
+        alignClasses[h.align || 'left'],
+        h.size === 'auto' 
+          ? sizeClasses[getSemanticDefaultSize(h.level)]
+          : sizeClasses[h.size || 'auto'],
+        colorClasses[h.color || 'default'],
+        spacingClasses[h.spacing || 'normal']
+      ].filter(Boolean).join(' ')
+      
       return (
         <SkinWrap skin={widget.skin}>
-          <div className={`px-6 py-4 ${alignClass}`}>
+          <div className="px-6 py-4">
             <HeadingComponent
-              className={`font-bold text-gray-900 ${
-                headingWidget.level === 1 ? 'text-3xl' :
-                headingWidget.level === 2 ? 'text-2xl' :
-                headingWidget.level === 3 ? 'text-xl' :
-                headingWidget.level === 4 ? 'text-lg' :
-                headingWidget.level === 5 ? 'text-base' :
-                'text-sm'
-              }`}
+              className={headingClasses}
               contentEditable={true}
               suppressContentEditableWarning={true}
               onBlur={(e: React.FocusEvent<HTMLHeadingElement>) => {
                 const newText = e.currentTarget.textContent || ''
-                if (newText !== headingWidget.text) {
+                if (newText !== h.text) {
                   const updatedCanvasItems = canvasItems.map(item => {
                     if (isSection(item)) {
                       return {
@@ -319,8 +364,17 @@ function InteractiveWidgetRenderer({
                 }
               }}
             >
-              {headingWidget.text}
+              {h.icon?.enabled && h.icon?.position === 'left' && (
+                <span className="mr-2">{h.icon?.emoji || '🎯'}</span>
+              )}
+              {h.text}
+              {h.icon?.enabled && h.icon?.position === 'right' && (
+                <span className="ml-2">{h.icon?.emoji || '✨'}</span>
+              )}
             </HeadingComponent>
+            {h.style === 'decorated' && (
+              <div className="w-12 h-0.5 bg-current opacity-60 mt-2"></div>
+            )}
           </div>
         </SkinWrap>
       )
@@ -453,23 +507,109 @@ function InteractiveWidgetRenderer({
         </SkinWrap>
       )
     }
-    case 'image':
+    case 'image': {
+      const imageWidget = widget as ImageWidget
+      const aspectRatios = {
+        '1:1': 'aspect-square',
+        '4:3': 'aspect-4/3', 
+        '3:4': 'aspect-3/4',
+        '16:9': 'aspect-video',
+        'auto': ''
+      }
+      
+      const alignmentClasses = {
+        left: 'text-left',
+        center: 'text-center',
+        right: 'text-right'
+      }
+      
+      const widthClasses = {
+        auto: 'w-auto',
+        small: 'w-1/4',
+        medium: 'w-1/2', 
+        large: 'w-3/4',
+        full: 'w-full'
+      }
+      
+      const alignment = imageWidget.alignment || 'center'
+      const width = imageWidget.width || 'full'
+      const objectFit = imageWidget.objectFit || 'cover'
+      const ratio = imageWidget.ratio || 'auto'
+      
       return (
         <SkinWrap skin={widget.skin}>
           <div className="p-4">
-            <img 
-              src={widget.src} 
-              alt={widget.alt}
-              className="w-full rounded"
-              style={{ 
-                aspectRatio: widget.ratio || 'auto',
-                objectFit: 'cover',
-                height: widget.ratio === '16:9' ? '300px' : 'auto'
-              }}
-            />
+            {!imageWidget.src || imageWidget.src.trim() === '' ? (
+              <div className={`${alignmentClasses[alignment]} ${widthClasses[width]} mx-auto`}>
+                <div className={`bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg flex items-center justify-center text-blue-600 ${ratio !== 'auto' ? aspectRatios[ratio] : 'min-h-[200px]'}`}>
+                  <div className="text-center p-6">
+                    <div className="text-4xl mb-2">🖼️</div>
+                    <div className="text-sm font-medium">Click to Add Image</div>
+                    <div className="text-xs mt-1">Set image URL in properties panel →</div>
+                  </div>
+                </div>
+                {imageWidget.caption && (
+                  <p className="text-sm text-gray-600 mt-2 italic">{imageWidget.caption}</p>
+                )}
+              </div>
+            ) : (
+              <div className={alignmentClasses[alignment]}>
+                <div className="inline-block">
+                  <div className="relative group">
+                    {imageWidget.link && (
+                      <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-xs z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                        🔗 Linked
+                      </div>
+                    )}
+                    <img 
+                      key={imageWidget.src} // Force re-mount when src changes
+                      src={imageWidget.src} 
+                      alt={imageWidget.alt}
+                      className={`rounded ${widthClasses[width]} ${ratio !== 'auto' ? aspectRatios[ratio] : ''}`}
+                      style={{ 
+                        objectFit: objectFit,
+                        maxWidth: '100%',
+                        height: ratio === 'auto' ? 'auto' : undefined
+                      }}
+                      onLoad={(e) => {
+                        // Reset error state on successful load
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'block'
+                        const placeholder = target.nextElementSibling as HTMLElement
+                        if (placeholder) {
+                          placeholder.style.display = 'none'
+                        }
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const placeholder = target.nextElementSibling as HTMLElement
+                        if (placeholder) {
+                          placeholder.style.display = 'flex'
+                        }
+                      }}
+                    />
+                    <div 
+                      className={`bg-red-50 border-2 border-dashed border-red-200 rounded-lg flex items-center justify-center text-red-500 ${ratio !== 'auto' ? aspectRatios[ratio] : 'min-h-[200px]'} ${widthClasses[width]}`}
+                      style={{ display: 'none' }}
+                    >
+                      <div className="text-center p-6">
+                        <div className="text-4xl mb-2">❌</div>
+                        <div className="text-sm font-medium">Failed to Load Image</div>
+                        <div className="text-xs mt-1">Check image URL in properties →</div>
+                      </div>
+                    </div>
+                  </div>
+                  {imageWidget.caption && (
+                    <p className="text-sm text-gray-600 mt-2 italic">{imageWidget.caption}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </SkinWrap>
       )
+    }
     case 'html':
       return (
         <>
@@ -773,16 +913,36 @@ function buildWidget(item: SpecItem): Widget {
         type: 'heading',
         text: 'Your Heading Text',
         level: 2,
-        align: 'left'
+        align: 'left',
+        style: 'default',
+        color: 'default',
+        size: 'auto',
+        fontStyle: {
+          bold: true,
+          italic: false,
+          underline: false,
+          strikethrough: false
+        },
+        icon: {
+          enabled: false,
+          position: 'left',
+          emoji: '🎯'
+        },
+        spacing: 'normal'
       } as HeadingWidget;
     
     case 'image':
       return {
         ...baseWidget,
         type: 'image',
-        src: 'https://via.placeholder.com/400x200',
-        alt: 'Sample image',
-        ratio: '16:9'
+        src: '', // Start with empty src to show placeholder
+        alt: 'Image description',
+        ratio: '16:9',
+        caption: '',
+        link: '',
+        alignment: 'center',
+        width: 'full',
+        objectFit: 'cover'
       } as ImageWidget;
     
     case 'navbar':

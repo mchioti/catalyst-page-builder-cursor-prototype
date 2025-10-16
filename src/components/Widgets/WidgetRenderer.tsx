@@ -90,18 +90,122 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget }> = ({ widget }) => {
 const ImageWidgetRenderer: React.FC<{ widget: ImageWidget }> = ({ widget }) => {
   const aspectRatios = {
     '1:1': 'aspect-square',
-    '4:3': 'aspect-4/3',
+    '4:3': 'aspect-4/3', 
     '3:4': 'aspect-3/4',
-    '16:9': 'aspect-video'
+    '16:9': 'aspect-video',
+    'auto': ''
   }
   
-  return (
+  const alignmentClasses = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  }
+  
+  const widthClasses = {
+    auto: 'w-auto',
+    small: 'w-1/4',
+    medium: 'w-1/2', 
+    large: 'w-3/4',
+    full: 'w-full'
+  }
+  
+  const alignment = widget.alignment || 'center'
+  const width = widget.width || 'full'
+  const objectFit = widget.objectFit || 'cover'
+  const ratio = widget.ratio || 'auto'
+  
+  // Show placeholder if no image source
+  if (!widget.src || widget.src.trim() === '') {
+    return (
+      <div className={`${alignmentClasses[alignment]} ${widthClasses[width]} mx-auto`}>
+        <div className={`bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 ${ratio !== 'auto' ? aspectRatios[ratio] : 'min-h-[200px]'}`}>
+          <div className="text-center p-6">
+            <div className="text-4xl mb-2">🖼️</div>
+            <div className="text-sm font-medium">No Image Selected</div>
+            <div className="text-xs mt-1">Add an image URL in properties</div>
+          </div>
+        </div>
+        {widget.caption && (
+          <p className="text-sm text-gray-600 mt-2 italic">{widget.caption}</p>
+        )}
+      </div>
+    )
+  }
+  
+  const imageElement = (
     <img 
+      key={widget.src} // Force re-mount when src changes
       src={widget.src} 
       alt={widget.alt}
-      className={`w-full object-cover rounded ${widget.ratio ? aspectRatios[widget.ratio as keyof typeof aspectRatios] : ''}`}
+      className={`rounded ${widthClasses[width]} ${ratio !== 'auto' ? aspectRatios[ratio] : ''}`}
+      style={{ 
+        objectFit: objectFit,
+        maxWidth: '100%',
+        height: ratio === 'auto' ? 'auto' : undefined
+      }}
+      onLoad={(e) => {
+        // Reset error state on successful load
+        const target = e.target as HTMLImageElement
+        target.style.display = 'block'
+        const placeholder = target.nextElementSibling as HTMLElement
+        if (placeholder) {
+          placeholder.style.display = 'none'
+        }
+      }}
+      onError={(e) => {
+        const target = e.target as HTMLImageElement
+        target.style.display = 'none'
+        // Show error placeholder
+        const placeholder = target.nextElementSibling as HTMLElement
+        if (placeholder) {
+          placeholder.style.display = 'flex'
+        }
+      }}
     />
   )
+  
+  // Error placeholder (hidden by default)
+  const errorPlaceholder = (
+    <div 
+      className={`bg-red-50 border-2 border-dashed border-red-200 rounded-lg flex items-center justify-center text-red-500 ${ratio !== 'auto' ? aspectRatios[ratio] : 'min-h-[200px]'} ${widthClasses[width]}`}
+      style={{ display: 'none' }}
+    >
+      <div className="text-center p-6">
+        <div className="text-4xl mb-2">❌</div>
+        <div className="text-sm font-medium">Failed to Load Image</div>
+        <div className="text-xs mt-1">Check image URL</div>
+      </div>
+    </div>
+  )
+  
+  const content = (
+    <div className={alignmentClasses[alignment]}>
+      <div className="inline-block">
+        {imageElement}
+        {errorPlaceholder}
+        {widget.caption && (
+          <p className="text-sm text-gray-600 mt-2 italic">{widget.caption}</p>
+        )}
+      </div>
+    </div>
+  )
+  
+  // Wrap with link if provided
+  if (widget.link && widget.link.trim() !== '') {
+    return (
+      <a 
+        href={widget.link}
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="block hover:opacity-90 transition-opacity"
+      >
+        {content}
+      </a>
+    )
+  }
+  
+  return content
 }
 
 // Navbar Widget Component
@@ -188,11 +292,94 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
     right: 'text-right'
   }
   
+  const colorClasses = {
+    default: 'text-gray-900',
+    primary: 'text-blue-600',
+    secondary: 'text-green-600', 
+    accent: 'text-orange-600',
+    muted: 'text-gray-500'
+  }
+  
+  const sizeClasses = {
+    small: 'text-lg',
+    medium: 'text-xl', 
+    large: 'text-2xl',
+    xl: 'text-4xl',
+    auto: ''
+  }
+  
+  // Semantic size defaults based on heading level
+  const getSemanticDefaultSize = (level: number): 'small' | 'medium' | 'large' | 'xl' => {
+    switch (level) {
+      case 1: return 'xl'      // H1 → Extra Large
+      case 2: return 'large'   // H2 → Large  
+      case 3: return 'medium'  // H3 → Medium
+      case 4: return 'small'   // H4 → Small
+      case 5: return 'small'   // H5 → Small
+      case 6: return 'small'   // H6 → Small
+      default: return 'medium'
+    }
+  }
+  
+  const spacingClasses = {
+    tight: 'mb-2',
+    normal: 'mb-4',
+    loose: 'mb-6'
+  }
+  
+  const getStyleClasses = () => {
+    const style = widget.style || 'default'
+    
+    switch (style) {
+      case 'bordered-left':
+        return 'border-l-4 border-current pl-4'
+      case 'underlined':
+        return 'border-b-2 border-current pb-2 inline-block'
+      case 'highlighted':
+        return 'bg-gradient-to-r from-yellow-100 to-yellow-50 px-3 py-2 rounded'
+      case 'decorated':
+        return 'relative'
+      case 'gradient':
+        return 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'
+      default:
+        return ''
+    }
+  }
+  
   const HeadingTag = `h${widget.level}` as keyof React.JSX.IntrinsicElements
   
+  const getFontStyleClasses = () => {
+    const styles = []
+    if (widget.fontStyle?.bold) styles.push('font-bold')
+    if (widget.fontStyle?.italic) styles.push('italic')
+    if (widget.fontStyle?.underline) styles.push('underline')
+    if (widget.fontStyle?.strikethrough) styles.push('line-through')
+    return styles.join(' ')
+  }
+  
+  const headingClasses = [
+    getStyleClasses(),
+    getFontStyleClasses(),
+    alignClasses[widget.align || 'left'],
+    widget.size === 'auto' 
+      ? sizeClasses[getSemanticDefaultSize(widget.level)]
+      : sizeClasses[widget.size || 'auto'],
+    colorClasses[widget.color || 'default'],
+    spacingClasses[widget.spacing || 'normal']
+  ].filter(Boolean).join(' ')
+  
   return (
-    <HeadingTag className={`font-bold ${alignClasses[widget.align || 'left']}`}>
+    <HeadingTag className={headingClasses}>
+      {widget.icon?.enabled && widget.icon?.position === 'left' && (
+        <span className="mr-2">{widget.icon?.emoji || '🎯'}</span>
+      )}
       {widget.text}
+      {widget.icon?.enabled && widget.icon?.position === 'right' && (
+        <span className="ml-2">{widget.icon?.emoji || '✨'}</span>
+      )}
+      {widget.style === 'decorated' && (
+        <div className="absolute -bottom-2 left-0 w-12 h-0.5 bg-current opacity-60"></div>
+      )}
     </HeadingTag>
   )
 }
