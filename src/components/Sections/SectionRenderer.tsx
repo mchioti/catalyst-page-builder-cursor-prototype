@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import { 
   type Widget,
   type WidgetSection, 
-  type LayoutArea,
   type ContentBlockLayout,
   isSection 
 } from '../../types/widgets'
@@ -167,7 +166,6 @@ export function SectionRenderer({
   setActiveWidgetToolbar,
   activeDropZone,
   showToast,
-  instanceId,
   usePageStore
 }: { 
   section: WidgetSection
@@ -180,7 +178,6 @@ export function SectionRenderer({
   setActiveWidgetToolbar: (value: string | null) => void
   activeDropZone: string | null
   showToast: (message: string, type: 'success' | 'error') => void
-  instanceId: string
   usePageStore: any // Zustand store hook
 }) {
   const [showSaveModal, setShowSaveModal] = useState(false)

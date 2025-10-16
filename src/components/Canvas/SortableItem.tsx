@@ -22,7 +22,6 @@ interface SortableItemProps {
   setActiveWidgetToolbar: (value: string | null) => void
   activeDropZone: string | null
   showToast: (message: string, type: 'success' | 'error') => void
-  instanceId: string
   usePageStore: any // TODO: Type this properly when extracting store
   InteractiveWidgetRenderer: any // TODO: Type this properly
 }
@@ -38,7 +37,6 @@ export function SortableItem({
   setActiveWidgetToolbar,
   activeDropZone,
   showToast,
-  instanceId,
   usePageStore,
   InteractiveWidgetRenderer
 }: SortableItemProps) {
@@ -108,7 +106,6 @@ export function SortableItem({
             setActiveWidgetToolbar={setActiveWidgetToolbar}
             activeDropZone={activeDropZone}
             showToast={showToast}
-            instanceId={instanceId}
             usePageStore={usePageStore}
           />
         </div>
