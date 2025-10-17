@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { nanoid } from 'nanoid'
 import { X } from 'lucide-react'
 import { getAvailableOptionsForContentType, getConfigForContentType } from '../../utils/publicationCardConfigs'
 import type { PublicationCardConfig } from '../../types'
@@ -41,7 +42,7 @@ export function PublicationCards({ usePageStore }: PublicationCardsProps) {
     if (!variantName.trim()) return
     
     const newVariant = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       name: variantName.trim(),
       description: `${selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)} card variant`,
       config: { ...editingConfig },

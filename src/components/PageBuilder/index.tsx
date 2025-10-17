@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { nanoid } from 'nanoid'
 import {
   DndContext,
   useSensors,
@@ -805,7 +806,7 @@ function SectionsContent({ showToast, usePageStore }: {
   // Create a new section with the specified layout and default areas
   const createSection = (layout: ContentBlockLayout, name: string) => {
     const newSection: CanvasItem = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       name: name,
       type: 'content-block',
       layout: layout,
@@ -818,37 +819,37 @@ function SectionsContent({ showToast, usePageStore }: {
   const createAreasForLayout = (layout: ContentBlockLayout) => {
     switch (layout) {
       case 'one-column':
-        return [{ id: crypto.randomUUID(), name: 'Content', widgets: [] }]
+        return [{ id: nanoid(), name: 'Content', widgets: [] }]
       
       case 'two-columns':
         return [
-          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+          { id: nanoid(), name: 'Left Column', widgets: [] },
+          { id: nanoid(), name: 'Right Column', widgets: [] }
         ]
       
       case 'three-columns':
         return [
-          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Center Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+          { id: nanoid(), name: 'Left Column', widgets: [] },
+          { id: nanoid(), name: 'Center Column', widgets: [] },
+          { id: nanoid(), name: 'Right Column', widgets: [] }
         ]
       
       case 'hero-with-buttons':
         return [
-          { id: crypto.randomUUID(), name: 'Hero Content', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Button Row', widgets: [] }
+          { id: nanoid(), name: 'Hero Content', widgets: [] },
+          { id: nanoid(), name: 'Button Row', widgets: [] }
         ]
       
       case 'header-plus-grid':
         return [
-          { id: crypto.randomUUID(), name: 'Header', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Left Card', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Center Card', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right Card', widgets: [] }
+          { id: nanoid(), name: 'Header', widgets: [] },
+          { id: nanoid(), name: 'Left Card', widgets: [] },
+          { id: nanoid(), name: 'Center Card', widgets: [] },
+          { id: nanoid(), name: 'Right Card', widgets: [] }
         ]
       
       default:
-        return [{ id: crypto.randomUUID(), name: 'Content', widgets: [] }]
+        return [{ id: nanoid(), name: 'Content', widgets: [] }]
     }
   }
 
@@ -879,7 +880,7 @@ function SectionsContent({ showToast, usePageStore }: {
     
     // Add placeholder heading widget to hero content area (transparent background)
     const headingWidget = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'heading' as const,
       sectionId: heroSection.id,
       skin: 'minimal' as const,
@@ -896,7 +897,7 @@ function SectionsContent({ showToast, usePageStore }: {
 
     // Add placeholder text widget (transparent background for blue gradient)
     const textWidget = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'text' as const,
       sectionId: heroSection.id,
       skin: 'minimal' as const,
@@ -906,7 +907,7 @@ function SectionsContent({ showToast, usePageStore }: {
 
     // Add placeholder button widgets to button row
     const primaryButton = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'button' as const,
       sectionId: heroSection.id,
       skin: 'minimal' as const,
@@ -917,7 +918,7 @@ function SectionsContent({ showToast, usePageStore }: {
     }
 
     const secondaryButton = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'button' as const,
       sectionId: heroSection.id,
       skin: 'minimal' as const,
@@ -946,7 +947,7 @@ function SectionsContent({ showToast, usePageStore }: {
     
     // Add main heading
     const mainHeading = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'heading' as const,
       sectionId: featuresSection.id,
       skin: 'minimal' as const,
@@ -963,7 +964,7 @@ function SectionsContent({ showToast, usePageStore }: {
 
     // Create 3 text widgets for research areas (as agreed) with card layout
     const leftText = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'text' as const,
       sectionId: featuresSection.id,
       skin: 'minimal' as const,
@@ -978,7 +979,7 @@ function SectionsContent({ showToast, usePageStore }: {
     }
 
     const centerText = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'text' as const, 
       sectionId: featuresSection.id,
       skin: 'minimal' as const,
@@ -993,7 +994,7 @@ function SectionsContent({ showToast, usePageStore }: {
     }
 
     const rightText = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       type: 'text' as const,
       sectionId: featuresSection.id,
       skin: 'minimal' as const, 

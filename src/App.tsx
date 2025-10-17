@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import React from 'react'
+import { nanoid } from 'nanoid'
 import { arrayMove } from '@dnd-kit/sortable'
 import { ChevronDown, Building2, Settings, X, Plus, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Trash2, Info } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
@@ -895,7 +896,7 @@ function InteractiveWidgetRenderer({
 // Helper function to build widgets from library items
 function buildWidget(item: SpecItem): Widget {
   const baseWidget = {
-    id: crypto.randomUUID(),
+    id: nanoid(),
     skin: (item.skin as Skin) || 'minimal'
   };
 
@@ -1859,7 +1860,7 @@ const usePageStore = create<PageState>((set, get) => ({
     if (!template) return state
     const duplicate = {
       ...template,
-      id: crypto.randomUUID(),
+      id: nanoid(),
       name: `${template.name} (Copy)`,
       version: '1.0.0',
       createdAt: new Date(),
@@ -1934,7 +1935,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     // Create new section with layout
     const newSection: WidgetSection = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       name: 'Section',
       type: 'content-block',
       layout,
@@ -1945,43 +1946,43 @@ const usePageStore = create<PageState>((set, get) => ({
     switch (layout) {
       case 'one-column':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Content', widgets: [] }
+          { id: nanoid(), name: 'Content', widgets: [] }
         ]
         break
       case 'two-columns':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+          { id: nanoid(), name: 'Left Column', widgets: [] },
+          { id: nanoid(), name: 'Right Column', widgets: [] }
         ]
         break
       case 'three-columns':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Center Column', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+          { id: nanoid(), name: 'Left Column', widgets: [] },
+          { id: nanoid(), name: 'Center Column', widgets: [] },
+          { id: nanoid(), name: 'Right Column', widgets: [] }
         ]
         break
       case 'one-third-left':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Left (1/3)', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right (2/3)', widgets: [] }
+          { id: nanoid(), name: 'Left (1/3)', widgets: [] },
+          { id: nanoid(), name: 'Right (2/3)', widgets: [] }
         ]
         break
       case 'one-third-right':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Left (2/3)', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Right (1/3)', widgets: [] }
+          { id: nanoid(), name: 'Left (2/3)', widgets: [] },
+          { id: nanoid(), name: 'Right (1/3)', widgets: [] }
         ]
         break
       case 'vertical':
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Top', widgets: [] },
-          { id: crypto.randomUUID(), name: 'Bottom', widgets: [] }
+          { id: nanoid(), name: 'Top', widgets: [] },
+          { id: nanoid(), name: 'Bottom', widgets: [] }
         ]
         break
       default:
         newSection.areas = [
-          { id: crypto.randomUUID(), name: 'Content', widgets: [] }
+          { id: nanoid(), name: 'Content', widgets: [] }
         ]
     }
     

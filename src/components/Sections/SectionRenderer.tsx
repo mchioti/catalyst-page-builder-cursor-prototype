@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { nanoid } from 'nanoid'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import { 
@@ -89,7 +90,7 @@ export function DraggableWidgetInSection({
                 e.stopPropagation()
                 // Duplicate widget logic
                 const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                const duplicatedWidget = { ...widget, id: crypto.randomUUID() }
+                const duplicatedWidget = { ...widget, id: nanoid() }
                 
                 const updatedCanvasItems = canvasItems.map((canvasItem: any) => {
                   if (isSection(canvasItem)) {
@@ -288,14 +289,14 @@ export function SectionRenderer({
       const widgetCount = section.areas.reduce((count, area) => count + area.widgets.length, 0)
       
       const customSection = {
-        id: crypto.randomUUID(),
+        id: nanoid(),
         name: sectionName.trim(),
         description: sectionDescription.trim() || 'Custom saved section',
         widgets: section.areas.flatMap(area => area.widgets), // Store flattened widget list for easier counting
         createdAt: new Date(),
         section: {
           ...section,
-          id: crypto.randomUUID() // Generate new ID for the saved section
+          id: nanoid() // Generate new ID for the saved section
         }
       }
       addCustomSection(customSection)
@@ -314,14 +315,14 @@ export function SectionRenderer({
     
     if (sectionIndex !== -1) {
       const duplicatedSection = JSON.parse(JSON.stringify(section))
-      duplicatedSection.id = crypto.randomUUID()
+      duplicatedSection.id = nanoid()
       // Update all widget IDs in the duplicated section
       duplicatedSection.areas = duplicatedSection.areas.map((area: any) => ({
         ...area,
-        id: crypto.randomUUID(),
+        id: nanoid(),
         widgets: area.widgets.map((widget: any) => ({
           ...widget,
-          id: crypto.randomUUID(),
+          id: nanoid(),
           sectionId: duplicatedSection.id
         }))
       }))

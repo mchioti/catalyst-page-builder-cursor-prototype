@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { nanoid } from 'nanoid'
 import { X, Palette } from 'lucide-react'
 
 // TODO: Add proper type imports when extracting store
@@ -77,7 +78,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
     } : websiteData.branding
 
     const newWebsite: Website = {
-      id: crypto.randomUUID(),
+      id: nanoid(),
       name: websiteData.name,
       domain: `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com`, // Auto-generate from name
       themeId: websiteData.themeId,

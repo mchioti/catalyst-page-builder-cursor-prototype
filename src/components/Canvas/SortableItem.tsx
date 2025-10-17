@@ -1,4 +1,5 @@
 import React from 'react'
+import { nanoid } from 'nanoid'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Copy, Edit, Trash2 } from 'lucide-react'
@@ -142,7 +143,7 @@ export function SortableItem({
                   const { replaceCanvasItems, canvasItems } = usePageStore.getState()
                   const itemIndex = canvasItems.findIndex((canvasItem: CanvasItem) => canvasItem.id === item.id)
                   if (itemIndex !== -1) {
-                    const duplicatedWidget = { ...item, id: crypto.randomUUID() }
+                    const duplicatedWidget = { ...item, id: nanoid() }
                     const newCanvasItems = [...canvasItems]
                     newCanvasItems.splice(itemIndex + 1, 0, duplicatedWidget)
                     replaceCanvasItems(newCanvasItems)
