@@ -7,6 +7,15 @@ export type WidgetBase = {
   type: string
   skin: Skin
   sectionId?: string
+  layout?: {
+    variant?: 'default' | 'card' | 'bordered' | 'elevated'
+    padding?: 'none' | 'small' | 'medium' | 'large'
+    margin?: 'none' | 'small' | 'medium' | 'large'
+    background?: 'transparent' | 'white' | 'gray-50' | 'gray-100'
+    shadow?: 'none' | 'small' | 'medium' | 'large'
+    rounded?: 'none' | 'small' | 'medium' | 'large'
+    border?: 'none' | 'light' | 'medium' | 'heavy'
+  }
 }
 
 export type TextWidget = WidgetBase & { type: 'text'; text: string; align?: 'left'|'center'|'right' }
@@ -43,14 +52,6 @@ export type HeadingWidget = WidgetBase & {
     emoji?: string;
   };
   spacing?: 'tight' | 'normal' | 'loose';
-}
-export type ButtonWidget = WidgetBase & { 
-  type: 'button'; 
-  text: string; 
-  variant: 'solid' | 'outline' | 'ghost';
-  size: 'small' | 'medium' | 'large';
-  url?: string;
-  onClick?: string;
 }
 
 // Publication Card configuration types
@@ -136,10 +137,19 @@ export type PublicationDetailsWidget = WidgetBase & {
   }
 }
 
+export type ButtonWidget = WidgetBase & {
+  type: 'button'
+  text: string
+  href: string
+  variant: 'primary' | 'secondary' | 'outline' | 'link'
+  size: 'small' | 'medium' | 'large'
+  target?: '_blank' | '_self'
+}
+
 export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget
 
 // Layout types for widget sections
-export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical'
+export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'
 
 export type LayoutArea = {
   id: string

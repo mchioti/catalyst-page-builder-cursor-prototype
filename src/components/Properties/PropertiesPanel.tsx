@@ -34,7 +34,7 @@ interface PropertiesPanelProps {
   onSaveSchema: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancelSchema: () => void
   usePageStore: any  // TODO: Type this properly when extracting store
-  SchemaFormEditor: React.ComponentType<{
+  SchemaFormEditor?: React.ComponentType<{
     schemaType: SchemaOrgType
     initialData?: Partial<SchemaObject>
     onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
@@ -53,7 +53,7 @@ export function PropertiesPanel({
   const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects } = usePageStore()
   
   // Show schema form if creating or editing schema
-  if (creatingSchemaType || selectedSchemaObject) {
+  if ((creatingSchemaType || selectedSchemaObject) && SchemaFormEditor) {
     const schemaType = creatingSchemaType || selectedSchemaObject?.type
     if (schemaType) {
       return (

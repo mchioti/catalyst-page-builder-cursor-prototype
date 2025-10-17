@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
   DndContext,
   useSensors,
@@ -48,15 +48,12 @@ import type { EditingContext, MockLiveSiteRoute } from '../../types'
 interface PageBuilderProps {
   usePageStore: any // TODO: Type this properly when extracting store
   buildWidget: (item: any) => Widget
-  SectionsContent: React.ComponentType<{ showToast: (message: string, type: 'success' | 'error') => void }>
-  DIYZoneContent: React.ComponentType<{ showToast: (message: string, type: 'success' | 'error') => void }>
-  SchemaContentTab: React.ComponentType<{ onCreateSchema: (type: SchemaOrgType) => void }>
-  SchemaFormEditor: React.ComponentType<{
-    schemaType: SchemaOrgType
-    initialData?: Partial<SchemaObject>
-    onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
-    onCancel: () => void
-  }>
+  // SchemaFormEditor: React.ComponentType<{
+  //   schemaType: SchemaOrgType
+  //   initialData?: Partial<SchemaObject>
+  //   onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
+  //   onCancel: () => void
+  // }>
   TemplateCanvas: React.ComponentType<{
     editingContext: EditingContext
     mockLiveSiteRoute: MockLiveSiteRoute
@@ -71,15 +68,12 @@ type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
 export function PageBuilder({
   usePageStore,
   buildWidget,
-  SectionsContent,
-  DIYZoneContent,
-  SchemaContentTab,
-  SchemaFormEditor,
+  // SchemaFormEditor,
   TemplateCanvas,
   InteractiveWidgetRenderer,
   isSection
 }: PageBuilderProps) {
-  const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
+  // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute } = usePageStore()
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
@@ -254,18 +248,18 @@ export function PageBuilder({
       // Add widget to the specific section area
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
       // Type narrow to section item, which should have .areas
-      const targetSection = canvasItems.find(item => item.type === 'content-block' && item.id === sectionId)
+      const targetSection = canvasItems.find((item: CanvasItem) => item.type === 'content-block' && item.id === sectionId)
       const targetArea = (targetSection && 'areas' in targetSection)
         ? targetSection.areas.find((area: any) => area.id === areaId)
         : undefined
 
       console.log('🎯 Target area before:', targetArea?.widgets?.length || 0, 'widgets')
 
-      const updatedCanvasItems = canvasItems.map(canvasItem => {
+      const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
         if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
           return {
             ...canvasItem,
-            areas: canvasItem.areas.map(area => 
+            areas: canvasItem.areas.map((area: any) => 
               area.id === areaId 
                 ? { ...area, widgets: [...area.widgets, newWidget] }
                 : area
@@ -277,7 +271,7 @@ export function PageBuilder({
 
       // Type guard: ensure found section actually has areas before accessing
       const updatedSection = updatedCanvasItems.find(
-        item => item.id === sectionId && 'areas' in item && Array.isArray((item as any).areas)
+        (item: CanvasItem) => item.id === sectionId && 'areas' in item && Array.isArray((item as any).areas)
       ) as { areas: { id: string; widgets: any[] }[] } | undefined;
       
       const updatedArea = updatedSection?.areas.find(
@@ -312,7 +306,7 @@ export function PageBuilder({
       } else {
         const widgetId = active.id as string
         const { canvasItems } = usePageStore.getState()
-        const foundWidget = canvasItems.find(item => item.id === widgetId && !isSection(item))
+        const foundWidget = canvasItems.find((item: CanvasItem) => item.id === widgetId && !isSection(item))
         if (!foundWidget) {
           console.log('❌ Standalone widget not found')
           return
@@ -325,13 +319,13 @@ export function PageBuilder({
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
       
       // Remove widget from canvas and add to section area
-      const newCanvasItems = canvasItems.filter(item => item.id !== widget.id)
-      const updatedCanvasItems = newCanvasItems.map(canvasItem => {
+      const newCanvasItems = canvasItems.filter((item: CanvasItem) => item.id !== widget.id)
+      const updatedCanvasItems = newCanvasItems.map((canvasItem: CanvasItem) => {
         if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
           const updatedWidget = { ...widget, sectionId: sectionId }
           return {
             ...canvasItem,
-            areas: canvasItem.areas.map(area => 
+            areas: canvasItem.areas.map((area: any) => 
               area.id === areaId 
                 ? { ...area, widgets: [...area.widgets, updatedWidget] }
                 : area
@@ -366,14 +360,14 @@ export function PageBuilder({
         }
         
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-        const updatedCanvasItems = canvasItems.map(canvasItem => {
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
           if (canvasItem.type === 'content-block') {
             return {
               ...canvasItem,
-              areas: canvasItem.areas.map(area => {
+              areas: canvasItem.areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
-                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
+                  return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
                 }
                 // Add to target area with updated sectionId
                 if (area.id === toAreaId) {
@@ -385,7 +379,7 @@ export function PageBuilder({
             }
           }
           return canvasItem
-        }).filter((item): item is CanvasItem => item !== undefined)
+        }).filter((item: CanvasItem | undefined): item is CanvasItem => item !== undefined)
         replaceCanvasItems(updatedCanvasItems)
         console.log('✅ Widget moved between sections!')
         return
@@ -415,7 +409,7 @@ export function PageBuilder({
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         
         // Find the target section and its first area
-        const targetSection = canvasItems.find(item => item.id === targetSectionId && item.type === 'content-block') as WidgetSection
+        const targetSection = canvasItems.find((item: CanvasItem) => item.id === targetSectionId && item.type === 'content-block') as WidgetSection
         if (!targetSection || !targetSection.areas.length) {
           console.log('❌ Target section not found or has no areas')
           return
@@ -424,14 +418,14 @@ export function PageBuilder({
         const firstAreaId = targetSection.areas[0].id
         console.log('🎯 Target section found, first area:', firstAreaId)
         
-        const updatedCanvasItems = canvasItems.map(canvasItem => {
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
           if (canvasItem.type === 'content-block') {
             return {
               ...canvasItem,
-              areas: canvasItem.areas.map(area => {
+              areas: canvasItem.areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
-                  return { ...area, widgets: area.widgets.filter(w => w.id !== draggedWidget.id) }
+                  return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
                 }
                 // Add to target area (first area of target section)
                 if (area.id === firstAreaId) {
@@ -477,8 +471,8 @@ export function PageBuilder({
       
       if (activeItemId !== targetId) {
         const { moveItem } = usePageStore.getState()
-        const oldIndex = canvasItems.findIndex((item) => item.id === activeItemId)
-        const newIndex = canvasItems.findIndex((item) => item.id === targetId)
+        const oldIndex = canvasItems.findIndex((item: CanvasItem) => item.id === activeItemId)
+        const newIndex = canvasItems.findIndex((item: CanvasItem) => item.id === targetId)
         
         console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, targetId, originalOverId: over.id })
         
@@ -525,14 +519,14 @@ export function PageBuilder({
     console.log('🖱️ Widget clicked for properties:', { widgetId })
     
     // Find the widget to check its sectionId - use same logic as Properties Panel
-    let widget: Widget | undefined = canvasItems.find(item => item.id === widgetId && !isSection(item)) as Widget
+    let widget: Widget | undefined = canvasItems.find((item: CanvasItem) => item.id === widgetId && !isSection(item)) as Widget
     
     // If not found at canvas level, search within section areas
     if (!widget) {
       for (const canvasItem of canvasItems) {
         if (isSection(canvasItem)) {
           for (const area of canvasItem.areas) {
-            const foundWidget = area.widgets.find(w => w.id === widgetId)
+            const foundWidget = area.widgets.find((w: Widget) => w.id === widgetId)
             if (foundWidget) {
               widget = foundWidget
               break
@@ -608,7 +602,7 @@ export function PageBuilder({
           
           <div className="flex-1 flex flex-col overflow-y-auto p-4">
             {leftSidebarTab === 'library' && <WidgetLibrary usePageStore={usePageStore} buildWidget={buildWidget} />}
-            {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} />}
+            {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} usePageStore={usePageStore} />}
             {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
             {leftSidebarTab === 'schema-content' && <SchemaContentTab onCreateSchema={handleCreateSchema} />}
           </div>
@@ -656,7 +650,7 @@ export function PageBuilder({
             />
             
             {/* Regular Page Editing Context - Show minimal info */}
-            {usePageStore(state => state.editingContext) === 'page' && (
+            {usePageStore((state: any) => state.editingContext) === 'page' && (
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
                   Editing: <strong>Wiley Online Library Homepage</strong>
@@ -685,7 +679,7 @@ export function PageBuilder({
               ) : (
                 <SortableContext items={canvasItems} strategy={verticalListSortingStrategy}>
                   <div className="relative">
-                    {canvasItems.map((item, index) => (
+                    {canvasItems.map((item: CanvasItem, index: number) => (
                       <div key={item.id} className="relative group">
                         {/* Add Section Button Above */}
                         {item.id !== 'header-section' && (
@@ -710,7 +704,6 @@ export function PageBuilder({
                           setActiveWidgetToolbar={setActiveWidgetToolbar}
                           activeDropZone={activeDropZone}
                           showToast={showToast}
-                          instanceId={instanceId}
                           usePageStore={usePageStore}
                           InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                         />
@@ -748,7 +741,6 @@ export function PageBuilder({
             onSaveSchema={handleSaveSchema}
             onCancelSchema={handleCancelSchema}
             usePageStore={usePageStore}
-            SchemaFormEditor={SchemaFormEditor}
           />
         </div>
       </div>
@@ -780,6 +772,348 @@ export function PageBuilder({
       )}
       </div>
     </DndContext>
+  )
+}
+
+// DIYZoneContent Component - Placeholder for DIY zone functionality
+function DIYZoneContent({ showToast: _showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-gray-700">DIY Zone</h3>
+      <p className="text-sm text-gray-500">Custom components and saved sections coming soon...</p>
+    </div>
+  )
+}
+
+// SchemaContentTab Component - Placeholder for schema functionality  
+function SchemaContentTab({ onCreateSchema: _onCreateSchema }: { onCreateSchema: (schemaType: SchemaOrgType) => void }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-gray-700">Schema Content</h3>
+      <p className="text-sm text-gray-500">Schema.org integration coming soon...</p>
+    </div>
+  )
+}
+
+// SectionsContent Component - Manages different categories of sections
+function SectionsContent({ showToast, usePageStore }: { 
+  showToast: (message: string, type: 'success' | 'error') => void
+  usePageStore: any
+}) {
+  const { replaceCanvasItems, canvasItems } = usePageStore()
+
+  // Create a new section with the specified layout and default areas
+  const createSection = (layout: ContentBlockLayout, name: string) => {
+    const newSection: CanvasItem = {
+      id: crypto.randomUUID(),
+      name: name,
+      type: 'content-block',
+      layout: layout,
+      areas: createAreasForLayout(layout)
+    }
+    return newSection
+  }
+
+  // Create areas based on layout type
+  const createAreasForLayout = (layout: ContentBlockLayout) => {
+    switch (layout) {
+      case 'one-column':
+        return [{ id: crypto.randomUUID(), name: 'Content', widgets: [] }]
+      
+      case 'two-columns':
+        return [
+          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+        ]
+      
+      case 'three-columns':
+        return [
+          { id: crypto.randomUUID(), name: 'Left Column', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Center Column', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Right Column', widgets: [] }
+        ]
+      
+      case 'hero-with-buttons':
+        return [
+          { id: crypto.randomUUID(), name: 'Hero Content', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Button Row', widgets: [] }
+        ]
+      
+      case 'header-plus-grid':
+        return [
+          { id: crypto.randomUUID(), name: 'Header', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Left Card', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Center Card', widgets: [] },
+          { id: crypto.randomUUID(), name: 'Right Card', widgets: [] }
+        ]
+      
+      default:
+        return [{ id: crypto.randomUUID(), name: 'Content', widgets: [] }]
+    }
+  }
+
+  // Add a section to the canvas
+  const addSectionToCanvas = (layout: ContentBlockLayout, name: string) => {
+    const newSection = createSection(layout, name)
+    replaceCanvasItems([...canvasItems, newSection])
+    showToast(`${name} section added successfully!`, 'success')
+  }
+
+  // Create prefab sections with placeholder content
+  const createHeroPrefab = () => {
+    const heroSection = createSection('hero-with-buttons', 'Hero Section')
+    
+    // Add Mock Live Site styling to match the blue hero
+    heroSection.background = {
+      type: 'gradient',
+      gradient: {
+        type: 'linear',
+        direction: 'to bottom',
+        stops: [
+          { color: '#1e40af', position: '0%' },
+          { color: '#3b82f6', position: '100%' }
+        ]
+      },
+      opacity: 1
+    }
+    
+    // Add placeholder heading widget to hero content area (transparent background)
+    const headingWidget = {
+      id: crypto.randomUUID(),
+      type: 'heading' as const,
+      sectionId: heroSection.id,
+      skin: 'minimal' as const,
+      text: 'Wiley Online Library',
+      level: 1 as const,
+      align: 'center' as const,
+      style: 'default' as const,
+      color: 'primary' as const,
+      size: 'xl' as const,
+      fontStyle: { bold: true, italic: false, underline: false, strikethrough: false },
+      icon: { enabled: false, position: 'left' as const, emoji: '🚀' },
+      spacing: 'normal' as const
+    }
+
+    // Add placeholder text widget (transparent background for blue gradient)
+    const textWidget = {
+      id: crypto.randomUUID(),
+      type: 'text' as const,
+      sectionId: heroSection.id,
+      skin: 'minimal' as const,
+      text: 'Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.',
+      align: 'center' as const
+    }
+
+    // Add placeholder button widgets to button row
+    const primaryButton = {
+      id: crypto.randomUUID(),
+      type: 'button' as const,
+      sectionId: heroSection.id,
+      skin: 'minimal' as const,
+      text: 'Explore Journals',
+      href: '#',
+      variant: 'primary' as const,
+      size: 'large' as const
+    }
+
+    const secondaryButton = {
+      id: crypto.randomUUID(),
+      type: 'button' as const,
+      sectionId: heroSection.id,
+      skin: 'minimal' as const,
+      text: 'Browse Collections',
+      href: '#',
+      variant: 'secondary' as const,
+      size: 'large' as const
+    }
+
+    // Assign widgets to appropriate areas
+    heroSection.areas[0].widgets = [headingWidget, textWidget] // Hero Content
+    heroSection.areas[1].widgets = [primaryButton, secondaryButton] // Button Row
+
+    return heroSection
+  }
+
+  const createFeaturesPrefab = () => {
+    const featuresSection = createSection('header-plus-grid', 'Featured Research Section')
+    
+    // Add Mock Live Site styling to match the featured research cards  
+    featuresSection.background = {
+      type: 'color',
+      color: '#f8fafc',
+      opacity: 1
+    }
+    
+    // Add main heading
+    const mainHeading = {
+      id: crypto.randomUUID(),
+      type: 'heading' as const,
+      sectionId: featuresSection.id,
+      skin: 'minimal' as const,
+      text: 'Featured Research',
+      level: 2 as const,
+      align: 'center' as const,
+      style: 'default' as const,
+      color: 'default' as const,
+      size: 'large' as const,
+      fontStyle: { bold: true, italic: false, underline: false, strikethrough: false },
+      icon: { enabled: false, position: 'left' as const, emoji: '📚' },
+      spacing: 'normal' as const
+    }
+
+    // Create 3 text widgets for research areas (as agreed) with card layout
+    const leftText = {
+      id: crypto.randomUUID(),
+      type: 'text' as const,
+      sectionId: featuresSection.id,
+      skin: 'minimal' as const,
+      text: 'Latest in AI & Machine Learning\n\nCutting-edge research in artificial intelligence, neural networks, and computational learning theory.\n\nExplore Articles →',
+      align: 'left' as const,
+      layout: {
+        variant: 'card' as const,
+        padding: 'large' as const,
+        shadow: 'medium' as const,
+        rounded: 'medium' as const
+      }
+    }
+
+    const centerText = {
+      id: crypto.randomUUID(),
+      type: 'text' as const, 
+      sectionId: featuresSection.id,
+      skin: 'minimal' as const,
+      text: 'Computer Systems & Architecture\n\nBreakthrough discoveries in distributed systems, cloud computing, and hardware optimization.\n\nRead More →',
+      align: 'left' as const,
+      layout: {
+        variant: 'card' as const,
+        padding: 'large' as const,
+        shadow: 'medium' as const,
+        rounded: 'medium' as const
+      }
+    }
+
+    const rightText = {
+      id: crypto.randomUUID(),
+      type: 'text' as const,
+      sectionId: featuresSection.id,
+      skin: 'minimal' as const, 
+      text: 'Software Engineering Advances\n\nRevolutionary approaches to software development, testing, and quality assurance methodologies.\n\nView Research →',
+      align: 'left' as const,
+      layout: {
+        variant: 'card' as const,
+        padding: 'large' as const,
+        shadow: 'medium' as const,
+        rounded: 'medium' as const
+      }
+    }
+
+    // Assign widgets to areas: 1 Heading + 3 Text widgets
+    featuresSection.areas[0].widgets = [mainHeading] // Header
+    featuresSection.areas[1].widgets = [leftText] // Left Card
+    featuresSection.areas[2].widgets = [centerText] // Center Card
+    featuresSection.areas[3].widgets = [rightText] // Right Card
+
+    return featuresSection
+  }
+
+  const addPrefabSection = (type: 'hero' | 'features') => {
+    let section: CanvasItem
+    
+    if (type === 'hero') {
+      section = createHeroPrefab()
+    } else {
+      section = createFeaturesPrefab()
+    }
+
+    replaceCanvasItems([...canvasItems, section])
+    showToast(`${section.name} added with template content!`, 'success')
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Basic Sections */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Basic Sections
+        </h3>
+        <div className="grid grid-cols-1 gap-2">
+          <button
+            onClick={() => addSectionToCanvas('one-column', 'Single Column')}
+            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="font-medium text-sm">Single Column</div>
+            <div className="text-xs text-gray-500">Full-width content area</div>
+          </button>
+          
+          <button
+            onClick={() => addSectionToCanvas('two-columns', 'Two Columns')}
+            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="font-medium text-sm">Two Columns</div>
+            <div className="text-xs text-gray-500">Side-by-side layout</div>
+          </button>
+          
+          <button
+            onClick={() => addSectionToCanvas('three-columns', 'Three Columns')}
+            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="font-medium text-sm">Three Columns</div>
+            <div className="text-xs text-gray-500">Equal width columns</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Full Width Sections */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Lightbulb className="w-4 h-4" />
+          Full Width Sections
+        </h3>
+        <div className="grid grid-cols-1 gap-2">
+          <button
+            onClick={() => addSectionToCanvas('hero-with-buttons', 'Hero with Buttons')}
+            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="font-medium text-sm">Hero with Buttons</div>
+            <div className="text-xs text-gray-500">Hero content + button row</div>
+          </button>
+          
+          <button
+            onClick={() => addSectionToCanvas('header-plus-grid', 'Header + 3-Column Grid')}
+            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <div className="font-medium text-sm">Header + 3-Column Grid</div>
+            <div className="text-xs text-gray-500">Header with 3-card layout below</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Template-Ready Sections */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <BookOpen className="w-4 h-4" />
+          Template-Ready Sections
+        </h3>
+        <div className="grid grid-cols-1 gap-2">
+          <button
+            onClick={() => addPrefabSection('hero')}
+            className="p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+          >
+            <div className="font-medium text-sm text-blue-900">Hero Section</div>
+            <div className="text-xs text-blue-700">Full hero with heading, text, and action buttons</div>
+          </button>
+          
+          <button
+            onClick={() => addPrefabSection('features')}
+            className="p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors"
+          >
+            <div className="font-medium text-sm text-green-900">Featured Research</div>
+            <div className="text-xs text-green-700">Header with 3 research highlight cards</div>
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

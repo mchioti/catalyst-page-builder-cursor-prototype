@@ -198,6 +198,10 @@ export function SectionRenderer({
         return 'grid-cols-3 [&>:first-child]:col-span-2 [&>:last-child]:col-span-1'
       case 'vertical':
         return 'grid-cols-1'
+      case 'hero-with-buttons':
+        return 'grid-cols-1 gap-6'
+      case 'header-plus-grid':
+        return 'grid-cols-3 gap-6 [&>:first-child]:col-span-3'
       default:
         return 'grid-cols-1'
     }
@@ -249,17 +253,25 @@ export function SectionRenderer({
     return styles
   }
 
-  // Get section container classes with background awareness
+  // Get section container classes with background awareness and text color
   const getSectionContainerClasses = (section: WidgetSection) => {
     const hasBackground = section.background && section.background.type !== 'none'
     const baseClasses = 'group transition-all relative cursor-grab active:cursor-grabbing'
     
+    // Add text color for blue gradient backgrounds
+    const hasBlueBackground = section.background?.type === 'gradient' && 
+      section.background.gradient?.stops?.some(stop => 
+        stop.color.includes('#1e40af') || stop.color.includes('#3b82f6')
+      )
+    
+    const textColorClass = hasBlueBackground ? 'text-white' : ''
+    
     if (isSpecialSection) {
-      return `${baseClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''}`
+      return `${baseClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
     } else {
       // If section has custom background, use more neutral styling
       if (hasBackground) {
-        return `${baseClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20`
+        return `${baseClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20 ${textColorClass}`
       } else {
         return `${baseClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
       }
@@ -423,7 +435,11 @@ export function SectionRenderer({
               isSpecialSection 
                 ? '' 
                 : area.widgets.length === 0 
-                  ? `min-h-20 border-2 border-dashed rounded p-4 bg-white transition-all ${
+                  ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
+                      (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
+                        ? '' // Transparent for sections with background
+                        : 'bg-white' // White background for normal sections
+                    } ${
                       activeDropZone === `drop-${area.id}` 
                         ? 'border-green-400 bg-green-50 ring-2 ring-green-200' 
                         : isOver 
@@ -434,7 +450,9 @@ export function SectionRenderer({
                     ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
                     : activeDropZone === `drop-${area.id}` 
                       ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
-                      : 'bg-white rounded p-2'
+                      : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
+                        ? 'rounded p-2' // Transparent background to show section gradient/color/image
+                        : 'bg-white rounded p-2'
             }`}
           >
             {!isSpecialSection && area.widgets.length === 0 && (
@@ -462,20 +480,27 @@ export function SectionRenderer({
               </div>
             )}
             
-            {area.widgets.map((widget) => (
-              <DraggableWidgetInSection
-                key={widget.id}
-                widget={widget}
-                sectionId={section.id}
-                areaId={area.id}
-                activeSectionToolbar={activeSectionToolbar}
-                setActiveSectionToolbar={setActiveSectionToolbar}
-                activeWidgetToolbar={activeWidgetToolbar}
-                setActiveWidgetToolbar={setActiveWidgetToolbar}
-                onWidgetClick={onWidgetClick}
-                usePageStore={usePageStore}
-              />
-            ))}
+            <div className={`${
+              // Special layout for button areas - display buttons side by side
+              area.name === 'Button Row' || area.name === 'Button Area' || (area.widgets.length > 1 && area.widgets.every(w => w.type === 'button'))
+                ? 'flex flex-wrap gap-3 justify-center'
+                : 'space-y-2'
+            }`}>
+              {area.widgets.map((widget) => (
+                <DraggableWidgetInSection
+                  key={widget.id}
+                  widget={widget}
+                  sectionId={section.id}
+                  areaId={area.id}
+                  activeSectionToolbar={activeSectionToolbar}
+                  setActiveSectionToolbar={setActiveSectionToolbar}
+                  activeWidgetToolbar={activeWidgetToolbar}
+                  setActiveWidgetToolbar={setActiveWidgetToolbar}
+                  onWidgetClick={onWidgetClick}
+                  usePageStore={usePageStore}
+                />
+              ))}
+            </div>
           </div>
         )})}
       </div>

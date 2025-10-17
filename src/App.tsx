@@ -18,7 +18,7 @@ import { type LibraryItem as SpecItem } from './library'
 
 // Import specific types and constants from organized directories
 import { 
-  // Widget types
+// Widget types
   type Widget, type WidgetSection, type CanvasItem, isSection, 
   type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
@@ -131,7 +131,7 @@ function IssuesSidebar() {
   
   const errorCount = pageIssues.filter(i => i.severity === 'error').length
   const warningCount = pageIssues.filter(i => i.severity === 'warning').length
-  
+
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
       <button
@@ -147,7 +147,7 @@ function IssuesSidebar() {
             {errorCount > 0 && `${errorCount} errors`}
             {errorCount > 0 && warningCount > 0 && ', '}
             {warningCount > 0 && `${warningCount} warnings`}
-          </span>
+            </span>
           </div>
       </button>
       
@@ -184,8 +184,8 @@ function IssuesSidebar() {
                               <li key={idx}>{suggestion}</li>
                             ))}
                           </ul>
-        )}
-      </div>
+          )}
+        </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -195,7 +195,7 @@ function IssuesSidebar() {
                       >
                         <X className="w-3 h-3" />
                       </button>
-                    </div>
+      </div>
                   </div>
                 ))}
               </div>
@@ -566,7 +566,7 @@ function InteractiveWidgetRenderer({
                       src={imageWidget.src} 
                       alt={imageWidget.alt}
                       className={`rounded ${widthClasses[width]} ${ratio !== 'auto' ? aspectRatios[ratio] : ''}`}
-                      style={{ 
+              style={{ 
                         objectFit: objectFit,
                         maxWidth: '100%',
                         height: ratio === 'auto' ? 'auto' : undefined
@@ -847,9 +847,10 @@ function InteractiveWidgetRenderer({
     case 'button':
       const buttonWidget = widget as ButtonWidget
       const variantClasses = {
-        solid: 'bg-red-600 text-white hover:bg-red-700',
+        primary: 'bg-red-600 text-white hover:bg-red-700',
+        secondary: 'bg-gray-600 text-white hover:bg-gray-700',
         outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white',
-        ghost: 'text-red-600 hover:bg-red-50'
+        link: 'text-red-600 hover:text-red-700 underline hover:no-underline bg-transparent'
       }
       
       const sizeClasses = {
@@ -860,19 +861,19 @@ function InteractiveWidgetRenderer({
       
       const buttonClasses = `
         font-medium rounded transition-colors duration-200 cursor-pointer inline-block
-        ${variantClasses[buttonWidget.variant] || variantClasses.solid}
+        ${variantClasses[buttonWidget.variant] || variantClasses.primary}
         ${sizeClasses[buttonWidget.size] || sizeClasses.medium}
       `.trim()
       
       return (
         <SkinWrap skin={widget.skin}>
           <div className="flex items-center justify-center p-2">
-            {buttonWidget.url ? (
-              <a href={buttonWidget.url} className={buttonClasses}>
+            {buttonWidget.href ? (
+              <a href={buttonWidget.href} className={buttonClasses}>
                 {buttonWidget.text}
               </a>
             ) : (
-              <button className={buttonClasses} onClick={() => buttonWidget.onClick && eval(buttonWidget.onClick)}>
+              <button className={buttonClasses}>
                 {buttonWidget.text}
               </button>
             )}
@@ -961,9 +962,9 @@ function buildWidget(item: SpecItem): Widget {
         ...baseWidget,
         type: 'button',
         text: 'Button Text',
-        variant: 'solid',
+        variant: 'primary',
         size: 'medium',
-        url: '#'
+        href: '#'
       } as ButtonWidget;
     
     case 'html-block':
@@ -2453,7 +2454,7 @@ function DesignConsole() {
   }
 
   const isWebsiteExpanded = (websiteId: string) => expandedWebsites.has(websiteId)
-
+  
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white shadow-sm border-b border-slate-200">
@@ -2467,7 +2468,7 @@ function DesignConsole() {
               Back to Page Builder
             </button>
             <h1 className="text-xl font-semibold text-slate-800">Design System Console</h1>
-          </div>
+            </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setCurrentView('mock-live-site')}
@@ -2477,8 +2478,8 @@ function DesignConsole() {
               View Live Site
             </button>
           </div>
-        </div>
-      </div>
+                  </div>
+                </div>
 
       <div className="flex h-[calc(100vh-73px)]">
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
@@ -2498,7 +2499,7 @@ function DesignConsole() {
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Themes
-              </div>
+            </div>
             </div>
             <div className="space-y-1">
               {usedThemes.map((theme) => (
@@ -2510,7 +2511,7 @@ function DesignConsole() {
                     <div className="flex items-center gap-2">
                       <Palette className="w-4 h-4" />
                       <span className="font-medium">{theme.name}</span>
-                    </div>
+          </div>
                     <ChevronDown className={`w-4 h-4 transition-transform ${
                       isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
                     }`} />
@@ -2553,17 +2554,17 @@ function DesignConsole() {
                         <FileText className="w-4 h-4" />
                         Theme Templates
                       </button>
-                    </div>
+                        </div>
                   )}
-                </div>
-              ))}
-            </div>
-
+                      </div>
+                    ))}
+                  </div>
+                  
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Websites
-              </div>
-            </div>
+                            </div>
+                          </div>
             <div className="space-y-1">
               {websites.map((website) => (
                 <div key={website.id}>
@@ -2574,7 +2575,7 @@ function DesignConsole() {
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4" />
                       <span className="font-medium">{website.name}</span>
-                    </div>
+                        </div>
                     <ChevronDown className={`w-4 h-4 transition-transform ${
                       isWebsiteExpanded(website.id) ? 'transform rotate-180' : ''
                     }`} />
@@ -2633,13 +2634,13 @@ function DesignConsole() {
                 <List className="w-4 h-4" />
                 All Websites
               </button>
-            </div>
-
+                  </div>
+                  
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 System
-              </div>
-            </div>
+                          </div>
+                        </div>
             <div className="space-y-1">
               <button
                 onClick={() => setSiteManagerView('settings')}
@@ -2652,13 +2653,13 @@ function DesignConsole() {
                 <Cog className="w-5 h-5" />
                 Settings
               </button>
-            </div>
+                          </div>
           </nav>
-        </div>
+                        </div>
 
         <div className="flex-1 p-6 bg-slate-50">
           {siteManagerView === 'overview' && (
-            <div>
+                        <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Design System Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {usedThemes.map((theme) => (
@@ -2684,7 +2685,7 @@ function DesignConsole() {
                       >
                         Theme Templates →
                       </button>
-                    </div>
+                        </div>
                   </div>
                 ))}
                 {websites.slice(0, 3).map((website) => (
@@ -2725,32 +2726,32 @@ function DesignConsole() {
                   >
                     View All Websites →
                   </button>
-                </div>
-                </div>
-                </div>
-          )}
-          
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
           {siteManagerView === 'modernist-theme-theme-settings' && (
-            <div>
+                  <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
-              </div>
+                      </div>
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
-            </div>
+                      </div>
           )}
           {siteManagerView === 'modernist-theme-publication-cards' && (
-            <div>
+                      <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Predefined publication card designs with clean, minimalist styling and vibrant accents</p>
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
                   <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                </div>
-              </div>
+                      </div>
+                      </div>
               <ThemePublicationCards themeId="modernist-theme" />
-            </div>
+                    </div>
           )}
           {siteManagerView === 'modernist-theme-templates' && (
             <SiteManagerTemplates themeId="modernist-theme" />
@@ -2761,10 +2762,10 @@ function DesignConsole() {
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
-              </div>
+                            </div>
               <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
-            </div>
-          )}
+                    </div>
+                  )}
           {siteManagerView === 'classicist-theme-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -2776,33 +2777,33 @@ function DesignConsole() {
                 </div>
               </div>
               <ThemePublicationCards themeId="classicist-theme" />
-            </div>
-          )}
+              </div>
+            )}
           {siteManagerView === 'classicist-theme-templates' && (
             <SiteManagerTemplates themeId="classicist-theme" />
           )}
-          
+            
           {siteManagerView === 'curator-theme-theme-settings' && (
-            <div>
+                <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
-        </div>
+                    </div>
               <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
-      </div>
+                    </div>
           )}
           {siteManagerView === 'curator-theme-publication-cards' && (
-            <div>
+                    <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Predefined publication card designs with visually rich, image-forward styling and elegant typography</p>
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
                   <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Curator theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-    </div>
-              </div>
+                    </div>
+                    </div>
               <ThemePublicationCards themeId="curator-theme" />
-            </div>
+                  </div>
           )}
           {siteManagerView === 'curator-theme-templates' && (
             <SiteManagerTemplates themeId="curator-theme" />
@@ -2811,52 +2812,52 @@ function DesignConsole() {
           // Website-Specific Views
           // Wiley Online Library
           {siteManagerView === 'wiley-main-settings' && (
-            <div>
+                      <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Website Settings</h2>
                 <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-              </div>
+                      </div>
               <WebsiteSettings websiteId="wiley-main" />
-            </div>
+                      </div>
           )}
           {siteManagerView === 'wiley-main-publication-cards' && (
-            <div>
+                      <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design publication cards optimized for journals and books with taxonomy features</p>
-              </div>
+                      </div>
               <PublicationCards usePageStore={usePageStore} />
-            </div>
+                      </div>
           )}
           {siteManagerView === 'wiley-main-custom-templates' && (
-            <div>
+                      <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Custom Templates</h2>
                 <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-                </div>
+                      </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-              </div>
+                      </div>
             </div>
           )}
 
           // Wiley Research Hub
           {siteManagerView === 'research-hub-settings' && (
-            <div>
+                      <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
                 <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-        </div>
+                      </div>
               <WebsiteSettings websiteId="research-hub" />
-            </div>
-          )}
+              </div>
+            )}
           {siteManagerView === 'research-hub-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design publication cards optimized for research journals with simple organization</p>
-              </div>
+          </div>
               <PublicationCards usePageStore={usePageStore} />
             </div>
           )}
@@ -2865,12 +2866,12 @@ function DesignConsole() {
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Custom Templates</h2>
                 <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-                </div>
+            </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-                </div>
-              </div>
+          </div>
+        </div>
           )}
 
           // Journal of Advanced Science
@@ -2879,26 +2880,26 @@ function DesignConsole() {
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Website Settings</h2>
                 <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
-        </div>
+          </div>
               <WebsiteSettings websiteId="journal-of-science" />
-      </div>
+        </div>
           )}
           {siteManagerView === 'journal-of-science-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Design publication cards optimized for scientific journals and conferences with taxonomy features</p>
-    </div>
+      </div>
               <PublicationCards usePageStore={usePageStore} />
-            </div>
+        </div>
           )}
           {siteManagerView === 'journal-of-science-custom-templates' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Custom Templates</h2>
                 <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
               </div>
@@ -2919,1009 +2920,6 @@ function DesignConsole() {
     </div>
   )
 }
-
-// Left sidebar tabs
-// LeftSidebarTab type moved to PageBuilder component
-
-// Layout picker component
-// NOTE: LayoutPicker component moved to src/components/Canvas/LayoutPicker.tsx
-
-// NOTE: DraggableLibraryWidget component moved to src/components/Canvas/DraggableLibraryWidget.tsx
-
-// Library component to show widgets and sections with collapsible categories
-// NOTE: WidgetLibrary component moved to src/components/Library/WidgetLibrary.tsx
-
-// NOTE: PREFAB_SECTIONS is now defined at the top of the file to avoid hoisting issues
-
-// Sections Content component
-function SectionsContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
-  const { addSection, customSections, removeCustomSection } = usePageStore()
-  
-  const handleAddPrefabSection = (sectionKey: keyof typeof PREFAB_SECTIONS) => {
-    const prefab = PREFAB_SECTIONS[sectionKey]
-    const newSection = {
-      ...prefab,
-      id: crypto.randomUUID(),
-      // Ensure all nested items have unique IDs
-      areas: prefab.areas.map(area => ({
-        ...area,
-        id: crypto.randomUUID(),
-        widgets: area.widgets.map(widget => ({
-          ...widget,
-          id: crypto.randomUUID()
-        })) as any
-      }))
-    } as WidgetSection
-    addSection(newSection)
-  }
-
-  // Group sections by category
-  const sectionsByCategory = Object.entries(PREFAB_SECTIONS).reduce((acc, [key, section]) => {
-    const category = section.category
-    if (!acc[category]) acc[category] = []
-    acc[category].push([key, section])
-    return acc
-  }, {} as Record<string, Array<[string, any]>>)
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-4">Sections</h3>
-        <p className="text-sm text-gray-600 mb-4">Pre-fabricated layout patterns to accelerate page design</p>
-        
-        {Object.entries(sectionsByCategory).map(([categoryName, sections]) => (
-          <div key={categoryName} className="space-y-3 mb-6">
-            <h4 className="font-medium text-gray-700">{categoryName}</h4>
-            <div className="space-y-2">
-                  {sections.map(([key, section]) => (
-                    <button
-                      key={key}
-                      onClick={() => handleAddPrefabSection(key as keyof typeof PREFAB_SECTIONS)}
-                      className="block w-full text-left p-3 border border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Plus className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-gray-900">{section.name}</span>
-                      </div>
-                      <p className="text-sm text-gray-600">{section.description}</p>
-                    </button>
-                  ))}
-            </div>
-          </div>
-        ))}
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-700">Custom Sections</h4>
-            <span className="text-xs text-gray-500">{customSections.length} saved</span>
-          </div>
-          
-          {customSections.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-              <p className="text-sm text-gray-500">No custom sections yet</p>
-              <p className="text-xs text-gray-400 mt-1">Create sections on your page and save them for reuse</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {customSections.map((section) => (
-                <div key={section.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white">
-                  <div>
-                    <div className="font-medium text-gray-900">{section.name}</div>
-                    {section.description && (
-                      <div className="text-sm text-gray-500">{section.description}</div>
-                    )}
-                    <div className="text-xs text-gray-400">
-                      {section.widgets.length} widget{section.widgets.length !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => {
-                        const { addSection } = usePageStore.getState()
-                        // Create a copy of the section with new IDs
-                        const newSectionId = crypto.randomUUID()
-                        const sectionCopy: WidgetSection = {
-                          ...section.section, // Use the saved section structure
-                          id: newSectionId,
-                          areas: section.section.areas.map(area => ({
-                            ...area,
-                            id: crypto.randomUUID(),
-                            widgets: area.widgets.map(widget => ({
-                              ...widget,
-                              id: crypto.randomUUID(),
-                              sectionId: newSectionId
-                            }))
-                          }))
-                        }
-                        addSection(sectionCopy)
-                        
-                        // Show success notification
-                        const widgetCount = section.widgets.length
-                        showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
-                      }}
-                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                    >
-                      Use
-                    </button>
-                    <button 
-                      onClick={() => removeCustomSection(section.id)}
-                      className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// DIY Zone component
-function DIYZoneContent({ showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
-  const { addWidget, customSections, removeCustomSection } = usePageStore()
-  
-  const handleAddDIYWidget = (type: string) => {
-    let widget: Widget
-    
-    switch (type) {
-      case 'html-block':
-        widget = {
-          id: crypto.randomUUID(),
-          type: 'html',
-          skin: 'minimal',
-          htmlContent: '',
-          title: 'HTML Widget'
-        } as HTMLWidget
-        break
-      case 'code-block':
-        widget = {
-          id: crypto.randomUUID(),
-          type: 'text',
-          skin: 'modern',
-          text: '// Your code here\nconsole.log("Hello World");',
-          align: 'left'
-        } as TextWidget
-        break
-      default:
-        return
-    }
-    
-    addWidget(widget)
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-4">DIY Zone</h3>
-        <p className="text-sm text-gray-600 mb-4">Advanced tools for creating custom content</p>
-        
-        <div className="space-y-3 mb-6">
-          <h4 className="font-medium text-gray-700">DIY Widgets</h4>
-          <div className="space-y-2">
-            <DraggableLibraryWidget 
-              item={{ 
-                id: 'html-block', 
-                label: 'HTML Block', 
-                type: 'html-block', 
-                description: 'Custom HTML, CSS and JavaScript',
-                status: 'supported'
-              }}
-              isDIY={true}
-              usePageStore={usePageStore}
-              buildWidget={buildWidget}
-            />
-            <button
-              onClick={() => handleAddDIYWidget('code-block')}
-              className="block w-full text-left p-3 border border-orange-200 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Building2 className="w-4 h-4 text-orange-600" />
-                <span className="font-medium text-gray-900">Code Block</span>
-              </div>
-              <p className="text-sm text-gray-600">Syntax-highlighted code snippets</p>
-            </button>
-            
-            <div className="p-3 border border-gray-200 bg-gray-50 rounded-lg opacity-60">
-              <div className="flex items-center gap-2 mb-1">
-                <Settings className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-500">Global CSS</span>
-              </div>
-              <p className="text-sm text-gray-500">Site-wide styling (Coming Soon)</p>
-            </div>
-            
-            <div className="p-3 border border-gray-200 bg-gray-50 rounded-lg opacity-60">
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-500">File Manager</span>
-              </div>
-              <p className="text-sm text-gray-500">Upload and manage assets (Coming Soon)</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-700">Custom Sections</h4>
-            <span className="text-xs text-gray-500">{customSections.length} saved</span>
-          </div>
-          
-          {customSections.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-              <p className="text-sm text-gray-500">No custom sections yet</p>
-              <p className="text-xs text-gray-400 mt-1">Select a section and choose "Save as My Section"</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {customSections.map((section) => (
-                <div key={section.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white">
-                  <div>
-                    <div className="font-medium text-gray-900">{section.name}</div>
-                    {section.description && (
-                      <div className="text-sm text-gray-500">{section.description}</div>
-                    )}
-                    <div className="text-xs text-gray-400">
-                      {section.widgets.length} widget{section.widgets.length !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => {
-                        const { addSection } = usePageStore.getState()
-                        // Create a copy of the section with new IDs
-                        const newSectionId = crypto.randomUUID()
-                        const sectionCopy: WidgetSection = {
-                          ...section.section, // Use the saved section structure
-                          id: newSectionId,
-                          areas: section.section.areas.map(area => ({
-                            ...area,
-                            id: crypto.randomUUID(),
-                            widgets: area.widgets.map(widget => ({
-                              ...widget,
-                              id: crypto.randomUUID(),
-                              sectionId: newSectionId
-                            }))
-                          }))
-                        }
-                        addSection(sectionCopy)
-                        
-                        // Show success notification
-                        const widgetCount = section.widgets.length
-                        showToast(`"${section.name}" added to canvas with ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}!`, 'success')
-                      }}
-                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                    >
-                      Use
-                    </button>
-                    <button 
-                      onClick={() => removeCustomSection(section.id)}
-                      className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Publication Cards configuration component
-
-// Schema Form Editor component
-function SchemaFormEditor({ schemaType, initialData, onSave, onCancel }: {
-  schemaType: SchemaOrgType
-  initialData?: Partial<SchemaObject>
-  onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onCancel: () => void
-}) {
-  const definition = SCHEMA_DEFINITIONS[schemaType]
-  const [formData, setFormData] = useState<Record<string, any>>(initialData?.data || {})
-  const [objectName, setObjectName] = useState(initialData?.name || '')
-  const [tags, setTags] = useState<string[]>(initialData?.tags || [])
-  const [tagInput, setTagInput] = useState('')
-  
-  // Auto-generate identifier for JSON-LD (not user-editable)
-  const generateIdentifier = () => {
-    const timestamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 14) // YYYYMMDDHHMMSS
-    const nonce = Math.floor(Math.random() * 1000).toString().padStart(3, '0') // 3-digit random
-    const typePrefix = schemaType.toLowerCase().replace(/([A-Z])/g, '-$1').replace(/^-/, '') // Convert camelCase to kebab-case
-    return `${typePrefix}-${timestamp}-${nonce}`
-  }
-  
-  // Generate JSON-LD from form data
-  const generateJsonLD = () => {
-    const jsonLD = {
-      "@context": "https://schema.org",
-      "@type": schemaType,
-      "identifier": generateIdentifier(), // Auto-generated identifier
-      ...formData
-    }
-  return JSON.stringify(jsonLD, null, 2)
-}
-
-
-const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate required fields
-    const missingRequired = definition.requiredProperties.filter(
-      prop => !formData[prop] || formData[prop].toString().trim() === ''
-    )
-    
-    if (missingRequired.length > 0) {
-      alert(`Please fill in required fields: ${missingRequired.join(', ')}`)
-      return
-    }
-    
-    onSave({
-      type: schemaType,
-      name: objectName || formData.name || `${definition.label} ${Date.now()}`,
-      data: formData,
-      jsonLD: generateJsonLD(),
-      tags
-    })
-  }
-  
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()])
-      setTagInput('')
-    }
-  }
-  
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove))
-  }
-  
-  const renderFormField = (property: any) => {
-    const value = formData[property.name] || ''
-    
-    const updateField = (newValue: any) => {
-      setFormData(prev => ({
-        ...prev,
-        [property.name]: newValue
-      }))
-    }
-    
-    switch (property.type) {
-      case 'textarea':
-        return (
-          <textarea
-            value={value}
-            onChange={(e) => updateField(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={3}
-            placeholder={property.placeholder}
-          />
-        )
-      
-      case 'select':
-        return (
-          <select
-            value={value}
-            onChange={(e) => updateField(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Select {property.label} --</option>
-            {property.options?.map((option: string) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        )
-      
-      case 'boolean':
-        return (
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={!!value}
-              onChange={(e) => updateField(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Yes</span>
-          </label>
-        )
-      
-      case 'number':
-        return (
-          <input
-            type="number"
-            value={value}
-            onChange={(e) => updateField(e.target.value ? parseFloat(e.target.value) : '')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={property.placeholder}
-            min={property.min}
-            max={property.max}
-          />
-        )
-      
-      default: // text, url, email, tel, date, datetime-local
-        return (
-          <input
-            type={property.type}
-            value={value}
-            onChange={(e) => updateField(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={property.placeholder}
-            pattern={property.pattern}
-          />
-        )
-    }
-  }
-  
-  return (
-    <div className="p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{definition.label}</h3>
-          <p className="text-sm text-gray-500">{definition.description}</p>
-        </div>
-        <button
-          onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Object Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={objectName}
-            onChange={(e) => setObjectName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Give this object a descriptive name"
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">Internal name for managing this object</p>
-        </div>
-        
-        {definition.properties.map((property) => (
-          <div key={property.name}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {property.label} <span className="text-gray-500">({property.name})</span>
-              {property.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            {renderFormField(property)}
-            {property.description && (
-              <p className="text-xs text-gray-500 mt-1">{property.description}</p>
-            )}
-          </div>
-        ))}
-        
-        // Tags
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Add a tag..."
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-            />
-            <button
-              type="button"
-              onClick={handleAddTag}
-              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
-            >
-              Add
-            </button>
-          </div>
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">JSON-LD Preview</label>
-          <pre className="w-full p-3 bg-gray-50 border border-gray-300 rounded-md text-xs overflow-auto max-h-40">
-            {generateJsonLD()}
-          </pre>
-        </div>
-        
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors"
-          >
-            {initialData ? 'Update' : 'Save'} Object
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  )
-}
-
-// NOTE: PropertiesPanel component moved to src/components/Properties/PropertiesPanel.tsx
-
-// Schema Content Tab component
-function SchemaContentTab({ onCreateSchema }: { onCreateSchema: (type: SchemaOrgType) => void }) {
-  const { 
-    schemaObjects, 
-    selectedSchemaObject, 
-    removeSchemaObject, 
-    selectSchemaObject,
-    addNotification 
-  } = usePageStore()
-  
-  const [selectedMainType, setSelectedMainType] = useState<string>('')
-  const [selectedSubType, setSelectedSubType] = useState<SchemaOrgType | ''>('')
-  const [selectedSubSubType, setSelectedSubSubType] = useState<SchemaOrgType | ''>('')
-  const [isCreating, setIsCreating] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  
-  // Filter objects by search query
-  const filteredObjects = searchQuery 
-    ? schemaObjects.filter(obj => 
-        obj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        obj.type.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : schemaObjects
-  
-  // Group objects by type
-  const objectsByType = filteredObjects.reduce((acc, obj) => {
-    if (!acc[obj.type]) acc[obj.type] = []
-    acc[obj.type].push(obj)
-    return acc
-  }, {} as Record<SchemaOrgType, SchemaObject[]>)
-  
-  const handleCreateNew = () => {
-    setIsCreating(true)
-    setSelectedMainType('')
-    setSelectedSubType('')
-    setSelectedSubSubType('')
-    selectSchemaObject(null)
-  }
-  
-  const handleCancelCreate = () => {
-    setIsCreating(false)
-    setSelectedMainType('')
-    setSelectedSubType('')
-    setSelectedSubSubType('')
-    selectSchemaObject(null)
-  }
-  
-  // Main schema types (most commonly used)
-  const mainSchemaTypes = [
-    { value: 'MediaObject', label: 'Media Object', description: 'Audio, image, and video content' },
-    { value: 'Event', label: 'Event', description: 'Events and happenings' },
-    { value: 'Organization', label: 'Organization', description: 'Companies, institutions, groups' },
-    { value: 'Person', label: 'Person', description: 'People and individuals' },
-    { value: 'CreativeWork', label: 'Other Creative Work', description: 'Articles, books, media, reviews and other creative content' }
-  ]
-
-  // Subtypes for Media Object
-  const mediaObjectSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'AudioObject', label: 'Audio Object', description: 'Audio files, podcasts, music' },
-    { value: 'ImageObject', label: 'Image Object', description: 'Photos, images, graphics' },
-    { value: 'VideoObject', label: 'Video Object', description: 'Videos, movies, clips' }
-  ]
-
-  // Subtypes for Event
-  const eventSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'BusinessEvent', label: 'Business Event', description: 'Conferences, meetings, trade shows' },
-    { value: 'ChildrensEvent', label: 'Children\'s Event', description: 'Events designed for children' },
-    { value: 'ComedyEvent', label: 'Comedy Event', description: 'Comedy shows and performances' },
-    { value: 'CourseInstance', label: 'Course Instance', description: 'A specific instance of a course' },
-    { value: 'DanceEvent', label: 'Dance Event', description: 'Dance performances and classes' },
-    { value: 'DeliveryEvent', label: 'Delivery Event', description: 'Package or service delivery' },
-    { value: 'EducationEvent', label: 'Education Event', description: 'Educational workshops and seminars' },
-    { value: 'ExhibitionEvent', label: 'Exhibition Event', description: 'Art shows, museum exhibitions' },
-    { value: 'Festival', label: 'Festival', description: 'Cultural festivals and celebrations' },
-    { value: 'FoodEvent', label: 'Food Event', description: 'Food tastings, cooking classes' },
-    { value: 'LiteraryEvent', label: 'Literary Event', description: 'Book readings, poetry events' },
-    { value: 'MusicEvent', label: 'Music Event', description: 'Concerts and music performances' },
-    { value: 'PublicationEvent', label: 'Publication Event', description: 'Book launches, publication releases' },
-    { value: 'SaleEvent', label: 'Sale Event', description: 'Sales, promotions, discounts' },
-    { value: 'ScreeningEvent', label: 'Screening Event', description: 'Movie screenings, film festivals' },
-    { value: 'SocialEvent', label: 'Social Event', description: 'Parties, social gatherings' },
-    { value: 'SportsEvent', label: 'Sports Event', description: 'Sports games and competitions' },
-    { value: 'TheaterEvent', label: 'Theater Event', description: 'Plays, theatrical performances' },
-    { value: 'VisualArtsEvent', label: 'Visual Arts Event', description: 'Art exhibitions, gallery openings' }
-  ]
-
-  // Subtypes for Organization
-  const organizationSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'Corporation', label: 'Corporation', description: 'Business corporations and companies' },
-    { value: 'EducationalOrganization', label: 'Educational Organization', description: 'Schools, universities, training centers' },
-    { value: 'GovernmentOrganization', label: 'Government Organization', description: 'Government agencies and departments' },
-    { value: 'LibrarySystem', label: 'Library System', description: 'Libraries and library networks' },
-    { value: 'LocalBusiness', label: 'Local Business', description: 'Local shops, restaurants, services' },
-    { value: 'MedicalOrganization', label: 'Medical Organization', description: 'Hospitals, clinics, medical practices' },
-    { value: 'NewsMediaOrganization', label: 'News Media Organization', description: 'News outlets, journalism organizations' },
-    { value: 'NGO', label: 'Non-Governmental Organization', description: 'Non-profit organizations, NGOs' },
-    { value: 'PerformingGroup', label: 'Performing Group', description: 'Bands, theater groups, dance companies' },
-    { value: 'ResearchOrganization', label: 'Research Organization', description: 'Research institutes and labs' },
-    { value: 'SportsOrganization', label: 'Sports Organization', description: 'Sports teams, leagues, associations' },
-    { value: 'WorkersUnion', label: 'Workers Union', description: 'Labor unions and worker organizations' }
-  ]
-
-  // Subtypes for CreativeWork (comprehensive schema.org list)
-  const creativeWorkSubtypes: { value: SchemaOrgType; label: string; description: string }[] = [
-    { value: 'Article', label: 'Article', description: 'Articles and written content' },
-    { value: 'Certification', label: 'Certification', description: 'A certification or credential' },
-    { value: 'Clip', label: 'Clip', description: 'A short video or audio clip' },
-    { value: 'Collection', label: 'Collection', description: 'A collection of creative works' },
-    { value: 'Comment', label: 'Comment', description: 'A comment on content' },
-    { value: 'Conversation', label: 'Conversation', description: 'A conversation or dialogue' },
-    { value: 'Course', label: 'Course', description: 'Educational course or curriculum' },
-    { value: 'Dataset', label: 'Dataset', description: 'Data collections and datasets' },
-    { value: 'DigitalDocument', label: 'Digital Document', description: 'Electronic documents and files' },
-    { value: 'EducationalOccupationalCredential', label: 'Educational Credential', description: 'Educational or occupational credentials' },
-    { value: 'Guide', label: 'Guide', description: 'A guide or manual' },
-    { value: 'HowTo', label: 'How-To', description: 'Instructional content' },
-    { value: 'HowToDirection', label: 'How-To Direction', description: 'A direction in instructions' },
-    { value: 'HowToSection', label: 'How-To Section', description: 'A section of instructions' },
-    { value: 'HowToStep', label: 'How-To Step', description: 'A step in instructions' },
-    { value: 'HowToTip', label: 'How-To Tip', description: 'A tip or hint in instructions' },
-    { value: 'HyperToc', label: 'Hyper Table of Contents', description: 'A hyperlinked table of contents' },
-    { value: 'HyperTocEntry', label: 'Hyper ToC Entry', description: 'An entry in a hyperlinked table of contents' },
-    { value: 'LearningResource', label: 'Learning Resource', description: 'Educational learning materials' },
-    { value: 'Manuscript', label: 'Manuscript', description: 'A manuscript or draft document' },
-    { value: 'MathSolver', label: 'Math Solver', description: 'Mathematical problem solver' },
-    { value: 'Poster', label: 'Poster', description: 'A poster or large format display' },
-    { value: 'Quotation', label: 'Quotation', description: 'A quotation or cited text' },
-    { value: 'Review', label: 'Review', description: 'Reviews and ratings' },
-    { value: 'ShortStory', label: 'Short Story', description: 'A short work of fiction' },
-    { value: 'SoftwareApplication', label: 'Software Application', description: 'Software apps and programs' },
-    { value: 'SoftwareSourceCode', label: 'Software Source Code', description: 'Computer source code' },
-    { value: 'SpecialAnnouncement', label: 'Special Announcement', description: 'Important announcements' },
-    { value: 'Statement', label: 'Statement', description: 'A statement or declaration' },
-    { value: 'Thesis', label: 'Thesis', description: 'Academic thesis or dissertation' },
-    { value: 'VisualArtwork', label: 'Visual Artwork', description: 'Paintings, drawings, and visual art' },
-    { value: 'WebContent', label: 'Web Content', description: 'General web content' },
-    { value: 'WebPage', label: 'Web Page', description: 'Individual web pages' },
-    { value: 'WebPageElement', label: 'Web Page Element', description: 'Elements within web pages' },
-    { value: 'WebSite', label: 'Web Site', description: 'Complete websites' }
-  ]
-
-  // Sub-subtypes for CreativeWork types that have more specific types
-  const articleSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'BlogPosting', label: 'Blog Posting', description: 'Blog posts and personal articles' },
-    { value: 'NewsArticle', label: 'News Article', description: 'Journalism and news content' },
-    { value: 'ScholarlyArticle', label: 'Scholarly Article', description: 'Academic papers and research' },
-    { value: 'TechArticle', label: 'Technical Article', description: 'Technical documentation and guides' }
-  ]
-
-  const digitalDocumentSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'NoteDigitalDocument', label: 'Note Digital Document', description: 'Digital notes and memos' },
-    { value: 'PresentationDigitalDocument', label: 'Presentation Digital Document', description: 'Slide presentations and decks' },
-    { value: 'SpreadsheetDigitalDocument', label: 'Spreadsheet Digital Document', description: 'Spreadsheets and data tables' },
-    { value: 'TextDigitalDocument', label: 'Text Digital Document', description: 'Text documents and files' }
-  ]
-
-  const webPageSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'AboutPage', label: 'About Page', description: 'About us or information pages' },
-    { value: 'CheckoutPage', label: 'Checkout Page', description: 'E-commerce checkout pages' },
-    { value: 'CollectionPage', label: 'Collection Page', description: 'Pages showing collections of items' },
-    { value: 'ContactPage', label: 'Contact Page', description: 'Contact information pages' },
-    { value: 'FAQPage', label: 'FAQ Page', description: 'Frequently asked questions pages' },
-    { value: 'ItemPage', label: 'Item Page', description: 'Pages showing individual items' },
-    { value: 'MedicalWebPage', label: 'Medical Web Page', description: 'Medical and health information pages' },
-    { value: 'ProfilePage', label: 'Profile Page', description: 'User or entity profile pages' },
-    { value: 'QAPage', label: 'Q&A Page', description: 'Question and answer pages' },
-    { value: 'RealEstateListing', label: 'Real Estate Listing', description: 'Property listing pages' },
-    { value: 'SearchResultsPage', label: 'Search Results Page', description: 'Search results display pages' }
-  ]
-
-  const softwareApplicationSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'MobileApplication', label: 'Mobile Application', description: 'Mobile apps for phones and tablets' },
-    { value: 'VideoGame', label: 'Video Game', description: 'Interactive games and entertainment software' },
-    { value: 'WebApplication', label: 'Web Application', description: 'Browser-based applications' }
-  ]
-
-  const visualArtworkSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'CoverArt', label: 'Cover Art', description: 'Album covers, book covers, etc.' },
-    { value: 'ComicStory', label: 'Comic Story', description: 'Comic books and graphic novels' },
-    { value: 'Painting', label: 'Painting', description: 'Painted artwork and canvases' },
-    { value: 'Photograph', label: 'Photograph', description: 'Photography and photo art' },
-    { value: 'Sculpture', label: 'Sculpture', description: '3D artwork and sculptures' }
-  ]
-
-  const learningResourceSubtypes: { value: string; label: string; description: string }[] = [
-    { value: 'Course', label: 'Course', description: 'Educational courses and classes' },
-    { value: 'Quiz', label: 'Quiz', description: 'Quizzes and assessments' },
-    { value: 'Syllabus', label: 'Syllabus', description: 'Course syllabi and curricula' }
-  ]
-
-  // Get available sub-subtypes based on subtype selection
-  const getAvailableSubSubtypes = (subType: string) => {
-    switch (subType) {
-      case 'Article':
-        return articleSubtypes
-      case 'DigitalDocument':
-        return digitalDocumentSubtypes
-      case 'WebPage':
-        return webPageSubtypes
-      case 'SoftwareApplication':
-        return softwareApplicationSubtypes
-      case 'VisualArtwork':
-        return visualArtworkSubtypes
-      case 'LearningResource':
-        return learningResourceSubtypes
-      default:
-        return []
-    }
-  }
-  
-  // Get available subtypes based on main type selection
-  const getAvailableSubtypes = (mainType: string) => {
-    switch (mainType) {
-      case 'MediaObject':
-        return mediaObjectSubtypes
-      case 'CreativeWork':
-        return creativeWorkSubtypes
-      case 'Event':
-        return eventSubtypes
-      case 'Organization':
-        return organizationSubtypes
-      default:
-        return []
-    }
-  }
-  
-  const availableSubtypes = getAvailableSubtypes(selectedMainType)
-  const showSubtypeDropdown = availableSubtypes.length > 0
-  
-  const availableSubSubtypes = getAvailableSubSubtypes(selectedSubType)
-  const showSubSubtypeDropdown = availableSubSubtypes.length > 0
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Schema Content</h3>
-          <p className="text-sm text-gray-500">Create and manage structured data objects</p>
-        </div>
-        <button
-          onClick={handleCreateNew}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New
-        </button>
-      </div>
-      
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search schema objects..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      
-      {isCreating && (
-        <div className="p-4 bg-gray-50 rounded-lg border space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-900">Select Schema Type</h4>
-            <button
-              onClick={handleCancelCreate}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Content Type
-            </label>
-            <select
-              value={selectedMainType}
-              onChange={(e) => {
-                setSelectedMainType(e.target.value)
-                setSelectedSubType('') // Reset subtype when main type changes
-                setSelectedSubSubType('') // Reset sub-subtype when main type changes
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">-- Select content type --</option>
-              {mainSchemaTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            {selectedMainType && (
-              <p className="text-xs text-gray-500 mt-1">
-                {mainSchemaTypes.find(t => t.value === selectedMainType)?.description}
-              </p>
-            )}
-          </div>
-          
-          {showSubtypeDropdown && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Specific Type <span className="text-gray-500 font-normal">(optional)</span>
-              </label>
-              <select
-                value={selectedSubType}
-                onChange={(e) => {
-                  setSelectedSubType(e.target.value as SchemaOrgType)
-                  setSelectedSubSubType('') // Reset third dropdown when second changes
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- Use general type or select specific --</option>
-                {availableSubtypes.map((subtype) => (
-                  <option key={subtype.value} value={subtype.value}>
-                    {subtype.label}
-                  </option>
-                ))}
-              </select>
-              {selectedSubType && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {availableSubtypes.find(t => t.value === selectedSubType)?.description}
-                </p>
-              )}
-            </div>
-          )}
-          
-          {showSubSubtypeDropdown && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                More Specific Type <span className="text-gray-500 font-normal">(optional)</span>
-              </label>
-              <select
-                value={selectedSubSubType}
-                onChange={(e) => setSelectedSubSubType(e.target.value as SchemaOrgType)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- Use {selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 'type'} or select more specific --</option>
-                {availableSubSubtypes.map((subSubtype) => (
-                  <option key={subSubtype.value} value={subSubtype.value}>
-                    {subSubtype.label}
-                  </option>
-                ))}
-              </select>
-              {selectedSubSubType && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {availableSubSubtypes.find(t => t.value === selectedSubSubType)?.description}
-                </p>
-              )}
-            </div>
-          )}
-          
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                const typeToCreate = selectedSubSubType || selectedSubType || selectedMainType as SchemaOrgType
-                if (typeToCreate) {
-                  onCreateSchema(typeToCreate)
-                  setIsCreating(false)
-                  setSelectedMainType('')
-                  setSelectedSubType('')
-                  setSelectedSubSubType('')
-                }
-              }}
-              disabled={!selectedMainType}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              Create {selectedSubSubType ? availableSubSubtypes.find(t => t.value === selectedSubSubType)?.label : 
-                      selectedSubType ? availableSubtypes.find(t => t.value === selectedSubType)?.label : 
-                      selectedMainType ? mainSchemaTypes.find(t => t.value === selectedMainType)?.label : 'Object'}
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {!isCreating && (
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">
-            Your Schema Objects ({schemaObjects.length})
-          </h4>
-          
-          {schemaObjects.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>No schema objects created yet</p>
-              <p className="text-sm">Click "New" to create your first schema object</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(objectsByType).map(([type, objects]) => (
-                <div key={type}>
-                  <h5 className="text-sm font-medium text-gray-700 mb-2">
-                    {SCHEMA_DEFINITIONS[type as SchemaOrgType]?.label || type} ({objects.length})
-                  </h5>
-                  <div className="space-y-2">
-                    {objects.map((obj) => (
-                      <div
-                        key={obj.id}
-                        className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                          selectedSchemaObject?.id === obj.id
-                            ? 'border-blue-300 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                        onClick={() => selectSchemaObject(obj.id)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h6 className="font-medium text-sm text-gray-900 truncate">{obj.name}</h6>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Created {obj.createdAt.toLocaleDateString()}
-                            </p>
-                            {obj.tags && obj.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {obj.tags.map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeSchemaObject(obj.id)
-                              addNotification({
-                                type: 'success',
-                                title: 'Schema Object Deleted',
-                                message: `${obj.name} has been deleted`
-                              })
-                            }}
-                            className="text-gray-400 hover:text-red-500 ml-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// PageBuilder component extracted to src/components/PageBuilder/index.tsx
 
 // Website Settings Component
 function WebsiteSettings({ websiteId }: { websiteId: string }) {
@@ -4593,10 +3591,10 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
             <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
               {context}
             </span>
-          ))}
-        </div>
-      </div>
-
+              ))}
+            </div>
+          </div>
+          
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cards List */}
         <div className="space-y-4">
@@ -4619,10 +3617,10 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
                         {card.style.layout}
                       </span>
-                    </div>
+            </div>
                     <div className="text-xs text-gray-500 mb-2">
                       <strong>Usage:</strong> {card.context}
-                    </div>
+          </div>
                   </div>
                 </div>
                 
@@ -4635,8 +3633,8 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                         {feature}
                       </span>
                     ))}
-                  </div>
-                </div>
+                          </div>
+                      </div>
 
                 {/* Style Properties */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
@@ -4644,8 +3642,8 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                     <span className="text-gray-500">Typography:</span>
                     <div style={{ fontFamily: card.style.titleFont, color: card.style.titleColor }} className="font-medium">
                       {card.style.titleFont.split(',')[0]}
-                    </div>
                   </div>
+            </div>
                   <div>
                     <span className="text-gray-500">Accent:</span>
                     <div className="flex items-center gap-1">
@@ -4654,13 +3652,13 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                         style={{ backgroundColor: card.style.accentColor }}
                       ></div>
                       <span style={{ color: card.style.accentColor }}>{card.style.accentColor}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
+        </div>
+              </div>
+            ))}
+        </div>
+      </div>
 
         {/* Preview Area */}
         <div className="space-y-4">
@@ -4707,7 +3705,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               >
                                 🔓 FULL ACCESS
                               </span>
-                            </div>
+          </div>
                             
                             <h4 
                               className="mb-2"
@@ -4737,8 +3735,8 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               style={{ color: card.style.metaColor }}
                             >
                               Ahead of Print
-              </div>
-                          </div>
+            </div>
+        </div>
                         </div>
                         
                         {/* Action buttons for detailed layouts */}
@@ -4783,7 +3781,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               className={`object-cover rounded border ${
                                 card.style.layout === 'featured' ? 'w-20 h-26' : 'w-12 h-16'
                               }`}
-                            />
+            />
           </div>
                           
                           <div className="flex-1">
@@ -4812,7 +3810,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'Smith, Johnson, Davis' :
                                card.id.includes('classic') ? 'Druehl, Elmaghraby, Shier, Greenberg' :
                                'Russell & Norvig'}
-              </div>
+    </div>
                             
                             <div 
                               className="text-sm mb-2"
@@ -4821,7 +3819,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? '2024 • ISBN: 978-0-262-04567-8' :
                                card.id.includes('classic') ? '1 Nov 2020 • ISBN: 978-0-9906153-4-7' :
                                '2024 • ISBN: 978-0-13-461099-3'}
-              </div>
+            </div>
                             
                             {/* Publisher */}
                             <div 
@@ -4832,7 +3830,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                                card.id.includes('classic') ? 'INFORMS' :
                                'Pearson'}
           </div>
-      </div>
+        </div>
       </div>
                       </>
                     )}
@@ -4851,8 +3849,8 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               className={`object-cover rounded border ${
                                 card.style.layout === 'banner' ? 'w-24 h-32' : 'w-16 h-20'
                               }`}
-                />
-              </div>
+        />
+      </div>
               
                           <div className="flex-1">
                             <h4 
@@ -4875,7 +3873,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                               {card.id.includes('modern') ? 'Volume 5, Number 3 • 30 Sep 2024' :
                                card.id.includes('classic') ? 'Vol. 14, Issue 1234 • 15 Nov 2024' :
                                'Volume 15, Number 2 • Mar 2024'}
-            </div>
+              </div>
                             <div 
                               className="text-sm mb-2"
                               style={{ color: card.style.metaColor }}
@@ -4893,18 +3891,18 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
                                card.id.includes('classic') ? 'http://doi.org/10.1038/s41598-024-xyz' :
                                'http://doi.org/10.1145/CompEd.2024'}
                             </a>
-        </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
-        </div>
+                      </>
+                    )}
+          </div>
+              </div>
+            ))}
+          </div>
       </div>
-
+      </div>
+              </div>
+              
       <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
         <div className="flex items-start gap-3">
           <div className="text-amber-600 mt-0.5">
@@ -4912,16 +3910,16 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           </div>
-          <div>
+              <div>
             <h4 className="text-amber-800 font-medium mb-1">Design System Foundation</h4>
             <p className="text-amber-700 text-sm">
               These publication cards are optimized for <strong>{themeData.name}</strong> and designed for real-world publishing contexts: search results, issue listings, journal headers, and featured content displays. 
               Websites using this theme inherit these cards as their foundation and can customize them for specific needs.
             </p>
+              </div>
+            </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -4971,10 +3969,6 @@ export default function App() {
       <PageBuilder 
         usePageStore={usePageStore}
         buildWidget={buildWidget}
-        SectionsContent={SectionsContent}
-        DIYZoneContent={DIYZoneContent}
-        SchemaContentTab={SchemaContentTab}
-        SchemaFormEditor={SchemaFormEditor}
         TemplateCanvas={TemplateCanvas}
         InteractiveWidgetRenderer={InteractiveWidgetRenderer}
         isSection={isSection}

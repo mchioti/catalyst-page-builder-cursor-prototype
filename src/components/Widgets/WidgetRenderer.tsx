@@ -14,7 +14,7 @@ const usePageStore = window.usePageStore
 // Widget skin wrapper component
 const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin, children }) => {
   const skinClasses = {
-    minimal: 'bg-white',
+    minimal: '', // Changed from 'bg-white' to transparent for gradient visibility
     modern: 'bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4',
     classic: 'bg-gray-50 border border-gray-200 rounded p-4',
     accent: 'bg-accent-50 border border-accent-200 rounded p-4',
@@ -26,11 +26,116 @@ const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin,
     center: 'text-center',
     footer: 'bg-gray-900 text-white py-8 px-6',
     compact: 'space-y-4',
-    raw: '' // No styling for raw HTML
+    raw: '', // No styling for raw HTML
+    transparent: '' // Explicit transparent option
   }
   
   return (
-    <div className={skinClasses[skin as keyof typeof skinClasses] || skinClasses.minimal}>
+    <div className={skinClasses[skin as keyof typeof skinClasses] || ''}>
+      {children}
+    </div>
+  )
+}
+
+// Widget Layout Wrapper Component - Applies layout styling to widgets
+const WidgetLayoutWrapper: React.FC<{ widget: Widget; children: React.ReactNode }> = ({ widget, children }) => {
+  if (!widget.layout || widget.layout.variant === 'default') {
+    return <>{children}</>
+  }
+
+  const getLayoutClasses = () => {
+    const layout = widget.layout!
+    const classes = []
+
+    // Variant classes
+    switch (layout.variant) {
+      case 'card':
+        classes.push('bg-white rounded-lg shadow-md border border-gray-200')
+        break
+      case 'bordered':
+        classes.push('border-2 border-gray-300 rounded-md')
+        break
+      case 'elevated':
+        classes.push('bg-white shadow-lg rounded-xl border border-gray-100')
+        break
+    }
+
+    // Padding classes
+    switch (layout.padding) {
+      case 'none':
+        classes.push('p-0')
+        break
+      case 'small':
+        classes.push('p-3')
+        break
+      case 'medium':
+        classes.push('p-4')
+        break
+      case 'large':
+        classes.push('p-6')
+        break
+      default:
+        if (layout.variant === 'card' || layout.variant === 'elevated') {
+          classes.push('p-4') // Default padding for cards
+        }
+    }
+
+    // Margin classes
+    switch (layout.margin) {
+      case 'none':
+        classes.push('m-0')
+        break
+      case 'small':
+        classes.push('m-2')
+        break
+      case 'medium':
+        classes.push('m-4')
+        break
+      case 'large':
+        classes.push('m-6')
+        break
+    }
+
+    // Background classes (override card defaults if specified)
+    if (layout.background && layout.background !== 'transparent') {
+      classes.push(`bg-${layout.background}`)
+    }
+
+    // Shadow classes (override card defaults if specified)
+    if (layout.shadow && layout.shadow !== 'none') {
+      const shadowMap = {
+        small: 'shadow-sm',
+        medium: 'shadow-md', 
+        large: 'shadow-lg'
+      }
+      classes.push(shadowMap[layout.shadow])
+    }
+
+    // Rounded classes (override card defaults if specified)
+    if (layout.rounded && layout.rounded !== 'none') {
+      const roundedMap = {
+        small: 'rounded',
+        medium: 'rounded-md',
+        large: 'rounded-lg'
+      }
+      classes.push(roundedMap[layout.rounded])
+    }
+
+    // Border classes
+    if (layout.border && layout.border !== 'none') {
+      const borderMap = {
+        light: 'border border-gray-200',
+        medium: 'border-2 border-gray-300',
+        heavy: 'border-4 border-gray-400'
+      }
+      classes.push(borderMap[layout.border])
+    }
+
+    return classes.join(' ')
+  }
+
+  return (
+    <div className={getLayoutClasses()}>
       {children}
     </div>
   )
@@ -39,9 +144,10 @@ const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin,
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) => {
   const variantClasses = {
-    solid: 'bg-red-600 text-white hover:bg-red-700',
-    outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white',
-    ghost: 'text-red-600 hover:bg-red-50'
+    primary: 'bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-2 focus:ring-gray-500',
+    outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white focus:ring-2 focus:ring-red-500',
+    link: 'text-red-600 hover:text-red-700 underline hover:no-underline bg-transparent'
   }
   
   const sizeClasses = {
@@ -50,24 +156,32 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
     large: 'px-6 py-3 text-lg'
   }
   
+  const baseClasses = widget.variant === 'link' 
+    ? 'font-medium transition-colors duration-200 cursor-pointer inline-block'
+    : 'font-medium rounded transition-colors duration-200 cursor-pointer inline-block'
+  
   const classes = `
-    font-medium rounded transition-colors duration-200 cursor-pointer
-    ${variantClasses[widget.variant] || variantClasses.solid}
-    ${sizeClasses[widget.size] || sizeClasses.medium}
+    ${baseClasses}
+    ${variantClasses[widget.variant as keyof typeof variantClasses] || variantClasses.primary}
+    ${sizeClasses[widget.size as keyof typeof sizeClasses] || sizeClasses.medium}
   `.trim()
   
-  if (widget.url) {
+  if (widget.href) {
     return (
-      <a href={widget.url} className={classes}>
+      <a 
+        href={widget.href} 
+        className={classes}
+        target={widget.target || '_self'}
+      >
         {widget.text}
       </a>
     )
   }
   
   return (
-    <button className={classes} onClick={() => widget.onClick && eval(widget.onClick)}>
+    <span className={classes}>
       {widget.text}
-    </button>
+    </span>
   )
 }
 
@@ -79,10 +193,20 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget }> = ({ widget }) => {
     right: 'text-right'
   }
   
+  // Enhanced text rendering with line break support and better typography
+  const renderTextWithBreaks = (text: string) => {
+    return text.split('\n').map((line, index, array) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < array.length - 1 && <br />}
+      </React.Fragment>
+    ))
+  }
+  
   return (
-    <p className={`${alignClasses[widget.align || 'left']}`}>
-      {widget.text}
-    </p>
+    <div className={`${alignClasses[widget.align || 'left']}`}>
+      {renderTextWithBreaks(widget.text)}
+    </div>
   )
 }
 
@@ -346,7 +470,7 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
     }
   }
   
-  const HeadingTag = `h${widget.level}` as keyof React.JSX.IntrinsicElements
+  const HeadingTag = `h${widget.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   
   const getFontStyleClasses = () => {
     const styles = []
@@ -656,6 +780,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
   )
 }
 
+
 // Main Widget Renderer Component
 export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[] }> = ({ widget, schemaObjects = [] }) => {
   const renderWidget = () => {
@@ -683,7 +808,9 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[] }>
   
   return (
     <SkinWrap skin={widget.skin}>
-      {renderWidget()}
+      <WidgetLayoutWrapper widget={widget}>
+        {renderWidget()}
+      </WidgetLayoutWrapper>
     </SkinWrap>
   )
 }
