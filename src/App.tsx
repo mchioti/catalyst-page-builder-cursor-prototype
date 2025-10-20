@@ -21,7 +21,7 @@ import { type LibraryItem as SpecItem } from './library'
 import { 
 // Widget types
   type Widget, type WidgetSection, type CanvasItem, isSection, 
-  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
+  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type CodeWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
   // App types
@@ -276,8 +276,7 @@ function InteractiveWidgetRenderer({
         default: 'text-gray-900', primary: 'text-blue-600', 
         secondary: 'text-green-600', accent: 'text-orange-600', muted: 'text-gray-500' 
       }
-      const sizeClasses = { small: 'text-lg', medium: 'text-xl', large: 'text-2xl', xl: 'text-4xl', auto: '' }
-      const spacingClasses = { tight: 'mb-2', normal: 'mb-4', loose: 'mb-6' }
+      const sizeClasses = { small: 'text-lg', medium: 'text-xl', large: 'text-3xl', xl: 'text-5xl', auto: '' }
       
       // Semantic size defaults based on heading level
       const getSemanticDefaultSize = (level: number): 'small' | 'medium' | 'large' | 'xl' => {
@@ -300,6 +299,7 @@ function InteractiveWidgetRenderer({
           case 'highlighted': return 'bg-gradient-to-r from-yellow-100 to-yellow-50 px-3 py-2 rounded'
           case 'decorated': return 'relative'
           case 'gradient': return 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'
+          case 'hero': return 'font-bold mb-6 text-white'
           default: return ''
         }
       }
@@ -316,24 +316,14 @@ function InteractiveWidgetRenderer({
         }
       }
       
-      const getFontStyleClasses = () => {
-        const styles = []
-        if (h.fontStyle?.bold) styles.push('font-bold')
-        if (h.fontStyle?.italic) styles.push('italic')
-        if (h.fontStyle?.underline) styles.push('underline')
-        if (h.fontStyle?.strikethrough) styles.push('line-through')
-        return styles.join(' ')
-      }
       
       const headingClasses = [
         getStyleClasses(),
-        getFontStyleClasses(),
         alignClasses[h.align || 'left'],
         h.size === 'auto' 
           ? sizeClasses[getSemanticDefaultSize(h.level)]
           : sizeClasses[h.size || 'auto'],
-        colorClasses[h.color || 'default'],
-        spacingClasses[h.spacing || 'normal']
+        colorClasses[h.color || 'default']
       ].filter(Boolean).join(' ')
       
       return (
@@ -670,6 +660,56 @@ function InteractiveWidgetRenderer({
         </>
       )
       
+    case 'code':
+      const codeWidget = widget as CodeWidget
+      return (
+        <SkinWrap skin={widget.skin}>
+          <div className="px-6 py-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Code Block</span>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>{codeWidget.language}</span>
+                  {codeWidget.showLineNumbers && <span>• Line Numbers</span>}
+                  <span>• {codeWidget.theme === 'dark' ? 'Dark' : 'Light'} Theme</span>
+                </div>
+              </div>
+              
+              {codeWidget.codeContent ? (
+                <div className={`rounded-lg border p-4 font-mono text-sm overflow-x-auto ${
+                  codeWidget.theme === 'dark' 
+                    ? 'bg-gray-900 text-gray-100 border-gray-700' 
+                    : 'bg-gray-50 text-gray-900 border-gray-200'
+                }`}>
+                  {codeWidget.showLineNumbers ? (
+                    <div className="flex">
+                      <div className="flex flex-col text-right pr-4 text-gray-500 select-none border-r border-current/20 mr-4">
+                        {codeWidget.codeContent.split('\n').map((_, index) => (
+                          <span key={index} className="leading-relaxed">{index + 1}</span>
+                        ))}
+                      </div>
+                      <div className="flex-1">
+                        <pre className="whitespace-pre-wrap leading-relaxed">{codeWidget.codeContent}</pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="whitespace-pre-wrap leading-relaxed">{codeWidget.codeContent}</pre>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full min-h-[200px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                  <div className="text-center text-gray-600 px-4">
+                    <div className="text-4xl mb-2">💻</div>
+                    <div className="text-sm font-medium">Empty Code Block</div>
+                    <div className="text-xs mt-1">Add code content in properties panel →</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SkinWrap>
+      )
+      
     case 'publication-list':
       const publicationWidget = widget as PublicationListWidget
       
@@ -848,10 +888,10 @@ function InteractiveWidgetRenderer({
     case 'button':
       const buttonWidget = widget as ButtonWidget
       const variantClasses = {
-        primary: 'bg-red-600 text-white hover:bg-red-700',
-        secondary: 'bg-gray-600 text-white hover:bg-gray-700',
-        outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white',
-        link: 'text-red-600 hover:text-red-700 underline hover:no-underline bg-transparent'
+        primary: 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200',
+        secondary: 'border border-white text-white hover:bg-white hover:text-blue-600',
+        outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white',
+        link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
       }
       
       const sizeClasses = {
@@ -919,18 +959,11 @@ function buildWidget(item: SpecItem): Widget {
         style: 'default',
         color: 'default',
         size: 'auto',
-        fontStyle: {
-          bold: true,
-          italic: false,
-          underline: false,
-          strikethrough: false
-        },
         icon: {
           enabled: false,
           position: 'left',
           emoji: '🎯'
-        },
-        spacing: 'normal'
+        }
       } as HeadingWidget;
     
     case 'image':
@@ -975,6 +1008,17 @@ function buildWidget(item: SpecItem): Widget {
         title: 'HTML Widget',
         htmlContent: ''
       } as HTMLWidget;
+    
+    case 'code-block':
+      return {
+        ...baseWidget,
+        type: 'code',
+        title: 'Code Block',
+        language: 'javascript',
+        codeContent: '// Your code here\nconsole.log("Hello, world!");',
+        showLineNumbers: true,
+        theme: 'light'
+      } as CodeWidget;
     
     case 'publication-list':
       return {

@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
+import { PREFAB_SECTIONS } from './prefabSections'
+import { createHomepageTemplate, shouldAutoLoadHomepage } from './homepageTemplate'
 import {
   DndContext,
   useSensors,
@@ -27,7 +29,9 @@ import {
 
 // Component imports
 import { WidgetLibrary } from '../Library/WidgetLibrary'
+import { DraggableLibraryWidget } from '../Canvas/DraggableLibraryWidget'
 import { PropertiesPanel } from '../Properties/PropertiesPanel'
+import { SchemaFormEditor } from '../Schema/SchemaFormEditor'
 import { LayoutPicker } from '../Canvas/LayoutPicker'
 import { SortableItem } from '../Canvas/SortableItem'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
@@ -37,6 +41,7 @@ import type {
   SchemaOrgType, 
   SchemaObject 
 } from '../../types/schema'
+import { SCHEMA_DEFINITIONS } from '../../types/schema'
 import type { 
   Widget, 
   WidgetSection, 
@@ -85,6 +90,23 @@ export function PageBuilder({
   
   // Schema editing state
   const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
+  
+  // Homepage template auto-loading
+  useEffect(() => {
+    console.log('🔍 Auto-loading check:', {
+      editingContext,
+      mockLiveSiteRoute,
+      canvasItemsLength: canvasItems.length,
+      shouldLoad: shouldAutoLoadHomepage(editingContext, mockLiveSiteRoute, canvasItems)
+    })
+    
+    if (shouldAutoLoadHomepage(editingContext, mockLiveSiteRoute, canvasItems)) {
+      console.log('🏠 Auto-loading homepage template...')
+      const homepageTemplate = createHomepageTemplate()
+      replaceCanvasItems(homepageTemplate)
+      showToast('Homepage template loaded! Edit sections to match your vision.', 'success')
+    }
+  }, [editingContext, mockLiveSiteRoute, canvasItems]) // Watch for changes to editing context, route, and canvas content
   
   const handleCreateSchema = (type: SchemaOrgType) => {
     setCreatingSchemaType(type)
@@ -604,8 +626,8 @@ export function PageBuilder({
           <div className="flex-1 flex flex-col overflow-y-auto p-4">
             {leftSidebarTab === 'library' && <WidgetLibrary usePageStore={usePageStore} buildWidget={buildWidget} />}
             {leftSidebarTab === 'sections' && <SectionsContent showToast={showToast} usePageStore={usePageStore} />}
-            {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} />}
-            {leftSidebarTab === 'schema-content' && <SchemaContentTab onCreateSchema={handleCreateSchema} />}
+            {leftSidebarTab === 'diy-zone' && <DIYZoneContent showToast={showToast} usePageStore={usePageStore} buildWidget={buildWidget} />}
+            {leftSidebarTab === 'schema-content' && <SchemaContentTab onCreateSchema={handleCreateSchema} usePageStore={usePageStore} selectSchemaObject={selectSchemaObject} />}
           </div>
         </div>
 
@@ -742,6 +764,7 @@ export function PageBuilder({
             onSaveSchema={handleSaveSchema}
             onCancelSchema={handleCancelSchema}
             usePageStore={usePageStore}
+            SchemaFormEditor={SchemaFormEditor}
           />
         </div>
       </div>
@@ -776,22 +799,397 @@ export function PageBuilder({
   )
 }
 
-// DIYZoneContent Component - Placeholder for DIY zone functionality
-function DIYZoneContent({ showToast: _showToast }: { showToast: (message: string, type: 'success' | 'error') => void }) {
+// DIYZoneContent Component - Advanced widgets and saved sections
+function DIYZoneContent({ showToast, usePageStore, buildWidget }: { 
+  showToast: (message: string, type: 'success' | 'error') => void
+  usePageStore: any
+  buildWidget: (item: any) => Widget
+}) {
+  const { savedSections = [], canvasItems, replaceCanvasItems } = usePageStore()
+
+  // DIY Widgets - Advanced/Technical widgets for power users
+  const diyWidgets = [
+    { id: 'html-block', label: 'HTML Block', type: 'html-block' as const, description: 'Custom HTML content', skin: 'minimal' as const, status: 'supported' as const },
+    { id: 'code-block', label: 'Code Block', type: 'code-block' as const, description: 'Syntax-highlighted code', skin: 'minimal' as const, status: 'supported' as const }
+  ]
+
+  // Save current canvas as a custom section
+  const saveCurrentAsSection = () => {
+    if (canvasItems.length === 0) {
+      showToast('Cannot save empty canvas as section', 'error')
+      return
+    }
+
+    const sectionName = prompt('Enter a name for this custom section:')
+    if (!sectionName) return
+
+    // Note: Saved sections functionality would need to be implemented in the store
+    // const newSavedSection = { id: nanoid(), name: sectionName, items: canvasItems, createdAt: new Date().toISOString() }
+    showToast(`Section "${sectionName}" saved! (Feature coming soon)`, 'success')
+  }
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700">DIY Zone</h3>
-      <p className="text-sm text-gray-500">Custom components and saved sections coming soon...</p>
+    <div className="space-y-6">
+      {/* DIY Widgets */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Lightbulb className="w-4 h-4" />
+          Advanced Widgets
+        </h3>
+        <div className="space-y-1">
+          {diyWidgets.map((item) => (
+            <DraggableLibraryWidget key={item.id} item={item} usePageStore={usePageStore} buildWidget={buildWidget} isDIY={true} />
+          ))}
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          💡 Drag these advanced widgets into your sections for custom functionality
+        </p>
+      </div>
+
+      {/* Advanced Features - Coming Soon */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Settings className="w-4 h-4" />
+          Advanced Features
+        </h3>
+        <div className="space-y-2">
+          <div className="p-3 border border-gray-200 rounded-md bg-gray-50 opacity-60">
+            <div className="flex items-center gap-2">
+              <div className="text-lg">🎨</div>
+              <div>
+                <div className="font-medium text-sm text-gray-700">Global CSS</div>
+                <div className="text-xs text-gray-500">Site-wide styling (Coming Soon)</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-3 border border-gray-200 rounded-md bg-gray-50 opacity-60">
+            <div className="flex items-center gap-2">
+              <div className="text-lg">📁</div>
+              <div>
+                <div className="font-medium text-sm text-gray-700">File Manager</div>
+                <div className="text-xs text-gray-500">Upload and manage assets (Coming Soon)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Saved Sections */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Saved Sections
+        </h3>
+        
+        <button
+          onClick={saveCurrentAsSection}
+          className="w-full p-3 text-left border-2 border-dashed border-gray-300 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors mb-3"
+        >
+          <div className="font-medium text-sm text-gray-600">+ Save Current Canvas</div>
+          <div className="text-xs text-gray-500">Save current sections as reusable template</div>
+        </button>
+
+        {savedSections.length > 0 ? (
+          <div className="space-y-2">
+            {savedSections.map((section: any) => (
+              <div key={section.id} className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">{section.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {section.items.length} section{section.items.length !== 1 ? 's' : ''} • 
+                      Saved {new Date(section.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      replaceCanvasItems([...canvasItems, ...section.items])
+                      showToast(`"${section.name}" sections added to canvas!`, 'success')
+                    }}
+                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Load
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">📦</div>
+            <div className="text-sm">No saved sections yet</div>
+            <div className="text-xs mt-1">Create some sections and save them for reuse</div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// SchemaContentTab Component - Placeholder for schema functionality  
-function SchemaContentTab({ onCreateSchema: _onCreateSchema }: { onCreateSchema: (schemaType: SchemaOrgType) => void }) {
+// SchemaContentTab Component - Schema.org content management 
+function SchemaContentTab({ onCreateSchema, usePageStore, selectSchemaObject }: { 
+  onCreateSchema: (schemaType: SchemaOrgType) => void
+  usePageStore?: any
+  selectSchemaObject?: (obj: SchemaObject) => void 
+}) {
+  const { schemaObjects = [] } = usePageStore?.() || {}
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showNewMenu, setShowNewMenu] = useState(false)
+  const [currentLevel, setCurrentLevel] = useState<string[]>([]) // Track hierarchy level
+  
+  // Filter objects based on search
+  const filteredObjects = schemaObjects.filter((obj: SchemaObject) => 
+    obj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    obj.type.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  
+  // Hierarchical schema.org structure
+  const schemaHierarchy: Record<string, any> = {
+    // Top level types
+    'CreativeWork': {
+      label: 'Creative Work',
+      description: 'The most generic kind of creative work, including books, movies, photographs, software programs, etc.',
+      children: {
+        'Article': {
+          label: 'Article', 
+          description: 'An article, such as a news article or piece of investigative report',
+          children: {
+            'ScholarlyArticle': { label: 'Scholarly Article', description: 'A scholarly article' },
+            'NewsArticle': { label: 'News Article', description: 'A news article' },
+            'BlogPosting': { label: 'Blog Posting', description: 'A blog post' }
+          }
+        },
+        'Book': { label: 'Book', description: 'A book' },
+        'MediaObject': {
+          label: 'Media Object',
+          description: 'A media object, such as an image, video, or audio file',
+          children: {
+            'ImageObject': { label: 'Image Object', description: 'An image file' },
+            'VideoObject': { label: 'Video Object', description: 'A video file' },
+            'AudioObject': { label: 'Audio Object', description: 'An audio file' }
+          }
+        }
+      }
+    },
+    'Person': { 
+      label: 'Person', 
+      description: 'A person (alive, dead, undead, or fictional)' 
+    },
+    'Organization': {
+      label: 'Organization',
+      description: 'An organization such as a school, NGO, corporation, club, etc.',
+      children: {
+        'Corporation': { label: 'Corporation', description: 'A business corporation' },
+        'EducationalOrganization': { label: 'Educational Organization', description: 'A school, university, etc.' },
+        'ResearchOrganization': { label: 'Research Organization', description: 'A research organization' }
+      }
+    },
+    'Event': {
+      label: 'Event',
+      description: 'An event happening at a certain time and location',
+      children: {
+        'BusinessEvent': { label: 'Business Event', description: 'A business event' },
+        'EducationEvent': { label: 'Education Event', description: 'An education event' },
+        'ConferenceEvent': { label: 'Conference Event', description: 'A conference event' }
+      }
+    }
+  }
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700">Schema Content</h3>
-      <p className="text-sm text-gray-500">Schema.org integration coming soon...</p>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 p-4 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Schema Content</h3>
+            <p className="text-sm text-gray-600">Create and manage structured data objects</p>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowNewMenu(!showNewMenu)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              New
+            </button>
+            
+          </div>
+        </div>
+        
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Search schema objects..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {showNewMenu ? (
+          /* Schema Type Selection */
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-gray-900">Select Schema Type</h4>
+              <button
+                onClick={() => {
+                  setShowNewMenu(false)
+                  setCurrentLevel([])
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+            
+            {/* Breadcrumb Navigation */}
+            {currentLevel.length > 0 && (
+              <div className="flex items-center mb-3 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded">
+                <button 
+                  onClick={() => setCurrentLevel([])}
+                  className="hover:text-blue-600"
+                >
+                  Schema Types
+                </button>
+                {currentLevel.map((level, index) => (
+                  <span key={index}>
+                    <span className="mx-2">›</span>
+                    <button 
+                      onClick={() => setCurrentLevel(currentLevel.slice(0, index + 1))}
+                      className="hover:text-blue-600"
+                    >
+                      {schemaHierarchy[level]?.label || level}
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            {/* Schema Type Options */}
+            <div className="space-y-1">
+              {(() => {
+                // Navigate to current level in hierarchy
+                let currentItems = schemaHierarchy
+                for (const levelKey of currentLevel) {
+                  currentItems = currentItems[levelKey]?.children || {}
+                }
+                
+                // If we're at top level, show main types
+                if (currentLevel.length === 0) {
+                  return Object.entries(schemaHierarchy).map(([key, value]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        if (value.children) {
+                          setCurrentLevel([key])
+                        } else {
+                          onCreateSchema(key as SchemaOrgType)
+                          setShowNewMenu(false)
+                          setCurrentLevel([])
+                        }
+                      }}
+                      className="w-full p-3 text-left border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-900">{value.label}</div>
+                          <div className="text-xs text-gray-500 mt-1">{value.description}</div>
+                        </div>
+                        {value.children && (
+                          <div className="text-gray-400 ml-2">›</div>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                }
+                
+                // Show items at current level
+                return Object.entries(currentItems).map(([key, value]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (value.children) {
+                        setCurrentLevel([...currentLevel, key])
+                      } else {
+                        onCreateSchema(key as SchemaOrgType)
+                        setShowNewMenu(false)
+                        setCurrentLevel([])
+                      }
+                    }}
+                    className="w-full p-3 text-left border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">{value.label}</div>
+                        <div className="text-xs text-gray-500 mt-1">{value.description}</div>
+                      </div>
+                      {value.children ? (
+                        <div className="text-gray-400 ml-2">›</div>
+                      ) : (
+                        <div className="text-xs text-green-600 ml-2 font-medium">Create</div>
+                      )}
+                    </div>
+                  </button>
+                ))
+              })()}
+            </div>
+          </div>
+        ) : (
+          /* Your Schema Objects */
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">
+              Your Schema Objects ({filteredObjects.length})
+            </h4>
+            
+            {filteredObjects.length === 0 ? (
+              <div className="text-center py-12">
+                {schemaObjects.length === 0 ? (
+                  <div>
+                    <div className="text-4xl mb-3">📋</div>
+                    <p className="text-gray-500 mb-2">No schema objects yet</p>
+                    <p className="text-xs text-gray-400">Click "New" to create your first schema object</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="text-4xl mb-3">🔍</div>
+                    <p className="text-gray-500 mb-2">No objects match "{searchTerm}"</p>
+                    <p className="text-xs text-gray-400">Try a different search term</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredObjects.map((obj: SchemaObject) => (
+                  <div
+                    key={obj.id}
+                    onClick={() => selectSchemaObject?.(obj)}
+                    className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm text-gray-900">{obj.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{SCHEMA_DEFINITIONS[obj.type]?.label || obj.type}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Created {new Date(obj.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                          {obj.type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
@@ -860,174 +1258,23 @@ function SectionsContent({ showToast, usePageStore }: {
     showToast(`${name} section added successfully!`, 'success')
   }
 
-  // Create prefab sections with placeholder content
-  const createHeroPrefab = () => {
-    const heroSection = createSection('hero-with-buttons', 'Hero Section')
-    
-    // Add Mock Live Site styling to match the blue hero
-    heroSection.background = {
-      type: 'gradient',
-      gradient: {
-        type: 'linear',
-        direction: 'to bottom',
-        stops: [
-          { color: '#1e40af', position: '0%' },
-          { color: '#3b82f6', position: '100%' }
-        ]
-      },
-      opacity: 1
-    }
-    
-    // Add placeholder heading widget to hero content area (transparent background)
-    const headingWidget = {
-      id: nanoid(),
-      type: 'heading' as const,
-      sectionId: heroSection.id,
-      skin: 'minimal' as const,
-      text: 'Wiley Online Library',
-      level: 1 as const,
-      align: 'center' as const,
-      style: 'default' as const,
-      color: 'primary' as const,
-      size: 'xl' as const,
-      fontStyle: { bold: true, italic: false, underline: false, strikethrough: false },
-      icon: { enabled: false, position: 'left' as const, emoji: '🚀' },
-      spacing: 'normal' as const
-    }
+  // Prefab sections are now handled by the modular prefabSections.ts
 
-    // Add placeholder text widget (transparent background for blue gradient)
-    const textWidget = {
-      id: nanoid(),
-      type: 'text' as const,
-      sectionId: heroSection.id,
-      skin: 'minimal' as const,
-      text: 'Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.',
-      align: 'center' as const
-    }
-
-    // Add placeholder button widgets to button row
-    const primaryButton = {
-      id: nanoid(),
-      type: 'button' as const,
-      sectionId: heroSection.id,
-      skin: 'minimal' as const,
-      text: 'Explore Journals',
-      href: '#',
-      variant: 'primary' as const,
-      size: 'large' as const
-    }
-
-    const secondaryButton = {
-      id: nanoid(),
-      type: 'button' as const,
-      sectionId: heroSection.id,
-      skin: 'minimal' as const,
-      text: 'Browse Collections',
-      href: '#',
-      variant: 'secondary' as const,
-      size: 'large' as const
-    }
-
-    // Assign widgets to appropriate areas
-    heroSection.areas[0].widgets = [headingWidget, textWidget] // Hero Content
-    heroSection.areas[1].widgets = [primaryButton, secondaryButton] // Button Row
-
-    return heroSection
-  }
-
-  const createFeaturesPrefab = () => {
-    const featuresSection = createSection('header-plus-grid', 'Featured Research Section')
-    
-    // Add Mock Live Site styling to match the featured research cards  
-    featuresSection.background = {
-      type: 'color',
-      color: '#f8fafc',
-      opacity: 1
-    }
-    
-    // Add main heading
-    const mainHeading = {
-      id: nanoid(),
-      type: 'heading' as const,
-      sectionId: featuresSection.id,
-      skin: 'minimal' as const,
-      text: 'Featured Research',
-      level: 2 as const,
-      align: 'center' as const,
-      style: 'default' as const,
-      color: 'default' as const,
-      size: 'large' as const,
-      fontStyle: { bold: true, italic: false, underline: false, strikethrough: false },
-      icon: { enabled: false, position: 'left' as const, emoji: '📚' },
-      spacing: 'normal' as const
-    }
-
-    // Create 3 text widgets for research areas (as agreed) with card layout
-    const leftText = {
-      id: nanoid(),
-      type: 'text' as const,
-      sectionId: featuresSection.id,
-      skin: 'minimal' as const,
-      text: 'Latest in AI & Machine Learning\n\nCutting-edge research in artificial intelligence, neural networks, and computational learning theory.\n\nExplore Articles →',
-      align: 'left' as const,
-      layout: {
-        variant: 'card' as const,
-        padding: 'large' as const,
-        shadow: 'medium' as const,
-        rounded: 'medium' as const
-      }
-    }
-
-    const centerText = {
-      id: nanoid(),
-      type: 'text' as const, 
-      sectionId: featuresSection.id,
-      skin: 'minimal' as const,
-      text: 'Computer Systems & Architecture\n\nBreakthrough discoveries in distributed systems, cloud computing, and hardware optimization.\n\nRead More →',
-      align: 'left' as const,
-      layout: {
-        variant: 'card' as const,
-        padding: 'large' as const,
-        shadow: 'medium' as const,
-        rounded: 'medium' as const
-      }
-    }
-
-    const rightText = {
-      id: nanoid(),
-      type: 'text' as const,
-      sectionId: featuresSection.id,
-      skin: 'minimal' as const, 
-      text: 'Software Engineering Advances\n\nRevolutionary approaches to software development, testing, and quality assurance methodologies.\n\nView Research →',
-      align: 'left' as const,
-      layout: {
-        variant: 'card' as const,
-        padding: 'large' as const,
-        shadow: 'medium' as const,
-        rounded: 'medium' as const
-      }
-    }
-
-    // Assign widgets to areas: 1 Heading + 3 Text widgets
-    featuresSection.areas[0].widgets = [mainHeading] // Header
-    featuresSection.areas[1].widgets = [leftText] // Left Card
-    featuresSection.areas[2].widgets = [centerText] // Center Card
-    featuresSection.areas[3].widgets = [rightText] // Right Card
-
-    return featuresSection
-  }
-
-  const addPrefabSection = (type: 'hero' | 'features') => {
+  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader') => {
     let section: CanvasItem
     
     if (type === 'hero') {
-      section = createHeroPrefab()
+      section = PREFAB_SECTIONS.hero()
+    } else if (type === 'features') {
+      section = PREFAB_SECTIONS.featuredResearch()
+    } else if (type === 'globalHeader') {
+      section = PREFAB_SECTIONS.globalHeader()
     } else {
-      section = createFeaturesPrefab()
+      return // Invalid type
     }
 
     replaceCanvasItems([...canvasItems, section])
-    showToast(`${section.name} added with template content!`, 'success')
+    showToast(`${(section as WidgetSection).name} added with template content!`, 'success')
   }
 
   return (
@@ -1097,6 +1344,14 @@ function SectionsContent({ showToast, usePageStore }: {
           Template-Ready Sections
         </h3>
         <div className="grid grid-cols-1 gap-2">
+          <button
+            onClick={() => addPrefabSection('globalHeader')}
+            className="p-3 text-left border-2 border-purple-200 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
+          >
+            <div className="font-medium text-sm text-purple-900">Global Header</div>
+            <div className="text-xs text-purple-700">University header + main navigation (reusable across pages)</div>
+          </button>
+          
           <button
             onClick={() => addPrefabSection('hero')}
             className="p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"

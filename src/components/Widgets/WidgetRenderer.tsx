@@ -1,5 +1,5 @@
 import React from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 
@@ -144,10 +144,10 @@ const WidgetLayoutWrapper: React.FC<{ widget: Widget; children: React.ReactNode 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) => {
   const variantClasses = {
-    primary: 'bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-2 focus:ring-gray-500',
-    outline: 'border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white focus:ring-2 focus:ring-red-500',
-    link: 'text-red-600 hover:text-red-700 underline hover:no-underline bg-transparent'
+    primary: 'bg-white text-blue-600 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 shadow-sm border border-blue-200',
+    secondary: 'border border-white text-white hover:bg-white hover:text-blue-600 focus:ring-2 focus:ring-blue-500',
+    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white focus:ring-2 focus:ring-blue-500',
+    link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
   }
   
   const sizeClasses = {
@@ -408,6 +408,61 @@ const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
   )
 }
 
+// Code Widget Component
+const CodeWidgetRenderer: React.FC<{ widget: CodeWidget }> = ({ widget }) => {
+  if (!widget.codeContent || widget.codeContent.trim() === '') {
+    // Show placeholder when no content
+    return (
+      <div className="min-h-[200px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+          <span className="text-2xl">💻</span>
+        </div>
+        <h3 className="text-sm font-medium text-gray-900 mb-2">Code Block</h3>
+        <p className="text-xs text-gray-500">No code content provided</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {widget.title && (
+        <h3 className="text-sm font-medium text-gray-900">{widget.title}</h3>
+      )}
+      
+      <div className={`rounded-lg border p-4 font-mono text-sm overflow-x-auto ${
+        widget.theme === 'dark' 
+          ? 'bg-gray-900 text-gray-100 border-gray-700' 
+          : 'bg-gray-50 text-gray-900 border-gray-200'
+      }`}>
+        {widget.showLineNumbers ? (
+          <div className="flex">
+            <div className="flex flex-col text-right pr-4 text-gray-500 select-none border-r border-current/20 mr-4">
+              {widget.codeContent.split('\n').map((_, index) => (
+                <span key={index} className="leading-relaxed">{index + 1}</span>
+              ))}
+            </div>
+            <div className="flex-1">
+              <pre className="whitespace-pre-wrap leading-relaxed">{widget.codeContent}</pre>
+            </div>
+          </div>
+        ) : (
+          <pre className="whitespace-pre-wrap leading-relaxed">{widget.codeContent}</pre>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <span className={`px-2 py-1 rounded-full ${
+          widget.theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-700'
+        }`}>
+          {widget.language}
+        </span>
+        {widget.showLineNumbers && <span>Line Numbers</span>}
+        <span>{widget.theme === 'dark' ? 'Dark' : 'Light'} Theme</span>
+      </div>
+    </div>
+  )
+}
+
 // Heading Widget Component
 const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) => {
   const alignClasses = {
@@ -427,8 +482,8 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   const sizeClasses = {
     small: 'text-lg',
     medium: 'text-xl', 
-    large: 'text-2xl',
-    xl: 'text-4xl',
+    large: 'text-3xl',
+    xl: 'text-5xl',
     auto: ''
   }
   
@@ -445,11 +500,6 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
     }
   }
   
-  const spacingClasses = {
-    tight: 'mb-2',
-    normal: 'mb-4',
-    loose: 'mb-6'
-  }
   
   const getStyleClasses = () => {
     const style = widget.style || 'default'
@@ -465,6 +515,8 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
         return 'relative'
       case 'gradient':
         return 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'
+      case 'hero':
+        return 'font-bold mb-6 text-white'
       default:
         return ''
     }
@@ -472,24 +524,14 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   
   const HeadingTag = `h${widget.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   
-  const getFontStyleClasses = () => {
-    const styles = []
-    if (widget.fontStyle?.bold) styles.push('font-bold')
-    if (widget.fontStyle?.italic) styles.push('italic')
-    if (widget.fontStyle?.underline) styles.push('underline')
-    if (widget.fontStyle?.strikethrough) styles.push('line-through')
-    return styles.join(' ')
-  }
   
   const headingClasses = [
     getStyleClasses(),
-    getFontStyleClasses(),
     alignClasses[widget.align || 'left'],
     widget.size === 'auto' 
       ? sizeClasses[getSemanticDefaultSize(widget.level)]
       : sizeClasses[widget.size || 'auto'],
-    colorClasses[widget.color || 'default'],
-    spacingClasses[widget.spacing || 'normal']
+    colorClasses[widget.color || 'default']
   ].filter(Boolean).join(' ')
   
   return (
@@ -795,6 +837,8 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[] }>
         return <NavbarWidgetRenderer widget={widget as NavbarWidget} />
       case 'html':
         return <HTMLWidgetRenderer widget={widget as HTMLWidget} />
+      case 'code':
+        return <CodeWidgetRenderer widget={widget as CodeWidget} />
       case 'heading':
         return <HeadingWidgetRenderer widget={widget as HeadingWidget} />
       case 'publication-details':

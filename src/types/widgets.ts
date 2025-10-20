@@ -32,26 +32,27 @@ export type ImageWidget = WidgetBase & {
 }
 export type NavbarWidget = WidgetBase & { type: 'navbar'; links: Array<{ label: string; href: string }> }
 export type HTMLWidget = WidgetBase & { type: 'html'; htmlContent: string; title?: string }
+export type CodeWidget = WidgetBase & {
+  type: 'code'
+  title: string
+  language: 'javascript' | 'typescript' | 'python' | 'css' | 'html' | 'json' | 'markdown' | 'xml' | 'sql' | 'shell'
+  codeContent: string
+  showLineNumbers?: boolean
+  theme?: 'light' | 'dark'
+}
 export type HeadingWidget = WidgetBase & { 
   type: 'heading'; 
   text: string; 
   level: 1 | 2 | 3 | 4 | 5 | 6; 
   align?: 'left' | 'center' | 'right';
-  style?: 'default' | 'bordered-left' | 'underlined' | 'highlighted' | 'decorated' | 'gradient';
+  style?: 'default' | 'bordered-left' | 'underlined' | 'highlighted' | 'decorated' | 'gradient' | 'hero';
   color?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted';
   size?: 'small' | 'medium' | 'large' | 'xl' | 'auto';
-  fontStyle?: {
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-    strikethrough?: boolean;
-  };
   icon?: {
     enabled?: boolean;
     position?: 'left' | 'right';
     emoji?: string;
   };
-  spacing?: 'tight' | 'normal' | 'loose';
 }
 
 // Publication Card configuration types
@@ -146,7 +147,7 @@ export type ButtonWidget = WidgetBase & {
   target?: '_blank' | '_self'
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'

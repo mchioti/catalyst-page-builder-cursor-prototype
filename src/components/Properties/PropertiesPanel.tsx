@@ -7,8 +7,10 @@ import {
   type SchemaObject, 
   type SchemaOrgType,
   type HTMLWidget,
+  type CodeWidget,
   type ImageWidget,
   type HeadingWidget,
+  type ButtonWidget,
   type PublicationListWidget,
   type PublicationDetailsWidget,
   isSection
@@ -411,16 +413,18 @@ export function PropertiesPanel({
             (widget as any).type === 'navbar' ? 'bg-indigo-100 text-indigo-700' :
             (widget as any).type === 'heading' ? 'bg-yellow-100 text-yellow-700' :
             (widget as any).type === 'html' ? 'bg-red-100 text-red-700' :
+            (widget as any).type === 'code' ? 'bg-teal-100 text-teal-700' :
             'bg-gray-100 text-gray-700'
           }`}>
             {(widget as any).type === 'publication-details' ? 'Publication Details' :
              (widget as any).type === 'publication-list' ? 'Publication List' :
-             (widget as any).type === 'button' ? 'Button' :
+             (widget as any).type === 'button' ? 'Button Link' :
              (widget as any).type === 'text' ? 'Text' :
              (widget as any).type === 'image' ? 'Image' :
              (widget as any).type === 'navbar' ? 'Navigation' :
              (widget as any).type === 'heading' ? 'Heading' :
              (widget as any).type === 'html' ? 'HTML Block' :
+             (widget as any).type === 'code' ? 'Code Block' :
              (widget as any).type.charAt(0).toUpperCase() + (widget as any).type.slice(1)
             } Widget
           </span>
@@ -510,6 +514,7 @@ export function PropertiesPanel({
               <option value="highlighted">Highlighted Background</option>
               <option value="decorated">Decorated</option>
               <option value="gradient">Gradient Text</option>
+              <option value="hero">Hero - Bold white text with margin</option>
             </select>
           </div>
           
@@ -555,70 +560,6 @@ export function PropertiesPanel({
           </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Font Styling</label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={(widget as HeadingWidget).fontStyle?.bold ?? false}
-                  onChange={(e) => updateWidget({ 
-                    fontStyle: { 
-                      ...((widget as HeadingWidget).fontStyle || {}), 
-                      bold: e.target.checked 
-                    }
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm font-bold">Bold</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={(widget as HeadingWidget).fontStyle?.italic ?? false}
-                  onChange={(e) => updateWidget({ 
-                    fontStyle: { 
-                      ...((widget as HeadingWidget).fontStyle || {}), 
-                      italic: e.target.checked 
-                    }
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm italic">Italic</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={(widget as HeadingWidget).fontStyle?.underline ?? false}
-                  onChange={(e) => updateWidget({ 
-                    fontStyle: { 
-                      ...((widget as HeadingWidget).fontStyle || {}), 
-                      underline: e.target.checked 
-                    }
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm underline">Underline</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={(widget as HeadingWidget).fontStyle?.strikethrough ?? false}
-                  onChange={(e) => updateWidget({ 
-                    fontStyle: { 
-                      ...((widget as HeadingWidget).fontStyle || {}), 
-                      strikethrough: e.target.checked 
-                    }
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm line-through">Strikethrough</span>
-              </label>
-            </div>
-          </div>
           
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
@@ -679,18 +620,6 @@ export function PropertiesPanel({
             )}
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Spacing</label>
-            <select
-              value={(widget as HeadingWidget).spacing || 'normal'}
-              onChange={(e) => updateWidget({ spacing: e.target.value as HeadingWidget['spacing'] })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="tight">Tight</option>
-              <option value="normal">Normal</option>
-              <option value="loose">Loose</option>
-            </select>
-          </div>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
@@ -888,6 +817,161 @@ export function PropertiesPanel({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {widget.type === 'code' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Widget Title</label>
+            <input
+              type="text"
+              value={(widget as CodeWidget).title}
+              onChange={(e) => updateWidget({ title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter code block title..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Programming Language</label>
+            <select
+              value={(widget as CodeWidget).language}
+              onChange={(e) => updateWidget({ language: e.target.value as CodeWidget['language'] })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+              <option value="python">Python</option>
+              <option value="css">CSS</option>
+              <option value="html">HTML</option>
+              <option value="json">JSON</option>
+              <option value="markdown">Markdown</option>
+              <option value="xml">XML</option>
+              <option value="sql">SQL</option>
+              <option value="shell">Shell/Bash</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Code Content</label>
+            <textarea
+              value={(widget as CodeWidget).codeContent}
+              onChange={(e) => updateWidget({ codeContent: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={10}
+              placeholder="Enter your code here..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as CodeWidget).showLineNumbers ?? true}
+                  onChange={(e) => updateWidget({ showLineNumbers: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Show Line Numbers</span>
+              </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Theme</label>
+              <select
+                value={(widget as CodeWidget).theme || 'light'}
+                onChange={(e) => updateWidget({ theme: e.target.value as 'light' | 'dark' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-800">
+                <strong>Code Block Tips:</strong>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Use syntax highlighting to make code more readable</li>
+                  <li>Line numbers help users reference specific lines</li>
+                  <li>Choose dark theme for better contrast with code</li>
+                  <li>Include comments in your code for better understanding</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'button' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+            <input
+              type="text"
+              value={(widget as ButtonWidget).text}
+              onChange={(e) => updateWidget({ text: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter button text..."
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Link URL</label>
+            <input
+              type="url"
+              value={(widget as ButtonWidget).href}
+              onChange={(e) => updateWidget({ href: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="https://example.com"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Button Style</label>
+            <select
+              value={(widget as ButtonWidget).variant}
+              onChange={(e) => updateWidget({ variant: e.target.value as 'primary' | 'secondary' | 'outline' | 'link' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="primary">Primary - White with blue text (Hero CTA)</option>
+              <option value="secondary">Secondary - White border outline (Hero secondary)</option>
+              <option value="outline">Outline - Blue border with blue text</option>
+              <option value="link">Link - Blue text link (Featured articles)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              💡 <strong>Primary:</strong> Main call-to-action buttons • <strong>Secondary:</strong> Alternative actions • <strong>Link:</strong> Inline text links
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Button Size</label>
+            <select
+              value={(widget as ButtonWidget).size}
+              onChange={(e) => updateWidget({ size: e.target.value as 'small' | 'medium' | 'large' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="small">Small - Compact sizing</option>
+              <option value="medium">Medium - Standard sizing</option>
+              <option value="large">Large - Hero/prominent buttons</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Link Target</label>
+            <select
+              value={(widget as ButtonWidget).target || '_self'}
+              onChange={(e) => updateWidget({ target: e.target.value as '_blank' | '_self' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="_self">Same window/tab</option>
+              <option value="_blank">New window/tab</option>
+            </select>
+          </div>
         </div>
       )}
       

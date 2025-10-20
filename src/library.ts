@@ -3,7 +3,7 @@ export type LibraryItemStatus = 'supported' | 'planned' | 'deprecated' | 'advanc
 export type LibraryItem = {
   id: string
   label: string
-  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
+  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'code-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
   description?: string
   skin?: 'modern' | 'classic' | 'minimal' | 'accent'
   status: LibraryItemStatus
@@ -35,8 +35,7 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
           { id: 'text', label: 'Text', type: 'text', description: 'Paragraph or rich text', skin: 'minimal', status: 'supported' },
           { id: 'heading', label: 'Heading', type: 'heading', description: 'Structured heading styles', skin: 'minimal', status: 'supported' },
           { id: 'image', label: 'Image', type: 'image', description: 'Static image', skin: 'minimal', status: 'supported' },
-          { id: 'button', label: 'Button', type: 'button', description: 'Links and actions', skin: 'minimal', status: 'supported' },
-          { id: 'link', label: 'Link', type: 'link', description: 'Simple hyperlink', status: 'planned' },
+          { id: 'button', label: 'Button Link', type: 'button', description: 'Links and actions', skin: 'minimal', status: 'supported' },
           { id: 'divider', label: 'Divider', type: 'divider', description: 'Horizontal rule', status: 'planned' },
           { id: 'spacer', label: 'Spacer', type: 'spacer', description: 'Vertical space', status: 'planned' },
         ],
