@@ -69,20 +69,22 @@ export const createGlobalHeaderPrefab = (): CanvasItem => {
   // Set up styling to match Mock Live Site
   const typedSection = headerSection as WidgetSection
   
-  // University header styling (black background)
+  // University header with proper padding
   typedSection.styling = {
-    paddingTop: 'small',
-    paddingBottom: 'small', 
+    paddingTop: 'medium',
+    paddingBottom: 'medium', 
     paddingLeft: 'medium',
     paddingRight: 'medium',
     gap: 'none',
     variant: 'full-width',
-    textColor: 'white',
-    background: {
-      type: 'color',
-      color: '#000000',
-      opacity: 1
-    }
+    textColor: 'white'
+  }
+
+  // Add black background
+  typedSection.background = {
+    type: 'color',
+    color: '#000000',
+    opacity: 1
   }
 
   // University header content (left side)
@@ -120,7 +122,7 @@ export const createMainNavigationPrefab = (): CanvasItem => {
   const navSection = createBaseSection('two-columns', 'Main Navigation')
   const typedSection = navSection as WidgetSection
 
-  // White background styling
+  // Main navigation with proper padding
   typedSection.styling = {
     paddingTop: 'medium',
     paddingBottom: 'medium',
@@ -129,16 +131,19 @@ export const createMainNavigationPrefab = (): CanvasItem => {
     gap: 'none',
     variant: 'full-width',
     textColor: 'default',
-    background: {
-      type: 'color',
-      color: '#ffffff',
-      opacity: 1
-    },
     border: {
-      type: 'bottom',
+      enabled: true,
+      position: 'bottom',
       width: 'thin',
-      color: 'gray-200'
+      color: 'default'
     }
+  }
+
+  // Add white background
+  typedSection.background = {
+    type: 'color',
+    color: '#ffffff',
+    opacity: 1
   }
 
   // Wiley logo/title (left side)
@@ -243,6 +248,17 @@ export const createHeroPrefab = (): CanvasItem => {
     size: 'large' as const
   }
 
+  // Proper Hero section padding
+  typedSection.styling = {
+    paddingTop: 'large',
+    paddingBottom: 'large',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'medium',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+
   // Assign widgets to appropriate areas
   typedSection.areas[0].widgets = [headingWidget, textWidget] // Hero Content
   typedSection.areas[1].widgets = [primaryButton, secondaryButton] // Button Row
@@ -324,6 +340,17 @@ export const createFeaturesPrefab = (): CanvasItem => {
       shadow: 'medium' as const,
       rounded: 'medium' as const
     }
+  }
+
+  // Proper Featured Research section padding
+  typedSection.styling = {
+    paddingTop: 'large',
+    paddingBottom: 'large',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'medium',
+    variant: 'full-width',
+    textColor: 'default'
   }
 
   // Assign widgets to areas

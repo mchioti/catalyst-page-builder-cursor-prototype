@@ -12,17 +12,33 @@ import {
 // Force module refresh after fixing duplicate schema keys
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 
+interface SectionRendererProps {
+  section: WidgetSection
+  onWidgetClick: (id: string, e: React.MouseEvent) => void
+  dragAttributes?: any
+  dragListeners?: any
+  activeSectionToolbar: string | null
+  setActiveSectionToolbar: (value: string | null) => void
+  activeWidgetToolbar: string | null
+  setActiveWidgetToolbar: (value: string | null) => void
+  activeDropZone: string | null
+  showToast: (message: string, type: 'success' | 'error') => void
+  usePageStore: any // Zustand store hook
+  isLiveMode?: boolean // Flag to disable editor overlays for live site
+}
+
 // Component for draggable widgets within sections
 export function DraggableWidgetInSection({ 
   widget, 
   sectionId, 
-  areaId, 
-  activeSectionToolbar, 
-  setActiveSectionToolbar, 
-  activeWidgetToolbar, 
-  setActiveWidgetToolbar, 
+  areaId,
+  activeSectionToolbar,
+  setActiveSectionToolbar,
+  activeWidgetToolbar,
+  setActiveWidgetToolbar,
   onWidgetClick,
-  usePageStore
+  usePageStore,
+  isLiveMode = false
 }: {
   widget: Widget
   sectionId: string
@@ -33,6 +49,7 @@ export function DraggableWidgetInSection({
   setActiveWidgetToolbar: (value: string | null) => void
   onWidgetClick: (id: string, e: React.MouseEvent) => void
   usePageStore: any
+  isLiveMode?: boolean
 }) {
   // Each widget gets its own draggable hook - no hooks rule violation
   const widgetDrag = useDraggable({
@@ -51,30 +68,32 @@ export function DraggableWidgetInSection({
       style={widgetDrag.transform ? {
         transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
       } : undefined}
-      className={`cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all group relative ${
+      className={`${!isLiveMode ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} group relative ${
         widgetDrag.isDragging ? 'opacity-50' : ''
       }`}
     >
-      {/* Overlay to capture clicks on interactive widgets */}
-      <div 
-        className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
-        style={{ pointerEvents: 'auto' }}
-        onClick={(e) => {
-          e.stopPropagation()
-          console.log('🎯 Overlay click detected:', { 
-            widgetId: widget.id, 
-            widgetType: widget.type 
-          })
-          // Only close section toolbar if it's not for the current widget's section
-          if (activeSectionToolbar !== widget.sectionId) {
-            setActiveSectionToolbar?.(null)
-          }
-          setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
-          onWidgetClick(widget.id, e)
-        }}
-      />
-      {/* Widget Action Toolbar - appears on click (outside non-interactive area) */}
-      {activeWidgetToolbar === widget.id && (
+      {/* Overlay to capture clicks on interactive widgets - only in editor mode */}
+      {!isLiveMode && (
+        <div 
+          className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            console.log('🎯 Overlay click detected:', { 
+              widgetId: widget.id, 
+              widgetType: widget.type 
+            })
+            // Only close section toolbar if it's not for the current widget's section
+            if (activeSectionToolbar !== widget.sectionId) {
+              setActiveSectionToolbar?.(null)
+            }
+            setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+            onWidgetClick(widget.id, e)
+          }}
+        />
+      )}
+      {/* Widget Action Toolbar - appears on click (outside non-interactive area) - only in editor mode */}
+      {!isLiveMode && activeWidgetToolbar === widget.id && (
         <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
             <div 
@@ -167,20 +186,9 @@ export function SectionRenderer({
   setActiveWidgetToolbar,
   activeDropZone,
   showToast,
-  usePageStore
-}: { 
-  section: WidgetSection
-  onWidgetClick: (id: string, e: React.MouseEvent) => void
-  dragAttributes?: any
-  dragListeners?: any
-  activeSectionToolbar: string | null
-  setActiveSectionToolbar: (value: string | null) => void
-  activeWidgetToolbar: string | null
-  setActiveWidgetToolbar: (value: string | null) => void
-  activeDropZone: string | null
-  showToast: (message: string, type: 'success' | 'error') => void
-  usePageStore: any // Zustand store hook
-}) {
+  usePageStore,
+  isLiveMode = false
+}: SectionRendererProps) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
@@ -200,11 +208,56 @@ export function SectionRenderer({
       case 'vertical':
         return 'grid-cols-1'
       case 'hero-with-buttons':
-        return 'grid-cols-1 gap-6'
+        return 'grid-cols-1 gap-4'
       case 'header-plus-grid':
-        return 'grid-cols-3 gap-6 [&>:first-child]:col-span-3'
+        return 'grid-cols-3 gap-4 [&>:first-child]:col-span-3'
       default:
         return 'grid-cols-1'
+    }
+  }
+
+  // Convert section styling properties to CSS classes
+  const getSectionStylingClasses = (section: WidgetSection) => {
+    // Provide sensible defaults if no styling is specified
+    const styling = section.styling || {
+      paddingTop: 'medium',
+      paddingBottom: 'medium',
+      paddingLeft: 'medium',
+      paddingRight: 'medium',
+      gap: 'medium'
+    }
+    
+    const padding = getSectionPaddingClasses(styling)
+    const gap = getGapClasses(styling.gap)
+    
+    return `${padding} ${gap}`.trim()
+  }
+
+  const getSectionPaddingClasses = (styling: any) => {
+    const paddingMap: { [key: string]: string } = {
+      'none': '',
+      'small': '4',
+      'medium': '6', 
+      'large': '8'
+    }
+    
+    const pt = styling.paddingTop && paddingMap[styling.paddingTop] ? `pt-${paddingMap[styling.paddingTop]}` : ''
+    const pb = styling.paddingBottom && paddingMap[styling.paddingBottom] ? `pb-${paddingMap[styling.paddingBottom]}` : ''
+    const pl = styling.paddingLeft && paddingMap[styling.paddingLeft] ? `pl-${paddingMap[styling.paddingLeft]}` : ''
+    const pr = styling.paddingRight && paddingMap[styling.paddingRight] ? `pr-${paddingMap[styling.paddingRight]}` : ''
+    
+    const result = `${pt} ${pb} ${pl} ${pr}`.trim()
+    
+    return result
+  }
+
+  const getGapClasses = (gap?: string) => {
+    switch (gap) {
+      case 'none': return 'gap-0'
+      case 'small': return 'gap-2'
+      case 'medium': return 'gap-4'
+      case 'large': return 'gap-6'
+      default: return 'gap-4' // default gap
     }
   }
 
@@ -257,7 +310,12 @@ export function SectionRenderer({
   // Get section container classes with background awareness and text color
   const getSectionContainerClasses = (section: WidgetSection) => {
     const hasBackground = section.background && section.background.type !== 'none'
-    const baseClasses = 'group transition-all relative cursor-grab active:cursor-grabbing'
+    
+    // Base classes for all modes
+    const baseClasses = 'group relative'
+    
+    // Editor-specific classes
+    const editorClasses = !isLiveMode ? 'transition-all cursor-grab active:cursor-grabbing' : ''
     
     // Add text color for blue gradient backgrounds
     const hasBlueBackground = section.background?.type === 'gradient' && 
@@ -267,14 +325,20 @@ export function SectionRenderer({
     
     const textColorClass = hasBlueBackground ? 'text-white' : ''
     
+    if (isLiveMode) {
+      // Live mode: clean styling, no editor visual elements
+      return `${baseClasses} ${textColorClass}`
+    }
+    
+    // Editor mode styling
     if (isSpecialSection) {
-      return `${baseClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
+      return `${baseClasses} ${editorClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
     } else {
       // If section has custom background, use more neutral styling
       if (hasBackground) {
-        return `${baseClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20 ${textColorClass}`
+        return `${baseClasses} ${editorClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20 ${textColorClass}`
       } else {
-        return `${baseClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
+        return `${baseClasses} ${editorClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
       }
     }
   }
@@ -288,16 +352,30 @@ export function SectionRenderer({
       // Count widgets in the section for better metadata
       const widgetCount = section.areas.reduce((count, area) => count + area.widgets.length, 0)
       
+      // Create section with new ID and regenerated widget IDs
+      const newSectionId = nanoid()
+      const sectionWithNewId = {
+        ...section,
+        id: newSectionId,
+        areas: section.areas.map(area => ({
+          ...area,
+          id: nanoid(),
+          widgets: area.widgets.map(widget => ({
+            ...widget,
+            id: nanoid(),
+            sectionId: newSectionId
+          }))
+        }))
+      }
+      
       const customSection = {
         id: nanoid(),
         name: sectionName.trim(),
         description: sectionDescription.trim() || 'Custom saved section',
-        widgets: section.areas.flatMap(area => area.widgets), // Store flattened widget list for easier counting
+        widgets: section.areas.flatMap(area => area.widgets), // Legacy field for compatibility
         createdAt: new Date(),
-        section: {
-          ...section,
-          id: nanoid() // Generate new ID for the saved section
-        }
+        section: sectionWithNewId, // Legacy field for compatibility
+        canvasItems: [sectionWithNewId] // NEW FORMAT - array of canvas items!
       }
       addCustomSection(customSection)
       setShowSaveModal(false)
@@ -340,9 +418,20 @@ export function SectionRenderer({
   return (
     <>
       <div 
-        className={getSectionContainerClasses(section)}
-        style={getSectionBackgroundStyles(section)}
-        onClick={(e) => {
+        className={`${getSectionContainerClasses(section)} ${getSectionStylingClasses(section)}`}
+        style={{
+          ...getSectionBackgroundStyles(section),
+          // Fallback inline styles in case Tailwind classes don't exist
+          ...(section.styling?.paddingTop === 'large' && { paddingTop: '32px' }),
+          ...(section.styling?.paddingBottom === 'large' && { paddingBottom: '32px' }),
+          ...(section.styling?.paddingTop === 'medium' && { paddingTop: '24px' }),
+          ...(section.styling?.paddingBottom === 'medium' && { paddingBottom: '24px' }),
+          ...(section.styling?.paddingTop === 'small' && { paddingTop: '16px' }),
+          ...(section.styling?.paddingBottom === 'small' && { paddingBottom: '16px' }),
+          ...(section.styling?.paddingLeft && { paddingLeft: section.styling.paddingLeft === 'large' ? '32px' : section.styling.paddingLeft === 'medium' ? '24px' : '16px' }),
+          ...(section.styling?.paddingRight && { paddingRight: section.styling.paddingRight === 'large' ? '32px' : section.styling.paddingRight === 'medium' ? '24px' : '16px' })
+        }}
+        onClick={!isLiveMode ? (e) => {
           e.stopPropagation()
           const newValue = activeSectionToolbar === section.id ? null : section.id
           // Close any widget toolbar and toggle section toolbar
@@ -351,12 +440,12 @@ export function SectionRenderer({
           // Select the section for properties panel (use selectWidget directly)
           const { selectWidget } = usePageStore.getState()
           selectWidget(section.id)
-        }}
+        } : undefined}
         {...dragAttributes}
         {...dragListeners}
       >
-        {/* Section Action Toolbar - appears on click */}
-        {activeSectionToolbar === section.id && (
+        {/* Section Action Toolbar - appears on click - only in editor mode */}
+        {!isLiveMode && activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
               <div 
@@ -409,7 +498,9 @@ export function SectionRenderer({
         
         {/* Removed repetitive section info - cleaner UI */}
       
-      <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
+      {/* Content wrapper with proper constraints for live site */}
+      <div className={`${isLiveMode ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' : ''}`}>
+        <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
         {section.areas.map((area) => {
           // Make area droppable for library widgets
           const { isOver, setNodeRef: setDropRef } = useDroppable({
@@ -433,30 +524,32 @@ export function SectionRenderer({
             ref={setDropRef}
             key={area.id} 
             className={`relative ${
-              isSpecialSection 
-                ? '' 
-                : area.widgets.length === 0 
-                  ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
-                      (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
-                        ? '' // Transparent for sections with background
-                        : 'bg-white' // White background for normal sections
-                    } ${
-                      activeDropZone === `drop-${area.id}` 
-                        ? 'border-green-400 bg-green-50 ring-2 ring-green-200' 
-                        : isOver 
-                        ? 'border-blue-400 bg-blue-50' 
-                        : 'border-purple-300 opacity-60'
-                    }` 
-                  : activeDropZone === `drop-${area.id}` 
-                    ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+              isLiveMode
+                ? '' // Live mode: no editor styling
+                : isSpecialSection 
+                  ? '' 
+                  : area.widgets.length === 0 
+                    ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
+                        (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
+                          ? '' // Transparent for sections with background
+                          : 'bg-white' // White background for normal sections
+                      } ${
+                        activeDropZone === `drop-${area.id}` 
+                          ? 'border-green-400 bg-green-50 ring-2 ring-green-200' 
+                          : isOver 
+                          ? 'border-blue-400 bg-blue-50' 
+                          : 'border-purple-300 opacity-60'
+                      }` 
                     : activeDropZone === `drop-${area.id}` 
                       ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
-                      : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
-                        ? 'rounded p-2' // Transparent background to show section gradient/color/image
-                        : 'bg-white rounded p-2'
+                      : activeDropZone === `drop-${area.id}` 
+                        ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+                        : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
+                          ? 'rounded p-2' // Transparent background to show section gradient/color/image
+                          : 'bg-white rounded p-2'
             }`}
           >
-            {!isSpecialSection && area.widgets.length === 0 && (
+            {!isLiveMode && !isSpecialSection && area.widgets.length === 0 && (
               <div className="flex items-center justify-center h-full">
                 <span className={`text-xs transition-colors ${
                   activeDropZone === `drop-${area.id}` 
@@ -499,16 +592,18 @@ export function SectionRenderer({
                   setActiveWidgetToolbar={setActiveWidgetToolbar}
                   onWidgetClick={onWidgetClick}
                   usePageStore={usePageStore}
+                  isLiveMode={isLiveMode}
                 />
               ))}
             </div>
           </div>
         )})}
+        </div>
       </div>
       </div>
       
-      {/* Save Section Modal */}
-      {showSaveModal && (
+      {/* Save Section Modal - only in editor mode */}
+      {!isLiveMode && showSaveModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
             <h3 className="text-lg font-semibold mb-4">Save Custom Section</h3>

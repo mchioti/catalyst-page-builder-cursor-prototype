@@ -368,18 +368,105 @@ const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
     )
   }
   
-  // Render HTML content in an iframe for safety
+  // Enhanced HTML content with better interactivity support
+  const enhancedHtmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { 
+          margin: 0; 
+          padding: 16px; 
+          font-family: system-ui, -apple-system, sans-serif; 
+          line-height: 1.5;
+          background-color: transparent;
+        }
+        * { box-sizing: border-box; }
+        
+        /* Ensure clicks and interactions work properly */
+        button, a, [onclick], [data-clickable], .clickable {
+          cursor: pointer !important;
+          user-select: none;
+          transition: all 0.2s ease;
+        }
+        
+        button:hover, a:hover, [onclick]:hover, [data-clickable]:hover, .clickable:hover {
+          opacity: 0.8;
+          transform: translateY(-1px);
+        }
+        
+        /* Auto-resize communication script */
+        .html-widget-container {
+          min-height: 200px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="html-widget-container">
+        ${widget.htmlContent}
+      </div>
+      
+      <script>
+        // Auto-resize iframe to content
+        function resizeIframe() {
+          const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight, 300);
+          window.parent.postMessage({
+            type: 'resize',
+            height: height
+          }, '*');
+        }
+        
+        // Resize on load and content changes
+        window.addEventListener('load', resizeIframe);
+        window.addEventListener('resize', resizeIframe);
+        
+        // Set up mutation observer to detect content changes
+        const observer = new MutationObserver(() => {
+          setTimeout(resizeIframe, 50);
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+        
+        // Initial resize after a short delay
+        setTimeout(resizeIframe, 100);
+        setTimeout(resizeIframe, 500); // Second attempt for complex content
+        
+        // Enhanced click handling for better interactivity
+        document.addEventListener('click', function(e) {
+          // Ensure clicks work properly and don't get blocked
+          console.log('HTML Widget Click:', e.target);
+        }, true);
+        
+        // Enable proper event bubbling
+        document.addEventListener('DOMContentLoaded', function() {
+          // Make sure all interactive elements are properly initialized
+          const interactiveElements = document.querySelectorAll('button, a, [onclick], [data-clickable], .clickable');
+          interactiveElements.forEach(el => {
+            el.style.cursor = 'pointer';
+            if (!el.onclick && !el.getAttribute('onclick') && !el.href) {
+              el.addEventListener('click', function(e) {
+                console.log('Interactive element clicked:', this);
+              });
+            }
+          });
+        });
+      </script>
+    </body>
+    </html>
+  `;
+
+  // Render HTML content in an iframe for safety with enhanced interactivity
   return (
     <iframe
-      srcDoc={`
-        <style>
-          body { margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-          * { box-sizing: border-box; }
-        </style>
-        ${widget.htmlContent}
-      `}
+      srcDoc={enhancedHtmlContent}
       className="w-full border-0 block"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals allow-downloads"
       title="HTML Widget Content"
       style={{ 
         height: 'auto', 
@@ -387,19 +474,30 @@ const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
         width: '100%',
         display: 'block',
         margin: 0,
-        padding: 0
+        padding: 0,
+        backgroundColor: 'transparent'
       }}
       onLoad={(e) => {
-        // Auto-resize iframe to content
         const iframe = e.target as HTMLIFrameElement;
+        
+        // Listen for resize messages from iframe content
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data && event.data.type === 'resize' && event.source === iframe.contentWindow) {
+            iframe.style.height = event.data.height + 'px';
+          }
+        };
+        
+        window.addEventListener('message', handleMessage);
+        
+        // Initial resize attempt for compatibility
         try {
           setTimeout(() => {
             const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
             if (iframeDoc && iframeDoc.body) {
-              const height = Math.max(iframeDoc.body.scrollHeight, 300);
+              const height = Math.max(iframeDoc.body.scrollHeight, iframeDoc.documentElement.scrollHeight, 300);
               iframe.style.height = height + 'px';
             }
-          }, 200);
+          }, 300);
         } catch (err) {
           iframe.style.height = '400px';
         }

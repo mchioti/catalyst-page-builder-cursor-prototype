@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "test:smoke": "playwright test tests/smoke.test.js --headed",
+    "test:smoke:ci": "playwright test tests/smoke.test.js",
+    "test:automated": "playwright test tests/automated.test.js --headed", 
+    "test:automated:ci": "playwright test tests/automated.test.js",
+    "test:all": "playwright test tests/ --headed",
+    "test:setup": "npx playwright install",
+    "dev:test": "concurrently 'npm run dev' 'npm run test:smoke'"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "concurrently": "^8.2.2"
+  }
+}

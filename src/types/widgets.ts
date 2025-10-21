@@ -182,6 +182,27 @@ export type WidgetSection = {
     }
     opacity?: number // 0-1 for background opacity
   }
+  
+  // Section styling configuration
+  styling?: {
+    paddingTop?: 'none' | 'small' | 'medium' | 'large'
+    paddingBottom?: 'none' | 'small' | 'medium' | 'large'
+    paddingLeft?: 'none' | 'small' | 'medium' | 'large'
+    paddingRight?: 'none' | 'small' | 'medium' | 'large'
+    gap?: 'none' | 'small' | 'medium' | 'large'
+    variant?: 'default' | 'full-width' | 'contained' | 'wide'
+    textColor?: 'default' | 'white' | 'dark' | 'muted'
+    border?: {
+      enabled: boolean
+      color?: 'default' | 'primary' | 'accent' | 'success' | 'warning' | 'error'
+      width?: 'thin' | 'medium' | 'thick'
+      style?: 'solid' | 'dashed' | 'dotted'
+      position?: 'top' | 'bottom' | 'left' | 'right' | 'all'
+    }
+    shadow?: 'none' | 'small' | 'medium' | 'large'
+    maxWidth?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl'
+    centerContent?: boolean
+  }
 }
 
 // Canvas item can be either an individual widget or a section
@@ -196,8 +217,9 @@ export type CustomSection = {
   id: string
   name: string
   description?: string
-  widgets: Widget[]  // Keep this for metadata/counting
-  section: WidgetSection  // Full section structure for reconstruction
+  widgets: Widget[]  // Keep this for metadata/counting (legacy)
+  section?: WidgetSection  // Full section structure for reconstruction (legacy)
+  canvasItems?: CanvasItem[]  // Full canvas items for reconstruction (new approach)
   createdAt: Date
 }
 

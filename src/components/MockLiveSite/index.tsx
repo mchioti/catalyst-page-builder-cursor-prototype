@@ -1,82 +1,51 @@
 import React from 'react'
-import type { EditingContext, MockLiveSiteRoute } from '../../types'
+import type { EditingContext, MockLiveSiteRoute, CanvasItem } from '../../types'
+import { SectionRenderer } from '../Sections/SectionRenderer'
+import { WidgetRenderer } from '../Widgets/WidgetRenderer'
+import { isSection } from '../../types'
 
-// Mock Live Site Page Components
-function MockHomepage({ onEdit }: { onEdit: (context?: EditingContext) => void }) {
+// Dynamic Homepage that uses canvas content
+function MockHomepage({ 
+  onEdit, 
+  canvasItems, 
+  schemaObjects 
+}: { 
+  onEdit: (context?: EditingContext) => void
+  canvasItems: CanvasItem[]
+  schemaObjects: any[]
+}) {
+
   return (
     <div className="min-h-screen">
-      {/* University Publications Header */}
-      <div className="bg-black text-white py-2 px-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
-          <div className="text-gray-300">brought to you by Atypon</div>
-          <div className="flex items-center space-x-4">
-            <select className="bg-gray-800 text-white text-xs px-2 py-1 rounded">
-              <option>ANYWHERE</option>
-            </select>
-            <input type="text" placeholder="Enter search phrase/DOI" className="bg-gray-800 text-white text-xs px-2 py-1 rounded w-48" />
-            <button className="bg-red-600 text-white px-2 py-1 text-xs rounded">🔍</button>
-            <button className="text-white text-xs">Advanced Search</button>
-            <button className="text-white text-xs">🛒</button>
-            <button className="text-white text-xs">Maria Chioti</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navigation */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="text-2xl font-bold text-blue-600">Wiley <span className="text-blue-400">Online Library</span></div>
-          <nav className="flex space-x-8 text-sm font-medium">
-            <a href="#" className="text-gray-700 hover:text-blue-600">Journals</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600">Books</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600">Proceedings</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600">Blogs</a>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-6">Wiley Online Library</h1>
-          <p className="text-xl text-blue-100 mb-8">
-            Discover breakthrough research in computing, technology, and digital innovation. 
-            Access thousands of peer-reviewed articles from leading journals and conferences.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50">
-              Explore Journals
-            </button>
-            <button className="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600">
-              Browse Collections
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Content */}
-      <div className="py-16 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Featured Research</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Latest in AI & Machine Learning</h3>
-              <p className="text-gray-600 mb-4">Cutting-edge research in artificial intelligence, neural networks, and computational learning theory.</p>
-              <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">Explore Articles →</a>
+      {/* Render canvas content */}
+      {canvasItems.map((item: CanvasItem) => {
+        if (isSection(item)) {
+          return (
+            <SectionRenderer
+              key={item.id}
+              section={item}
+              onWidgetClick={() => {}} // No widget clicking on live site
+              dragAttributes={{}}
+              dragListeners={{}}
+              activeSectionToolbar={null}
+              setActiveSectionToolbar={() => {}}
+              activeWidgetToolbar={null}
+              setActiveWidgetToolbar={() => {}}
+              activeDropZone={null}
+              showToast={() => {}}
+              usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
+              isLiveMode={true} // Add this flag to prevent editor overlays
+            />
+          )
+        } else {
+          // Standalone widget
+          return (
+            <div key={item.id} className="w-full">
+              <WidgetRenderer widget={item} schemaObjects={schemaObjects} />
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Computer Systems & Architecture</h3>
-              <p className="text-gray-600 mb-4">Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization.</p>
-              <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">Read More →</a>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Software Engineering Advances</h3>
-              <p className="text-gray-600 mb-4">Revolutionary approaches to software development, testing, and quality assurance methodologies.</p>
-              <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">View Research →</a>
-            </div>
-          </div>
-        </div>
-      </div>
+          )
+        }
+      })}
     </div>
   )
 }
@@ -687,14 +656,19 @@ interface MockLiveSiteProps {
   setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void
   setCurrentView: (view: 'page-builder' | 'design-console' | 'mock-live-site') => void
   setEditingContext: (context: EditingContext) => void
+  usePageStore: any // Store hook passed from parent
 }
 
 export function MockLiveSite({
   mockLiveSiteRoute,
   setMockLiveSiteRoute,
   setCurrentView,
-  setEditingContext
+  setEditingContext,
+  usePageStore
 }: MockLiveSiteProps) {
+  // Get canvas data from store
+  const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
+  const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
   const handleEditPage = (context: EditingContext = 'page') => {
     setEditingContext(context)
     setCurrentView('page-builder')
@@ -739,7 +713,7 @@ export function MockLiveSite({
   const renderPage = () => {
     switch (mockLiveSiteRoute) {
       case '/':
-        return <MockHomepage onEdit={handleEditPage} />
+        return <MockHomepage onEdit={handleEditPage} canvasItems={canvasItems} schemaObjects={schemaObjects} />
       case '/toc/advma/current':
         return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} />
       case '/toc/embo/current':

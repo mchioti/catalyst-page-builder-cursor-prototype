@@ -48,6 +48,7 @@ import type {
   ContentBlockLayout, 
   CanvasItem 
 } from '../../types/widgets'
+import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 
 // Component props interface
@@ -638,18 +639,13 @@ export function PageBuilder({
               <div className="flex items-center gap-3">
               <button
                   onClick={() => {
-                    const { addNotification, setCurrentView } = usePageStore.getState()
-                    addNotification({
-                      type: 'success',
-                      title: 'Changes Published',
-                      message: 'Your changes have been published to the live site'
-                    })
+                    const { setCurrentView } = usePageStore.getState()
                     setCurrentView('mock-live-site')
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Publish Changes
+                  Preview Changes
                 </button>
                 <button
                   onClick={() => setCurrentView('design-console')}
@@ -800,12 +796,12 @@ export function PageBuilder({
 }
 
 // DIYZoneContent Component - Advanced widgets and saved sections
-function DIYZoneContent({ showToast, usePageStore, buildWidget }: { 
+function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
   showToast: (message: string, type: 'success' | 'error') => void
   usePageStore: any
   buildWidget: (item: any) => Widget
 }) {
-  const { savedSections = [], canvasItems, replaceCanvasItems } = usePageStore()
+  const { customSections = [], canvasItems, replaceCanvasItems, addCustomSection, selectWidget } = usePageStore()
 
   // DIY Widgets - Advanced/Technical widgets for power users
   const diyWidgets = [
@@ -815,17 +811,73 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
 
   // Save current canvas as a custom section
   const saveCurrentAsSection = () => {
-    if (canvasItems.length === 0) {
-      showToast('Cannot save empty canvas as section', 'error')
-      return
+    try {
+      // Clear any selection first to avoid interference
+      selectWidget(null)
+      
+      if (canvasItems.length === 0) {
+        showToast('Cannot save empty canvas as section', 'error')
+        return
+      }
+
+      const sectionName = prompt('Enter a name for this custom section:')
+      if (!sectionName?.trim()) return
+
+      const sectionDescription = prompt('Enter a description (optional):') || 'Custom saved section'
+
+      // Count total widgets
+      const totalWidgets = canvasItems.reduce((count: number, item: CanvasItem) => {
+        if (isSection(item)) {
+          return count + item.areas.reduce((areaCount: number, area: any) => areaCount + area.widgets.length, 0)
+        } else {
+          return count + 1 // standalone widget
+        }
+      }, 0)
+
+      // Deep clone and regenerate IDs for canvas items to avoid conflicts
+      const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
+        if (isSection(item)) {
+          // For sections, also regenerate widget IDs
+          const newSectionId = nanoid()
+          return {
+            ...item,
+            id: newSectionId,
+            areas: item.areas.map(area => ({
+              ...area,
+              id: nanoid(),
+              widgets: area.widgets.map(widget => ({
+                ...widget,
+                id: nanoid(),
+                sectionId: newSectionId // Set to the new section ID
+              }))
+            }))
+          }
+        } else {
+          // For standalone widgets
+          return {
+            ...item,
+            id: nanoid()
+          }
+        }
+      })
+
+      // Create the custom section with proper structure
+      const newSavedSection = {
+        id: nanoid(),
+        name: sectionName.trim(),
+        description: sectionDescription,
+        widgets: [], // Legacy field, keeping empty for compatibility
+        createdAt: new Date(),
+        canvasItems: clonedCanvasItems
+      }
+
+      addCustomSection(newSavedSection)
+      showToast(`Section "${sectionName.trim()}" saved with ${totalWidgets} widget${totalWidgets !== 1 ? 's' : ''}!`, 'success')
+    
+    } catch (error) {
+      console.error('❌ ERROR in saveCurrentAsSection:', error)
+      showToast('Error saving section: ' + (error instanceof Error ? error.message : String(error)), 'error')
     }
-
-    const sectionName = prompt('Enter a name for this custom section:')
-    if (!sectionName) return
-
-    // Note: Saved sections functionality would need to be implemented in the store
-    // const newSavedSection = { id: nanoid(), name: sectionName, items: canvasItems, createdAt: new Date().toISOString() }
-    showToast(`Section "${sectionName}" saved! (Feature coming soon)`, 'success')
   }
 
   return (
@@ -890,30 +942,53 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
           <div className="text-xs text-gray-500">Save current sections as reusable template</div>
         </button>
 
-        {savedSections.length > 0 ? (
+        {customSections.length > 0 ? (
           <div className="space-y-2">
-            {savedSections.map((section: any) => (
-              <div key={section.id} className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-sm">{section.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {section.items.length} section{section.items.length !== 1 ? 's' : ''} • 
-                      Saved {new Date(section.createdAt).toLocaleDateString()}
+            {customSections.map((section: any) => {
+              // Count widgets in the saved section
+              const itemCount = section.canvasItems?.length || section.items?.length || 0
+              const totalWidgets = (section.canvasItems || section.items || []).reduce((count: number, item: any) => {
+                if (isSection(item)) {
+                  return count + item.areas.reduce((areaCount: number, area: any) => areaCount + area.widgets.length, 0)
+                } else {
+                  return count + 1
+                }
+              }, 0)
+              
+              return (
+                <div key={section.id} className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{section.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">{section.description}</div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {itemCount} section{itemCount !== 1 ? 's' : ''} • {totalWidgets} widget{totalWidgets !== 1 ? 's' : ''} • 
+                        Saved {new Date(section.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
+                    <button
+                      onClick={() => {
+                        const itemsToLoad = section.canvasItems || section.items || []
+                        console.log('🔍 Loading saved section:', {
+                          sectionName: section.name,
+                          itemsToLoad,
+                          currentCanvasItems: canvasItems,
+                          totalItemsAfterLoad: canvasItems.length + itemsToLoad.length
+                        })
+                        // Clear any selected widgets/sections to prevent "not found" errors
+                        selectWidget(null)
+                        // Load the saved sections
+                        replaceCanvasItems([...canvasItems, ...itemsToLoad])
+                        showToast(`"${section.name}" loaded to canvas!`, 'success')
+                      }}
+                      className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0 ml-2"
+                    >
+                      Load
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      replaceCanvasItems([...canvasItems, ...section.items])
-                      showToast(`"${section.name}" sections added to canvas!`, 'success')
-                    }}
-                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Load
-                  </button>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">

@@ -772,9 +772,105 @@ export function PropertiesPanel({
               value={(widget as HTMLWidget).htmlContent}
               onChange={(e) => updateWidget({ htmlContent: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm resize-none"
-              rows={6}
+              rows={8}
               placeholder="Enter your HTML code here..."
             />
+          </div>
+          
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                const interactiveExample = `<div style="padding: 20px; font-family: system-ui;">
+  <h2 style="color: #2563eb; margin-bottom: 20px;">Interactive Widget Example</h2>
+  
+  <div style="display: flex; gap: 20px;">
+    <!-- Left Side - Clickable Tags -->
+    <div style="flex: 1;">
+      <h3 style="margin-bottom: 15px;">Click on categories:</h3>
+      <div style="display: flex; flex-wrap: gap: 8px;">
+        <button class="clickable" onclick="showContent('profile')" style="background: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer;">Profile (84)</button>
+        <button class="clickable" onclick="showContent('general')" style="background: #6b7280; color: white; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer;">General (32)</button>
+        <button class="clickable" onclick="showContent('search')" style="background: #059669; color: white; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer;">Search (6)</button>
+        <button class="clickable" onclick="showContent('reports')" style="background: #dc2626; color: white; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer;">Reports (6)</button>
+      </div>
+    </div>
+    
+    <!-- Right Side - Dynamic Content -->
+    <div style="flex: 1; border-left: 2px solid #e5e7eb; padding-left: 20px;">
+      <div id="content-area">
+        <p style="color: #6b7280; font-style: italic;">Click on a category to see its content</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function showContent(category) {
+      const contentArea = document.getElementById('content-area');
+      
+      const content = {
+        profile: \`<h4 style="color: #3b82f6; margin-bottom: 10px;">Profile Widgets (84)</h4>
+                  <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">User Profile Display</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Profile Settings</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Avatar Management</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Account Preferences</li>
+                    <li style="padding: 8px 0; color: #6b7280;">...and 80 more</li>
+                  </ul>\`,
+        general: \`<h4 style="color: #6b7280; margin-bottom: 10px;">General Widgets (32)</h4>
+                   <ul style="list-style: none; padding: 0;">
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Text Blocks</li>
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Image Gallery</li>
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Button Groups</li>
+                     <li style="padding: 8px 0; color: #6b7280;">...and 29 more</li>
+                   </ul>\`,
+        search: \`<h4 style="color: #059669; margin-bottom: 10px;">Search Widgets (6)</h4>
+                  <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Advanced Search Form</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Search Results Display</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Filter Controls</li>
+                    <li style="padding: 8px 0; color: #6b7280;">...and 3 more</li>
+                  </ul>\`,
+        reports: \`<h4 style="color: #dc2626; margin-bottom: 10px;">Report Widgets (6)</h4>
+                   <ul style="list-style: none; padding: 0;">
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Analytics Dashboard</li>
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Data Visualization</li>
+                     <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Export Tools</li>
+                     <li style="padding: 8px 0; color: #6b7280;">...and 3 more</li>
+                   </ul>\`
+      };
+      
+      contentArea.innerHTML = content[category];
+      
+      // Highlight active button
+      document.querySelectorAll('button').forEach(btn => {
+        btn.style.opacity = '0.7';
+      });
+      event.target.style.opacity = '1';
+    }
+  </script>
+</div>`;
+                updateWidget({ htmlContent: interactiveExample });
+              }}
+              className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+            >
+              📱 Load Interactive Example
+            </button>
+            
+            <button
+              onClick={() => {
+                const basicExample = `<div style="padding: 20px; text-align: center; font-family: system-ui;">
+  <h2 style="color: #059669;">Welcome to HTML Widgets!</h2>
+  <p>This is a simple HTML widget. You can add any HTML content here.</p>
+  <button onclick="alert('Hello from HTML Widget!')" style="background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+    Click Me!
+  </button>
+</div>`;
+                updateWidget({ htmlContent: basicExample });
+              }}
+              className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+            >
+              🚀 Load Basic Example
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Upload HTML File</label>
