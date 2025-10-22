@@ -48,11 +48,7 @@ export type HeadingWidget = WidgetBase & {
   style?: 'default' | 'bordered-left' | 'underlined' | 'highlighted' | 'decorated' | 'gradient' | 'hero';
   color?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted';
   size?: 'small' | 'medium' | 'large' | 'xl' | 'auto';
-  icon?: {
-    enabled?: boolean;
-    position?: 'left' | 'right';
-    emoji?: string;
-  };
+  icon?: WidgetIcon;
 }
 
 // Publication Card configuration types
@@ -94,7 +90,7 @@ export type PublicationCardConfig = {
   titleStyle: 'small' | 'medium' | 'large'
 }
 
-export type PublicationListWidget = WidgetBase & { 
+export type PublicationListWidget = WidgetBase & {
   type: 'publication-list'
   contentSource: 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
   publications: any[] // JSON-LD ScholarlyArticle array
@@ -138,6 +134,13 @@ export type PublicationDetailsWidget = WidgetBase & {
   }
 }
 
+// Reusable icon configuration for widgets
+export type WidgetIcon = {
+  enabled?: boolean;
+  position?: 'left' | 'right';
+  emoji?: string;
+}
+
 export type ButtonWidget = WidgetBase & {
   type: 'button'
   text: string
@@ -145,6 +148,7 @@ export type ButtonWidget = WidgetBase & {
   variant: 'primary' | 'secondary' | 'outline' | 'link'
   size: 'small' | 'medium' | 'large'
   target?: '_blank' | '_self'
+  icon?: WidgetIcon
 }
 
 export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget

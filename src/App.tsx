@@ -3,15 +3,15 @@ import type { ReactNode } from 'react'
 import React from 'react'
 import { nanoid } from 'nanoid'
 import { arrayMove } from '@dnd-kit/sortable'
-import { ChevronDown, Building2, Settings, X, Plus, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Trash2, Info } from 'lucide-react'
+import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
+import { WebsiteBrandingConfiguration } from './components/SiteManager/WebsiteBrandingConfiguration'
 import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
 import { PublicationCard } from './components/Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
-import { DraggableLibraryWidget } from './components/Canvas/DraggableLibraryWidget'
 import { WebsiteCreationWizard } from './components/Wizards/WebsiteCreation'
 import { PageBuilder } from './components/PageBuilder'
 import { create } from 'zustand'
@@ -27,7 +27,7 @@ import {
   // App types
   type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType,
   // Schema.org types
-  type SchemaObject, type SchemaOrgType, SCHEMA_DEFINITIONS
+  type SchemaObject, type SchemaOrgType
 } from './types'
 import { 
   MOCK_SCHOLARLY_ARTICLES, 
@@ -372,12 +372,13 @@ function InteractiveWidgetRenderer({
     }
     
     case 'text': {
-      const align = widget.align ?? 'left'
+      const textWidget = widget as TextWidget
+      const align = textWidget.align ?? 'left'
       const alignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
-      const isWileyLogo = widget.id === 'wiley-logo'
-      const isHeroText = widget.id === 'hero-text'
-      const isFooterText = widget.id === 'footer-text'
-      const isFeatureText = widget.sectionId === 'features-section'
+      const isWileyLogo = textWidget.id === 'wiley-logo'
+      const isHeroText = textWidget.id === 'hero-text'
+      const isFooterText = textWidget.id === 'footer-text'
+      const isFeatureText = textWidget.sectionId === 'features-section'
       
       if (isWileyLogo) {
         // Special styling for Wiley logo - styled text widget with theme colors
@@ -484,6 +485,7 @@ function InteractiveWidgetRenderer({
         )
       }
       
+      // General text widget rendering
       return (
         <SkinWrap skin={widget.skin}>
           <div className={`px-6 py-4 ${alignClass}`}>
@@ -2728,6 +2730,18 @@ function DesignConsole() {
                       </button>
 
                       <button
+                        onClick={() => setSiteManagerView(`${website.id}-branding` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-branding`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Branding Configuration
+                      </button>
+
+                      <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                           siteManagerView === `${website.id}-publication-cards`
@@ -2735,7 +2749,7 @@ function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <Palette className="w-4 h-4" />
+                        <FileText className="w-4 h-4" />
                         Publication Cards
                       </button>
 
@@ -2747,7 +2761,7 @@ function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <Globe className="w-4 h-4" />
                         Custom Templates
                       </button>
                     </div>
@@ -2833,6 +2847,12 @@ function DesignConsole() {
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Website Settings →
+                      </button>
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-branding` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Branding Configuration →
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
@@ -2941,16 +2961,17 @@ function DesignConsole() {
             <SiteManagerTemplates themeId="curator-theme" />
           )}
 
-          // Website-Specific Views
-          // Wiley Online Library
           {siteManagerView === 'wiley-main-settings' && (
                       <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+                <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
                       </div>
               <WebsiteSettings websiteId="wiley-main" />
                       </div>
+          )}
+          {siteManagerView === 'wiley-main-branding' && (
+            <WebsiteBrandingConfiguration websiteId="wiley-main" usePageStore={usePageStore} />
           )}
           {siteManagerView === 'wiley-main-publication-cards' && (
                       <div>
@@ -2974,16 +2995,18 @@ function DesignConsole() {
             </div>
           )}
 
-          // Wiley Research Hub
           {siteManagerView === 'research-hub-settings' && (
                       <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+                <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
                       </div>
               <WebsiteSettings websiteId="research-hub" />
               </div>
             )}
+          {siteManagerView === 'research-hub-branding' && (
+            <WebsiteBrandingConfiguration websiteId="research-hub" usePageStore={usePageStore} />
+          )}
           {siteManagerView === 'research-hub-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -3006,15 +3029,17 @@ function DesignConsole() {
         </div>
           )}
 
-          // Journal of Advanced Science
           {siteManagerView === 'journal-of-science-settings' && (
             <div>
               <div className="mb-6 border-b pb-4">
                 <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, branding, purpose, and website-specific settings</p>
+                <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
           </div>
               <WebsiteSettings websiteId="journal-of-science" />
         </div>
+          )}
+          {siteManagerView === 'journal-of-science-branding' && (
+            <WebsiteBrandingConfiguration websiteId="journal-of-science" usePageStore={usePageStore} />
           )}
           {siteManagerView === 'journal-of-science-publication-cards' && (
             <div>
@@ -3055,9 +3080,8 @@ function DesignConsole() {
 
 // Website Settings Component
 function WebsiteSettings({ websiteId }: { websiteId: string }) {
-  const { websites, updateWebsite, themes } = usePageStore()
+  const { websites, updateWebsite } = usePageStore()
   const website = websites.find(w => w.id === websiteId)
-  const currentTheme = website ? themes.find(t => t.id === website.themeId) : null
   
   if (!website) {
     return (
@@ -3093,17 +3117,6 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
   }
 
 
-  const handleBrandingUpdate = (field: string, value: string) => {
-    const updatedWebsite = {
-      ...website,
-      branding: {
-        ...website.branding,
-        [field]: value
-      },
-      updatedAt: new Date()
-    }
-    updateWebsite(website.id, updatedWebsite)
-  }
 
   const handleBasicUpdate = (field: string, value: any) => {
     const updatedWebsite = {
@@ -3257,56 +3270,6 @@ function WebsiteSettings({ websiteId }: { websiteId: string }) {
         </div>
       </div>
 
-      {/* Combined Theme & Branding */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Theme & Branding</h3>
-            <p className="text-gray-600 text-sm mt-2">
-              Customize your website's visual appearance including logo, colors, typography, and advanced styling options.
-            </p>
-    </div>
-        </div>
-        
-        {currentTheme ? (
-          <div className="space-y-6">
-            {/* Logo Section - Always Available */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span>Branding</span>
-                <div className="h-px flex-1 bg-gray-200"></div>
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
-                  <input
-                    type="url"
-                    value={website.branding.logoUrl || ''}
-                    onChange={(e) => handleBrandingUpdate('logoUrl', e.target.value)}
-                    placeholder="https://example.com/logo.svg"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Theme Customization Section */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span>Theme Customization</span>
-                <div className="h-px flex-1 bg-gray-200"></div>
-              </h4>
-              <ThemeEditor 
-                usePageStore={usePageStore} 
-                themeId={website.themeId} 
-                websiteId={website.id} 
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-500 italic">Theme not found. Cannot load customization options.</p>
-        )}
-      </div>
 
       {/* Current Configuration Summary */}
       <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">

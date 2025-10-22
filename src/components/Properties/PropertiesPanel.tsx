@@ -16,6 +16,7 @@ import {
   isSection
 } from '../../types'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
+import { IconSelector } from '../IconSelector'
 
 // Import the DEFAULT_PUBLICATION_CARD_CONFIG constant
 const DEFAULT_PUBLICATION_CARD_CONFIG = {
@@ -502,7 +503,7 @@ export function PropertiesPanel({
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Style Variant</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Heading Style</label>
             <select
               value={(widget as HeadingWidget).style || 'default'}
               onChange={(e) => updateWidget({ style: e.target.value as HeadingWidget['style'] })}
@@ -562,62 +563,10 @@ export function PropertiesPanel({
           
           
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700">Icon</label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={(widget as HeadingWidget).icon?.enabled ?? false}
-                  onChange={(e) => updateWidget({ 
-                    icon: { 
-                      ...((widget as HeadingWidget).icon || {}), 
-                      enabled: e.target.checked 
-                    }
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm">Enable Icon</span>
-              </label>
-            </div>
-            
-            {(widget as HeadingWidget).icon?.enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon Emoji</label>
-                  <input
-                    type="text"
-                    value={(widget as HeadingWidget).icon?.emoji || '🎯'}
-                    onChange={(e) => updateWidget({ 
-                      icon: { 
-                        ...((widget as HeadingWidget).icon || {}), 
-                        emoji: e.target.value 
-                      }
-                    })}
-                    placeholder="🎯"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-center"
-                    maxLength={2}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter any emoji</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                  <select
-                    value={(widget as HeadingWidget).icon?.position || 'left'}
-                    onChange={(e) => updateWidget({ 
-                      icon: { 
-                        ...((widget as HeadingWidget).icon || {}), 
-                        position: e.target.value as 'left' | 'right' 
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="left">Left</option>
-                    <option value="right">Right</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            <IconSelector
+              icon={(widget as HeadingWidget).icon}
+              onChange={(icon) => updateWidget({ icon })}
+            />
           </div>
           
           
@@ -1068,6 +1017,11 @@ export function PropertiesPanel({
               <option value="_blank">New window/tab</option>
             </select>
           </div>
+
+          <IconSelector
+            icon={(widget as ButtonWidget).icon}
+            onChange={(icon) => updateWidget({ icon })}
+          />
         </div>
       )}
       

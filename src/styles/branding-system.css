@@ -1,0 +1,210 @@
+/* Multi-layered Branding System CSS */
+
+/* Base website branding variables */
+:root {
+  --brand-primary: #6366F1;
+  --brand-secondary: #E0E7FF;
+  --brand-accent: #4338CA;
+  --brand-text: #312E81;
+  --brand-background: #F0F4FF;
+}
+
+/* Website default branding */
+.website-brand {
+  --brand-primary: #6366F1;
+  --brand-secondary: #E0E7FF;
+  --brand-accent: #4338CA;
+  --brand-text: #312E81;
+  --brand-background: #F0F4FF;
+}
+
+/* Subject-based branding (highest priority) */
+.subject-biology {
+  --brand-primary: #F59E0B;
+  --brand-secondary: #FEF3C7;
+  --brand-accent: #92400E;
+  --brand-text: #92400E;
+  --brand-background: #FFFBEB;
+}
+
+.subject-mathematics {
+  --brand-primary: #3B82F6;
+  --brand-secondary: #DBEAFE;
+  --brand-accent: #1E40AF;
+  --brand-text: #1E3A8A;
+  --brand-background: #EFF6FF;
+}
+
+.subject-chemistry {
+  --brand-primary: #10B981;
+  --brand-secondary: #D1FAE5;
+  --brand-accent: #065F46;
+  --brand-text: #064E3B;
+  --brand-background: #ECFDF5;
+}
+
+.subject-engineering {
+  --brand-primary: #F97316;
+  --brand-secondary: #FED7AA;
+  --brand-accent: #C2410C;
+  --brand-text: #9A3412;
+  --brand-background: #FFF7ED;
+}
+
+/* Journal-specific branding (medium priority) */
+.journal-nature {
+  --brand-primary: #DC2626;
+  --brand-secondary: #FEE2E2;
+  --brand-accent: #991B1B;
+  --brand-text: #7F1D1D;
+  --brand-background: #FEF2F2;
+}
+
+.journal-science {
+  --brand-primary: #7C3AED;
+  --brand-secondary: #EDE9FE;
+  --brand-accent: #5B21B6;
+  --brand-text: #4C1D95;
+  --brand-background: #FAF5FF;
+}
+
+/* Book series branding (lower priority) */
+.series-springer {
+  --brand-primary: #059669;
+  --brand-secondary: #A7F3D0;
+  --brand-accent: #047857;
+  --brand-text: #065F46;
+  --brand-background: #F0FDF4;
+}
+
+/* Branded component styles */
+.branded-button {
+  background-color: var(--brand-primary);
+  color: white;
+  border: 2px solid var(--brand-primary);
+  transition: all 0.2s ease;
+}
+
+.branded-button:hover {
+  background-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.branded-button-outline {
+  background-color: transparent;
+  color: var(--brand-primary);
+  border: 2px solid var(--brand-primary);
+}
+
+.branded-button-outline:hover {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+.branded-link {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--brand-secondary);
+}
+
+.branded-link:hover {
+  color: var(--brand-accent);
+  text-decoration-color: var(--brand-accent);
+}
+
+.branded-badge {
+  background-color: var(--brand-secondary);
+  color: var(--brand-text);
+  border: 1px solid var(--brand-primary);
+}
+
+.branded-card {
+  border-left: 4px solid var(--brand-primary);
+  background-color: var(--brand-background);
+}
+
+.branded-section {
+  background-color: var(--brand-background);
+  border-top: 2px solid var(--brand-secondary);
+}
+
+.branded-heading {
+  color: var(--brand-text);
+  border-bottom: 2px solid var(--brand-secondary);
+}
+
+/* Priority-based overrides */
+.brand-priority-100 {
+  /* Highest priority - subject categories */
+  position: relative;
+  z-index: 100;
+}
+
+.brand-priority-75 {
+  /* High priority - major journals */
+  position: relative;
+  z-index: 75;
+}
+
+.brand-priority-50 {
+  /* Medium priority - book series */
+  position: relative;
+  z-index: 50;
+}
+
+.brand-priority-25 {
+  /* Low priority - misc categories */
+  position: relative;
+  z-index: 25;
+}
+
+/* Responsive branding adjustments */
+@media (max-width: 768px) {
+  .branded-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .branded-card {
+    border-left-width: 2px;
+  }
+}
+
+/* Theme transition animations */
+.brand-transition {
+  transition: 
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Print styles - use neutral colors */
+@media print {
+  :root {
+    --brand-primary: #000000;
+    --brand-secondary: #f5f5f5;
+    --brand-accent: #333333;
+    --brand-text: #000000;
+    --brand-background: #ffffff;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .branded-button {
+    border-width: 3px;
+  }
+  
+  .branded-link {
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .brand-transition,
+  .branded-button,
+  .branded-link {
+    transition: none;
+  }
+}

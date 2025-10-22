@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./styles/journal-themes.css";
+@import "./styles/branding-system.css";
 
 /* Tailwind v4 preflight replacement to ensure base layout isn't broken */
 *, *::before, *::after { box-sizing: border-box; }

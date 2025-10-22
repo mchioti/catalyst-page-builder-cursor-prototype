@@ -166,6 +166,18 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
     ${sizeClasses[widget.size as keyof typeof sizeClasses] || sizeClasses.medium}
   `.trim()
   
+  const renderContent = () => (
+    <>
+      {widget.icon?.enabled && widget.icon?.position === 'left' && (
+        <span className="mr-2">{widget.icon?.emoji || '🎯'}</span>
+      )}
+      {widget.text}
+      {widget.icon?.enabled && widget.icon?.position === 'right' && (
+        <span className="ml-2">{widget.icon?.emoji || '✨'}</span>
+      )}
+    </>
+  );
+
   if (widget.href) {
     return (
       <a 
@@ -173,14 +185,14 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
         className={classes}
         target={widget.target || '_self'}
       >
-        {widget.text}
+        {renderContent()}
       </a>
     )
   }
   
   return (
     <span className={classes}>
-      {widget.text}
+      {renderContent()}
     </span>
   )
 }

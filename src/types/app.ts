@@ -20,12 +20,15 @@ export type DesignConsoleView =
   | 'curator-theme-templates'
   // Website-level views (per-website customization)
   | 'wiley-main-settings'
+  | 'wiley-main-branding'
   | 'wiley-main-publication-cards'
   | 'wiley-main-custom-templates'
   | 'research-hub-settings'
+  | 'research-hub-branding'
   | 'research-hub-publication-cards'
   | 'research-hub-custom-templates'
   | 'journal-of-science-settings'
+  | 'journal-of-science-branding'
   | 'journal-of-science-publication-cards'
   | 'journal-of-science-custom-templates'
   // System views

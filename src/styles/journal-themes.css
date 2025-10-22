@@ -1,0 +1,117 @@
+/* Journal Theme System
+ * CSS Custom Properties for journal-specific branding
+ * Applied automatically based on journal code (advma, embo, etc.)
+ */
+
+/* Advanced Materials Theme (Red) */
+.journal-advma {
+  --journal-primary: #dc2626;      /* Red-600 */
+  --journal-primary-dark: #991b1b; /* Red-800 */  
+  --journal-primary-light: #f87171; /* Red-400 */
+  --journal-accent: #fca5a5;       /* Red-300 */
+  --journal-text: #ffffff;         /* White text */
+  --journal-text-dark: #1f2937;    /* Dark text for light backgrounds */
+  --journal-hover: #b91c1c;        /* Red-700 */
+}
+
+/* EMBO Journal Theme (Orange/Purple) */
+.journal-embo {
+  --journal-primary: #ea580c;      /* Orange-600 */
+  --journal-primary-dark: #c2410c; /* Orange-700 */
+  --journal-primary-light: #fb923c; /* Orange-400 */
+  --journal-secondary: #7c3aed;    /* Purple-600 */
+  --journal-secondary-dark: #5b21b6; /* Purple-700 */
+  --journal-accent: #fdba74;       /* Orange-300 */
+  --journal-text: #ffffff;         /* White text */
+  --journal-text-dark: #1f2937;    /* Dark text */
+  --journal-hover: #c2410c;        /* Orange-700 */
+}
+
+/* Default/Fallback Theme (Blue - matches current Wiley branding) */
+.journal-default {
+  --journal-primary: #1d4ed8;      /* Blue-700 */
+  --journal-primary-dark: #1e3a8a; /* Blue-800 */
+  --journal-primary-light: #3b82f6; /* Blue-500 */
+  --journal-accent: #93c5fd;       /* Blue-300 */
+  --journal-text: #ffffff;         /* White text */
+  --journal-text-dark: #1f2937;    /* Dark text */
+  --journal-hover: #1e3a8a;        /* Blue-800 */
+}
+
+/* Journal-themed button classes */
+.journal-themed-button {
+  background-color: var(--journal-primary);
+  color: var(--journal-text);
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-themed-button:hover {
+  background-color: var(--journal-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.journal-themed-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--journal-accent);
+}
+
+/* Journal-themed outline button variant */
+.journal-themed-button-outline {
+  background-color: transparent;
+  color: var(--journal-primary);
+  border: 2px solid var(--journal-primary);
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-themed-button-outline:hover {
+  background-color: var(--journal-primary);
+  color: var(--journal-text);
+}
+
+/* Journal-themed links */
+.journal-themed-link {
+  color: var(--journal-primary);
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.journal-themed-link:hover {
+  color: var(--journal-hover);
+  text-decoration: underline;
+}
+
+/* Journal-themed accent elements */
+.journal-themed-accent {
+  color: var(--journal-primary);
+}
+
+.journal-themed-accent-bg {
+  background-color: var(--journal-primary);
+  color: var(--journal-text);
+}
+
+/* Journal-themed navigation elements */
+.journal-themed-nav {
+  background-color: var(--journal-primary);
+  color: var(--journal-text);
+}
+
+/* Journal-themed badge/pill elements */
+.journal-themed-badge {
+  background-color: var(--journal-accent);
+  color: var(--journal-text-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}

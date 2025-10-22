@@ -3,6 +3,13 @@ import type { EditingContext, MockLiveSiteRoute, CanvasItem } from '../../types'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { WidgetRenderer } from '../Widgets/WidgetRenderer'
 import { isSection } from '../../types'
+import '../../styles/journal-themes.css'
+
+// Utility function to extract journal code from route/context
+const getJournalCode = (route: string): string => {
+  const match = route.match(/\/(toc|journal)\/([^\/]+)/);
+  return match ? match[2] : 'default';
+}
 
 // Dynamic Homepage that uses canvas content
 function MockHomepage({ 
@@ -69,7 +76,7 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
   const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
 
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen journal-${journalCode}`}>
       {/* University Publications Header */}
       <div className="bg-black text-white py-2 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
@@ -79,7 +86,7 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
               <option>ANYWHERE</option>
             </select>
             <input type="text" placeholder="Enter search phrase/DOI" className="bg-gray-800 text-white text-xs px-2 py-1 rounded w-48" />
-            <button className="bg-red-600 text-white px-2 py-1 text-xs rounded">🔍</button>
+            <button className="journal-themed-button px-2 py-1 text-xs rounded">🔍</button>
             <button className="text-white text-xs">Advanced Search</button>
             <button className="text-white text-xs">🛒</button>
             <button className="text-white text-xs">Maria Chioti</button>
@@ -103,9 +110,9 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
           </p>
           <p className="text-base">Editor: {journal.editor}</p>
           <div className="flex space-x-4 mt-6">
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBSCRIBE/RENEW</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">RECOMMEND TO A LIBRARIAN</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBMIT AN ARTICLE</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">SUBSCRIBE/RENEW</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">RECOMMEND TO A LIBRARIAN</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">SUBMIT AN ARTICLE</button>
           </div>
         </div>
       </div>
@@ -375,7 +382,7 @@ function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: {
   const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
 
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen journal-${journalCode}`}>
       {/* University Publications Header */}
       <div className="bg-black text-white py-2 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
@@ -385,7 +392,7 @@ function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: {
               <option>ANYWHERE</option>
             </select>
             <input type="text" placeholder="Enter search phrase/DOI" className="bg-gray-800 text-white text-xs px-2 py-1 rounded w-48" />
-            <button className="bg-red-600 text-white px-2 py-1 text-xs rounded">🔍</button>
+            <button className="journal-themed-button px-2 py-1 text-xs rounded">🔍</button>
             <button className="text-white text-xs">Advanced Search</button>
             <button className="text-white text-xs">🛒</button>
             <button className="text-white text-xs">Maria Chioti</button>
@@ -412,9 +419,9 @@ function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: {
           </p>
           <p className="text-sm mb-6">Editor: {journal.editor}</p>
           <div className="flex space-x-4">
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBSCRIBE/RENEW</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">RECOMMEND TO A LIBRARIAN</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded font-medium">SUBMIT AN ARTICLE</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">SUBSCRIBE/RENEW</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">RECOMMEND TO A LIBRARIAN</button>
+            <button className="journal-themed-button px-6 py-3 rounded-md font-medium text-sm uppercase tracking-wide">SUBMIT AN ARTICLE</button>
           </div>
         </div>
       </div>
@@ -505,7 +512,7 @@ function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: {
                   Interested in learning more about {journal.name}?
                 </h2>
                 <p className="text-gray-600 mb-4">{journal.description}</p>
-                <button className="bg-red-600 text-white px-6 py-2 rounded font-medium">Subscribe/Renew</button>
+                <button className="journal-themed-button px-6 py-3 rounded-md font-medium">Subscribe/Renew</button>
               </div>
 
               {/* Most Read */}
@@ -669,6 +676,8 @@ export function MockLiveSite({
   // Get canvas data from store
   const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
   const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
+  const journalCode = getJournalCode(mockLiveSiteRoute)
+  
   const handleEditPage = (context: EditingContext = 'page') => {
     setEditingContext(context)
     setCurrentView('page-builder')
@@ -729,12 +738,12 @@ export function MockLiveSite({
       case '/search':
         return <MockSearchPage onEdit={handleEditPage} />
       default:
-        return <MockHomepage onEdit={handleEditPage} />
+        return <MockHomepage onEdit={handleEditPage} canvasItems={canvasItems} schemaObjects={schemaObjects} />
     }
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen bg-white journal-${journalCode}`}>
       {/* Mock Live Site Navigation */}
       <div className="bg-gray-900 text-white px-6 py-3">
         <div className="flex items-center justify-between max-w-6xl mx-auto">

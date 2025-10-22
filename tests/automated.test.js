@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Schema Editor Workflow', () => {
   
   test('Complete schema creation workflow', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     // Navigate to Schema tab
     await page.click('button:has-text("Schema")')
     
@@ -26,7 +26,7 @@ test.describe('Schema Editor Workflow', () => {
 test.describe('DIY Zone - HTML Widget', () => {
   
   test('HTML widget creation and interactivity', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Go to DIY Zone
     await page.click('button:has-text("DIY")')
@@ -44,7 +44,7 @@ test.describe('DIY Zone - HTML Widget', () => {
 test.describe('Save/Load Sections', () => {
   
   test('Save and load custom sections', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Go to DIY Zone to check saved sections area
     await page.click('button:has-text("DIY")')
@@ -60,7 +60,7 @@ test.describe('Save/Load Sections', () => {
 test.describe('Core Page Builder Functions', () => {
   
   test('Drag and drop widgets', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Verify core widgets are available in library
     await expect(page.locator('text=Text')).toBeVisible()
@@ -72,7 +72,7 @@ test.describe('Core Page Builder Functions', () => {
   })
   
   test('Widget properties editing', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Check that properties panel exists
     await expect(page.locator('h2:has-text("Properties")')).toBeVisible()
@@ -87,7 +87,7 @@ test.describe('Core Page Builder Functions', () => {
   })
   
   test('Delete widgets and sections', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Test that sections tab shows pre-built sections
     await page.click('button:has-text("Sections")')
@@ -100,7 +100,7 @@ test.describe('Core Page Builder Functions', () => {
 test.describe('Live Site Navigation', () => {
   
   test('Complete live site navigation', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Go to live site
     await page.click('button:has-text("Preview Changes")')
@@ -121,7 +121,7 @@ test.describe('Live Site Navigation', () => {
   })
   
   test('Edit homepage workflow', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Go to live site
     await page.click('button:has-text("Preview Changes")')
@@ -149,7 +149,7 @@ test.describe('Live Site Navigation', () => {
 test.describe('Design System Console', () => {
   
   test('Theme and website management', async ({ page }) => {
-    await page.goto('http://localhost:5174')
+    await page.goto('http://localhost:5173')
     
     // Go to design console
     await page.click('button:has-text("Design System Console")')
