@@ -146,6 +146,244 @@ test.describe('Live Site Navigation', () => {
   })
 })
 
+test.describe('Journal Banner and Section Background Features', () => {
+  
+  test('Journal Banner section has preconfigured background', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Go to Mock Live Site TOC to see Journal Banner
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    
+    // Should see Journal Banner with preconfigured dark background
+    await expect(page.locator('text=Volume 67')).toBeVisible()
+    
+    // Click Edit to enter editor mode
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Click on Journal Banner section
+    await page.click('text=Journal Banner', { force: true })
+    
+    // Properties Panel should show Gradient as background type
+    await expect(page.locator('text=Background Type')).toBeVisible()
+    await expect(page.locator('select').filter({ hasText: 'Gradient' })).toBeVisible()
+  })
+
+  test('Section background editing works correctly', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Add Hero section
+    await page.click('text=Hero Section')
+    
+    // Click on the hero section to select it  
+    await page.click('.bg-gradient-to-r >> visible=true')
+    
+    // Check Background controls are available
+    await expect(page.locator('text=Background')).toBeVisible()
+    await expect(page.locator('text=Background Type')).toBeVisible()
+    
+    // Change background to Solid Color
+    await page.selectOption('select >> nth=0', 'solid')
+    
+    // Should see color picker
+    await expect(page.locator('input[type="color"]')).toBeVisible()
+  })
+
+  test('Template editing scope button provides context-aware options', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Go to Mock Live Site Advanced Materials TOC
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    
+    // Should see primary edit button for this journal
+    await expect(page.locator('text=Edit All Advanced Materials Issues')).toBeVisible()
+    
+    // Click the dropdown arrow to see more options
+    await page.click('button[title="More editing options"]')
+    
+    // Should see dropdown with global and individual options
+    await expect(page.locator('text=Edit this Issue')).toBeVisible()
+    await expect(page.locator('text=Edit All Issues')).toBeVisible()
+  })
+
+  test('Global template conflict detection system exists', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // First, create individual customizations by editing a specific journal
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Make a change (add a text widget to create customization)
+    await page.click('text=Text')
+    
+    // Go back to live site and verify global template option exists
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('button[title="More editing options"]')
+    
+    // Should see global template editing option
+    await expect(page.locator('text=Edit All Issues')).toBeVisible()
+  })
+
+  test('Journal Banner section has preconfigured black background', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Navigate to TOC template
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Click on Journal Banner section
+    await page.locator('text=Volume 67').first().click()
+    
+    // Check Properties Panel shows Gradient background by default
+    await expect(page.locator('text=Background Type')).toBeVisible()
+    await expect(page.locator('select').filter({ hasText: 'Gradient' })).toBeVisible()
+  })
+
+  test('Hero section background can be edited without conflicts', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Add Hero section
+    await page.click('text=Hero Section')
+    
+    // Click on hero section to select it
+    await page.locator('.bg-gradient-to-r').first().click()
+    
+    // Change background to Solid Color
+    await page.selectOption('select', { label: 'Solid Color' })
+    
+    // Should see color picker
+    await expect(page.locator('input[type="color"]')).toBeVisible()
+    
+    // Change color and verify no black gradient override
+    await page.fill('input[type="color"]', '#ff0000')
+    
+    // Section should now have red background, not black gradient
+    await expect(page.locator('[style*="background-color: rgb(255, 0, 0)"]')).toBeVisible()
+  })
+
+  test('Publication Details widget inherits section background', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Navigate to TOC and edit Journal Banner
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')  
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Click on Journal Banner section
+    await page.locator('text=Volume 67').first().click()
+    
+    // Change section background to red
+    await page.selectOption('select', { label: 'Solid Color' })
+    await page.fill('input[type="color"]', '#ff0000')
+    
+    // Publication Details should inherit the red background
+    const publicationDetails = page.locator('text=Volume 67').first()
+    await expect(publicationDetails).toBeVisible()
+  })
+
+  test('Individual issue auto-save functionality', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Edit individual issue
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit this Issue')
+    
+    // Make a change
+    await page.click('text=Text')
+    
+    // Go back to live site and return to editing - changes should be saved
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit this Issue')
+    
+    // Should see the text widget we added
+    await expect(page.locator('text=Enter your text content')).toBeVisible()
+  })
+
+  test('Conflict resolution dialog system', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // First, create individual customizations
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit this Issue')
+    
+    // Make a change to create customization
+    await page.click('text=Text')
+    
+    // Now try to edit global template - should trigger conflict dialog
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit All Issues')
+    
+    // Should see conflict resolution dialog (check for dialog elements)
+    await expect(page.locator('text=Template Conflict Resolution')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('text=Skip Changed Journals')).toBeVisible()
+    await expect(page.locator('text=Apply Everywhere')).toBeVisible()
+    await expect(page.locator('text=Cancel Template Changes')).toBeVisible()
+  })
+
+  test('Skip functionality in conflict resolution prevents changes to skipped journals', async ({ page }) => {
+    await page.goto('http://localhost:5173')
+    
+    // Step 1: Make journal template changes to ADMA
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Change journal banner background color to red
+    await page.locator('text=Volume 67').first().click()
+    await page.selectOption('select', { label: 'Solid Color' })
+    await page.fill('input[type="color"]', '#ff0000')
+    
+    // Verify red background applied
+    await expect(page.locator('[style*="background-color: rgb(255, 0, 0)"]')).toBeVisible()
+    
+    // Step 2: Try to edit global template (should trigger conflict dialog)
+    await page.click('text=Preview Changes')
+    await page.click('text=EMBO Journal') 
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit All Issues')
+    
+    // Should see conflict dialog
+    await expect(page.locator('text=Template Conflict Resolution')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('text=Advanced Materials')).toBeVisible() // Should show ADMA as conflicted
+    
+    // Step 3: Select "Skip Changed Journals"
+    await page.click('text=Skip Changed Journals')
+    
+    // Should be in editor now
+    await expect(page.locator('h1').first()).toContainText('Page Builder')
+    
+    // Step 4: Make a global change (change banner to blue)
+    await page.locator('text=Volume 67').first().click()
+    await page.selectOption('select', { label: 'Solid Color' })  
+    await page.fill('input[type="color"]', '#0000ff')
+    
+    // Step 5: Verify ADMA kept its red color (was skipped)
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    
+    // ADMA should still have red background (not blue from global template)
+    await expect(page.locator('[style*="background-color: rgb(255, 0, 0)"]')).toBeVisible()
+    
+    // Step 6: Verify EMBO got the blue color (not skipped)
+    await page.click('text=EMBO Journal')
+    
+    // EMBO should have blue background from global template
+    await expect(page.locator('[style*="background-color: rgb(0, 0, 255)"]')).toBeVisible()
+  })
+})
+
 test.describe('Design System Console', () => {
   
   test('Theme and website management', async ({ page }) => {

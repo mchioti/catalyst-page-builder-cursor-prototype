@@ -1468,6 +1468,28 @@ export function PropertiesPanel({
               → Configure Publication Cards
             </button>
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={(widget as PublicationDetailsWidget).textColor || '#ffffff'}
+                onChange={(e) => updateWidget({ textColor: e.target.value })}
+                className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+              />
+              <input
+                type="text"
+                value={(widget as PublicationDetailsWidget).textColor || '#ffffff'}
+                onChange={(e) => updateWidget({ textColor: e.target.value })}
+                placeholder="#ffffff"
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-mono"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Text color for the publication details (defaults to white for hero/journal layouts)
+            </p>
+          </div>
         </div>
       )}
     </div>

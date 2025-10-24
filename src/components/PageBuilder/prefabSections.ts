@@ -186,6 +186,9 @@ export const createHeroPrefab = (): CanvasItem => {
   const heroSection = createBaseSection('hero-with-buttons', 'Hero Section')
   const typedSection = heroSection as WidgetSection
   
+  // Set section type for consistent hero styling
+  typedSection.type = 'hero'
+  
   // Add blue gradient background to match Mock Live Site
   typedSection.background = {
     type: 'gradient',

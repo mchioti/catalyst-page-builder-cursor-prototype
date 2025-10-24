@@ -37,11 +37,24 @@ export type DesignConsoleView =
 
 export type EditingContext = 'template' | 'page' | 'website'
 
+export type TemplateEditingContext = {
+  scope: 'global' | 'issue-type' | 'journal' | 'individual'
+  templateId: string
+  journalCode?: string
+  issueType?: IssueType
+  affectedIssues: string[]
+  skipRoutes?: string[] // Routes to skip in selective global mode
+}
+
+export type IssueType = 'current' | 'ahead-of-print' | 'just-accepted' | 'archive'
+
 // Mock Live Site routing
 export type MockLiveSiteRoute = 
   | '/' 
   | '/toc/advma/current' 
-  | '/toc/embo/current' 
+  | '/toc/embo/current'
+  | '/toc/advma/vol-35-issue-47'  
+  | '/toc/embo/vol-35-issue-47'
   | '/article/advma/67/12/p45'
   | '/journal/advma'
   | '/journal/embo'
@@ -76,11 +89,13 @@ export type PageState = {
   currentView: AppView
   siteManagerView: DesignConsoleView
   editingContext: EditingContext
+  templateEditingContext: TemplateEditingContext | null
   currentWebsiteId: string
   mockLiveSiteRoute: MockLiveSiteRoute
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
+  setTemplateEditingContext: (context: TemplateEditingContext | null) => void
   setCurrentWebsiteId: (websiteId: string) => void
   setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void
   
@@ -106,6 +121,9 @@ export type PageState = {
   
   // Page Builder
   canvasItems: CanvasItem[] // Can contain both individual widgets and sections
+  routeCanvasItems: Record<string, CanvasItem[]> // Route-specific canvas storage
+  globalTemplateCanvas: CanvasItem[] // Global template changes that apply to all TOC routes
+  journalTemplateCanvas: Record<string, CanvasItem[]> // Journal-specific template storage (journalCode -> template)
   customSections: CustomSection[]
   publicationCardVariants: PublicationCardVariant[]
   selectedWidget: string | null
@@ -123,6 +141,20 @@ export type PageState = {
   replaceCanvasItems: (items: CanvasItem[]) => void
   selectWidget: (id: string | null) => void
   deleteWidget: (widgetId: string) => void
+  
+  // Route-specific canvas management
+  getCanvasItemsForRoute: (route: string) => CanvasItem[]
+  setCanvasItemsForRoute: (route: string, items: CanvasItem[]) => void
+  clearCanvasItemsForRoute: (route: string) => void
+  
+  // Global template management
+  setGlobalTemplateCanvas: (items: CanvasItem[]) => void
+  clearGlobalTemplateCanvas: () => void
+  
+  // Journal template management
+  setJournalTemplateCanvas: (journalCode: string, items: CanvasItem[]) => void
+  getJournalTemplateCanvas: (journalCode: string) => CanvasItem[]
+  clearJournalTemplateCanvas: (journalCode: string) => void
   addCustomSection: (section: CustomSection) => void
   removeCustomSection: (id: string) => void
   addPublicationCardVariant: (variant: PublicationCardVariant) => void

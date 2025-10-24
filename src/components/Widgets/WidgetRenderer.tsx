@@ -19,8 +19,7 @@ const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin,
     classic: 'bg-gray-50 border border-gray-200 rounded p-4',
     accent: 'bg-accent-50 border border-accent-200 rounded p-4',
     hero: 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 px-6',
-    journal: 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 px-6',
-    primary: 'bg-blue-700 text-white py-3 px-6',
+    journal: 'py-12 px-6', // Transparent background, inherits from section, keeps padding and text styling
     dark: 'bg-black text-white py-2 px-6',
     muted: 'text-gray-600 text-sm',
     center: 'text-center',
@@ -748,8 +747,11 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     const printISSN = getIdentifierValue(pub, 'print')
     const onlineISSN = getIdentifierValue(pub, 'online')
     
+    // Default to white text for hero/journal layouts, allow override
+    const textColor = widget.textColor || '#ffffff'
+    
     return (
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto" style={{ color: textColor }}>
         <h1 className="text-4xl font-bold mb-2">
           Volume {String(volume?.volumeNumber || '')} • Issue {String(pub.issueNumber || '')}
         </h1>

@@ -1158,11 +1158,13 @@ const usePageStore = create<PageState>((set, get) => ({
   currentView: 'page-builder',
   siteManagerView: 'overview', 
   editingContext: 'page', // 'template' | 'page' | 'website'
+  templateEditingContext: null, // Track template editing context for propagation
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   mockLiveSiteRoute: '/', // Default to homepage
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
+  setTemplateEditingContext: (context) => set({ templateEditingContext: context }),
   setCurrentWebsiteId: (websiteId) => set({ currentWebsiteId: websiteId }),
   setMockLiveSiteRoute: (route) => set({ mockLiveSiteRoute: route }),
   
@@ -1345,6 +1347,9 @@ const usePageStore = create<PageState>((set, get) => ({
   
   // Page Builder
   canvasItems: INITIAL_CANVAS_ITEMS,
+  routeCanvasItems: {}, // Route-specific canvas storage
+  globalTemplateCanvas: [], // Global template changes
+  journalTemplateCanvas: {}, // Journal-specific template storage
   customSections: [],
   // Template System Data
   // Templates are now organized within themes instead of standalone
@@ -1943,6 +1948,44 @@ const usePageStore = create<PageState>((set, get) => ({
   moveItem: (fromIndex, toIndex) => set((s) => ({ canvasItems: arrayMove(s.canvasItems, fromIndex, toIndex) })),
   replaceCanvasItems: (items) => set({ canvasItems: items }),
   selectWidget: (id) => set({ selectedWidget: id }),
+  
+  // Route-specific canvas management
+  getCanvasItemsForRoute: (route) => {
+    const state = get()
+    return state.routeCanvasItems[route] || []
+  },
+  setCanvasItemsForRoute: (route, items) => set((state) => ({
+    routeCanvasItems: {
+      ...state.routeCanvasItems,
+      [route]: items
+    }
+  })),
+  clearCanvasItemsForRoute: (route) => set((state) => {
+    const newRouteCanvasItems = { ...state.routeCanvasItems }
+    delete newRouteCanvasItems[route]
+    return { routeCanvasItems: newRouteCanvasItems }
+  }),
+  
+  // Global template management
+  setGlobalTemplateCanvas: (items) => set({ globalTemplateCanvas: items }),
+  clearGlobalTemplateCanvas: () => set({ globalTemplateCanvas: [] }),
+  
+  // Journal template management
+  setJournalTemplateCanvas: (journalCode, items) => set((state) => ({
+    journalTemplateCanvas: {
+      ...state.journalTemplateCanvas,
+      [journalCode]: items
+    }
+  })),
+  getJournalTemplateCanvas: (journalCode) => {
+    const state = get()
+    return state.journalTemplateCanvas[journalCode] || []
+  },
+  clearJournalTemplateCanvas: (journalCode) => set((state) => {
+    const newJournalTemplateCanvas = { ...state.journalTemplateCanvas }
+    delete newJournalTemplateCanvas[journalCode]
+    return { journalTemplateCanvas: newJournalTemplateCanvas }
+  }),
   deleteWidget: (widgetId) => set((state) => {
     // First try to find and remove standalone widget
     const standaloneIndex = state.canvasItems.findIndex(item => !isSection(item) && item.id === widgetId)

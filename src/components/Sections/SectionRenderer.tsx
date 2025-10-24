@@ -317,6 +317,15 @@ export function SectionRenderer({
     // Editor-specific classes
     const editorClasses = !isLiveMode ? 'transition-all cursor-grab active:cursor-grabbing' : ''
     
+    // Add section type styling (like hero sections with black background)
+    // Only apply default black gradient if section has no custom background
+    const hasCustomBackground = section.background && section.background.type !== 'none'
+    const sectionTypeClasses = section.type === 'hero' && !hasCustomBackground
+      ? 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white' 
+      : section.type === 'hero' && hasCustomBackground
+      ? 'text-white' // Keep white text for hero sections with custom backgrounds
+      : ''
+    
     // Add text color for blue gradient backgrounds
     const hasBlueBackground = section.background?.type === 'gradient' && 
       section.background.gradient?.stops?.some(stop => 
@@ -327,16 +336,19 @@ export function SectionRenderer({
     
     if (isLiveMode) {
       // Live mode: clean styling, no editor visual elements
-      return `${baseClasses} ${textColorClass}`
+      return `${baseClasses} ${sectionTypeClasses} ${textColorClass}`
     }
+    
+    // Honor section type styling in editor mode too, but adjust editor borders for hero sections
+    const isHeroSection = section.type === 'hero'
     
     // Editor mode styling
     if (isSpecialSection) {
-      return `${baseClasses} ${editorClasses} p-2 hover:bg-gray-50 border-2 border-transparent hover:border-blue-200 ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
+      return `${baseClasses} ${editorClasses} ${sectionTypeClasses} p-2 ${isHeroSection ? 'hover:bg-gray-800/50 border-2 border-transparent hover:border-gray-400' : 'hover:bg-gray-50 border-2 border-transparent hover:border-blue-200'} ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
     } else {
-      // If section has custom background, use more neutral styling
-      if (hasBackground) {
-        return `${baseClasses} ${editorClasses} border-2 border-gray-300 p-2 rounded hover:border-blue-400 min-h-20 ${textColorClass}`
+      // If section has custom background or is hero type, use more neutral styling
+      if (hasBackground || isHeroSection) {
+        return `${baseClasses} ${editorClasses} ${sectionTypeClasses} border-2 ${isHeroSection ? 'border-gray-600' : 'border-gray-300'} p-2 rounded ${isHeroSection ? 'hover:border-gray-400' : 'hover:border-blue-400'} min-h-20 ${textColorClass}`
       } else {
         return `${baseClasses} ${editorClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
       }
@@ -530,8 +542,8 @@ export function SectionRenderer({
                   ? '' 
                   : area.widgets.length === 0 
                     ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
-                        (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
-                          ? '' // Transparent for sections with background
+                        (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
+                          ? '' // Transparent for sections with background or hero sections
                           : 'bg-white' // White background for normal sections
                       } ${
                         activeDropZone === `drop-${area.id}` 
@@ -544,8 +556,8 @@ export function SectionRenderer({
                       ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
                       : activeDropZone === `drop-${area.id}` 
                         ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
-                        : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image') 
-                          ? 'rounded p-2' // Transparent background to show section gradient/color/image
+                        : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
+                          ? 'rounded p-2' // Transparent background to show section gradient/color/image or hero styling
                           : 'bg-white rounded p-2'
             }`}
           >

@@ -119,6 +119,7 @@ export type PublicationDetailsWidget = WidgetBase & {
   cardConfig: PublicationCardConfig
   cardVariantId?: string // Reference to saved variant
   layout: 'default' | 'compact' | 'hero' | 'sidebar'
+  textColor?: string // Custom text color (defaults to white for hero/journal layouts)
   // Source-specific configuration
   doiSource?: {
     doi: string // Specific DOI to fetch

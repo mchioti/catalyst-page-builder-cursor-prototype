@@ -1,6 +1,7 @@
 import React from 'react'
 import type { WidgetSection, LayoutArea, Widget } from '../../types'
 
+
 // TOC Template Configuration
 export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
   return [
@@ -32,11 +33,34 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
     },
 
     // Journal Banner Section (Publication Details + 3 CTA Buttons)
+    // Preconfigured with black gradient background (user can still edit)
     {
       id: 'toc-journal-banner-section',
       name: 'Journal Banner',
       type: 'hero',
       layout: 'vertical',
+      // Preconfigured black gradient background (user can still edit)
+      background: {
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          direction: 'to right',
+          stops: [
+            { color: '#111827', position: '0%' },  // gray-900
+            { color: '#1f2937', position: '50%' }, // gray-800
+            { color: '#111827', position: '100%' } // gray-900
+          ]
+        },
+        opacity: 1
+      },
+      // Preconfigured hero section padding (user can still edit)
+      styling: {
+        paddingTop: 'large',
+        paddingBottom: 'large',
+        paddingLeft: 'medium',
+        paddingRight: 'medium',
+        gap: 'medium'
+      },
       areas: [
         // Top area - Journal metadata
         {
@@ -50,6 +74,7 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               skin: 'journal',
               contentSource: 'ai-generated', // Use AI mock data for template preview
               layout: 'hero',
+              textColor: '#ffffff', // Default to white text for hero layout
               // AI generation for template preview
               aiSource: {
                 prompt: `Generate issue metadata for ${journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'} current issue`,
@@ -68,29 +93,29 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
             {
               id: 'toc-subscribe-button',
               type: 'button',
-              skin: 'primary',
+              skin: 'minimal',
               text: 'SUBSCRIBE/RENEW',
-              variant: 'solid',
+              variant: 'primary',
               size: 'medium',
-              url: `/journal/${journalCode}/subscribe`
+              href: `/journal/${journalCode}/subscribe`
             },
             {
               id: 'toc-librarian-button',
               type: 'button',
-              skin: 'primary',
+              skin: 'minimal',
               text: 'RECOMMEND TO A LIBRARIAN',
-              variant: 'solid',
+              variant: 'primary',
               size: 'medium',
-              url: `/journal/${journalCode}/recommend`
+              href: `/journal/${journalCode}/recommend`
             },
             {
               id: 'toc-submit-button',
               type: 'button',
-              skin: 'primary',
+              skin: 'minimal',
               text: 'SUBMIT AN ARTICLE',
-              variant: 'solid',
+              variant: 'primary',
               size: 'medium',
-              url: `/journal/${journalCode}/submit`
+              href: `/journal/${journalCode}/submit`
             }
           ]
         }
@@ -112,7 +137,7 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
             {
               id: 'toc-journal-menu-widget',
               type: 'navbar',
-              skin: 'primary',
+              skin: 'minimal',
               links: [
                 { label: 'Journal Home', href: `/journal/${journalCode}` },
                 { label: 'Current Issue', href: `/toc/${journalCode}/current` },

@@ -81,7 +81,20 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas } = usePageStore()
+  
+  // Detect editing context
+  const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
+  const isTemplateEdit = editingContext === 'template' && templateEditingContext !== null
+  const isGlobalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'global'
+  const isJournalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'journal'
+  
+  const getJournalCode = (route: string): string => {
+    const match = route.match(/\/(toc|journal)\/([^\/]+)/)
+    return match ? match[2] : 'default'
+  }
+  const journalCode = getJournalCode(mockLiveSiteRoute)
+  const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
@@ -108,6 +121,33 @@ export function PageBuilder({
       showToast('Homepage template loaded! Edit sections to match your vision.', 'success')
     }
   }, [editingContext, mockLiveSiteRoute, canvasItems]) // Watch for changes to editing context, route, and canvas content
+  
+  // Route-specific canvas saving for individual issue edits
+  useEffect(() => {
+    // Save canvas changes to route-specific storage when editing individual issues
+    if (isIndividualIssueEdit && canvasItems.length > 0) {
+      console.log('💾 Saving individual issue changes to route:', mockLiveSiteRoute)
+      setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
+    }
+  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute])
+  
+  // Global template canvas saving
+  useEffect(() => {
+    // Save canvas changes to global template storage when editing global templates
+    if (isGlobalTemplateEdit && canvasItems.length > 0) {
+      console.log('🌍 Saving global template changes:', canvasItems.length, 'items')
+      setGlobalTemplateCanvas(canvasItems)
+    }
+  }, [canvasItems, isGlobalTemplateEdit, setGlobalTemplateCanvas])
+  
+  // Journal template canvas saving
+  useEffect(() => {
+    // Save canvas changes to journal template storage when editing journal templates
+    if (isJournalTemplateEdit && templateEditingContext?.journalCode && canvasItems.length > 0) {
+      console.log('📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
+      setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
+    }
+  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas])
   
   const handleCreateSchema = (type: SchemaOrgType) => {
     setCreatingSchemaType(type)
@@ -637,25 +677,105 @@ export function PageBuilder({
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
               <div className="flex items-center gap-3">
-              <button
-                  onClick={() => {
-                    const { setCurrentView } = usePageStore.getState()
-                    setCurrentView('mock-live-site')
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Preview Changes
-                </button>
+                {/* Template Publishing Button */}
+                {isTemplateEdit && templateEditingContext && (
+                  <button
+                    onClick={() => {
+                      const affectedCount = templateEditingContext.scope === 'journal' 
+                        ? '2-15 issues' 
+                        : templateEditingContext.scope === 'issue-type'
+                          ? '25+ issues across journals'
+                          : '100+ issues (all journals)'
+                      
+                      addNotification({
+                        type: 'success',
+                        title: 'Template Changes Published!',
+                        message: `Template propagated to ${affectedCount}. Individual customizations preserved where possible.`
+                      })
+                      
+                      // Clear template editing context
+                      const { setTemplateEditingContext } = usePageStore.getState()
+                      setTemplateEditingContext(null)
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Publish Template Changes
+                  </button>
+                )}
+                
                 <button
-                  onClick={() => setCurrentView('design-console')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                  Design System Console
-              </button>
+                    onClick={() => {
+                      const { setCurrentView } = usePageStore.getState()
+                      setCurrentView('mock-live-site')
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Preview Changes
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('design-console')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                    Design System Console
+                </button>
               </div>
             </div>
+            
+            {/* Context-Aware Editing Indicators */}
+            {isIndividualIssueEdit && (
+              <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
+                  <span className="text-sm font-medium">
+                    Editing Individual Issue
+                  </span>
+                  <span className="text-xs text-amber-600">
+                    • Inherited from {journalName} Template • Changes apply only to this issue
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {isTemplateEdit && templateEditingContext && (
+              <div className="mt-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-3 text-blue-800">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">
+                      {templateEditingContext.scope === 'journal' && `Editing ${journalName} Template`}
+                      {templateEditingContext.scope === 'issue-type' && `Editing ${templateEditingContext.issueType === 'current' ? 'Current Issues' : 'Issue Type'} Template`}
+                      {templateEditingContext.scope === 'global' && 'Editing Global Template'}
+                    </span>
+                    <div className="flex items-center gap-4 mt-1">
+                      <span className="text-xs text-blue-600">
+                        Changes will propagate to: {
+                          templateEditingContext.scope === 'journal' 
+                            ? `All ${journalName} issues`
+                            : templateEditingContext.scope === 'issue-type'
+                              ? `All ${templateEditingContext.issueType} issues (all journals)`
+                              : 'All issues (all journals)'
+                        }
+                      </span>
+                      <button 
+                        className="text-xs text-blue-700 hover:text-blue-900 underline"
+                        onClick={() => {
+                          addNotification({
+                            type: 'info',
+                            title: 'Propagation Preview',
+                            message: `Template changes affect: ${templateEditingContext.affectedIssues.join(', ')}`
+                          })
+                        }}
+                      >
+                        Preview affected issues →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 p-6 bg-slate-50" onClick={() => selectWidget(null)}>

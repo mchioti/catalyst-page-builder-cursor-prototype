@@ -1,8 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { EditingContext, MockLiveSiteRoute, CanvasItem } from '../../types'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { WidgetRenderer } from '../Widgets/WidgetRenderer'
 import { isSection } from '../../types'
+import { TemplateEditingScopeButton } from './TemplateEditingScopeButton'
+import type { EditingScope, IssueType } from './TemplateEditingScopeButton'
+import { ConflictResolutionDialog } from './ConflictResolutionDialog'
+import { createTOCTemplate } from '../Templates/TOCTemplate'
 import '../../styles/journal-themes.css'
 
 // Utility function to extract journal code from route/context
@@ -57,7 +61,23 @@ function MockHomepage({
   )
 }
 
-function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: (context?: EditingContext) => void }) {
+function MockJournalTOC({ 
+  journalCode, 
+  onEdit, 
+  setMockLiveSiteRoute,
+  canvasItems,
+  schemaObjects,
+  editingContext,
+  currentRoute
+}: { 
+  journalCode: string; 
+  onEdit: (context?: EditingContext) => void;
+  setMockLiveSiteRoute?: (route: MockLiveSiteRoute) => void;
+  canvasItems?: CanvasItem[];
+  schemaObjects?: any[];
+  editingContext?: EditingContext;
+  currentRoute?: MockLiveSiteRoute;
+}) {
   const journalInfo = {
     advma: {
       name: 'Advanced Materials',
@@ -75,6 +95,65 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
 
   const journal = journalInfo[journalCode as keyof typeof journalInfo] || journalInfo.advma
 
+  // Render canvas content for TOC if:
+  // 1. Canvas has content (route-specific edits OR global template changes)
+  // 2. User is in editing mode (individual page OR template editing)
+  // 3. Currently on a TOC route
+  const hasCanvasContent = canvasItems && canvasItems.length > 0
+  const isCurrentlyOnTOCRoute = currentRoute && currentRoute.includes('/toc/')
+  const isInEditingMode = editingContext === 'page' || editingContext === 'template'
+  
+  const shouldRenderCanvasContent = hasCanvasContent && 
+                                    isInEditingMode && 
+                                    isCurrentlyOnTOCRoute
+  
+  console.log('🔍 TOC Canvas Decision:', {
+    route: currentRoute,
+    hasCanvas: hasCanvasContent,
+    editingContext: editingContext,
+    isInEditingMode: isInEditingMode,
+    shouldRender: shouldRenderCanvasContent,
+    canvasCount: canvasItems?.length || 0
+  })
+  
+  if (shouldRenderCanvasContent) {
+    console.log('🎨 Rendering canvas content for TOC (user has been editing):', canvasItems.length, 'items')
+    return (
+      <div className={`min-h-screen journal-${journalCode}`}>
+        {/* Render canvas content */}
+        {canvasItems.map((item: CanvasItem) => {
+          if (isSection(item)) {
+            return (
+              <SectionRenderer
+                key={item.id}
+                section={item}
+                onWidgetClick={() => {}} // No widget clicking on live site
+                dragAttributes={{}}
+                dragListeners={{}}
+                activeSectionToolbar={null}
+                setActiveSectionToolbar={() => {}}
+                activeWidgetToolbar={null}
+                setActiveWidgetToolbar={() => {}}
+                activeDropZone={null}
+                showToast={() => {}}
+                usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
+                isLiveMode={true} // Add this flag to prevent editor overlays
+              />
+            )
+          } else {
+            // Standalone widget
+            return (
+              <div key={item.id} className="w-full">
+                <WidgetRenderer widget={item} schemaObjects={schemaObjects || []} />
+              </div>
+            )
+          }
+        })}
+      </div>
+    )
+  }
+  
+  // Otherwise render static default content
   return (
     <div className={`min-h-screen journal-${journalCode}`}>
       {/* University Publications Header */}
@@ -143,6 +222,26 @@ function MockJournalTOC({ journalCode, onEdit }: { journalCode: string; onEdit: 
           <a href="#" className="hover:text-blue-600">{journal.name}</a>
           <span className="mx-2">→</span>
           <span>Vol. 67, No. 12</span>
+        </div>
+      </div>
+
+      {/* Navigation Banner for Current Issue */}
+      <div className="bg-blue-50 border-b border-blue-100 py-2 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span>🔍</span>
+              <span>Want to see editing options for past issues?</span>
+            </div>
+            {setMockLiveSiteRoute && (
+              <button
+                onClick={() => setMockLiveSiteRoute(`/toc/${journalCode}/vol-35-issue-47` as MockLiveSiteRoute)}
+                className="text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                View Past Issue Example →
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -673,60 +772,523 @@ export function MockLiveSite({
   setEditingContext,
   usePageStore
 }: MockLiveSiteProps) {
+  
+  // State for conflict resolution dialog
+  const [conflictDialog, setConflictDialog] = useState<{
+    isOpen: boolean
+    affectedJournals: Array<{ journalCode: string; journalName: string; route: string }>
+    scope: 'global' | 'issue-type'
+    pendingTemplate: CanvasItem[]
+  }>({
+    isOpen: false,
+    affectedJournals: [],
+    scope: 'global',
+    pendingTemplate: []
+  })
+  
   // Get canvas data from store
   const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
+  const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas) as CanvasItem[]
+  const getJournalTemplateCanvas = usePageStore((state: any) => state.getJournalTemplateCanvas)
+  const getCanvasItemsForRoute = usePageStore((state: any) => state.getCanvasItemsForRoute)
+  const editingContext = usePageStore((state: any) => state.editingContext)
+  const templateEditingContext = usePageStore((state: any) => state.templateEditingContext)
   const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
   const journalCode = getJournalCode(mockLiveSiteRoute)
+  
+  // Get route-specific canvas items for TOC routes
+  const routeSpecificCanvasItems = mockLiveSiteRoute.includes('/toc/') 
+    ? getCanvasItemsForRoute(mockLiveSiteRoute)
+    : []
+    
+  // Get journal-specific template canvas
+  const journalTemplateCanvasItems = getJournalTemplateCanvas(journalCode)
+  
+  // Smart canvas hierarchy for TOC routes:
+  // 1. Global template changes (if in template mode with global/issue-type scope)
+  // 2. Individual route-specific edits (if exists)
+  // 3. Static content (empty array)
+  let effectiveCanvasItems: CanvasItem[]
+  let canvasSource: string
+  
+  if (mockLiveSiteRoute.includes('/toc/')) {
+    // TOC routes: Check hierarchy with selective global support and journal templates
+    const isActiveGlobalTemplate = editingContext === 'template' && 
+                                  templateEditingContext?.scope === 'global'
+    const isActiveJournalTemplate = editingContext === 'template' && 
+                                   templateEditingContext?.scope === 'journal' &&
+                                   templateEditingContext?.journalCode === journalCode
+    const isActiveIssueTypeTemplate = editingContext === 'template' && 
+                                     templateEditingContext?.scope === 'issue-type'
+    const isSkippedRoute = templateEditingContext?.skipRoutes?.includes(mockLiveSiteRoute)
+    const isSkippedJournal = templateEditingContext?.skipJournals?.includes(journalCode)
+    const shouldSkipGlobalTemplate = isSkippedRoute || isSkippedJournal
+    
+    // Debug skip logic
+    if (templateEditingContext?.scope === 'global') {
+      console.log('🚫 Skip check for', mockLiveSiteRoute, '(journal:', journalCode, '):', {
+        skipRoutes: templateEditingContext?.skipRoutes,
+        skipJournals: templateEditingContext?.skipJournals,
+        isSkippedRoute,
+        isSkippedJournal,
+        shouldSkipGlobalTemplate
+      })
+    }
+    
+    if (isActiveGlobalTemplate && canvasItems.length > 0) {
+      // Currently editing global template
+      if (shouldSkipGlobalTemplate) {
+        // This journal/route is skipped - check for journal template, then individual edits
+        if (journalTemplateCanvasItems.length > 0) {
+          effectiveCanvasItems = journalTemplateCanvasItems
+          canvasSource = `Skipped journal - journal template (${journalTemplateCanvasItems.length} items)`
+        } else {
+          effectiveCanvasItems = routeSpecificCanvasItems.length > 0 ? routeSpecificCanvasItems : []
+          canvasSource = `Skipped journal - individual edits (${routeSpecificCanvasItems.length} items)`
+        }
+      } else {
+        // Normal global template application
+        effectiveCanvasItems = canvasItems
+        canvasSource = `Active global template (${canvasItems.length} items)`
+      }
+    } else if (globalTemplateCanvas.length > 0 && !shouldSkipGlobalTemplate) {
+      // Saved global template changes override everything (unless journal/route is skipped)
+      effectiveCanvasItems = globalTemplateCanvas
+      canvasSource = `Saved global template (${globalTemplateCanvas.length} items)`
+    } else if (isActiveJournalTemplate && canvasItems.length > 0) {
+      // Currently editing journal template
+      effectiveCanvasItems = canvasItems
+      canvasSource = `Active journal template (${canvasItems.length} items)`
+    } else if (journalTemplateCanvasItems.length > 0) {
+      // Saved journal template changes override individual edits
+      effectiveCanvasItems = journalTemplateCanvasItems
+      canvasSource = `Saved journal template (${journalTemplateCanvasItems.length} items)`
+    } else if (isActiveIssueTypeTemplate && canvasItems.length > 0) {
+      // Currently editing issue-type template
+      effectiveCanvasItems = canvasItems
+      canvasSource = `Active issue-type template (${canvasItems.length} items)`
+    } else if (routeSpecificCanvasItems.length > 0) {
+      // Individual route-specific edits
+      effectiveCanvasItems = routeSpecificCanvasItems
+      canvasSource = `Individual edits (${routeSpecificCanvasItems.length} items)`
+    } else {
+      // Static content
+      effectiveCanvasItems = []
+      canvasSource = `Static content (0 items)`
+    }
+  } else {
+    // Non-TOC routes: use global canvas
+    effectiveCanvasItems = canvasItems
+    canvasSource = `Global canvas (${canvasItems.length} items)`
+  }
+  
+  console.log(`📊 Canvas Selection for ${mockLiveSiteRoute}:`, {
+    editingContext,
+    templateScope: templateEditingContext?.scope,
+    journalCode,
+    isSkippedRoute: templateEditingContext?.skipRoutes?.includes(mockLiveSiteRoute),
+    routeSpecificEdits: routeSpecificCanvasItems.length,
+    globalCanvas: canvasItems.length,
+    globalTemplateCanvas: globalTemplateCanvas.length,
+    journalTemplateCanvas: journalTemplateCanvasItems.length,
+    effectiveCanvas: effectiveCanvasItems.length,
+    decision: canvasSource
+  })
   
   const handleEditPage = (context: EditingContext = 'page') => {
     setEditingContext(context)
     setCurrentView('page-builder')
   }
 
-  const getEditButtonText = () => {
-    switch (mockLiveSiteRoute) {
-      case '/':
-        return 'Edit Homepage'
-      case '/toc/advma/current':
-      case '/toc/embo/current':
-        return 'Edit this Issue'
-      case '/article/advma/67/12/p45':
-        return 'Edit this Article'
-      case '/journal/advma':
-      case '/journal/embo':
-        return 'Edit this Journal Home'
-      case '/about':
-        return 'Edit About Page'
-      case '/search':
-        return 'Edit Search Template'
-      default:
-        return 'Edit This Page'
+  // Handle conflict resolution dialog actions
+  const handleConflictResolution = (action: 'override' | 'skip' | 'cancel') => {
+    const { addNotification, setTemplateEditingContext, replaceCanvasItems, setGlobalTemplateCanvas } = usePageStore.getState()
+    const { affectedJournals, pendingTemplate, scope } = conflictDialog
+    
+    if (action === 'cancel') {
+      // Close dialog and don't proceed with template editing
+      setConflictDialog(prev => ({ ...prev, isOpen: false }))
+      return
+    }
+
+    if (action === 'override') {
+      // User chose to override - clear both individual and journal template customizations
+      const { clearCanvasItemsForRoute, setJournalTemplateCanvas } = usePageStore.getState()
+      
+      affectedJournals.forEach(journal => {
+        // Clear individual issue customizations
+        clearCanvasItemsForRoute(journal.route)
+        // Clear journal template customizations
+        setJournalTemplateCanvas(journal.journalCode, [])
+      })
+      
+      addNotification({
+        type: 'warning',
+        title: 'Customizations Cleared',
+        message: `Cleared journal templates and individual edits for ${affectedJournals.map(j => j.journalName).join(', ')} to apply global template everywhere.`
+      })
+      
+      // Set normal global context (applies everywhere)
+      const globalContext = {
+        scope: scope as const,
+        templateId: 'toc-global',
+        affectedIssues: ['all-journals', 'all-issues']
+      }
+      
+      console.log('🔧 Setting override global template context:', globalContext)
+      if (setTemplateEditingContext) {
+        setTemplateEditingContext(globalContext)
+      }
+      
+    } else if (action === 'skip') {
+      // User chose selective application - proceed but skip conflicted routes
+      addNotification({
+        type: 'info',
+        title: 'Selective Template Application',
+        message: `Global changes will apply to other journals. ${affectedJournals.map(j => j.journalName).join(', ')} will keep their existing templates and customizations.`
+      })
+      
+      // Set selective global context
+      const globalContext = {
+        scope: scope as const,
+        templateId: 'toc-global',
+        affectedIssues: ['all-journals', 'all-issues'],
+        skipRoutes: affectedJournals.map(j => j.route), // Track which routes to skip
+        skipJournals: affectedJournals.map(j => j.journalCode) // Track which journals to skip
+      }
+      
+      console.log('🔧 Setting selective global template context (SKIP mode):', globalContext)
+      console.log('🚫 Journals to skip:', globalContext.skipJournals)
+      console.log('🚫 Routes to skip:', globalContext.skipRoutes)
+      if (setTemplateEditingContext) {
+        setTemplateEditingContext(globalContext)
+      }
+    }
+
+    // Load template content for editing and proceed
+    replaceCanvasItems(pendingTemplate)
+    setGlobalTemplateCanvas(pendingTemplate)
+    setEditingContext('template')
+    setCurrentView('page-builder')
+    
+    // Close dialog
+    setConflictDialog(prev => ({ ...prev, isOpen: false }))
+    
+    addNotification({
+      type: 'success',
+      title: 'Template Editing Started',
+      message: 'Global template loaded. Changes will propagate according to your selection.'
+    })
+  }
+
+  const handleScopeEdit = (scope: EditingScope, issueType?: IssueType, journalCode?: string) => {
+    // Map scope to existing editing context
+    const contextMap: Record<EditingScope, EditingContext> = {
+      'global': 'template',
+      'issue-type': 'template', 
+      'journal': 'template',
+      'individual': 'page'
+    }
+    
+    // Extract volume info from current route for display
+    const issueTypeMatch = mockLiveSiteRoute.match(/\/toc\/[^\/]+\/([^\/]+)/)
+    const issueTypeRaw = issueTypeMatch?.[1] || 'current'
+    const volumeIssueMatch = issueTypeRaw.match(/vol-(\d+)-issue-(\d+)/)
+    const volumeInfo = volumeIssueMatch 
+      ? `vol ${volumeIssueMatch[1]}, issue ${volumeIssueMatch[2]}`
+      : null
+    
+    console.log(`🎯 Edit Scope Selected:`, {
+      scope,
+      issueType,
+      journalCode,
+      route: mockLiveSiteRoute,
+      context: contextMap[scope]
+    })
+    
+    const { replaceCanvasItems, addNotification, setTemplateEditingContext, setCanvasItemsForRoute, getCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas } = usePageStore.getState()
+    const journalName = journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'
+    
+    // Handle different editing scopes
+    if (scope === 'individual' && journalCode) {
+      // Individual Issue Editing: Load from route-specific storage or template
+      const existingRouteCanvas = getCanvasItemsForRoute(mockLiveSiteRoute)
+      let sectionsToLoad: CanvasItem[]
+      
+      if (existingRouteCanvas.length > 0) {
+        // Load existing edits for this route
+        sectionsToLoad = existingRouteCanvas
+        console.log(`📝 Loading existing edits for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
+      } else {
+        // Load fresh template for this route
+        sectionsToLoad = createTOCTemplate(journalCode)
+        console.log(`📝 Loading fresh template for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
+        
+        // Don't save to route-specific storage immediately - let auto-save handle actual changes
+      }
+      
+      // Load content into main canvas for editing
+      replaceCanvasItems(sectionsToLoad)
+      
+      // Show user what happened
+      const issueLabel = issueType === 'current' 
+        ? 'Current Issue' 
+        : volumeInfo || 'this Issue'
+      
+      setEditingContext('page')
+      setCurrentView('page-builder')
+      
+      const hasExistingEdits = existingRouteCanvas.length > 0
+      addNotification({
+        type: 'success',
+        title: hasExistingEdits ? 'Edits Restored!' : 'Template Inherited!',
+        message: hasExistingEdits 
+          ? `${issueLabel} loaded with your previous edits.`
+          : `${issueLabel} loaded with ${journalName} template. Customize as needed.`
+      })
+      
+    } else if (scope === 'journal' && journalCode) {
+      // Journal Template Editing with Individual Issue Inheritance
+      const baseTemplate = createTOCTemplate(journalCode)
+      
+      // Check if there are existing individual edits for current route that we should inherit
+      const currentRouteEdits = getCanvasItemsForRoute(mockLiveSiteRoute)
+      
+      let templateToEdit: CanvasItem[]
+      let notificationMessage: string
+      
+      if (currentRouteEdits.length > 0) {
+        // Start with existing individual edits as the base for template editing
+        templateToEdit = currentRouteEdits
+        console.log(`🎨 Loading journal template with individual customizations:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
+        
+        notificationMessage = `Editing ${journalName} template. Starting with your current issue customizations. Changes propagate to all ${journalName} issues.`
+      } else {
+        // No individual edits, start with fresh template
+        templateToEdit = baseTemplate
+        console.log(`🎨 Loading fresh journal template:`, journalCode, templateToEdit.length, 'sections')
+        
+        notificationMessage = `Editing ${journalName} template. Changes propagate to all ${journalName} issues.`
+      }
+      
+      // Load template content for editing
+      replaceCanvasItems(templateToEdit)
+      
+      // Set template editing context for propagation
+      if (setTemplateEditingContext) {
+        setTemplateEditingContext({
+          scope: 'journal',
+          journalCode,
+          templateId: `toc-${journalCode}`,
+          affectedIssues: ['current', 'archive'] // All issues for this journal
+        })
+      }
+      
+      setEditingContext('template')
+      setCurrentView('page-builder')
+      
+      addNotification({
+        type: 'info',
+        title: 'Template Editing Mode',
+        message: notificationMessage
+      })
+      
+    } else if (scope === 'issue-type' && issueType) {
+      // Issue Type Template Editing (e.g., all current issues)
+      const templateSections = createTOCTemplate(journalCode || 'advma')
+      
+      console.log(`🌐 Loading issue type template for editing:`, issueType, templateSections.length, 'sections')
+      
+      replaceCanvasItems(templateSections)
+      
+      if (setTemplateEditingContext) {
+        setTemplateEditingContext({
+          scope: 'issue-type',
+          issueType,
+          templateId: `toc-${issueType}`,
+          affectedIssues: ['all-journals'] // All journals, specific issue type
+        })
+      }
+      
+      setEditingContext('template')
+      setCurrentView('page-builder')
+      
+      const issueTypeLabel = issueType === 'current' ? 'Current Issues' : 'Issues'
+      addNotification({
+        type: 'info', 
+        title: 'Issue Type Template',
+        message: `Editing template for all ${issueTypeLabel} across journals. Changes propagate globally.`
+      })
+      
+    } else if (scope === 'global') {
+      // Global Template Editing with Conflict Detection
+      const templateSections = createTOCTemplate('advma') // Use base template
+      
+      // Check for existing customizations that would be overridden
+      const storeState = usePageStore.getState()
+      
+      // Check 1: Individual issue customizations (routeCanvasItems)
+      const routesWithActualCustomizations = Object.keys(storeState.routeCanvasItems || {})
+        .filter(route => {
+          if (!route.includes('/toc/')) return false
+          
+          // Compare route-specific canvas with base template to detect actual changes
+          const routeCanvas = storeState.routeCanvasItems[route]
+          const journalCodeFromRoute = route.match(/\/toc\/([^\/]+)/)?.[1]
+          const baseTemplate = createTOCTemplate(journalCodeFromRoute || 'advma')
+          
+          // Check if there are meaningful differences (not just ID differences)
+          const hasActualChanges = routeCanvas.length !== baseTemplate.length ||
+            routeCanvas.some((item, index) => {
+              const baseItem = baseTemplate[index]
+              if (!baseItem) return true
+              
+              // Compare meaningful properties (ignore IDs)
+              return item.name !== baseItem.name ||
+                     item.type !== baseItem.type ||
+                     item.layout !== baseItem.layout ||
+                     JSON.stringify(item.background) !== JSON.stringify(baseItem.background) ||
+                     JSON.stringify(item.styling) !== JSON.stringify(baseItem.styling) ||
+                     (item.areas && baseItem.areas && item.areas.length !== baseItem.areas.length)
+            })
+          
+          console.log(`🔍 Checking individual route ${route}:`, {
+            routeCanvasLength: routeCanvas.length,
+            baseTemplateLength: baseTemplate.length,
+            hasActualChanges
+          })
+          
+          return hasActualChanges
+        })
+
+      // Check 2: Journal template customizations (journalTemplateCanvas)
+      const journalsWithTemplateCustomizations: string[] = []
+      const journalCodes = ['advma', 'embo'] // Known journal codes
+      
+      journalCodes.forEach(code => {
+        const journalTemplate = storeState.getJournalTemplateCanvas(code)
+        if (journalTemplate && journalTemplate.length > 0) {
+          const baseTemplate = createTOCTemplate(code)
+          
+          // Check if journal template differs from base template
+          const hasJournalChanges = journalTemplate.length !== baseTemplate.length ||
+            journalTemplate.some((item, index) => {
+              const baseItem = baseTemplate[index]
+              if (!baseItem) return true
+              
+              // Compare meaningful properties (ignore IDs)
+              return item.name !== baseItem.name ||
+                     item.type !== baseItem.type ||
+                     item.layout !== baseItem.layout ||
+                     JSON.stringify(item.background) !== JSON.stringify(baseItem.background) ||
+                     JSON.stringify(item.styling) !== JSON.stringify(baseItem.styling) ||
+                     (item.areas && baseItem.areas && item.areas.length !== baseItem.areas.length)
+            })
+          
+          console.log(`🔍 Checking journal template ${code}:`, {
+            journalTemplateLength: journalTemplate.length,
+            baseTemplateLength: baseTemplate.length,
+            hasJournalChanges
+          })
+          
+          if (hasJournalChanges) {
+            journalsWithTemplateCustomizations.push(code)
+          }
+        }
+      })
+      
+      // Combine both types of customizations
+      const allAffectedRoutes = [...routesWithActualCustomizations]
+      const allAffectedJournals = [
+        ...routesWithActualCustomizations.map(route => route.match(/\/toc\/([^\/]+)/)?.[1]).filter(Boolean),
+        ...journalsWithTemplateCustomizations
+      ]
+      
+      // Remove duplicates
+      const uniqueAffectedJournals = [...new Set(allAffectedJournals)]
+      
+      console.log('🔍 Global template conflict check:', {
+        allRoutes: Object.keys(storeState.routeCanvasItems || {}),
+        routesWithActualCustomizations,
+        journalsWithTemplateCustomizations,
+        uniqueAffectedJournals,
+        scope
+      })
+      
+      if (uniqueAffectedJournals.length > 0) {
+        // Show conflict resolution dialog
+        const affectedJournals = uniqueAffectedJournals.map(journalCode => {
+          return {
+            journalCode: journalCode,
+            journalName: journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal',
+            route: `/toc/${journalCode}` // Generic route for journal
+          }
+        })
+        
+        setConflictDialog({
+          isOpen: true,
+          affectedJournals,
+          scope: 'global',
+          pendingTemplate: templateSections
+        })
+        
+        // Exit early - dialog will handle the resolution
+        return
+      } else {
+        // No conflicts - set normal global context
+        const globalContext = {
+          scope: 'global' as const,
+          templateId: 'toc-global',
+          affectedIssues: ['all-journals', 'all-issues']
+        }
+        
+        console.log('🔧 Setting normal global template context:', globalContext)
+        if (setTemplateEditingContext) {
+          setTemplateEditingContext(globalContext)
+        }
+      }
+      
+      console.log(`🌍 Loading global template for editing:`, templateSections.length, 'sections')
+      
+      replaceCanvasItems(templateSections)
+      
+      console.log('🔧 Setting editing context to template')
+      setEditingContext('template')
+      
+      console.log('🔧 Setting view to page-builder')
+      setCurrentView('page-builder')
+      
+      // Verify state after setting
+      setTimeout(() => {
+        const currentState = usePageStore.getState()
+        console.log('🔍 State after global template setup:', {
+          editingContext: currentState.editingContext,
+          templateEditingContext: currentState.templateEditingContext,
+          currentView: currentState.currentView
+        })
+      }, 100)
+      
+      addNotification({
+        type: 'warning',
+        title: 'Global Template Editing',
+        message: 'Changes will affect ALL issues across ALL journals. Individual customizations have been handled per your choice.'
+      })
     }
   }
 
-  const getTemplateButtonText = () => {
-    switch (mockLiveSiteRoute) {
-      case '/toc/advma/current':
-      case '/toc/embo/current':
-        return 'TOC Template'
-      case '/article/advma/67/12/p45':
-        return 'Article Template'
-      case '/journal/advma':
-      case '/journal/embo':
-        return 'Journal Home Template'
-      default:
-        return 'Template Mode'
-    }
-  }
 
   const renderPage = () => {
     switch (mockLiveSiteRoute) {
       case '/':
-        return <MockHomepage onEdit={handleEditPage} canvasItems={canvasItems} schemaObjects={schemaObjects} />
+        return <MockHomepage onEdit={handleEditPage} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} />
       case '/toc/advma/current':
-        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} />
+        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/toc/embo/current':
-        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} />
+        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+      case '/toc/advma/vol-35-issue-47':
+        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+      case '/toc/embo/vol-35-issue-47':
+        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/article/advma/67/12/p45':
         return <MockArticlePage onEdit={handleEditPage} />
       case '/journal/advma':
@@ -743,74 +1305,75 @@ export function MockLiveSite({
   }
 
   return (
-    <div className={`min-h-screen bg-white journal-${journalCode}`}>
-      {/* Mock Live Site Navigation */}
-      <div className="bg-gray-900 text-white px-6 py-3">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center space-x-6">
-            <div className="text-lg font-bold">Mock Live Site</div>
-            <nav className="flex space-x-4 text-sm">
+    <>
+      <div className={`min-h-screen bg-white journal-${journalCode}`}>
+        {/* Mock Live Site Navigation */}
+        <div className="bg-gray-900 text-white px-6 py-3">
+          <div className="flex items-center justify-between max-w-6xl mx-auto">
+            <div className="flex items-center space-x-6">
+              <div className="text-lg font-bold">Mock Live Site</div>
+              <nav className="flex space-x-4 text-sm">
+                <button
+                  onClick={() => setMockLiveSiteRoute('/')}
+                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/' ? 'text-blue-300' : ''}`}
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => setMockLiveSiteRoute('/journal/advma')}
+                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
+                >
+                  Advanced Materials
+                </button>
+                <button
+                  onClick={() => setMockLiveSiteRoute('/journal/embo')}
+                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/embo' ? 'text-blue-300' : ''}`}
+                >
+                  EMBO Journal
+                </button>
+                <button
+                  onClick={() => setMockLiveSiteRoute('/about')}
+                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/about' ? 'text-blue-300' : ''}`}
+                >
+                  About
+                </button>
+              </nav>
+            </div>
+            <div className="flex items-center space-x-4 text-sm">
+              <span className="text-gray-300">{mockLiveSiteRoute}</span>
               <button
-                onClick={() => setMockLiveSiteRoute('/')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/' ? 'text-blue-300' : ''}`}
+                onClick={() => setCurrentView('design-console')}
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
               >
-                Home
+                Back to Console
               </button>
-              <button
-                onClick={() => setMockLiveSiteRoute('/journal/advma')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
-              >
-                Advanced Materials
-              </button>
-              <button
-                onClick={() => setMockLiveSiteRoute('/journal/embo')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/embo' ? 'text-blue-300' : ''}`}
-              >
-                EMBO Journal
-              </button>
-              <button
-                onClick={() => setMockLiveSiteRoute('/about')}
-                className={`hover:text-blue-300 ${mockLiveSiteRoute === '/about' ? 'text-blue-300' : ''}`}
-              >
-                About
-              </button>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4 text-sm">
-            <span className="text-gray-300">{mockLiveSiteRoute}</span>
-            <button
-              onClick={() => setCurrentView('design-console')}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-            >
-              Back to Console
-            </button>
+            </div>
           </div>
         </div>
+
+        {/* Page Content */}
+        {renderPage()}
       </div>
 
-      {/* Page Content */}
-      {renderPage()}
-
-      {/* Floating Admin Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        <button
-          onClick={() => handleEditPage('page')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
-          title={getEditButtonText()}
-        >
-          {getEditButtonText()}
-        </button>
-        {(mockLiveSiteRoute.includes('/toc/') || mockLiveSiteRoute.includes('/journal/') || mockLiveSiteRoute.includes('/article/')) && (
-          <button
-            onClick={() => handleEditPage('template')}
-            className="px-4 py-2 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 text-sm font-medium whitespace-nowrap"
-            title={`Switch to ${getTemplateButtonText()}`}
-          >
-            {getTemplateButtonText()}
-          </button>
-        )}
+      {/* Smart Editing Scope Button - OUTSIDE main container */}
+      <div 
+        className="fixed bottom-6 right-6"
+        style={{ zIndex: 999998, position: 'fixed' }}
+      >
+        <TemplateEditingScopeButton 
+          mockLiveSiteRoute={mockLiveSiteRoute}
+          onEdit={handleScopeEdit}
+        />
       </div>
-    </div>
+
+      {/* Conflict Resolution Dialog */}
+      <ConflictResolutionDialog
+        isOpen={conflictDialog.isOpen}
+        affectedJournals={conflictDialog.affectedJournals}
+        scope={conflictDialog.scope}
+        onResolve={handleConflictResolution}
+      />
+    </>
   )
 }
 
