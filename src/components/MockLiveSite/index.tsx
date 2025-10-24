@@ -1010,7 +1010,20 @@ export function MockLiveSite({
     const journalName = journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'
     
     // Handle different editing scopes
-    if (scope === 'individual' && journalCode) {
+    if (scope === 'individual' && mockLiveSiteRoute === '/') {
+      // Homepage Individual Editing: Navigate back to page builder
+      console.log(`🏠 Loading homepage for editing`)
+      
+      setEditingContext('page')
+      setCurrentView('page-builder')
+      
+      addNotification({
+        type: 'success',
+        title: 'Homepage Editor Loaded!',
+        message: `Edit your homepage content and layout. Changes will be visible immediately.`
+      })
+      
+    } else if (scope === 'individual' && journalCode) {
       // Individual Issue Editing: Load from route-specific storage or template
       const existingRouteCanvas = getCanvasItemsForRoute(mockLiveSiteRoute)
       let sectionsToLoad: CanvasItem[]
