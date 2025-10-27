@@ -1,5 +1,4 @@
-import React from 'react'
-import type { WidgetSection, LayoutArea, Widget } from '../../types'
+import type { WidgetSection, PublicationCardConfig } from '../../types'
 
 
 // TOC Template Configuration
@@ -10,12 +9,11 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       id: 'toc-header-section',
       name: 'Header',
       type: 'header',
-      layout: 'single-column',
+      layout: 'one-column',
       areas: [
         {
           id: 'toc-header-area',
           name: 'Header Content',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-site-header',
@@ -66,7 +64,6 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
         {
           id: 'toc-journal-metadata-area',
           name: 'Journal Metadata',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-issue-details-widget',
@@ -75,6 +72,58 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
               contentSource: 'ai-generated', // Use AI mock data for template preview
               layout: 'hero',
               textColor: '#ffffff', // Default to white text for hero layout
+              // Mock publication data for template preview
+              publication: {
+                "@context": "https://schema.org",
+                "@type": "PublicationIssue", 
+                "issueNumber": "12",
+                "volumeNumber": "67",
+                "datePublished": "2024-12-01",
+                "name": "Volume 67 • Issue 12",
+                "isPartOf": {
+                  "@type": "Periodical",
+                  "name": getJournalName(journalCode),
+                  "issn": journalCode === 'advma' ? '0935-9648' : '0261-4189',
+                  "editor": { "name": "Editorial Board" }
+                }
+              },
+              cardConfig: {
+                // Content Identification
+                showContentTypeLabel: false,
+                showTitle: true,
+                showSubtitle: false,
+                showThumbnail: false,
+                thumbnailPosition: 'top' as const,
+                
+                // Publication Context
+                showPublicationTitle: true,
+                showVolumeIssue: true,
+                showBookSeriesTitle: false,
+                showChapterPages: false,
+                showNumberOfIssues: false,
+                showPublicationDate: true,
+                showDOI: false,
+                showISSN: false,
+                showISBN: false,
+                
+                // Author Information
+                showAuthors: false,
+                authorStyle: 'initials' as const,
+                showAffiliations: false,
+                
+                // Content Summary
+                showAbstract: false,
+                abstractLength: 'short' as const,
+                showKeywords: false,
+                
+                // Access & Usage
+                showAccessStatus: false,
+                showViewDownloadOptions: false,
+                showUsageMetrics: false,
+                
+                // Display Configuration
+                titleStyle: 'large' as const
+              },
               // AI generation for template preview
               aiSource: {
                 prompt: `Generate issue metadata for ${journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'} current issue`,
@@ -88,7 +137,6 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
         {
           id: 'toc-journal-cta-area',
           name: 'Journal CTA Buttons',
-          maxWidgets: 3,
           widgets: [
             {
               id: 'toc-subscribe-button',
@@ -127,12 +175,11 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       id: 'toc-journal-menu-section', 
       name: 'Journal Menu',
       type: 'navigation',
-      layout: 'single-column',
+      layout: 'one-column',
       areas: [
         {
           id: 'toc-journal-menu-area',
           name: 'Journal Navigation',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-journal-menu-widget',
@@ -157,12 +204,11 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       id: 'toc-breadcrumbs-section',
       name: 'Breadcrumbs',
       type: 'navigation',
-      layout: 'single-column',
+      layout: 'one-column',
       areas: [
         {
           id: 'toc-breadcrumbs-area',
           name: 'Breadcrumb Navigation',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-breadcrumbs-widget',
@@ -186,7 +232,6 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
         {
           id: 'toc-content-left',
           name: 'Issue Table of Contents',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-widget',
@@ -207,6 +252,7 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
                 showVolumeIssue: false, // Already shown in banner
                 showBookSeriesTitle: false, // Not applicable for articles
                 showChapterPages: false, // Not applicable for articles
+                showNumberOfIssues: false, // Not applicable for articles
                 showPublicationDate: true,
                 showDOI: true,
                 showISSN: false, // Already shown in banner
@@ -245,12 +291,11 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
         {
           id: 'toc-content-right',
           name: 'Current Issue Cover',
-          maxWidgets: 3,
           widgets: [
             {
               id: 'toc-cover-widget',
               type: 'image',
-              skin: 'default',
+              skin: 'minimal',
               src: getCoverImageUrl(journalCode),
               alt: `Current Issue Cover - ${getJournalName(journalCode)}`,
               ratio: '3:4'
@@ -277,12 +322,11 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       id: 'toc-footer-section',
       name: 'Footer',
       type: 'footer',
-      layout: 'single-column',
+      layout: 'one-column',
       areas: [
         {
           id: 'toc-footer-area',
           name: 'Footer Content',
-          maxWidgets: 1,
           widgets: [
             {
               id: 'toc-site-footer',
