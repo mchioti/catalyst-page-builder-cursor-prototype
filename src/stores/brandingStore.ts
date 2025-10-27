@@ -130,6 +130,37 @@ interface BrandingStore {
   generateCSSVariables: (branding: ResolvedBranding) => Record<string, string>;
 }
 
+const DEFAULT_JOURNALS: JournalBranding[] = [
+  {
+    id: nanoid(),
+    name: 'Advanced Materials',
+    slug: 'advma',
+    priority: 1,
+    colors: {
+      primary: '#dc2626',     // Red-600 (matches CSS --journal-primary)
+      secondary: '#fecaca',   // Red-200
+      accent: '#991b1b',      // Red-800 (matches CSS --journal-primary-dark)
+      text: '#ffffff',        // White text (matches CSS --journal-text)
+      background: '#fef2f2'   // Red-50
+    },
+    description: 'Materials science and engineering journal'
+  },
+  {
+    id: nanoid(),
+    name: 'EMBO Journal',
+    slug: 'embo',
+    priority: 1,
+    colors: {
+      primary: '#ea580c',     // Orange-600 (matches CSS --journal-primary)
+      secondary: '#7c3aed',   // Purple-600 (matches CSS --journal-secondary)
+      accent: '#c2410c',      // Orange-700 (matches CSS --journal-primary-dark)
+      text: '#ffffff',        // White text (matches CSS --journal-text)
+      background: '#fff7ed'   // Orange-50
+    },
+    description: 'European Molecular Biology Organization journal'
+  }
+];
+
 const createDefaultWebsiteBranding = (websiteId: string): WebsiteBrandingSystem => ({
   websiteId,
   website: {
@@ -137,7 +168,7 @@ const createDefaultWebsiteBranding = (websiteId: string): WebsiteBrandingSystem 
     name: `Website ${websiteId}`
   },
   subjects: DEFAULT_SUBJECTS,
-  journals: [],
+  journals: DEFAULT_JOURNALS,
   bookSeries: [],
   rules: {
     subjectsOverrideJournals: true,

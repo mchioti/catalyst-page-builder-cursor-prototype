@@ -1,0 +1,182 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - button "Library" [ref=e7]:
+          - img [ref=e8]
+          - generic [ref=e10]: Library
+        - button "Sections" [ref=e11]:
+          - img [ref=e12]
+          - generic [ref=e13]: Sections
+        - button "DIY" [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e17]: DIY
+        - button "Schema" [ref=e18]:
+          - img [ref=e19]
+          - generic [ref=e22]: Schema
+      - generic [ref=e24]:
+        - heading "Widget Library" [level=3] [ref=e25]
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - button "Core Widgets" [ref=e28]:
+              - heading "Core Widgets" [level=4] [ref=e29]
+              - img [ref=e30]
+            - generic [ref=e32]:
+              - generic [ref=e33]:
+                - heading "Page Elements" [level=5] [ref=e34]
+                - generic [ref=e35]:
+                  - button "Text" [ref=e36]:
+                    - generic [ref=e37]: Text
+                  - button "Heading" [ref=e38]:
+                    - generic [ref=e39]: Heading
+                  - button "Image" [ref=e40]:
+                    - generic [ref=e41]: Image
+                  - button "Button Link" [ref=e42]:
+                    - generic [ref=e43]: Button Link
+                  - button "Divider(Planned)" [ref=e44]:
+                    - generic [ref=e45]: Divider(Planned)
+                  - button "Spacer(Planned)" [ref=e46]:
+                    - generic [ref=e47]: Spacer(Planned)
+              - generic [ref=e48]:
+                - heading "Navigation" [level=5] [ref=e49]
+                - generic [ref=e50]:
+                  - button "Menu" [ref=e51]:
+                    - generic [ref=e52]: Menu
+                  - button "Breadcrumbs(Planned)" [ref=e53]:
+                    - generic [ref=e54]: Breadcrumbs(Planned)
+                  - button "Social Links(Planned)" [ref=e55]:
+                    - generic [ref=e56]: Social Links(Planned)
+              - generic [ref=e57]:
+                - heading "Interactive" [level=5] [ref=e58]
+                - generic [ref=e59]:
+                  - button "Table(Planned)" [ref=e60]:
+                    - generic [ref=e61]: Table(Planned)
+                  - button "Page Index(Planned)" [ref=e62]:
+                    - generic [ref=e63]: Page Index(Planned)
+                  - button "Tabs(Planned)" [ref=e64]:
+                    - generic [ref=e65]: Tabs(Planned)
+                  - button "Collapse(Planned)" [ref=e66]:
+                    - generic [ref=e67]: Collapse(Planned)
+                  - button "Slideshow(Planned)" [ref=e68]:
+                    - generic [ref=e69]: Slideshow(Planned)
+                  - button "Generic CTA(Planned)" [ref=e70]:
+                    - generic [ref=e71]: Generic CTA(Planned)
+                  - button "Feedback Form(Planned)" [ref=e72]:
+                    - generic [ref=e73]: Feedback Form(Planned)
+                  - button "Recommend to Library(Planned)" [ref=e74]:
+                    - generic [ref=e75]: Recommend to Library(Planned)
+          - button "Publishing Widgets" [ref=e77]:
+            - heading "Publishing Widgets" [level=4] [ref=e78]
+            - img [ref=e79]
+          - button "System Widgets" [ref=e82]:
+            - heading "System Widgets" [level=4] [ref=e83]
+            - img [ref=e84]
+          - button "Deprecated" [ref=e87]:
+            - heading "Deprecated" [level=4] [ref=e88]
+            - img [ref=e89]
+    - generic [ref=e91]:
+      - generic [ref=e93]:
+        - heading "Page Builder" [level=1] [ref=e94]
+        - generic [ref=e95]:
+          - button "Preview Changes" [ref=e96]:
+            - img [ref=e97]
+            - text: Preview Changes
+          - button "Design System Console" [ref=e100]:
+            - img [ref=e101]
+            - text: Design System Console
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - text: "Editing:"
+            - strong [ref=e107]: Wiley Online Library Homepage
+          - button "Switch to Template Mode" [ref=e108]
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - button "Add Section" [ref=e114]
+            - button "brought to you by Atypon Search • Advanced Search • 🛒 • Maria Chioti" [ref=e117]:
+              - generic [ref=e119]:
+                - generic [ref=e122] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: brought to you by Atypon
+                - generic [ref=e126] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: Search • Advanced Search • 🛒 • Maria Chioti
+          - generic [ref=e128]:
+            - button "Add Section" [ref=e130]
+            - button "Wiley Online Library Journals • Books • Proceedings • Blogs" [ref=e133]:
+              - generic [ref=e135]:
+                - generic [ref=e138] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - heading "Wiley Online Library" [level=2]
+                - generic [ref=e142] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: Journals • Books • Proceedings • Blogs
+          - generic [ref=e144]:
+            - button "Add Section" [ref=e146]
+            - button "Wiley Online Library Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences. Explore Journals Browse Collections" [ref=e149]:
+              - generic [ref=e151]:
+                - generic [ref=e153]:
+                  - generic [ref=e154] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - heading "Wiley Online Library" [level=1]
+                  - generic [ref=e156] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - generic: Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.
+                - generic [ref=e159]:
+                  - generic [ref=e160] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - link "Explore Journals":
+                          - /url: "#"
+                  - generic [ref=e162] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - link "Browse Collections":
+                          - /url: "#"
+          - generic [ref=e164]:
+            - button "Add Section" [ref=e166]
+            - button "Featured Research Latest in AI & Machine Learning Cutting-edge research in artificial intelligence, neural networks, and computational learning theory. Explore Articles → Computer Systems & Architecture Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization. Read More → Software Engineering Advances Revolutionary approaches to software development, testing, and quality assurance methodologies. View Research →" [ref=e169]:
+              - generic [ref=e171]:
+                - generic [ref=e174] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - heading "Featured Research" [level=2]
+                - generic [ref=e178] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Latest in AI & Machine Learning
+                          - text: Cutting-edge research in artificial intelligence, neural networks, and computational learning theory.
+                          - text: Explore Articles →
+                - generic [ref=e182] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Computer Systems & Architecture
+                          - text: Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization.
+                          - text: Read More →
+                - generic [ref=e186] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Software Engineering Advances
+                          - text: Revolutionary approaches to software development, testing, and quality assurance methodologies.
+                          - text: View Research →
+            - button "Add Section" [ref=e189]
+    - generic [ref=e190]:
+      - heading "Properties" [level=2] [ref=e192]
+      - paragraph [ref=e196]: Select a widget or section to edit its properties
+  - status [ref=e197]
+```

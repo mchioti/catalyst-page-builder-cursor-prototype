@@ -14,6 +14,7 @@ import { PublicationCard } from './components/Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
 import { WebsiteCreationWizard } from './components/Wizards/WebsiteCreation'
 import { PageBuilder } from './components/PageBuilder'
+import { DynamicBrandingCSS } from './components/BrandingSystem/DynamicBrandingCSS'
 import { create } from 'zustand'
 import { type LibraryItem as SpecItem } from './library'
 
@@ -976,12 +977,35 @@ function InteractiveWidgetRenderer({
       
     case 'button':
       const buttonWidget = widget as ButtonWidget
-      const variantClasses = {
-        primary: 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200',
-        secondary: 'border border-white text-white hover:bg-white hover:text-blue-600',
-        outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white',
-        link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
-      }
+      
+      // Check if we're in a journal context by looking for journal CSS classes on parent elements
+      const isInJournalContext = !!document.querySelector('.journal-advma, .journal-embo, .journal-nature, .journal-science');
+
+      const getVariantClasses = (variant: string, isJournalContext: boolean) => {
+        // For standard variants, use journal colors when in journal context, default colors otherwise
+        if (isJournalContext) {
+          switch (variant) {
+            case 'primary':
+              return 'journal-primary-button'; // Use journal primary color
+            case 'secondary':
+              return 'journal-secondary-button'; // Use journal secondary color
+            case 'outline':
+              return 'journal-outline-button'; // Use journal primary for border
+            case 'link':
+              return 'journal-link bg-transparent'; // Use journal primary for text
+            default:
+              return 'journal-primary-button';
+          }
+        }
+        
+        // Default (non-journal) styling
+        return {
+          primary: 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200',
+          secondary: 'border border-white text-white hover:bg-white hover:text-blue-600',
+          outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white',
+          link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
+        }[variant] || 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200';
+      };
       
       const sizeClasses = {
         small: 'px-3 py-1.5 text-sm',
@@ -989,11 +1013,16 @@ function InteractiveWidgetRenderer({
         large: 'px-6 py-3 text-lg'
       }
       
-      const buttonClasses = `
-        font-medium rounded transition-colors duration-200 cursor-pointer inline-block
-        ${variantClasses[buttonWidget.variant] || variantClasses.primary}
-        ${sizeClasses[buttonWidget.size] || sizeClasses.medium}
-      `.trim()
+      // Build classes array
+      const classesArray = [
+        'font-medium rounded transition-colors duration-200 cursor-pointer inline-block',
+        getVariantClasses(buttonWidget.variant, isInJournalContext),
+        sizeClasses[buttonWidget.size as keyof typeof sizeClasses] || sizeClasses.medium
+      ]
+      
+      // Note: customClasses removed - button variants now automatically use journal branding when in journal context
+      
+      const buttonClasses = classesArray.filter(Boolean).join(' ').trim()
       
       return (
         <SkinWrap skin={widget.skin}>
@@ -4062,7 +4091,7 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
 }
 
 export default function App() {
-  const { currentView, mockLiveSiteRoute, setMockLiveSiteRoute, setCurrentView, setEditingContext } = usePageStore()
+  const { currentView, mockLiveSiteRoute, setMockLiveSiteRoute, setCurrentView, setEditingContext, currentWebsiteId } = usePageStore()
   
   // Expose usePageStore to window for component access (for prototype only)
   useEffect(() => {
@@ -4082,6 +4111,7 @@ export default function App() {
   if (currentView === 'design-console') {
     return (
       <>
+        <DynamicBrandingCSS websiteId={currentWebsiteId} />
         <DesignConsole />
         <NotificationContainer />
       </>
@@ -4091,6 +4121,7 @@ export default function App() {
   if (currentView === 'mock-live-site') {
     return (
       <>
+        <DynamicBrandingCSS websiteId={currentWebsiteId} />
         <MockLiveSite 
           mockLiveSiteRoute={mockLiveSiteRoute}
           setMockLiveSiteRoute={setMockLiveSiteRoute}
@@ -4105,6 +4136,7 @@ export default function App() {
   
   return (
     <>
+      <DynamicBrandingCSS websiteId={currentWebsiteId} />
       <PageBuilder 
         usePageStore={usePageStore}
         buildWidget={buildWidget}

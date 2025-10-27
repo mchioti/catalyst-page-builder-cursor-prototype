@@ -38,11 +38,83 @@
   --journal-hover: #1e3a8a;        /* Blue-800 */
 }
 
-/* Journal-themed button classes */
+/* Journal variant-specific button classes */
+
+/* Primary Button - Uses journal primary color */
+.journal-primary-button {
+  background-color: var(--journal-primary, #ffffff);
+  color: var(--journal-text, #2563eb);
+  border: 2px solid var(--journal-primary, #dbeafe);
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-primary-button:hover {
+  background-color: var(--journal-hover, #dbeafe);
+  color: var(--journal-text, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Secondary Button - Uses journal secondary color */
+.journal-secondary-button {
+  background-color: var(--journal-secondary, #f3f4f6);
+  color: var(--journal-text-dark, #1f2937);
+  border: 2px solid var(--journal-secondary, #d1d5db);
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-secondary-button:hover {
+  background-color: var(--journal-primary, #2563eb);
+  color: var(--journal-text, #ffffff);
+  border-color: var(--journal-primary, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Outline Button - Uses journal primary for border */
+.journal-outline-button {
+  background-color: transparent;
+  color: var(--journal-primary, #2563eb);
+  border: 2px solid var(--journal-primary, #2563eb);
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-outline-button:hover {
+  background-color: var(--journal-primary, #2563eb);
+  color: var(--journal-text, #ffffff);
+}
+
+/* Link Button - Uses journal primary for text */
+.journal-link {
+  color: var(--journal-primary, #2563eb);
+  transition: color 0.2s ease;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.journal-link:hover {
+  color: var(--journal-hover, #1d4ed8);
+  text-decoration: underline;
+}
+
+/* Legacy classes - keeping for backward compatibility */
 .journal-themed-button {
-  background-color: var(--journal-primary);
-  color: var(--journal-text);
-  border: 2px solid transparent;
+  background-color: var(--journal-primary, #ffffff);
+  color: var(--journal-text, #2563eb);
+  border: 2px solid var(--journal-primary, #dbeafe);
   transition: all 0.2s ease;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -51,7 +123,8 @@
 }
 
 .journal-themed-button:hover {
-  background-color: var(--journal-hover);
+  background-color: var(--journal-hover, #dbeafe);
+  color: var(--journal-text, #2563eb);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -64,8 +137,8 @@
 /* Journal-themed outline button variant */
 .journal-themed-button-outline {
   background-color: transparent;
-  color: var(--journal-primary);
-  border: 2px solid var(--journal-primary);
+  color: var(--journal-primary, #2563eb);
+  border: 2px solid var(--journal-primary, #2563eb);
   transition: all 0.2s ease;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -74,19 +147,19 @@
 }
 
 .journal-themed-button-outline:hover {
-  background-color: var(--journal-primary);
-  color: var(--journal-text);
+  background-color: var(--journal-primary, #2563eb);
+  color: var(--journal-text, #ffffff);
 }
 
 /* Journal-themed links */
 .journal-themed-link {
-  color: var(--journal-primary);
+  color: var(--journal-primary, #2563eb);
   transition: color 0.2s ease;
   text-decoration: none;
 }
 
 .journal-themed-link:hover {
-  color: var(--journal-hover);
+  color: var(--journal-hover, #1d4ed8);
   text-decoration: underline;
 }
 

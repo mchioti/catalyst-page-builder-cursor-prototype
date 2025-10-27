@@ -79,7 +79,7 @@ test.describe('Core Page Builder Functions', () => {
     
     // Check different tabs work
     await page.click('button:has-text("Sections")')
-    await expect(page.locator('text=Basic Sections')).toBeVisible()
+    await expect(page.locator('text=Template-Ready Sections')).toBeVisible()
     
     // Go back to library
     await page.click('button:has-text("Library")')
@@ -171,7 +171,7 @@ test.describe('Journal Banner and Section Background Features', () => {
     await page.click('text=Sections', { timeout: 5000 })
     
     // Should see section controls which indicates template loaded
-    await expect(page.locator('text=Basic Sections')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=Template-Ready Sections')).toBeVisible({ timeout: 5000 })
   })
 
   test('Section background editing works correctly', async ({ page }) => {
@@ -388,6 +388,131 @@ test.describe('Journal Banner and Section Background Features', () => {
     
     // EMBO should have blue background from global template
     await expect(page.locator('[style*="background-color: rgb(0, 0, 255)"]')).toBeVisible()
+  })
+})
+
+test.describe('Button Variants and Journal Branding Integration', () => {
+  
+  test('Button variants use default styling on homepage', async ({ page }) => {
+    await page.goto('/')
+    
+    // Add a button widget to homepage
+    await page.click('text=Button Link')
+    await page.waitForTimeout(1000)
+    
+    // Click on the button to select it
+    await page.click('text=Click me')
+    
+    // Verify Properties Panel shows button style options
+    await expect(page.locator('label:has-text("Button Style")')).toBeVisible({ timeout: 5000 })
+    
+    // Check all button variants are available
+    const styleSelect = page.locator('select').filter({ has: page.locator('option:has-text("Primary")') })
+    await expect(styleSelect).toBeVisible()
+    await expect(page.locator('option:has-text("Primary")')).toBeVisible()
+    await expect(page.locator('option:has-text("Secondary")')).toBeVisible()
+    await expect(page.locator('option:has-text("Outline")')).toBeVisible()
+    await expect(page.locator('option:has-text("Link")')).toBeVisible()
+    
+    // Verify help text mentions journal branding
+    await expect(page.locator('text=Button styles automatically use journal branding colors')).toBeVisible()
+    
+    // Preview the homepage - buttons should use default blue styling
+    await page.click('text=Preview Changes')
+    await expect(page.locator('button:has-text("Click me")').first()).toBeVisible({ timeout: 10000 })
+    
+    // Homepage buttons should not have journal-specific classes
+    const homepageButton = page.locator('button:has-text("Click me")').first()
+    await expect(homepageButton).not.toHaveClass(/journal-/)
+  })
+  
+  test('Button variants automatically use journal branding on journal pages', async ({ page }) => {
+    await page.goto('/')
+    
+    // Navigate to ADVMA journal TOC (which has button widgets)
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    
+    // Verify we're on ADVMA journal page (should have red branding)
+    await expect(page.locator('h1:has-text("Advanced Materials")')).toBeVisible({ timeout: 10000 })
+    
+    // Check that journal banner buttons exist and should use red journal branding
+    const journalButtons = page.locator('button:has-text("SUBSCRIBE"), button:has-text("LIBRARIAN"), button:has-text("SUBMIT")')
+    await expect(journalButtons.first()).toBeVisible()
+    
+    // Edit the journal template to verify button variant selection works in journal context
+    await page.click('button[title="More editing options"]')
+    await page.click('text=Edit All Advanced Materials Issues')
+    
+    // Should be in page builder now
+    await expect(page.locator('h1').first()).toContainText('Page Builder', { timeout: 10000 })
+    
+    // Click on a journal banner button to select it
+    await page.locator('button:has-text("SUBSCRIBE")').first().click()
+    
+    // Verify button properties show up and variant can be changed
+    await expect(page.locator('label:has-text("Button Style")')).toBeVisible({ timeout: 5000 })
+    
+    // Change variant to Secondary
+    await page.selectOption('select', { label: 'Secondary' })
+    
+    // Button should now use Secondary variant styling
+    await page.waitForTimeout(1000)
+    
+    // Preview to see journal branding in action
+    await page.click('text=Preview Changes')
+    await page.click('text=Advanced Materials')
+    
+    // Journal buttons should have red ADVMA branding (not blue default)
+    await expect(page.locator('button:has-text("SUBSCRIBE")').first()).toBeVisible()
+  })
+  
+  test('EMBO journal uses different colors than ADVMA', async ({ page }) => {
+    await page.goto('/')
+    
+    // Test EMBO journal (should have orange/purple branding)
+    await page.click('text=Preview Changes')
+    await page.click('text=EMBO Journal')
+    
+    // Verify we're on EMBO journal page
+    await expect(page.locator('h1:has-text("EMBO Journal")')).toBeVisible({ timeout: 10000 })
+    
+    // EMBO journal buttons should exist and use orange/purple branding
+    const emboButtons = page.locator('button:has-text("SUBSCRIBE"), button:has-text("LIBRARIAN"), button:has-text("SUBMIT")')
+    await expect(emboButtons.first()).toBeVisible()
+    
+    // Navigate back to ADVMA to verify different colors
+    await page.click('text=Advanced Materials')
+    await expect(page.locator('h1:has-text("Advanced Materials")')).toBeVisible()
+    
+    // Both journals should have buttons, but with different branding
+    const advmaButtons = page.locator('button:has-text("SUBSCRIBE"), button:has-text("LIBRARIAN"), button:has-text("SUBMIT")')
+    await expect(advmaButtons.first()).toBeVisible()
+  })
+
+  test('Button variants work correctly across different contexts', async ({ page }) => {
+    await page.goto('/')
+    
+    // Test 1: Add button on homepage (should use default styling)
+    await page.click('text=Button Link')
+    await page.waitForTimeout(1000)
+    
+    // Preview homepage
+    await page.click('text=Preview Changes')
+    const homepageButton = page.locator('button:has-text("Click me")').first()
+    await expect(homepageButton).toBeVisible({ timeout: 10000 })
+    
+    // Test 2: Navigate to journal page (buttons should use journal styling)
+    await page.click('text=Advanced Materials')
+    const journalButtons = page.locator('button:has-text("SUBSCRIBE")').first()
+    await expect(journalButtons).toBeVisible()
+    
+    // Test 3: Go back to homepage (should revert to default styling)
+    await page.locator('button:has-text("Home")').first().click()
+    await expect(page.locator('h1:has-text("Wiley Online Library"), h2:has-text("Wiley Online Library")').first()).toBeVisible({ timeout: 10000 })
+    
+    // Homepage button should still be visible with default styling
+    await expect(page.locator('button:has-text("Click me")').first()).toBeVisible()
   })
 })
 

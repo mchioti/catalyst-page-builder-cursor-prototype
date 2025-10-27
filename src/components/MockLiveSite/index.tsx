@@ -46,6 +46,7 @@ function MockHomepage({
               showToast={() => {}}
               usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
               isLiveMode={true} // Add this flag to prevent editor overlays
+              // No journalContext for homepage - should use default button styling
             />
           )
         } else {
@@ -138,6 +139,7 @@ function MockJournalTOC({
                 showToast={() => {}}
                 usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
                 isLiveMode={true} // Add this flag to prevent editor overlays
+                journalContext={journalCode}
               />
             )
           } else {

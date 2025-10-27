@@ -366,13 +366,164 @@ export const createFeaturesPrefab = (): CanvasItem => {
 }
 
 /**
+ * Creates a Journal Banner section with publication details and CTA buttons
+ * Matches the Journal TOC banner with dark gradient background
+ */
+export const createJournalBannerPrefab = (): CanvasItem => {
+  // Use vertical layout to match TOC template structure
+  const bannerSection: WidgetSection = {
+    id: nanoid(),
+    name: 'Journal Banner',
+    type: 'hero',
+    layout: 'vertical',
+    areas: [
+      {
+        id: nanoid(),
+        name: 'Journal Metadata',
+        widgets: []
+      },
+      {
+        id: nanoid(), 
+        name: 'Journal CTA Buttons',
+        widgets: []
+      }
+    ]
+  }
+  
+  // Add black gradient background to match TOC template
+  bannerSection.background = {
+    type: 'gradient',
+    gradient: {
+      type: 'linear',
+      direction: 'to right',
+      stops: [
+        { color: '#111827', position: '0%' },   // gray-900
+        { color: '#1f2937', position: '50%' },  // gray-800
+        { color: '#111827', position: '100%' }  // gray-900
+      ]
+    },
+    opacity: 1
+  }
+  
+  // Add Journal Banner section padding
+  bannerSection.styling = {
+    paddingTop: 'large',
+    paddingBottom: 'large',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'medium'
+  }
+
+  // Publication Details widget (top area)
+  const publicationDetailsWidget = {
+    id: nanoid(),
+    type: 'publication-details' as const,
+    skin: 'journal' as const,
+    contentSource: 'ai-generated' as const,
+    layout: 'hero' as const,
+    textColor: '#ffffff',
+    // Mock publication data for template preview
+    publication: {
+      "@context": "https://schema.org",
+      "@type": "PublicationIssue",
+      "issueNumber": "12",
+      "volumeNumber": "67",
+      "datePublished": "2024-12-01",
+      "name": "Volume 67 • Issue 12",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Advanced Materials",
+        "issn": "0935-9648",
+        "editor": { "name": "Editorial Board" }
+      }
+    },
+    cardConfig: {
+      // Content Identification
+      showContentTypeLabel: false,
+      showTitle: true,
+      showSubtitle: false,
+      showThumbnail: false,
+      thumbnailPosition: 'top' as const,
+      
+      // Publication Context
+      showPublicationTitle: true,
+      showVolumeIssue: true,
+      showBookSeriesTitle: false,
+      showChapterPages: false,
+      showNumberOfIssues: false,
+      showPublicationDate: true,
+      showDOI: false,
+      showISSN: false,
+      showISBN: false,
+      
+      // Author Information
+      showAuthors: true,
+      authorStyle: 'initials' as const,
+      showAffiliations: false,
+      
+      // Content Summary
+      showAbstract: false,
+      abstractLength: 'short' as const,
+      showKeywords: false,
+      
+      // Access & Usage
+      showAccessStatus: false,
+      showViewDownloadOptions: false,
+      showUsageMetrics: false,
+      
+      // Display Configuration
+      titleStyle: 'large' as const
+    }
+  }
+
+      // Individual CTA Button widgets (bottom area)
+      // Using primary variant which automatically picks up journal branding when in journal context
+      const subscribeButton = {
+        id: nanoid(),
+        type: 'button' as const,
+        skin: 'minimal' as const,
+        text: 'SUBSCRIBE/RENEW',
+        variant: 'primary' as const,
+        size: 'medium' as const,
+        href: '#'
+      }
+
+      const librarianButton = {
+        id: nanoid(),
+        type: 'button' as const,
+        skin: 'minimal' as const,
+        text: 'RECOMMEND TO A LIBRARIAN',
+        variant: 'primary' as const,
+        size: 'medium' as const,
+        href: '#'
+      }
+
+      const submitButton = {
+        id: nanoid(),
+        type: 'button' as const,
+        skin: 'minimal' as const,
+        text: 'SUBMIT AN ARTICLE',
+        variant: 'primary' as const,
+        size: 'medium' as const,
+        href: '#'
+      }
+
+  // Assign widgets to areas
+  bannerSection.areas[0].widgets = [publicationDetailsWidget] // Top: Publication Details
+  bannerSection.areas[1].widgets = [subscribeButton, librarianButton, submitButton] // Bottom: CTA Buttons
+
+  return bannerSection
+}
+
+/**
  * Available prefab sections for easy access
  */
 export const PREFAB_SECTIONS = {
   globalHeader: createGlobalHeaderPrefab,
   mainNavigation: createMainNavigationPrefab,
   hero: createHeroPrefab,
-  featuredResearch: createFeaturesPrefab
+  featuredResearch: createFeaturesPrefab,
+  journalBanner: createJournalBannerPrefab
 } as const
 
 export type PrefabSectionType = keyof typeof PREFAB_SECTIONS

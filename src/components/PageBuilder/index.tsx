@@ -89,9 +89,9 @@ export function PageBuilder({
   const isGlobalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'global'
   const isJournalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'journal'
   
-  const getJournalCode = (route: string): string => {
+  const getJournalCode = (route: string): string | null => {
     const match = route.match(/\/(toc|journal)\/([^\/]+)/)
-    return match ? match[2] : 'default'
+    return match ? match[2] : null // Return null for non-journal pages (like homepage)
   }
   const journalCode = getJournalCode(mockLiveSiteRoute)
   const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
@@ -845,6 +845,7 @@ export function PageBuilder({
                           showToast={showToast}
                           usePageStore={usePageStore}
                           InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+                          journalContext={journalCode || undefined}
                         />
                         
                         {/* Add Section Button Below */}
@@ -1455,7 +1456,7 @@ function SectionsContent({ showToast, usePageStore }: {
 
   // Prefab sections are now handled by the modular prefabSections.ts
 
-  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader') => {
+  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader' | 'journalBanner') => {
     let section: CanvasItem
     
     if (type === 'hero') {
@@ -1464,6 +1465,8 @@ function SectionsContent({ showToast, usePageStore }: {
       section = PREFAB_SECTIONS.featuredResearch()
     } else if (type === 'globalHeader') {
       section = PREFAB_SECTIONS.globalHeader()
+    } else if (type === 'journalBanner') {
+      section = PREFAB_SECTIONS.journalBanner()
     } else {
       return // Invalid type
     }
@@ -1474,94 +1477,97 @@ function SectionsContent({ showToast, usePageStore }: {
 
   return (
     <div className="space-y-6">
-      {/* Basic Sections */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Basic Sections
-        </h3>
-        <div className="grid grid-cols-1 gap-2">
-          <button
-            onClick={() => addSectionToCanvas('one-column', 'Single Column')}
-            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="font-medium text-sm">Single Column</div>
-            <div className="text-xs text-gray-500">Full-width content area</div>
-          </button>
-          
-          <button
-            onClick={() => addSectionToCanvas('two-columns', 'Two Columns')}
-            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="font-medium text-sm">Two Columns</div>
-            <div className="text-xs text-gray-500">Side-by-side layout</div>
-          </button>
-          
-          <button
-            onClick={() => addSectionToCanvas('three-columns', 'Three Columns')}
-            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="font-medium text-sm">Three Columns</div>
-            <div className="text-xs text-gray-500">Equal width columns</div>
-          </button>
-        </div>
-      </div>
 
-      {/* Full Width Sections */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          Full Width Sections
-        </h3>
-        <div className="grid grid-cols-1 gap-2">
-          <button
-            onClick={() => addSectionToCanvas('hero-with-buttons', 'Hero with Buttons')}
-            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="font-medium text-sm">Hero with Buttons</div>
-            <div className="text-xs text-gray-500">Hero content + button row</div>
-          </button>
-          
-          <button
-            onClick={() => addSectionToCanvas('header-plus-grid', 'Header + 3-Column Grid')}
-            className="p-3 text-left border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            <div className="font-medium text-sm">Header + 3-Column Grid</div>
-            <div className="text-xs text-gray-500">Header with 3-card layout below</div>
-          </button>
-        </div>
-      </div>
-
+      
       {/* Template-Ready Sections */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <BookOpen className="w-4 h-4" />
+
+        <h3 className="font-semibold text-gray-900 mb-3">
           Template-Ready Sections
         </h3>
         <div className="grid grid-cols-1 gap-2">
-          <button
-            onClick={() => addPrefabSection('globalHeader')}
-            className="p-3 text-left border-2 border-purple-200 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
-          >
-            <div className="font-medium text-sm text-purple-900">Global Header</div>
-            <div className="text-xs text-purple-700">University header + main navigation (reusable across pages)</div>
-          </button>
-          
-          <button
-            onClick={() => addPrefabSection('hero')}
-            className="p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
-          >
-            <div className="font-medium text-sm text-blue-900">Hero Section</div>
-            <div className="text-xs text-blue-700">Full hero with heading, text, and action buttons</div>
-          </button>
-          
-          <button
-            onClick={() => addPrefabSection('features')}
-            className="p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors"
-          >
-            <div className="font-medium text-sm text-green-900">Featured Research</div>
-            <div className="text-xs text-green-700">Header with 3 research highlight cards</div>
-          </button>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Global Sections
+          </h4>
+          <div className="space-y-3">
+            <button
+              onClick={() => addPrefabSection('globalHeader')}
+              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
+            >
+              <img 
+                src="/layout-previews/globalHeader.png" 
+                alt="Global Header Preview"
+                className="w-full h-20 object-cover rounded border border-gray-200"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">Global Header</div>
+                <div className="text-xs text-gray-700">University header + main navigation (reusable across pages)</div>
+              </div>
+            </button>
+          </div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Full Width Sections
+          </h4>
+          <div className="space-y-3">
+            <button
+              onClick={() => addPrefabSection('hero')}
+              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
+            >
+              <img 
+                src="/layout-previews/hero.png" 
+                alt="Hero Section Preview"
+                className="w-full h-20 object-cover rounded border border-gray-200"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">Hero Section</div>
+                <div className="text-xs text-gray-700">Full hero with heading, text, and action buttons</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => addPrefabSection('features')}
+              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
+            >
+              <img 
+                src="/layout-previews/featuredResearch.png" 
+                alt="Featured Research Preview"
+                className="w-full h-20 object-cover rounded border border-gray-200"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">Featured Research</div>
+                <div className="text-xs text-gray-700">Header with 3 research highlight cards</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => addPrefabSection('journalBanner')}
+              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
+            >
+              <img 
+                src="/layout-previews/journalBanner.png" 
+                alt="Journal Banner Preview"
+                className="w-full h-20 object-cover rounded border border-gray-200"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">Journal Banner</div>
+                <div className="text-xs text-gray-700">Dark gradient banner with publication details & CTA buttons</div>
+              </div>
+            </button>
+        </div>
         </div>
       </div>
     </div>

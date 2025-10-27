@@ -1,0 +1,94 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: Mock Live Site
+        - navigation [ref=e8]:
+          - button "Home" [ref=e9]
+          - button "Advanced Materials" [ref=e10]
+          - button "EMBO Journal" [ref=e11]
+          - button "About" [ref=e12]
+      - generic [ref=e13]:
+        - generic [ref=e14]: /
+        - button "Back to Console" [ref=e15]
+    - generic [ref=e16]:
+      - generic [ref=e19]:
+        - generic [ref=e22]:
+          - generic:
+            - generic:
+              - generic: brought to you by Atypon
+        - generic [ref=e25]:
+          - generic:
+            - generic:
+              - generic: Search • Advanced Search • 🛒 • Maria Chioti
+      - generic [ref=e28]:
+        - generic [ref=e31]:
+          - generic:
+            - generic:
+              - heading "Wiley Online Library" [level=2]
+        - generic [ref=e34]:
+          - generic:
+            - generic:
+              - generic: Journals • Books • Proceedings • Blogs
+      - generic [ref=e37]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic:
+              - generic:
+                - heading "Wiley Online Library" [level=1]
+          - generic [ref=e41]:
+            - generic:
+              - generic:
+                - generic: Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic:
+              - generic:
+                - link "Explore Journals":
+                  - /url: "#"
+          - generic [ref=e45]:
+            - generic:
+              - generic:
+                - link "Browse Collections":
+                  - /url: "#"
+      - generic [ref=e48]:
+        - generic [ref=e51]:
+          - generic:
+            - generic:
+              - heading "Featured Research" [level=2]
+        - generic [ref=e54]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - text: Latest in AI & Machine Learning
+                  - text: Cutting-edge research in artificial intelligence, neural networks, and computational learning theory.
+                  - text: Explore Articles →
+        - generic [ref=e57]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - text: Computer Systems & Architecture
+                  - text: Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization.
+                  - text: Read More →
+        - generic [ref=e60]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - text: Software Engineering Advances
+                  - text: Revolutionary approaches to software development, testing, and quality assurance methodologies.
+                  - text: View Research →
+      - link "Button Text" [ref=e63] [cursor=pointer]:
+        - /url: "#"
+  - generic [ref=e66]:
+    - button "Edit Homepage" [ref=e67]:
+      - img [ref=e68]
+      - text: Edit Homepage
+    - button "More editing options" [ref=e70]:
+      - img [ref=e71]
+```

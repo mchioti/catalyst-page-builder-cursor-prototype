@@ -983,13 +983,13 @@ export function PropertiesPanel({
               onChange={(e) => updateWidget({ variant: e.target.value as 'primary' | 'secondary' | 'outline' | 'link' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="primary">Primary - White with blue text (Hero CTA)</option>
-              <option value="secondary">Secondary - White border outline (Hero secondary)</option>
-              <option value="outline">Outline - Blue border with blue text</option>
-              <option value="link">Link - Blue text link (Featured articles)</option>
+              <option value="primary">Primary</option>
+              <option value="secondary">Secondary</option>
+              <option value="outline">Outline</option>
+              <option value="link">Link</option>
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              💡 <strong>Primary:</strong> Main call-to-action buttons • <strong>Secondary:</strong> Alternative actions • <strong>Link:</strong> Inline text links
+              💡 Button styles automatically use journal branding colors when on journal pages (ADVMA, EMBO, etc.)
             </p>
           </div>
           

@@ -65,7 +65,7 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await page.click('text=Sections')
     
     // Look for sections area - just verify it exists for smoke test
-    await expect(page.locator('text=Basic Sections')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('text=Template-Ready Sections')).toBeVisible({ timeout: 10000 })
   })
 
   test('Mock Live Site navigation @smoke', async ({ page }) => {

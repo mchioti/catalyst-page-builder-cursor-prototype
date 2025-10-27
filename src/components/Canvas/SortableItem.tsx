@@ -25,6 +25,7 @@ interface SortableItemProps {
   showToast: (message: string, type: 'success' | 'error') => void
   usePageStore: any // TODO: Type this properly when extracting store
   InteractiveWidgetRenderer: any // TODO: Type this properly
+  journalContext?: string // Journal code for branding (advma, embo, etc.)
 }
 
 export function SortableItem({ 
@@ -39,7 +40,8 @@ export function SortableItem({
   activeDropZone,
   showToast,
   usePageStore,
-  InteractiveWidgetRenderer
+  InteractiveWidgetRenderer,
+  journalContext
 }: SortableItemProps) {
   const {
     attributes,
@@ -108,6 +110,7 @@ export function SortableItem({
             activeDropZone={activeDropZone}
             showToast={showToast}
             usePageStore={usePageStore}
+            journalContext={journalContext}
           />
         </div>
       ) : (

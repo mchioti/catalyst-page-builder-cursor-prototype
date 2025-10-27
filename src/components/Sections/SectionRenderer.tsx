@@ -25,6 +25,7 @@ interface SectionRendererProps {
   showToast: (message: string, type: 'success' | 'error') => void
   usePageStore: any // Zustand store hook
   isLiveMode?: boolean // Flag to disable editor overlays for live site
+  journalContext?: string // Journal code for branding (advma, embo, etc.)
 }
 
 // Component for draggable widgets within sections
@@ -187,7 +188,8 @@ export function SectionRenderer({
   activeDropZone,
   showToast,
   usePageStore,
-  isLiveMode = false
+  isLiveMode = false,
+  journalContext
 }: SectionRendererProps) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
@@ -314,6 +316,9 @@ export function SectionRenderer({
     // Base classes for all modes
     const baseClasses = 'group relative'
     
+    // Journal context classes for branding (applies CSS custom properties)
+    const journalClasses = journalContext ? `journal-${journalContext}` : ''
+    
     // Editor-specific classes
     const editorClasses = !isLiveMode ? 'transition-all cursor-grab active:cursor-grabbing' : ''
     
@@ -336,7 +341,7 @@ export function SectionRenderer({
     
     if (isLiveMode) {
       // Live mode: clean styling, no editor visual elements
-      return `${baseClasses} ${sectionTypeClasses} ${textColorClass}`
+      return `${baseClasses} ${journalClasses} ${sectionTypeClasses} ${textColorClass}`.trim()
     }
     
     // Honor section type styling in editor mode too, but adjust editor borders for hero sections
@@ -344,13 +349,13 @@ export function SectionRenderer({
     
     // Editor mode styling
     if (isSpecialSection) {
-      return `${baseClasses} ${editorClasses} ${sectionTypeClasses} p-2 ${isHeroSection ? 'hover:bg-gray-800/50 border-2 border-transparent hover:border-gray-400' : 'hover:bg-gray-50 border-2 border-transparent hover:border-blue-200'} ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`
+      return `${baseClasses} ${journalClasses} ${editorClasses} ${sectionTypeClasses} p-2 ${isHeroSection ? 'hover:bg-gray-800/50 border-2 border-transparent hover:border-gray-400' : 'hover:bg-gray-50 border-2 border-transparent hover:border-blue-200'} ${hasBackground ? 'min-h-20' : ''} ${textColorClass}`.trim()
     } else {
       // If section has custom background or is hero type, use more neutral styling
       if (hasBackground || isHeroSection) {
-        return `${baseClasses} ${editorClasses} ${sectionTypeClasses} border-2 ${isHeroSection ? 'border-gray-600' : 'border-gray-300'} p-2 rounded ${isHeroSection ? 'hover:border-gray-400' : 'hover:border-blue-400'} min-h-20 ${textColorClass}`
+        return `${baseClasses} ${journalClasses} ${editorClasses} ${sectionTypeClasses} border-2 ${isHeroSection ? 'border-gray-600' : 'border-gray-300'} p-2 rounded ${isHeroSection ? 'hover:border-gray-400' : 'hover:border-blue-400'} min-h-20 ${textColorClass}`.trim()
       } else {
-        return `${baseClasses} ${editorClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`
+        return `${baseClasses} ${journalClasses} ${editorClasses} border-2 border-purple-200 bg-purple-50 p-2 rounded hover:border-blue-400 hover:bg-purple-100`.trim()
       }
     }
   }

@@ -50,6 +50,9 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000
+    timeout: 120000,
+    // Wait for server to start, allowing port fallback
+    stdout: 'pipe',
+    stderr: 'pipe'
   }
 });
