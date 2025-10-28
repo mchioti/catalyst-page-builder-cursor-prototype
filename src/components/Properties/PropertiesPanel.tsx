@@ -390,6 +390,132 @@ export function PropertiesPanel({
               </div>
             )}
           </div>
+          
+          {/* Sidebar-specific properties */}
+          {section.type === 'sidebar' && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Sidebar Settings</h4>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                  <select
+                    value={section.sidebar?.position || 'right'}
+                    onChange={(e) => updateSection({
+                      sidebar: {
+                        ...section.sidebar,
+                        position: e.target.value as 'left' | 'right',
+                        span: section.sidebar?.span || 2,
+                        width: section.sidebar?.width || '25%',
+                        sticky: section.sidebar?.sticky || false,
+                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Width</label>
+                  <select
+                    value={section.sidebar?.width || '25%'}
+                    onChange={(e) => updateSection({
+                      sidebar: {
+                        ...section.sidebar,
+                        position: section.sidebar?.position || 'right',
+                        span: section.sidebar?.span || 2,
+                        width: e.target.value,
+                        sticky: section.sidebar?.sticky || false,
+                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="25%">25% (1/4)</option>
+                    <option value="33%">33% (1/3)</option>
+                    <option value="300px">300px (Fixed)</option>
+                    <option value="350px">350px (Fixed)</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Span Sections: {section.sidebar?.span || 2}
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={section.sidebar?.span || 2}
+                  onChange={(e) => updateSection({
+                    sidebar: {
+                      ...section.sidebar,
+                      position: section.sidebar?.position || 'right',
+                      span: parseInt(e.target.value),
+                      width: section.sidebar?.width || '25%',
+                      sticky: section.sidebar?.sticky || false,
+                      mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                    }
+                  })}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1 section</span>
+                  <span>10 sections</span>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="sticky-sidebar"
+                    checked={section.sidebar?.sticky || false}
+                    onChange={(e) => updateSection({
+                      sidebar: {
+                        ...section.sidebar,
+                        position: section.sidebar?.position || 'right',
+                        span: section.sidebar?.span || 2,
+                        width: section.sidebar?.width || '25%',
+                        sticky: e.target.checked,
+                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                      }
+                    })}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="sticky-sidebar" className="text-sm font-medium text-gray-700">
+                    Sticky (stays in viewport)
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Behavior</label>
+                  <select
+                    value={section.sidebar?.mobileBehavior || 'below'}
+                    onChange={(e) => updateSection({
+                      sidebar: {
+                        ...section.sidebar,
+                        position: section.sidebar?.position || 'right',
+                        span: section.sidebar?.span || 2,
+                        width: section.sidebar?.width || '25%',
+                        sticky: section.sidebar?.sticky || false,
+                        mobileBehavior: e.target.value as 'below' | 'hidden' | 'drawer'
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="below">Show below sections</option>
+                    <option value="hidden">Hide on mobile</option>
+                    <option value="drawer">Collapsible drawer</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )

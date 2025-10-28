@@ -33,8 +33,8 @@ import { DraggableLibraryWidget } from '../Canvas/DraggableLibraryWidget'
 import { PropertiesPanel } from '../Properties/PropertiesPanel'
 import { SchemaFormEditor } from '../Schema/SchemaFormEditor'
 import { LayoutPicker } from '../Canvas/LayoutPicker'
-import { SortableItem } from '../Canvas/SortableItem'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
+import { LayoutRenderer } from '../Canvas/LayoutRenderer'
 
 // Type imports
 import type { 
@@ -81,7 +81,7 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects } = usePageStore()
   
   // Detect editing context
   const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
@@ -95,6 +95,8 @@ export function PageBuilder({
   }
   const journalCode = getJournalCode(mockLiveSiteRoute)
   const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
+
+
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
@@ -818,49 +820,27 @@ export function PageBuilder({
               ) : (
                 <SortableContext items={canvasItems} strategy={verticalListSortingStrategy}>
                   <div className="relative">
-                    {canvasItems.map((item: CanvasItem, index: number) => (
-                      <div key={item.id} className="relative group">
-                        {/* Add Section Button Above */}
-                        {item.id !== 'header-section' && (
-                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button
-                              onClick={() => handleAddSection(item.id, 'above')}
-                              className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
-                            >
-                              Add Section
-                            </button>
-                          </div>
-                        )}
-                        
-                        <SortableItem 
-                          item={item} 
-                          isSelected={selectedWidget === item.id}
-                          onSectionClick={handleSectionClick}
-                          onWidgetClick={handleWidgetClick}
-                          activeSectionToolbar={activeSectionToolbar}
-                          setActiveSectionToolbar={handleSetActiveSectionToolbar}
-                          activeWidgetToolbar={activeWidgetToolbar}
-                          setActiveWidgetToolbar={setActiveWidgetToolbar}
-                          activeDropZone={activeDropZone}
-                          showToast={showToast}
-                          usePageStore={usePageStore}
-                          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-                          journalContext={journalCode || undefined}
-                        />
-                        
-                        {/* Add Section Button Below */}
-                        {index === canvasItems.length - 1 && (
-                          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button
-                              onClick={() => handleAddSection(item.id, 'below')}
-                              className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
-                            >
-                              Add Section
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    <LayoutRenderer
+                      canvasItems={canvasItems}
+                      schemaObjects={schemaObjects || []}
+                      isLiveMode={false}
+                      journalContext={journalCode || undefined}
+                      onWidgetClick={(id: string) => handleWidgetClick(id, {} as React.MouseEvent)}
+                      dragAttributes={{}}
+                      dragListeners={{}}
+                      activeSectionToolbar={activeSectionToolbar}
+                      setActiveSectionToolbar={handleSetActiveSectionToolbar}
+                      activeWidgetToolbar={activeWidgetToolbar}
+                      setActiveWidgetToolbar={setActiveWidgetToolbar}
+                      activeDropZone={activeDropZone}
+                      showToast={showToast}
+                      usePageStore={usePageStore}
+                      // Editor-specific props
+                      handleAddSection={handleAddSection}
+                      handleSectionClick={(id: string) => handleSectionClick(id, {} as React.MouseEvent)}
+                      selectedWidget={selectedWidget}
+                      InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+                    />
                   </div>
                 </SortableContext>
               )}
@@ -1456,10 +1436,20 @@ function SectionsContent({ showToast, usePageStore }: {
 
   // Prefab sections are now handled by the modular prefabSections.ts
 
-  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader' | 'journalBanner') => {
+  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader' | 'journalBanner' | 'sidebar') => {
     let section: CanvasItem
     
-    if (type === 'hero') {
+    // Check if adding a sidebar and one already exists
+    if (type === 'sidebar') {
+      const existingSidebar = canvasItems.find((item: CanvasItem) => 
+        isSection(item) && item.type === 'sidebar'
+      )
+      if (existingSidebar) {
+        showToast('Only one sidebar is allowed per page', 'error')
+        return
+      }
+      section = PREFAB_SECTIONS.sidebar()
+    } else if (type === 'hero') {
       section = PREFAB_SECTIONS.hero()
     } else if (type === 'features') {
       section = PREFAB_SECTIONS.featuredResearch()
@@ -1506,6 +1496,29 @@ function SectionsContent({ showToast, usePageStore }: {
               <div>
                 <div className="font-medium text-sm text-gray-900">Global Header</div>
                 <div className="text-xs text-gray-700">University header + main navigation (reusable across pages)</div>
+              </div>
+            </button>
+          </div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Special Sections
+          </h4>
+          <div className="space-y-3">
+            <button
+              onClick={() => addPrefabSection('sidebar')}
+              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
+            >
+              <img 
+                src="/layout-previews/sidebar.png" 
+                alt="Sidebar Preview"
+                className="w-full h-20 object-cover rounded border border-gray-200"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">Sidebar</div>
+                <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
               </div>
             </button>
           </div>

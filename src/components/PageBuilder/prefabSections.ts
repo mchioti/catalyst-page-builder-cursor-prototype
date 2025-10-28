@@ -515,6 +515,49 @@ export const createJournalBannerPrefab = (): CanvasItem => {
   return bannerSection
 }
 
+export const createSidebarPrefab = (): CanvasItem => {
+  const sidebarSection: WidgetSection = {
+    id: nanoid(),
+    name: 'Sidebar',
+    type: 'sidebar',
+    layout: 'one-column',
+    areas: [
+      {
+        id: nanoid(),
+        name: 'Sidebar Content',
+        widgets: []
+      }
+    ],
+    
+    // Default sidebar configuration
+    sidebar: {
+      position: 'right',
+      span: 2, // Span 2 sections by default
+      width: '25%', // 25% of page width
+      sticky: false, // Scroll with content by default
+      mobileBehavior: 'below' // Show below sections on mobile
+    },
+    
+    // Default styling
+    styling: {
+      paddingTop: 'medium',
+      paddingBottom: 'medium',
+      paddingLeft: 'medium',
+      paddingRight: 'medium',
+      gap: 'medium'
+    },
+    
+    // Light background by default
+    background: {
+      type: 'color',
+      color: '#f8fafc',
+      opacity: 1
+    }
+  }
+
+  return sidebarSection
+}
+
 /**
  * Available prefab sections for easy access
  */
@@ -523,7 +566,8 @@ export const PREFAB_SECTIONS = {
   mainNavigation: createMainNavigationPrefab,
   hero: createHeroPrefab,
   featuredResearch: createFeaturesPrefab,
-  journalBanner: createJournalBannerPrefab
+  journalBanner: createJournalBannerPrefab,
+  sidebar: createSidebarPrefab
 } as const
 
 export type PrefabSectionType = keyof typeof PREFAB_SECTIONS

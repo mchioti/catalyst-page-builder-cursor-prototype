@@ -1,8 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { EditingContext, MockLiveSiteRoute, CanvasItem } from '../../types'
-import { SectionRenderer } from '../Sections/SectionRenderer'
-import { WidgetRenderer } from '../Widgets/WidgetRenderer'
-import { isSection } from '../../types'
+import { LayoutRenderer } from '../Canvas/LayoutRenderer'
 import { TemplateEditingScopeButton } from './TemplateEditingScopeButton'
 import type { EditingScope, IssueType } from './TemplateEditingScopeButton'
 import { ConflictResolutionDialog } from './ConflictResolutionDialog'
@@ -28,36 +26,15 @@ function MockHomepage({
 
   return (
     <div className="min-h-screen">
-      {/* Render canvas content */}
-      {canvasItems.map((item: CanvasItem) => {
-        if (isSection(item)) {
-          return (
-            <SectionRenderer
-              key={item.id}
-              section={item}
-              onWidgetClick={() => {}} // No widget clicking on live site
-              dragAttributes={{}}
-              dragListeners={{}}
-              activeSectionToolbar={null}
-              setActiveSectionToolbar={() => {}}
-              activeWidgetToolbar={null}
-              setActiveWidgetToolbar={() => {}}
-              activeDropZone={null}
-              showToast={() => {}}
-              usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
-              isLiveMode={true} // Add this flag to prevent editor overlays
-              // No journalContext for homepage - should use default button styling
-            />
-          )
-        } else {
-          // Standalone widget
-          return (
-            <div key={item.id} className="w-full">
-              <WidgetRenderer widget={item} schemaObjects={schemaObjects} />
-            </div>
-          )
-        }
-      })}
+      {/* Render canvas content with sidebar support */}
+      <LayoutRenderer
+        canvasItems={canvasItems}
+        schemaObjects={schemaObjects}
+        isLiveMode={true}
+        // No journalContext for homepage - should use default button styling
+        onWidgetClick={() => {}} // No widget clicking on live site
+        usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
+      />
     </div>
   )
 }
@@ -121,36 +98,15 @@ function MockJournalTOC({
     console.log('🎨 Rendering canvas content for TOC (user has been editing):', canvasItems.length, 'items')
     return (
       <div className={`min-h-screen journal-${journalCode}`}>
-        {/* Render canvas content */}
-        {canvasItems.map((item: CanvasItem) => {
-          if (isSection(item)) {
-            return (
-              <SectionRenderer
-                key={item.id}
-                section={item}
-                onWidgetClick={() => {}} // No widget clicking on live site
-                dragAttributes={{}}
-                dragListeners={{}}
-                activeSectionToolbar={null}
-                setActiveSectionToolbar={() => {}}
-                activeWidgetToolbar={null}
-                setActiveWidgetToolbar={() => {}}
-                activeDropZone={null}
-                showToast={() => {}}
-                usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
-                isLiveMode={true} // Add this flag to prevent editor overlays
-                journalContext={journalCode}
-              />
-            )
-          } else {
-            // Standalone widget
-            return (
-              <div key={item.id} className="w-full">
-                <WidgetRenderer widget={item} schemaObjects={schemaObjects || []} />
-              </div>
-            )
-          }
-        })}
+        {/* Render canvas content with sidebar support */}
+        <LayoutRenderer
+          canvasItems={canvasItems}
+          schemaObjects={schemaObjects || []}
+          isLiveMode={true}
+          journalContext={journalCode}
+          onWidgetClick={() => {}} // No widget clicking on live site
+          usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
+        />
       </div>
     )
   }
