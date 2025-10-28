@@ -825,7 +825,7 @@ export function PageBuilder({
                       schemaObjects={schemaObjects || []}
                       isLiveMode={false}
                       journalContext={journalCode || undefined}
-                      onWidgetClick={(id: string) => handleWidgetClick(id, {} as React.MouseEvent)}
+                      onWidgetClick={handleWidgetClick}
                       dragAttributes={{}}
                       dragListeners={{}}
                       activeSectionToolbar={activeSectionToolbar}

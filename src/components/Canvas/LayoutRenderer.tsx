@@ -73,7 +73,7 @@ interface LayoutRendererProps {
   schemaObjects?: any[]
   isLiveMode?: boolean
   journalContext?: string
-  onWidgetClick?: (id: string) => void
+  onWidgetClick?: (id: string, e: React.MouseEvent) => void
   // Editor-specific props (ignored in live mode)
   dragAttributes?: any
   dragListeners?: any
@@ -96,7 +96,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   schemaObjects = [],
   isLiveMode = false,
   journalContext,
-  onWidgetClick = () => {},
+  onWidgetClick = (id: string, e: React.MouseEvent) => {},
   dragAttributes = {},
   dragListeners = {},
   activeSectionToolbar = null,
@@ -171,7 +171,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
               item={item} 
               isSelected={selectedWidget === item.id}
               onSectionClick={handleSectionClick}
-              onWidgetClick={(id, e) => onWidgetClick(id)}
+              onWidgetClick={onWidgetClick}
               activeSectionToolbar={activeSectionToolbar}
               setActiveSectionToolbar={setActiveSectionToolbar}
               activeWidgetToolbar={activeWidgetToolbar}
@@ -327,7 +327,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                       item={item} 
                       isSelected={selectedWidget === item.id}
                       onSectionClick={handleSectionClick}
-                      onWidgetClick={(id, e) => onWidgetClick(id)}
+                      onWidgetClick={onWidgetClick}
                       activeSectionToolbar={activeSectionToolbar}
                       setActiveSectionToolbar={setActiveSectionToolbar}
                       activeWidgetToolbar={activeWidgetToolbar}
@@ -367,7 +367,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 item={sidebar!} 
                 isSelected={selectedWidget === sidebar!.id}
                 onSectionClick={handleSectionClick}
-                onWidgetClick={(id, e) => onWidgetClick(id)}
+                onWidgetClick={onWidgetClick}
                 activeSectionToolbar={activeSectionToolbar}
                 setActiveSectionToolbar={setActiveSectionToolbar}
                 activeWidgetToolbar={activeWidgetToolbar}
