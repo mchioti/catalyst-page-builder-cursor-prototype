@@ -7,6 +7,14 @@
 html, body, #root { height: 100%; }
 body { margin: 0; }
 
+/* Prevent auto-scroll behavior that causes unwanted scrolling */
+* {
+  scroll-behavior: auto !important;
+  scroll-padding-top: 0 !important;
+  scroll-margin-top: 0 !important;
+}
+
+
 /* App base tokens */
 :root {
   --brand: 30 64 175;

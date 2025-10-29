@@ -399,20 +399,21 @@ export function PropertiesPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                  <select
-                    value={section.sidebar?.position || 'right'}
-                    onChange={(e) => updateSection({
-                      sidebar: {
-                        ...section.sidebar,
-                        position: e.target.value as 'left' | 'right',
-                        span: section.sidebar?.span || 2,
-                        width: section.sidebar?.width || '25%',
-                        sticky: section.sidebar?.sticky || false,
-                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
+            <select
+              value={section.sidebar?.position || 'right'}
+              onChange={(e) => updateSection({
+                sidebar: {
+                  ...section.sidebar,
+                  position: e.target.value as 'left' | 'right',
+                  span: section.sidebar?.span || 2,
+                  width: section.sidebar?.width || '25%',
+                  sticky: section.sidebar?.sticky || false,
+                  mobileBehavior: section.sidebar?.mobileBehavior || 'below',
+                  gap: section.sidebar?.gap || 'medium'
+                }
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
                     <option value="left">Left</option>
                     <option value="right">Right</option>
                   </select>
@@ -420,20 +421,21 @@ export function PropertiesPanel({
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Width</label>
-                  <select
-                    value={section.sidebar?.width || '25%'}
-                    onChange={(e) => updateSection({
-                      sidebar: {
-                        ...section.sidebar,
-                        position: section.sidebar?.position || 'right',
-                        span: section.sidebar?.span || 2,
-                        width: e.target.value,
-                        sticky: section.sidebar?.sticky || false,
-                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
+            <select
+              value={section.sidebar?.width || '25%'}
+              onChange={(e) => updateSection({
+                sidebar: {
+                  ...section.sidebar,
+                  position: section.sidebar?.position || 'right',
+                  span: section.sidebar?.span || 2,
+                  width: e.target.value,
+                  sticky: section.sidebar?.sticky || false,
+                  mobileBehavior: section.sidebar?.mobileBehavior || 'below',
+                  gap: section.sidebar?.gap || 'medium'
+                }
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
                     <option value="25%">25% (1/4)</option>
                     <option value="33%">33% (1/3)</option>
                     <option value="300px">300px (Fixed)</option>
@@ -458,7 +460,8 @@ export function PropertiesPanel({
                       span: parseInt(e.target.value),
                       width: section.sidebar?.width || '25%',
                       sticky: section.sidebar?.sticky || false,
-                      mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                      mobileBehavior: section.sidebar?.mobileBehavior || 'below',
+                      gap: section.sidebar?.gap || 'medium'
                     }
                   })}
                   className="w-full"
@@ -482,7 +485,8 @@ export function PropertiesPanel({
                         span: section.sidebar?.span || 2,
                         width: section.sidebar?.width || '25%',
                         sticky: e.target.checked,
-                        mobileBehavior: section.sidebar?.mobileBehavior || 'below'
+                        mobileBehavior: section.sidebar?.mobileBehavior || 'below',
+                        gap: section.sidebar?.gap || 'medium'
                       }
                     })}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -492,27 +496,52 @@ export function PropertiesPanel({
                   </label>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Behavior</label>
-                  <select
-                    value={section.sidebar?.mobileBehavior || 'below'}
-                    onChange={(e) => updateSection({
-                      sidebar: {
-                        ...section.sidebar,
-                        position: section.sidebar?.position || 'right',
-                        span: section.sidebar?.span || 2,
-                        width: section.sidebar?.width || '25%',
-                        sticky: section.sidebar?.sticky || false,
-                        mobileBehavior: e.target.value as 'below' | 'hidden' | 'drawer'
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="below">Show below sections</option>
-                    <option value="hidden">Hide on mobile</option>
-                    <option value="drawer">Collapsible drawer</option>
-                  </select>
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Behavior</label>
+            <select
+              value={section.sidebar?.mobileBehavior || 'below'}
+              onChange={(e) => updateSection({
+                sidebar: {
+                  ...section.sidebar,
+                  position: section.sidebar?.position || 'right',
+                  span: section.sidebar?.span || 2,
+                  width: section.sidebar?.width || '25%',
+                  sticky: section.sidebar?.sticky || false,
+                  mobileBehavior: e.target.value as 'below' | 'hidden' | 'drawer',
+                  gap: section.sidebar?.gap || 'medium'
+                }
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="below">Show below sections</option>
+              <option value="hidden">Hide on mobile</option>
+              <option value="drawer">Collapsible drawer</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gap Size</label>
+            <select
+              value={section.sidebar?.gap || 'medium'}
+              onChange={(e) => updateSection({
+                sidebar: {
+                  ...section.sidebar,
+                  position: section.sidebar?.position || 'right',
+                  span: section.sidebar?.span || 2,
+                  width: section.sidebar?.width || '25%',
+                  sticky: section.sidebar?.sticky || false,
+                  mobileBehavior: section.sidebar?.mobileBehavior || 'below',
+                  gap: e.target.value as 'none' | 'small' | 'medium' | 'large'
+                }
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="none">No gap</option>
+              <option value="small">Small gap</option>
+              <option value="medium">Medium gap</option>
+              <option value="large">Large gap</option>
+            </select>
+          </div>
               </div>
             </div>
           )}

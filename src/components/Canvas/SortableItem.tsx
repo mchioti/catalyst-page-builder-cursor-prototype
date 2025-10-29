@@ -26,6 +26,7 @@ interface SortableItemProps {
   usePageStore: any // TODO: Type this properly when extracting store
   InteractiveWidgetRenderer: any // TODO: Type this properly
   journalContext?: string // Journal code for branding (advma, embo, etc.)
+  sidebarHeight?: React.CSSProperties // Height styles for sidebar
 }
 
 export function SortableItem({ 
@@ -41,7 +42,8 @@ export function SortableItem({
   showToast,
   usePageStore,
   InteractiveWidgetRenderer,
-  journalContext
+  journalContext,
+  sidebarHeight
 }: SortableItemProps) {
   const {
     attributes,
@@ -63,13 +65,8 @@ export function SortableItem({
   }
 
   const getSectionName = (item: WidgetSection) => {
-    const specialSections: Record<string, string> = {
-      'header-section': 'Header',
-      'hero-section': 'Hero', 
-      'footer-section': 'Footer',
-      'features-section': 'Features'
-    }
-    return specialSections[item.id] || 'Section'
+    // Use the section's actual name property for display
+    return item.name || 'Section'
   }
 
   return (
@@ -111,6 +108,7 @@ export function SortableItem({
             showToast={showToast}
             usePageStore={usePageStore}
             journalContext={journalContext}
+            sidebarHeight={sidebarHeight}
           />
         </div>
       ) : (

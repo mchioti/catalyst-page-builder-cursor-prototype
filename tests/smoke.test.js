@@ -95,4 +95,50 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('text=Text')).toBeVisible({ timeout: 10000 })
     await expect(page.locator('text=Heading')).toBeVisible({ timeout: 10000 })
   })
+  
+  test('Sidebar system is accessible @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Navigate to Sections tab
+    await page.click('text=Sections')
+    
+    // Check Special Sections category exists
+    await expect(page.locator('text=Special Sections')).toBeVisible()
+    
+    // Check Sidebar exists in Special Sections
+    await expect(page.locator('text=sidebar')).toBeVisible()
+  })
+  
+  test('Sidebar can be placed on canvas @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Navigate to Sections tab  
+    await page.click('text=Sections')
+    
+    // Click on sidebar to add it
+    await page.click('text=sidebar')
+    
+    // Sidebar should appear on canvas with default content
+    await expect(page.locator('text=Drop widgets here')).toBeVisible({ timeout: 5000 })
+    
+    // Properties panel should show sidebar settings
+    await expect(page.locator('text=Sidebar Settings')).toBeVisible({ timeout: 5000 })
+  })
+  
+  test('Sidebar properties are configurable @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Add a sidebar
+    await page.click('text=Sections')
+    await page.click('text=sidebar')
+    
+    // Wait for sidebar to be selected and properties to show
+    await expect(page.locator('text=Sidebar Settings')).toBeVisible({ timeout: 5000 })
+    
+    // Check key configuration options exist
+    await expect(page.locator('label:has-text("Position")')).toBeVisible()
+    await expect(page.locator('label:has-text("Width")')).toBeVisible()
+    await expect(page.locator('label:has-text("Span Sections")')).toBeVisible()
+    await expect(page.locator('label:has-text("Gap Size")')).toBeVisible()
+  })
 })

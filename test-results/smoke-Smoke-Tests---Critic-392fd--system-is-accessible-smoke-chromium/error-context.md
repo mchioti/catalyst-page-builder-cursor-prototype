@@ -1,0 +1,164 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - button "Library" [ref=e7]:
+          - img [ref=e8]
+          - generic [ref=e10]: Library
+        - button "Sections" [active] [ref=e11]:
+          - img [ref=e12]
+          - generic [ref=e13]: Sections
+        - button "DIY" [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e17]: DIY
+        - button "Schema" [ref=e18]:
+          - img [ref=e19]
+          - generic [ref=e22]: Schema
+      - generic [ref=e25]:
+        - heading "Template-Ready Sections" [level=3] [ref=e26]
+        - generic [ref=e27]:
+          - heading "Global Sections" [level=4] [ref=e28]:
+            - img [ref=e29]
+            - text: Global Sections
+          - button "Global Header University header + main navigation (reusable across pages)" [ref=e32]:
+            - generic [ref=e33]:
+              - generic [ref=e34]: Global Header
+              - generic [ref=e35]: University header + main navigation (reusable across pages)
+          - heading "Special Sections" [level=4] [ref=e36]:
+            - img [ref=e37]
+            - text: Special Sections
+          - button "sidebar Vertical sidebar that can span multiple sections" [ref=e40]:
+            - generic [ref=e41]:
+              - generic [ref=e42]: sidebar
+              - generic [ref=e43]: Vertical sidebar that can span multiple sections
+          - heading "Full Width Sections" [level=4] [ref=e44]:
+            - img [ref=e45]
+            - text: Full Width Sections
+          - generic [ref=e47]:
+            - button "Hero Section Preview Hero Section Full hero with heading, text, and action buttons" [ref=e48]:
+              - img "Hero Section Preview" [ref=e49]
+              - generic [ref=e50]:
+                - generic [ref=e51]: Hero Section
+                - generic [ref=e52]: Full hero with heading, text, and action buttons
+            - button "Featured Research Preview Featured Research Header with 3 research highlight cards" [ref=e53]:
+              - img "Featured Research Preview" [ref=e54]
+              - generic [ref=e55]:
+                - generic [ref=e56]: Featured Research
+                - generic [ref=e57]: Header with 3 research highlight cards
+            - button "Journal Banner Preview Journal Banner Dark gradient banner with publication details & CTA buttons" [ref=e58]:
+              - img "Journal Banner Preview" [ref=e59]
+              - generic [ref=e60]:
+                - generic [ref=e61]: Journal Banner
+                - generic [ref=e62]: Dark gradient banner with publication details & CTA buttons
+    - generic [ref=e63]:
+      - generic [ref=e65]:
+        - heading "Page Builder" [level=1] [ref=e66]
+        - generic [ref=e67]:
+          - button "Preview Changes" [ref=e68]:
+            - img [ref=e69]
+            - text: Preview Changes
+          - button "Design System Console" [ref=e72]:
+            - img [ref=e73]
+            - text: Design System Console
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - text: "Editing:"
+            - strong [ref=e79]: Wiley Online Library Homepage
+          - button "Switch to Template Mode" [ref=e80]
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - button "Add Section" [ref=e87]
+            - button "brought to you by Atypon Search • Advanced Search • 🛒 • Maria Chioti" [ref=e90]:
+              - generic [ref=e92]:
+                - generic [ref=e95] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: brought to you by Atypon
+                - generic [ref=e99] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: Search • Advanced Search • 🛒 • Maria Chioti
+            - button "Add Section" [ref=e102]
+          - generic [ref=e103]:
+            - button "Add Section" [ref=e105]
+            - button "Wiley Online Library Journals • Books • Proceedings • Blogs" [ref=e108]:
+              - generic [ref=e110]:
+                - generic [ref=e113] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - heading "Wiley Online Library" [level=2]
+                - generic [ref=e117] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: Journals • Books • Proceedings • Blogs
+            - button "Add Section" [ref=e120]
+          - generic [ref=e121]:
+            - button "Add Section" [ref=e123]
+            - button "Wiley Online Library Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences. Explore Journals Browse Collections" [ref=e126]:
+              - generic [ref=e128]:
+                - generic [ref=e130]:
+                  - generic [ref=e131] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - heading "Wiley Online Library" [level=1]
+                  - generic [ref=e133] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - generic: Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.
+                - generic [ref=e136]:
+                  - generic [ref=e137] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - link "Explore Journals":
+                          - /url: "#"
+                  - generic [ref=e139] [cursor=pointer]:
+                    - generic:
+                      - generic:
+                        - link "Browse Collections":
+                          - /url: "#"
+            - button "Add Section" [ref=e142]
+          - generic [ref=e143]:
+            - button "Add Section" [ref=e145]
+            - button "Featured Research Latest in AI & Machine Learning Cutting-edge research in artificial intelligence, neural networks, and computational learning theory. Explore Articles → Computer Systems & Architecture Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization. Read More → Software Engineering Advances Revolutionary approaches to software development, testing, and quality assurance methodologies. View Research →" [ref=e148]:
+              - generic [ref=e150]:
+                - generic [ref=e153] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - heading "Featured Research" [level=2]
+                - generic [ref=e157] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Latest in AI & Machine Learning
+                          - text: Cutting-edge research in artificial intelligence, neural networks, and computational learning theory.
+                          - text: Explore Articles →
+                - generic [ref=e161] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Computer Systems & Architecture
+                          - text: Breakthrough discoveries in distributed systems, cloud computing, and hardware optimization.
+                          - text: Read More →
+                - generic [ref=e165] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - text: Software Engineering Advances
+                          - text: Revolutionary approaches to software development, testing, and quality assurance methodologies.
+                          - text: View Research →
+            - button "Add Section" [ref=e168]
+    - generic [ref=e169]:
+      - heading "Properties" [level=2] [ref=e171]
+      - paragraph [ref=e175]: Select a widget or section to edit its properties
+    - generic [ref=e177]:
+      - img [ref=e178]
+      - generic [ref=e180]: Homepage template loaded! Edit sections to match your vision.
+  - status [ref=e181]
+```

@@ -228,11 +228,21 @@ export function PageBuilder({
   }
   
   const handleDragStart = (event: DragStartEvent) => {
+    const draggedItem = event.active.data?.current?.item
+    const isSidebar = draggedItem && isSection(draggedItem) && draggedItem.type === 'sidebar'
+    
     console.log('🚀 Drag Start:', {
       activeId: event.active.id,
       activeType: event.active.data?.current?.type,
-      activeData: event.active.data?.current
+      activeData: event.active.data?.current,
+      activeItem: draggedItem,
+      isSidebar: isSidebar,
+      sidebarName: isSidebar ? draggedItem.name : 'not a sidebar'
     })
+    
+    if (isSidebar) {
+      console.log('🎯 SIDEBAR DRAG DETECTED! Setting up special highlighting...')
+    }
     
     // Log all available drop zones for debugging
     const dropZones = document.querySelectorAll('[data-droppable="true"]')
@@ -245,23 +255,66 @@ export function PageBuilder({
   
   const handleDragOver = (event: DragOverEvent) => {
     if (event.over) {
-      // Highlight section-area drop zones
-      if (event.over.data?.current?.type === 'section-area') {
-        const dropZoneId = event.over.id as string
-        if (activeDropZone !== dropZoneId) {
-          setActiveDropZone(dropZoneId)
-          console.log('🎯 Drop zone detected:', {
-            activeId: event.active.id,
-            activeType: event.active.data?.current?.type,
-            dropZone: dropZoneId,
-            sectionId: event.over.data?.current?.sectionId,
-            areaId: event.over.data?.current?.areaId
-          })
+      const activeItem = event.active.data?.current?.item
+      const isDraggingSidebar = activeItem && isSection(activeItem) && activeItem.type === 'sidebar'
+      
+      // DEBUG: Log what we're detecting
+      console.log('🔍 Drag Over Debug:', {
+        activeId: event.active.id,
+        activeType: event.active.data?.current?.type,
+        activeItem: activeItem,
+        isDraggingSidebar: isDraggingSidebar,
+        sidebarType: activeItem?.type,
+        overType: event.over.data?.current?.type
+      })
+      
+      if (isDraggingSidebar) {
+        // For sidebar dragging, convert section-area drops to section-level drops
+        if (event.over.data?.current?.type === 'section-area') {
+          const sectionId = event.over.data?.current?.sectionId
+          if (activeDropZone !== sectionId) {
+            setActiveDropZone(sectionId)
+            console.log('🎯 Sidebar drop zone detected (converted to section-level):', {
+              activeId: event.active.id,
+              dropZone: sectionId,
+              originalAreaId: event.over.id
+            })
+          }
+        } else if (event.over.data?.current?.type === 'section') {
+          const dropZoneId = event.over.id as string
+          if (activeDropZone !== dropZoneId) {
+            setActiveDropZone(dropZoneId)
+            console.log('🎯 Sidebar drop zone detected (section-level):', {
+              activeId: event.active.id,
+              dropZone: dropZoneId,
+              sectionId: event.over.id
+            })
+          }
+        } else {
+          // Clear highlight when not over a section or section-area
+          if (activeDropZone) {
+            setActiveDropZone(null)
+          }
         }
       } else {
-        // Clear highlight when not over a section-area
-        if (activeDropZone) {
-          setActiveDropZone(null)
+        // Normal behavior for other items - highlight section-area drop zones
+        if (event.over.data?.current?.type === 'section-area') {
+          const dropZoneId = event.over.id as string
+          if (activeDropZone !== dropZoneId) {
+            setActiveDropZone(dropZoneId)
+            console.log('🎯 Drop zone detected:', {
+              activeId: event.active.id,
+              activeType: event.active.data?.current?.type,
+              dropZone: dropZoneId,
+              sectionId: event.over.data?.current?.sectionId,
+              areaId: event.over.data?.current?.areaId
+            })
+          }
+        } else {
+          // Clear highlight when not over a section-area
+          if (activeDropZone) {
+            setActiveDropZone(null)
+          }
         }
       }
     } else {
@@ -314,7 +367,7 @@ export function PageBuilder({
       // Add widget to the specific section area
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
       // Type narrow to section item, which should have .areas
-      const targetSection = canvasItems.find((item: CanvasItem) => item.type === 'content-block' && item.id === sectionId)
+      const targetSection = canvasItems.find((item: CanvasItem) => isSection(item) && item.id === sectionId)
       const targetArea = (targetSection && 'areas' in targetSection)
         ? targetSection.areas.find((area: any) => area.id === areaId)
         : undefined
@@ -322,10 +375,10 @@ export function PageBuilder({
       console.log('🎯 Target area before:', targetArea?.widgets?.length || 0, 'widgets')
 
       const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
-        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
+        if (isSection(canvasItem) && canvasItem.id === sectionId) {
           return {
             ...canvasItem,
-            areas: canvasItem.areas.map((area: any) => 
+            areas: (canvasItem as WidgetSection).areas.map((area: any) => 
               area.id === areaId 
                 ? { ...area, widgets: [...area.widgets, newWidget] }
                 : area
@@ -387,11 +440,11 @@ export function PageBuilder({
       // Remove widget from canvas and add to section area
       const newCanvasItems = canvasItems.filter((item: CanvasItem) => item.id !== widget.id)
       const updatedCanvasItems = newCanvasItems.map((canvasItem: CanvasItem) => {
-        if (canvasItem.type === 'content-block' && canvasItem.id === sectionId) {
+        if (isSection(canvasItem) && canvasItem.id === sectionId) {
           const updatedWidget = { ...widget, sectionId: sectionId }
           return {
             ...canvasItem,
-            areas: canvasItem.areas.map((area: any) => 
+            areas: (canvasItem as WidgetSection).areas.map((area: any) => 
               area.id === areaId 
                 ? { ...area, widgets: [...area.widgets, updatedWidget] }
                 : area
@@ -427,10 +480,10 @@ export function PageBuilder({
         
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
-          if (canvasItem.type === 'content-block') {
+          if (isSection(canvasItem)) {
             return {
               ...canvasItem,
-              areas: canvasItem.areas.map((area: any) => {
+              areas: (canvasItem as WidgetSection).areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
                   return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
@@ -475,7 +528,7 @@ export function PageBuilder({
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         
         // Find the target section and its first area
-        const targetSection = canvasItems.find((item: CanvasItem) => item.id === targetSectionId && item.type === 'content-block') as WidgetSection
+        const targetSection = canvasItems.find((item: CanvasItem) => item.id === targetSectionId && isSection(item)) as WidgetSection
         if (!targetSection || !targetSection.areas.length) {
           console.log('❌ Target section not found or has no areas')
           return
@@ -485,10 +538,10 @@ export function PageBuilder({
         console.log('🎯 Target section found, first area:', firstAreaId)
         
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
-          if (canvasItem.type === 'content-block') {
+          if (isSection(canvasItem)) {
             return {
               ...canvasItem,
-              areas: canvasItem.areas.map((area: any) => {
+              areas: (canvasItem as WidgetSection).areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
                   return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
@@ -514,13 +567,68 @@ export function PageBuilder({
       return
     }
 
-    // Handle existing canvas item reordering (sections and standalone widgets) - EXCLUDE section-widgets!
-    if (!active.data?.current?.type || 
+    // Handle sidebar reordering FIRST - before regular canvas reordering
+    const draggedItem = active.data?.current?.item
+    const isDraggingSidebar = draggedItem && isSection(draggedItem) && draggedItem.type === 'sidebar'
+    
+    if (isDraggingSidebar && (over.data?.current?.type === 'section' || over.data?.current?.type === 'section-area')) {
+      const targetSectionId = over.data?.current?.type === 'section' 
+        ? over.id 
+        : over.data?.current?.sectionId
+        
+      console.log('✅ Sidebar dropped for reordering!', {
+        sidebarId: draggedItem.id,
+        targetSectionId: targetSectionId,
+        dropType: over.data?.current?.type
+      })
+      
+      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+      const targetIndex = canvasItems.findIndex(item => item.id === targetSectionId)
+      const sidebarIndex = canvasItems.findIndex(item => item.id === draggedItem.id)
+      
+      if (targetIndex !== -1 && sidebarIndex !== -1) {
+        // Move sidebar to just before the target section
+        const newCanvasItems = [...canvasItems]
+        const [movedSidebar] = newCanvasItems.splice(sidebarIndex, 1)
+        newCanvasItems.splice(targetIndex, 0, movedSidebar)
+        
+        // Calculate what sections this sidebar will now span
+        const sidebarSpan = movedSidebar.sidebar?.span || 2
+        const spannedSectionIds = []
+        
+        // Find the next 'span' number of sections after the sidebar
+        for (let i = targetIndex + 1; i < Math.min(newCanvasItems.length, targetIndex + 1 + sidebarSpan); i++) {
+          const item = newCanvasItems[i]
+          if (isSection(item) && item.type !== 'sidebar') {
+            spannedSectionIds.push(item.id)
+          }
+        }
+        
+        console.log('🔄 Sidebar repositioned successfully', {
+          sidebarId: movedSidebar.id,
+          newPosition: targetIndex,
+          spannedSections: spannedSectionIds,
+          spanCount: sidebarSpan
+        })
+        
+        replaceCanvasItems(newCanvasItems)
+        
+        // Force a re-render to recalculate heights
+        setTimeout(() => {
+          console.log('📐 Recalculating sidebar heights after repositioning')
+        }, 100)
+        
+        return
+      }
+    }
+
+    // Handle existing canvas item reordering (sections and standalone widgets) - EXCLUDE section-widgets and sidebars!
+    if ((!active.data?.current?.type || 
         active.data?.current?.type === 'canvas-section' ||
         active.data?.current?.type === 'canvas-widget' ||
         active.data?.current?.type === 'standalone-widget' ||
         (active.data?.current?.type !== 'library-widget' && 
-         active.data?.current?.type !== 'section-widget')) {
+         active.data?.current?.type !== 'section-widget')) && !isDraggingSidebar) {
       console.log('🔄 Attempting canvas item reordering for canvas items')
       
       // For standalone-widget type, use the original sortable ID for comparison
@@ -551,6 +659,7 @@ export function PageBuilder({
       }
     }
     
+    
     // Debug: Catch unhandled drag cases
     console.log('⚠️ Unhandled drag case:', {
       activeId: active.id,
@@ -572,6 +681,7 @@ export function PageBuilder({
   }
 
   const handleSectionClick = (sectionId: string, e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
     // Close any widget toolbar and toggle section toolbar
     setActiveWidgetToolbar(null)
@@ -580,6 +690,7 @@ export function PageBuilder({
   }
 
   const handleWidgetClick = (widgetId: string, e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
     
     console.log('🖱️ Widget clicked for properties:', { widgetId })
@@ -632,6 +743,11 @@ export function PageBuilder({
     >
       <div 
         className="h-screen bg-slate-50 flex overflow-hidden"
+        style={{ 
+          scrollBehavior: 'auto',
+          scrollPaddingTop: 0,
+          scrollMarginTop: 0
+        }}
         onClick={(e) => {
           // Only close toolbars if clicking directly on this div, not on children
           if (e.target === e.currentTarget) {
@@ -674,7 +790,13 @@ export function PageBuilder({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+        <div 
+          className="flex-1 flex flex-col h-screen overflow-y-auto"
+          style={{
+            scrollBehavior: 'auto',
+            scrollPaddingTop: 0
+          }}
+        >
           <div className="border-b bg-white px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
@@ -854,7 +976,14 @@ export function PageBuilder({
         <div className="border-b border-slate-200 p-4">
           <h2 className="font-semibold text-slate-800">Properties</h2>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          className="flex-1 overflow-y-auto" 
+          style={{ 
+            scrollBehavior: 'auto',
+            contain: 'layout style',
+            isolation: 'isolate'
+          }}
+        >
           <PropertiesPanel 
             creatingSchemaType={creatingSchemaType}
             selectedSchemaObject={selectedSchemaObject}
@@ -1516,10 +1645,10 @@ function SectionsContent({ showToast, usePageStore }: {
                   e.currentTarget.style.display = 'none';
                 }}
               />
-              <div>
-                <div className="font-medium text-sm text-gray-900">Sidebar</div>
-                <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
-              </div>
+          <div>
+            <div className="font-medium text-sm text-gray-900">sidebar</div>
+            <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
+          </div>
             </button>
           </div>
           <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">

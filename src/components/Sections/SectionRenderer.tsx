@@ -26,6 +26,7 @@ interface SectionRendererProps {
   usePageStore: any // Zustand store hook
   isLiveMode?: boolean // Flag to disable editor overlays for live site
   journalContext?: string // Journal code for branding (advma, embo, etc.)
+  sidebarHeight?: React.CSSProperties // Height styles for sidebar
 }
 
 // Component for draggable widgets within sections
@@ -78,7 +79,15 @@ export function DraggableWidgetInSection({
         <div 
           className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
           style={{ pointerEvents: 'auto' }}
+          tabIndex={-1}
+          onFocus={(e) => {
+            // CRITICAL: Prevent scrollIntoView that causes auto-scroll to top
+            e.preventDefault()
+            e.stopPropagation()
+            e.currentTarget.blur() // Remove focus to prevent scrollIntoView
+          }}
           onClick={(e) => {
+            e.preventDefault()
             e.stopPropagation()
             console.log('🎯 Overlay click detected:', { 
               widgetId: widget.id, 
@@ -134,22 +143,26 @@ export function DraggableWidgetInSection({
             </button>
             <button
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 onWidgetClick(widget.id, e)
               }}
               className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
               title="Properties"
+              type="button"
             >
               <Edit className="w-3 h-3" />
             </button>
             <button
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 const { deleteWidget } = usePageStore.getState()
                 deleteWidget(widget.id)
               }}
               className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
               title="Delete widget"
+              type="button"
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -189,7 +202,8 @@ export function SectionRenderer({
   showToast,
   usePageStore,
   isLiveMode = false,
-  journalContext
+  journalContext,
+  sidebarHeight
 }: SectionRendererProps) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
@@ -432,10 +446,25 @@ export function SectionRenderer({
     }
   }
 
+  // Make section droppable for sidebar repositioning
+  const { isOver: isSectionOver, setNodeRef: setSectionDropRef } = useDroppable({
+    id: section.id,
+    data: {
+      type: 'section',
+      sectionId: section.id
+    }
+  })
+
   return (
     <>
       <div 
-        className={`${getSectionContainerClasses(section)} ${getSectionStylingClasses(section)}`}
+        ref={setSectionDropRef}
+        data-section-id={section.id}
+        className={`${getSectionContainerClasses(section)} ${getSectionStylingClasses(section)} ${
+          activeDropZone === section.id && !isLiveMode
+            ? 'ring-4 ring-purple-300 ring-opacity-50 border-purple-400 bg-purple-50' 
+            : ''
+        }`}
         style={{
           ...getSectionBackgroundStyles(section),
           // Fallback inline styles in case Tailwind classes don't exist
@@ -448,7 +477,15 @@ export function SectionRenderer({
           ...(section.styling?.paddingLeft && { paddingLeft: section.styling.paddingLeft === 'large' ? '32px' : section.styling.paddingLeft === 'medium' ? '24px' : '16px' }),
           ...(section.styling?.paddingRight && { paddingRight: section.styling.paddingRight === 'large' ? '32px' : section.styling.paddingRight === 'medium' ? '24px' : '16px' })
         }}
+        tabIndex={-1}
+        onFocus={(e) => {
+          // CRITICAL: Prevent scrollIntoView that causes auto-scroll to top
+          e.preventDefault()
+          e.stopPropagation()
+          e.currentTarget.blur() // Remove focus to prevent scrollIntoView
+        }}
         onClick={!isLiveMode ? (e) => {
+          e.preventDefault()
           e.stopPropagation()
           const newValue = activeSectionToolbar === section.id ? null : section.id
           // Close any widget toolbar and toggle section toolbar
@@ -474,16 +511,26 @@ export function SectionRenderer({
                 <GripVertical className="w-3 h-3" />
               </div>
               <button
-                onClick={handleDuplicateSection}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleDuplicateSection()
+                }}
                 className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
                 title="Duplicate section"
+                type="button"
               >
                 <Copy className="w-3 h-3" />
               </button>
               <button
-                onClick={() => setShowSaveModal(true)}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setShowSaveModal(true)
+                }}
                 className="p-1 text-gray-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
                 title="Save as custom section"
+                type="button"
               >
                 <BookOpen className="w-3 h-3" />
               </button>
@@ -499,6 +546,7 @@ export function SectionRenderer({
               </button>
               <button
                 onClick={(e) => {
+                  e.preventDefault()
                   e.stopPropagation()
                   const { replaceCanvasItems, canvasItems } = usePageStore.getState()
                   const newCanvasItems = canvasItems.filter((item: any) => item.id !== section.id)
@@ -506,6 +554,7 @@ export function SectionRenderer({
                 }}
                 className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
                 title="Delete section"
+                type="button"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -517,7 +566,10 @@ export function SectionRenderer({
       
       {/* Content wrapper with proper constraints for live site */}
       <div className={`${isLiveMode ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' : ''}`}>
-        <div className={`grid gap-2 ${getLayoutClasses(section.layout)}`}>
+        <div 
+          className={`grid gap-2 ${getLayoutClasses(section.layout)}`}
+          style={sidebarHeight || {}}
+        >
         {section.areas.map((area) => {
           // Make area droppable for library widgets
           const { isOver, setNodeRef: setDropRef } = useDroppable({
@@ -552,15 +604,15 @@ export function SectionRenderer({
                           : 'bg-white' // White background for normal sections
                       } ${
                         activeDropZone === `drop-${area.id}` 
-                          ? 'border-green-400 bg-green-50 ring-2 ring-green-200' 
+                          ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-200' 
                           : isOver 
                           ? 'border-blue-400 bg-blue-50' 
                           : 'border-purple-300 opacity-60'
                       }` 
                     : activeDropZone === `drop-${area.id}` 
-                      ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+                      ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
                       : activeDropZone === `drop-${area.id}` 
-                        ? 'bg-green-50 rounded p-2 ring-2 ring-green-200 border-2 border-green-300' 
+                        ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
                         : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
                           ? 'rounded p-2' // Transparent background to show section gradient/color/image or hero styling
                           : 'bg-white rounded p-2'
@@ -586,7 +638,7 @@ export function SectionRenderer({
             
             {/* Active Drop Zone Indicator for Populated Areas */}
             {area.widgets.length > 0 && activeDropZone === `drop-${area.id}` && (
-              <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10 shadow-lg">
+              <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10 shadow-lg">
                 ACTIVE DROP ZONE
               </div>
             )}

@@ -1976,7 +1976,11 @@ const usePageStore = create<PageState>((set, get) => ({
   addSection: (section) => set((s) => ({ canvasItems: [...s.canvasItems, section] })),
   moveItem: (fromIndex, toIndex) => set((s) => ({ canvasItems: arrayMove(s.canvasItems, fromIndex, toIndex) })),
   replaceCanvasItems: (items) => set({ canvasItems: items }),
-  selectWidget: (id) => set({ selectedWidget: id }),
+  selectWidget: (id) => {
+    // Simple approach: just update state without scroll intervention
+    // The preventDefault() in click handlers should be enough
+    set({ selectedWidget: id })
+  },
   
   // Route-specific canvas management
   getCanvasItemsForRoute: (route) => {

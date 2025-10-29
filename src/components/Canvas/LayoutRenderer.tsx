@@ -118,6 +118,64 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
     group: { type: 'single' | 'sidebar-group', items: CanvasItem[], sidebar?: WidgetSection, sidebarPosition?: 'left' | 'right' }, 
     index: number 
   }) => {
+    // State for measured sidebar height
+    const [measuredHeight, setMeasuredHeight] = React.useState<React.CSSProperties>({})
+    
+    // Measure actual DOM height for sidebar groups
+    React.useEffect(() => {
+      if (group.type !== 'sidebar-group' || !group.sidebar) return
+      
+      const measureHeight = () => {
+        const span = group.sidebar?.sidebar?.span || 2
+        const actualSpannedSections = Math.min(group.items.length, span)
+        
+        let totalActualHeight = 0
+        
+        // Measure the actual rendered height of each spanned section
+        for (let i = 0; i < actualSpannedSections && i < group.items.length; i++) {
+          const item = group.items[i]
+          if (isSection(item)) {
+            // Find the DOM element for this section
+            const sectionElement = document.querySelector(`[data-section-id="${item.id}"]`)
+            if (sectionElement) {
+              const rect = sectionElement.getBoundingClientRect()
+              totalActualHeight += rect.height
+              console.log(`📏 Section ${item.id}: actual height = ${rect.height}px`)
+            } else {
+              // Fallback: use minimal estimate if DOM element not found
+              totalActualHeight += 300
+              console.log(`⚠️ Section ${item.id}: DOM element not found, using 300px fallback`)
+            }
+          } else {
+            // For individual widgets, use small fallback
+            totalActualHeight += 100
+          }
+        }
+        
+        // Only set height if we actually measured something
+        if (totalActualHeight > 0) {
+          console.log('📐 Measuring sidebar height (ACTUAL DOM):', {
+            itemsLength: group.items.length,
+            span: span,
+            actualSpanned: actualSpannedSections,
+            totalActualHeight: totalActualHeight,
+            appliedStyle: `minHeight: ${totalActualHeight}px`
+          })
+          
+          setMeasuredHeight({ 
+            minHeight: `${totalActualHeight}px`, 
+            height: '100%'
+          })
+        } else {
+          console.log('📐 No measurable height found - using natural height')
+          setMeasuredHeight({}) // Natural height - no forced dimensions
+        }
+      }
+      
+      // Measure after a short delay to ensure DOM is fully rendered
+      const timer = setTimeout(measureHeight, 100)
+      return () => clearTimeout(timer)
+    }, [group.items, group.sidebar?.sidebar?.span, group.type]) // Recalculate when items or span changes
     if (group.type === 'single') {
       // Render single item normally
       const item = group.items[0]
@@ -153,14 +211,27 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         }
       } else {
         // Editor mode: use SortableItem with Add Section buttons
+        // Let sidebars have natural height when not in a layout group
+        const isSingleSidebar = isSection(item) && item.type === 'sidebar'
+        const singleSidebarStyle = {} // No forced height - let sidebar be natural
+        
         return (
-          <div key={item.id} className="relative group">
+          <div 
+            key={item.id} 
+            className="relative group" 
+            style={singleSidebarStyle}
+          >
             {/* Add Section Button Above */}
             {item.id !== 'header-section' && handleAddSection && (
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <button
-                  onClick={() => handleAddSection(item.id, 'above')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleAddSection(item.id, 'above')
+                  }}
                   className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
+                  type="button"
                 >
                   Add Section
                 </button>
@@ -183,12 +254,17 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
               journalContext={journalContext}
             />
             
-            {/* Add Section Button Below - Show on last item */}
-            {handleAddSection && item.id === canvasItems[canvasItems.length - 1]?.id && (
+            {/* Add Section Button Below - Show on all sections */}
+            {handleAddSection && (
               <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <button
-                  onClick={() => handleAddSection(item.id, 'below')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleAddSection(item.id, 'below')
+                  }}
                   className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
+                  type="button"
                 >
                   Add Section
                 </button>
@@ -204,13 +280,31 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
     const sidebarWidth = sidebar?.sidebar?.width || '25%'
     const isSticky = sidebar?.sidebar?.sticky || false
     const mobileBehavior = sidebar?.sidebar?.mobileBehavior || 'below'
+    const sidebarGap = sidebar?.sidebar?.gap || 'medium'
     
-    // Simplified flexbox approach for better reliability
+    // Convert gap setting to Tailwind classes
+    const getGapClass = () => {
+      switch (sidebarGap) {
+        case 'none': return ''
+        case 'small': return 'gap-2 md:gap-2'
+        case 'medium': return 'gap-4 md:gap-4'
+        case 'large': return 'gap-8 md:gap-8'
+        default: return 'gap-4 md:gap-4'
+      }
+    }
+    
+    // Simple flexbox approach - let height be controlled by content
     const getContainerClasses = () => {
-      let classes = 'flex flex-col gap-8'
+      let classes = 'flex flex-col'
       
-      // Desktop: horizontal layout with full height stretching
-      classes += ' md:flex-row md:items-stretch'
+      // Add gap classes
+      const gapClass = getGapClass()
+      if (gapClass) {
+        classes += ` ${gapClass}`
+      }
+      
+      // Desktop: horizontal layout
+      classes += ' md:flex-row'
       
       if (mobileBehavior === 'hidden') {
         classes += ' md:flex' // Only show on desktop
@@ -220,43 +314,36 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
     }
     
     const getSidebarClasses = () => {
-      let classes = 'flex-shrink-0'
+      let classes = ''
       
       // Width handling with standard Tailwind classes
       switch (sidebarWidth) {
         case '25%':
-          classes += ' md:w-1/4'
+          classes += ' w-full md:w-1/4'
           break
         case '33%':
-          classes += ' md:w-1/3'
+          classes += ' w-full md:w-1/3'
           break
         case '300px':
-          classes += ' md:w-[300px]'
+          classes += ' w-full md:w-[300px]'
           break
         case '350px':
-          classes += ' md:w-[350px]'
+          classes += ' w-full md:w-[350px]'
           break
         default:
-          classes += ' md:w-1/4' // fallback
-      }
-      
-      // Order handling
-      if (sidebarPosition === 'left') {
-        classes += ' md:order-1'
-      } else {
-        classes += ' md:order-2'
+          classes += ' w-full md:w-1/4' // fallback
       }
       
       // Mobile behavior
       switch (mobileBehavior) {
         case 'hidden':
-          classes += ' hidden md:block'
+          classes += ' md:block hidden'
           break
         case 'below':
-          classes += ' order-2'
+          // Grid handles order automatically
           break
         default:
-          classes += ' order-2'
+          break
       }
       
       // Sticky positioning (desktop only)
@@ -270,17 +357,19 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
     const getMainContentClasses = () => {
       let classes = 'flex-1'
       
-      // Order handling
-      if (sidebarPosition === 'left') {
-        classes += ' md:order-2'
-      } else {
-        classes += ' md:order-1'
+      return classes
+    }
+    
+    // Use measured height from useEffect
+    const getSidebarHeight = () => {
+      // If no measured height available yet, let it be natural
+      if (Object.keys(measuredHeight).length === 0) {
+        console.log('📐 Using natural sidebar height (not measured yet)')
+        return {}
       }
       
-      // Mobile behavior
-      classes += ' order-1'
-      
-      return classes
+      console.log('📐 Using measured sidebar height:', measuredHeight)
+      return measuredHeight
     }
     
     return (
@@ -320,9 +409,26 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                   )
                 }
               } else {
-                // Editor mode: use SortableItem
+                // Editor mode: use SortableItem with Add Section buttons
                 return (
                   <div key={item.id} className="relative group">
+                    {/* Add Section Button Above */}
+                    {item.id !== 'header-section' && handleAddSection && (
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleAddSection(item.id, 'above')
+                          }}
+                          className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
+                          type="button"
+                        >
+                          Add Section
+                        </button>
+                      </div>
+                    )}
+                    
                     <SortableItem 
                       item={item} 
                       isSelected={selectedWidget === item.id}
@@ -338,6 +444,23 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                       InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                       journalContext={journalContext}
                     />
+                    
+                    {/* Add Section Button Below */}
+                    {handleAddSection && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleAddSection(item.id, 'below')
+                          }}
+                          className="px-3 py-1 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors"
+                          type="button"
+                        >
+                          Add Section
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               }
@@ -361,6 +484,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 usePageStore={usePageStore}
                 isLiveMode={isLiveMode}
                 journalContext={journalContext}
+                sidebarHeight={getSidebarHeight()}
               />
             ) : (
               <SortableItem 
@@ -377,6 +501,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 usePageStore={usePageStore}
                 InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                 journalContext={journalContext}
+                sidebarHeight={getSidebarHeight()}
               />
             )}
           </div>

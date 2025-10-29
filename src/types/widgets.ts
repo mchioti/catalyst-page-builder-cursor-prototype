@@ -209,14 +209,15 @@ export type WidgetSection = {
     centerContent?: boolean
   }
   
-  // Sidebar-specific properties (only when type === 'sidebar')
-  sidebar?: {
-    position: 'left' | 'right'
-    span: number // How many subsequent sections to span
-    width: string // '300px' | '25%' | '33%'
-    sticky: boolean // Stick to viewport or scroll with content
-    mobileBehavior: 'below' | 'hidden' | 'drawer' // Mobile display behavior
-  }
+      // Sidebar-specific properties (only when type === 'sidebar')
+      sidebar?: {
+        position: 'left' | 'right'
+        span: number // How many subsequent sections to span
+        width: string // '300px' | '25%' | '33%'
+        sticky: boolean // Stick to viewport or scroll with content
+        mobileBehavior: 'below' | 'hidden' | 'drawer' // Mobile display behavior
+        gap: 'none' | 'small' | 'medium' | 'large' // Gap between sidebar and sections
+      }
 }
 
 // Canvas item can be either an individual widget or a section

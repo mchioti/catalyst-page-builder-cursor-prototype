@@ -518,7 +518,7 @@ export const createJournalBannerPrefab = (): CanvasItem => {
 export const createSidebarPrefab = (): CanvasItem => {
   const sidebarSection: WidgetSection = {
     id: nanoid(),
-    name: 'Sidebar',
+    name: 'sidebar',
     type: 'sidebar',
     layout: 'one-column',
     areas: [
@@ -529,14 +529,15 @@ export const createSidebarPrefab = (): CanvasItem => {
       }
     ],
     
-    // Default sidebar configuration
-    sidebar: {
-      position: 'right',
-      span: 2, // Span 2 sections by default
-      width: '25%', // 25% of page width
-      sticky: false, // Scroll with content by default
-      mobileBehavior: 'below' // Show below sections on mobile
-    },
+        // Default sidebar configuration
+        sidebar: {
+          position: 'right',
+          span: 2, // Span 2 sections by default
+          width: '25%', // 25% of page width
+          sticky: false, // Scroll with content by default
+          mobileBehavior: 'below', // Show below sections on mobile
+          gap: 'medium' // Medium gap between sidebar and sections
+        },
     
     // Default styling
     styling: {

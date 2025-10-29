@@ -15,11 +15,9 @@ const getJournalCode = (route: string): string => {
 
 // Dynamic Homepage that uses canvas content
 function MockHomepage({ 
-  onEdit, 
   canvasItems, 
   schemaObjects 
 }: { 
-  onEdit: (context?: EditingContext) => void
   canvasItems: CanvasItem[]
   schemaObjects: any[]
 }) {
@@ -41,7 +39,6 @@ function MockHomepage({
 
 function MockJournalTOC({ 
   journalCode, 
-  onEdit, 
   setMockLiveSiteRoute,
   canvasItems,
   schemaObjects,
@@ -49,7 +46,6 @@ function MockJournalTOC({
   currentRoute
 }: { 
   journalCode: string; 
-  onEdit: (context?: EditingContext) => void;
   setMockLiveSiteRoute?: (route: MockLiveSiteRoute) => void;
   canvasItems?: CanvasItem[];
   schemaObjects?: any[];
@@ -390,7 +386,7 @@ function MockJournalTOC({
   )
 }
 
-function MockArticlePage({ onEdit }: { onEdit: (context?: EditingContext) => void }) {
+function MockArticlePage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto py-12 px-6">
@@ -406,9 +402,8 @@ function MockArticlePage({ onEdit }: { onEdit: (context?: EditingContext) => voi
   )
 }
 
-function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: { 
+function MockJournalHomepage({ journalCode, setMockLiveSiteRoute }: { 
   journalCode: string; 
-  onEdit: (context?: EditingContext) => void;
   setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void;
 }) {
   const journalInfo = {
@@ -674,7 +669,7 @@ function MockJournalHomepage({ journalCode, onEdit, setMockLiveSiteRoute }: {
   )
 }
 
-function MockAboutPage({ onEdit }: { onEdit: (context?: EditingContext) => void }) {
+function MockAboutPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto py-12 px-6">
@@ -690,7 +685,7 @@ function MockAboutPage({ onEdit }: { onEdit: (context?: EditingContext) => void 
   )
 }
 
-function MockSearchPage({ onEdit }: { onEdit: (context?: EditingContext) => void }) {
+function MockSearchPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto py-12 px-6">
@@ -853,15 +848,10 @@ export function MockLiveSite({
     decision: canvasSource
   })
   
-  const handleEditPage = (context: EditingContext = 'page') => {
-    setEditingContext(context)
-    setCurrentView('page-builder')
-  }
-
   // Handle conflict resolution dialog actions
   const handleConflictResolution = (action: 'override' | 'skip' | 'cancel') => {
     const { addNotification, setTemplateEditingContext, replaceCanvasItems, setGlobalTemplateCanvas } = usePageStore.getState()
-    const { affectedJournals, pendingTemplate, scope } = conflictDialog
+    const { affectedJournals, pendingTemplate } = conflictDialog
     
     if (action === 'cancel') {
       // Close dialog and don't proceed with template editing
@@ -888,7 +878,7 @@ export function MockLiveSite({
       
       // Set normal global context (applies everywhere)
       const globalContext = {
-        scope: scope as const,
+        scope: 'global' as const,
         templateId: 'toc-global',
         affectedIssues: ['all-journals', 'all-issues']
       }
@@ -908,7 +898,7 @@ export function MockLiveSite({
       
       // Set selective global context
       const globalContext = {
-        scope: scope as const,
+        scope: 'global' as const,
         templateId: 'toc-global',
         affectedIssues: ['all-journals', 'all-issues'],
         skipRoutes: affectedJournals.map(j => j.route), // Track which routes to skip
@@ -964,7 +954,7 @@ export function MockLiveSite({
       context: contextMap[scope]
     })
     
-    const { replaceCanvasItems, addNotification, setTemplateEditingContext, setCanvasItemsForRoute, getCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas } = usePageStore.getState()
+    const { replaceCanvasItems, addNotification, setTemplateEditingContext, getCanvasItemsForRoute } = usePageStore.getState()
     const journalName = journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal'
     
     // Handle different editing scopes
@@ -1110,17 +1100,20 @@ export function MockLiveSite({
           
           // Check if there are meaningful differences (not just ID differences)
           const hasActualChanges = routeCanvas.length !== baseTemplate.length ||
-            routeCanvas.some((item, index) => {
+            routeCanvas.some((item: CanvasItem, index: number) => {
               const baseItem = baseTemplate[index]
               if (!baseItem) return true
               
               // Compare meaningful properties (ignore IDs)
-              return item.name !== baseItem.name ||
+              const itemName = 'name' in item ? item.name : undefined
+              const baseItemName = 'name' in baseItem ? baseItem.name : undefined
+              return itemName !== baseItemName ||
                      item.type !== baseItem.type ||
-                     item.layout !== baseItem.layout ||
-                     JSON.stringify(item.background) !== JSON.stringify(baseItem.background) ||
-                     JSON.stringify(item.styling) !== JSON.stringify(baseItem.styling) ||
-                     (item.areas && baseItem.areas && item.areas.length !== baseItem.areas.length)
+                     ('layout' in item ? item.layout : undefined) !== ('layout' in baseItem ? baseItem.layout : undefined) ||
+                     JSON.stringify('background' in item ? item.background : undefined) !== JSON.stringify('background' in baseItem ? baseItem.background : undefined) ||
+                     JSON.stringify('styling' in item ? item.styling : undefined) !== JSON.stringify('styling' in baseItem ? baseItem.styling : undefined) ||
+                     (('areas' in item ? item.areas : undefined) && ('areas' in baseItem ? baseItem.areas : undefined) && 
+                      (item as any).areas.length !== (baseItem as any).areas.length)
             })
           
           console.log(`🔍 Checking individual route ${route}:`, {
@@ -1143,17 +1136,20 @@ export function MockLiveSite({
           
           // Check if journal template differs from base template
           const hasJournalChanges = journalTemplate.length !== baseTemplate.length ||
-            journalTemplate.some((item, index) => {
+            journalTemplate.some((item: CanvasItem, index: number) => {
               const baseItem = baseTemplate[index]
               if (!baseItem) return true
               
               // Compare meaningful properties (ignore IDs)
-              return item.name !== baseItem.name ||
+              const itemName = 'name' in item ? item.name : undefined
+              const baseItemName = 'name' in baseItem ? baseItem.name : undefined
+              return itemName !== baseItemName ||
                      item.type !== baseItem.type ||
-                     item.layout !== baseItem.layout ||
-                     JSON.stringify(item.background) !== JSON.stringify(baseItem.background) ||
-                     JSON.stringify(item.styling) !== JSON.stringify(baseItem.styling) ||
-                     (item.areas && baseItem.areas && item.areas.length !== baseItem.areas.length)
+                     ('layout' in item ? item.layout : undefined) !== ('layout' in baseItem ? baseItem.layout : undefined) ||
+                     JSON.stringify('background' in item ? item.background : undefined) !== JSON.stringify('background' in baseItem ? baseItem.background : undefined) ||
+                     JSON.stringify('styling' in item ? item.styling : undefined) !== JSON.stringify('styling' in baseItem ? baseItem.styling : undefined) ||
+                     (('areas' in item ? item.areas : undefined) && ('areas' in baseItem ? baseItem.areas : undefined) && 
+                      (item as any).areas.length !== (baseItem as any).areas.length)
             })
           
           console.log(`🔍 Checking journal template ${code}:`, {
@@ -1168,10 +1164,9 @@ export function MockLiveSite({
         }
       })
       
-      // Combine both types of customizations
-      const allAffectedRoutes = [...routesWithActualCustomizations]
+      // Combine both types of customizations  
       const allAffectedJournals = [
-        ...routesWithActualCustomizations.map(route => route.match(/\/toc\/([^\/]+)/)?.[1]).filter(Boolean),
+        ...routesWithActualCustomizations.map(route => route.match(/\/toc\/([^\/]+)/)?.[1]).filter((code): code is string => Boolean(code)),
         ...journalsWithTemplateCustomizations
       ]
       
@@ -1188,7 +1183,7 @@ export function MockLiveSite({
       
       if (uniqueAffectedJournals.length > 0) {
         // Show conflict resolution dialog
-        const affectedJournals = uniqueAffectedJournals.map(journalCode => {
+        const affectedJournals = uniqueAffectedJournals.map((journalCode: string) => {
           return {
             journalCode: journalCode,
             journalName: journalCode === 'advma' ? 'Advanced Materials' : 'EMBO Journal',
@@ -1251,27 +1246,27 @@ export function MockLiveSite({
   const renderPage = () => {
     switch (mockLiveSiteRoute) {
       case '/':
-        return <MockHomepage onEdit={handleEditPage} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} />
+        return <MockHomepage canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} />
       case '/toc/advma/current':
-        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/toc/embo/current':
-        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/toc/advma/vol-35-issue-47':
-        return <MockJournalTOC journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/toc/embo/vol-35-issue-47':
-        return <MockJournalTOC journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
       case '/article/advma/67/12/p45':
-        return <MockArticlePage onEdit={handleEditPage} />
+        return <MockArticlePage />
       case '/journal/advma':
-        return <MockJournalHomepage journalCode="advma" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} />
+        return <MockJournalHomepage journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} />
       case '/journal/embo':
-        return <MockJournalHomepage journalCode="embo" onEdit={handleEditPage} setMockLiveSiteRoute={setMockLiveSiteRoute} />
+        return <MockJournalHomepage journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} />
       case '/about':
-        return <MockAboutPage onEdit={handleEditPage} />
+        return <MockAboutPage />
       case '/search':
-        return <MockSearchPage onEdit={handleEditPage} />
+        return <MockSearchPage />
       default:
-        return <MockHomepage onEdit={handleEditPage} canvasItems={canvasItems} schemaObjects={schemaObjects} />
+        return <MockHomepage canvasItems={canvasItems} schemaObjects={schemaObjects} />
     }
   }
 
