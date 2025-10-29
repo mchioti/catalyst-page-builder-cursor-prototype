@@ -4,6 +4,7 @@ import { isSection } from '../../types/widgets'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { WidgetRenderer } from '../Widgets/WidgetRenderer'
 import { SortableItem } from './SortableItem'
+import { useBrandingStore } from '../../stores/brandingStore'
 
 // Helper function to group canvas items with sidebars for layout rendering
 export const calculateLayoutGroups = (items: CanvasItem[]) => {
@@ -73,6 +74,7 @@ interface LayoutRendererProps {
   schemaObjects?: any[]
   isLiveMode?: boolean
   journalContext?: string
+  websiteId?: string // Website ID for breakpoints/branding
   onWidgetClick?: (id: string, e: React.MouseEvent) => void
   // Editor-specific props (ignored in live mode)
   dragAttributes?: any
@@ -96,6 +98,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   schemaObjects = [],
   isLiveMode = false,
   journalContext,
+  websiteId,
   onWidgetClick = (id: string, e: React.MouseEvent) => {},
   dragAttributes = {},
   dragListeners = {},
@@ -199,6 +202,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
               usePageStore={usePageStore}
               isLiveMode={isLiveMode}
               journalContext={journalContext}
+              websiteId={websiteId}
             />
           )
         } else {
@@ -281,6 +285,45 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
     const isSticky = sidebar?.sidebar?.sticky || false
     const mobileBehavior = sidebar?.sidebar?.mobileBehavior || 'below'
     const sidebarGap = sidebar?.sidebar?.gap || 'medium'
+    
+    // Get first section's behavior to control entire group layout
+    const firstSection = items.find(item => isSection(item)) as WidgetSection | undefined
+    const groupBehavior = firstSection?.behavior || 'auto'
+    
+    // Get wrapper config for entire sidebar group based on first section's behavior
+    const { getWebsiteBranding } = useBrandingStore()
+    const getGroupWrapperConfig = () => {
+      // Only apply constraints in live mode
+      if (!isLiveMode) return { classes: '', styles: {} }
+      
+      if (groupBehavior === 'full-width') {
+        // Full width: no constraints, no padding - spans edge-to-edge
+        return { 
+          classes: 'w-full',
+          styles: {}
+        }
+      }
+      
+      // Auto behavior: constrain entire sidebar group within breakpoint
+      const websiteBranding = getWebsiteBranding(websiteId || 'wiley-main')
+      const desktopBreakpoint = websiteBranding?.breakpoints?.desktop || '1280px'
+      
+      console.log('🎯 LayoutRenderer - Sidebar group behavior from first section:', {
+        groupBehavior,
+        firstSectionId: firstSection?.id,
+        desktopBreakpoint,
+        websiteId: websiteId || 'wiley-main'
+      })
+      
+      // Use inline styles for max-width to support any custom breakpoint value
+      return {
+        classes: 'mx-auto px-4 sm:px-6 lg:px-8',
+        styles: {
+          maxWidth: desktopBreakpoint,
+          width: '100%'
+        }
+      }
+    }
     
     // Convert gap setting to Tailwind classes
     const getGapClass = () => {
@@ -372,10 +415,17 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
       return measuredHeight
     }
     
+    const groupWrapperConfig = getGroupWrapperConfig()
+    
     return (
       <div key={`sidebar-group-${index}`} className="relative">
-        {/* Sidebar Layout Container */}
-        <div className={getContainerClasses()}>
+        {/* Behavior-based wrapper (controlled by first section's behavior) */}
+        <div 
+          className={groupWrapperConfig.classes}
+          style={groupWrapperConfig.styles}
+        >
+          {/* Sidebar Layout Container */}
+          <div className={getContainerClasses()}>
           {/* Main Content Area */}
           <div className={getMainContentClasses()}>
             {items.map((item: CanvasItem) => {
@@ -398,6 +448,8 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                       usePageStore={usePageStore}
                       isLiveMode={isLiveMode}
                       journalContext={journalContext}
+                      websiteId={websiteId}
+                      isInSidebarGroup={true}
                     />
                   )
                 } else {
@@ -443,6 +495,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                       usePageStore={usePageStore}
                       InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                       journalContext={journalContext}
+                      isInSidebarGroup={true}
                     />
                     
                     {/* Add Section Button Below */}
@@ -484,6 +537,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 usePageStore={usePageStore}
                 isLiveMode={isLiveMode}
                 journalContext={journalContext}
+                websiteId={websiteId}
                 sidebarHeight={getSidebarHeight()}
               />
             ) : (
@@ -505,6 +559,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
               />
             )}
           </div>
+        </div>
         </div>
       </div>
     )

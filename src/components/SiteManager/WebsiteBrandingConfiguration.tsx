@@ -1,7 +1,8 @@
 import React from 'react';
-import { Palette, Image, Brush, Settings } from 'lucide-react';
+import { Palette, Image, Brush, Settings, Monitor } from 'lucide-react';
 import { ThemeEditor } from './ThemeEditor';
 import { WebsiteThemeManager } from '../BrandingSystem';
+import { useBrandingStore } from '../../stores/brandingStore';
 
 interface WebsiteBrandingConfigurationProps {
   websiteId: string;
@@ -15,6 +16,23 @@ export const WebsiteBrandingConfiguration: React.FC<WebsiteBrandingConfiguration
   const { websites, updateWebsite, themes } = usePageStore();
   const website = websites.find((w: any) => w.id === websiteId);
   const currentTheme = website ? themes.find((t: any) => t.id === website.themeId) : null;
+  
+  // Access branding store for breakpoints management
+  const { 
+    initializeWebsiteBranding, 
+    getWebsiteBranding, 
+    updateWebsiteBreakpoints 
+  } = useBrandingStore();
+  
+  // Initialize website branding if it doesn't exist
+  React.useEffect(() => {
+    if (websiteId && !getWebsiteBranding(websiteId)) {
+      initializeWebsiteBranding(websiteId);
+    }
+  }, [websiteId, getWebsiteBranding, initializeWebsiteBranding]);
+  
+  const websiteBranding = getWebsiteBranding(websiteId);
+  const breakpoints = websiteBranding?.breakpoints || { desktop: '1280px', tablet: '768px', mobile: '480px' };
 
   if (!website) {
     return (
@@ -35,6 +53,10 @@ export const WebsiteBrandingConfiguration: React.FC<WebsiteBrandingConfiguration
       updatedAt: new Date()
     };
     updateWebsite(website.id, updatedWebsite);
+  };
+
+  const handleBreakpointUpdate = (breakpoint: 'desktop' | 'tablet' | 'mobile', value: string) => {
+    updateWebsiteBreakpoints(websiteId, { [breakpoint]: value });
   };
 
 
@@ -130,6 +152,80 @@ export const WebsiteBrandingConfiguration: React.FC<WebsiteBrandingConfiguration
             />
           </div>
         )}
+
+        {/* Responsive Breakpoints - within Theme Configuration */}
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <h4 className="text-base font-medium text-gray-900 mb-4 flex items-center gap-2">
+            <Monitor className="w-5 h-5 text-indigo-600" />
+            Responsive Breakpoints
+          </h4>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure the responsive breakpoints for this website. These values control when sections switch between 'auto' (constrained width) and 'full-width' behaviors on different devices.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Desktop Breakpoint */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Desktop Breakpoint
+              </label>
+              <input
+                type="text"
+                value={breakpoints.desktop}
+                onChange={(e) => handleBreakpointUpdate('desktop', e.target.value)}
+                placeholder="1280px"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Maximum container width for 'auto' sections
+              </p>
+            </div>
+            
+            {/* Tablet Breakpoint */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tablet Breakpoint
+              </label>
+              <input
+                type="text"
+                value={breakpoints.tablet}
+                onChange={(e) => handleBreakpointUpdate('tablet', e.target.value)}
+                placeholder="768px"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Screen width for tablet layout
+              </p>
+            </div>
+            
+            {/* Mobile Breakpoint */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mobile Breakpoint
+              </label>
+              <input
+                type="text"
+                value={breakpoints.mobile}
+                onChange={(e) => handleBreakpointUpdate('mobile', e.target.value)}
+                placeholder="480px"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Screen width for mobile layout
+              </p>
+            </div>
+          </div>
+          
+          {/* Usage Information */}
+          <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
+            <h4 className="text-sm font-medium text-indigo-900 mb-2">How This Works</h4>
+            <ul className="text-sm text-indigo-700 space-y-1">
+              <li>• <strong>Auto Behavior:</strong> Content is constrained within the desktop breakpoint width ({breakpoints.desktop})</li>
+              <li>• <strong>Full-width Behavior:</strong> Content spans the entire screen width</li>
+              <li>• <strong>Tablet & Mobile:</strong> Breakpoints are available for future responsive features</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Advanced Content-Specific Branding */}

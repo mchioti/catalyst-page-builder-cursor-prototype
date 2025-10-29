@@ -11,6 +11,7 @@ import {
 
 // Force module refresh after fixing duplicate schema keys
 import WidgetRenderer from '../Widgets/WidgetRenderer'
+import { useBrandingStore } from '../../stores/brandingStore'
 
 interface SectionRendererProps {
   section: WidgetSection
@@ -26,7 +27,9 @@ interface SectionRendererProps {
   usePageStore: any // Zustand store hook
   isLiveMode?: boolean // Flag to disable editor overlays for live site
   journalContext?: string // Journal code for branding (advma, embo, etc.)
+  websiteId?: string // Website ID for breakpoints
   sidebarHeight?: React.CSSProperties // Height styles for sidebar
+  isInSidebarGroup?: boolean // If true, section is part of sidebar group and wrapper behavior is handled by group
 }
 
 // Component for draggable widgets within sections
@@ -203,11 +206,57 @@ export function SectionRenderer({
   usePageStore,
   isLiveMode = false,
   journalContext,
-  sidebarHeight
+  websiteId = 'wiley-main', // Default website ID
+  sidebarHeight,
+  isInSidebarGroup = false
 }: SectionRendererProps) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
+  
+  // Access branding store for breakpoints
+  const { getWebsiteBranding } = useBrandingStore()
+  
+  // Calculate content wrapper config once
+  const contentWrapperConfig = React.useMemo(() => {
+    // Skip wrapper if section is in a sidebar group (group handles the wrapper)
+    if (isInSidebarGroup) return { classes: '', styles: {} }
+    
+    // Only apply constraints in live mode
+    if (!isLiveMode) return { classes: '', styles: {} }
+    
+    const behavior = section.behavior || 'auto'
+    
+    if (behavior === 'full-width') {
+      // Full width: no constraints, no padding - spans edge-to-edge
+      return { 
+        classes: 'w-full',
+        styles: {}
+      }
+    }
+    
+    // Auto behavior: constrain within breakpoint
+    // Use website-specific breakpoint from passed websiteId
+    const websiteBranding = getWebsiteBranding(websiteId)
+    const desktopBreakpoint = websiteBranding?.breakpoints?.desktop || '1280px'
+    
+    console.log('🎯 SectionRenderer - Applying breakpoint:', {
+      sectionId: section.id,
+      behavior,
+      websiteId,
+      desktopBreakpoint,
+      websiteBranding: websiteBranding ? 'found' : 'not found'
+    })
+    
+    // Use inline styles for max-width to support any custom breakpoint value
+    return {
+      classes: 'mx-auto px-4 sm:px-6 lg:px-8',
+      styles: {
+        maxWidth: desktopBreakpoint,
+        width: '100%'
+      }
+    }
+  }, [isLiveMode, isInSidebarGroup, section.behavior, getWebsiteBranding, websiteId])
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
@@ -564,8 +613,11 @@ export function SectionRenderer({
         
         {/* Removed repetitive section info - cleaner UI */}
       
-      {/* Content wrapper with proper constraints for live site */}
-      <div className={`${isLiveMode ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' : ''}`}>
+      {/* Content wrapper with behavior-based constraints */}
+      <div 
+        className={contentWrapperConfig.classes}
+        style={contentWrapperConfig.styles}
+      >
         <div 
           className={`grid gap-2 ${getLayoutClasses(section.layout)}`}
           style={sidebarHeight || {}}

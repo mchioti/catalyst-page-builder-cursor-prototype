@@ -209,6 +209,9 @@ export type WidgetSection = {
     centerContent?: boolean
   }
   
+  // Section behavior configuration
+  behavior?: 'auto' | 'full-width' // Controls content width behavior
+  
       // Sidebar-specific properties (only when type === 'sidebar')
       sidebar?: {
         position: 'left' | 'right'

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { EditingContext, MockLiveSiteRoute, CanvasItem } from '../../types'
 import { LayoutRenderer } from '../Canvas/LayoutRenderer'
 import { TemplateEditingScopeButton } from './TemplateEditingScopeButton'
 import type { EditingScope, IssueType } from './TemplateEditingScopeButton'
 import { ConflictResolutionDialog } from './ConflictResolutionDialog'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
+import { useBrandingStore } from '../../stores/brandingStore'
 import '../../styles/journal-themes.css'
 
 // Utility function to extract journal code from route/context
@@ -16,10 +17,12 @@ const getJournalCode = (route: string): string => {
 // Dynamic Homepage that uses canvas content
 function MockHomepage({ 
   canvasItems, 
-  schemaObjects 
+  schemaObjects,
+  websiteId 
 }: { 
   canvasItems: CanvasItem[]
   schemaObjects: any[]
+  websiteId: string
 }) {
 
   return (
@@ -29,6 +32,7 @@ function MockHomepage({
         canvasItems={canvasItems}
         schemaObjects={schemaObjects}
         isLiveMode={true}
+        websiteId={websiteId}
         // No journalContext for homepage - should use default button styling
         onWidgetClick={() => {}} // No widget clicking on live site
         usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
@@ -43,7 +47,8 @@ function MockJournalTOC({
   canvasItems,
   schemaObjects,
   editingContext,
-  currentRoute
+  currentRoute,
+  websiteId
 }: { 
   journalCode: string; 
   setMockLiveSiteRoute?: (route: MockLiveSiteRoute) => void;
@@ -51,6 +56,7 @@ function MockJournalTOC({
   schemaObjects?: any[];
   editingContext?: EditingContext;
   currentRoute?: MockLiveSiteRoute;
+  websiteId: string;
 }) {
   const journalInfo = {
     advma: {
@@ -100,6 +106,7 @@ function MockJournalTOC({
           schemaObjects={schemaObjects || []}
           isLiveMode={true}
           journalContext={journalCode}
+          websiteId={websiteId}
           onWidgetClick={() => {}} // No widget clicking on live site
           usePageStore={{ getState: () => ({ canvasItems, schemaObjects }) }} // Minimal store for live site
         />
@@ -726,6 +733,28 @@ export function MockLiveSite({
   usePageStore
 }: MockLiveSiteProps) {
   
+  // Get canvas data from store (MUST BE FIRST - needed by other hooks)
+  const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
+  const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas) as CanvasItem[]
+  const getJournalTemplateCanvas = usePageStore((state: any) => state.getJournalTemplateCanvas)
+  const getCanvasItemsForRoute = usePageStore((state: any) => state.getCanvasItemsForRoute)
+  const editingContext = usePageStore((state: any) => state.editingContext)
+  const templateEditingContext = usePageStore((state: any) => state.templateEditingContext)
+  const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
+  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'wiley-main'
+  const journalCode = getJournalCode(mockLiveSiteRoute)
+  
+  // Initialize branding store for breakpoints
+  const { initializeWebsiteBranding, getWebsiteBranding } = useBrandingStore()
+  
+  useEffect(() => {
+    // Ensure current website branding is initialized
+    if (currentWebsiteId && !getWebsiteBranding(currentWebsiteId)) {
+      initializeWebsiteBranding(currentWebsiteId)
+      console.log('🎨 Initialized website branding with breakpoints for:', currentWebsiteId)
+    }
+  }, [currentWebsiteId, initializeWebsiteBranding, getWebsiteBranding])
+  
   // State for conflict resolution dialog
   const [conflictDialog, setConflictDialog] = useState<{
     isOpen: boolean
@@ -738,16 +767,6 @@ export function MockLiveSite({
     scope: 'global',
     pendingTemplate: []
   })
-  
-  // Get canvas data from store
-  const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
-  const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas) as CanvasItem[]
-  const getJournalTemplateCanvas = usePageStore((state: any) => state.getJournalTemplateCanvas)
-  const getCanvasItemsForRoute = usePageStore((state: any) => state.getCanvasItemsForRoute)
-  const editingContext = usePageStore((state: any) => state.editingContext)
-  const templateEditingContext = usePageStore((state: any) => state.templateEditingContext)
-  const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
-  const journalCode = getJournalCode(mockLiveSiteRoute)
   
   // Get route-specific canvas items for TOC routes
   const routeSpecificCanvasItems = mockLiveSiteRoute.includes('/toc/') 
@@ -1246,15 +1265,15 @@ export function MockLiveSite({
   const renderPage = () => {
     switch (mockLiveSiteRoute) {
       case '/':
-        return <MockHomepage canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} />
+        return <MockHomepage canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} websiteId={currentWebsiteId} />
       case '/toc/advma/current':
-        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} websiteId={currentWebsiteId} />
       case '/toc/embo/current':
-        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} websiteId={currentWebsiteId} />
       case '/toc/advma/vol-35-issue-47':
-        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} websiteId={currentWebsiteId} />
       case '/toc/embo/vol-35-issue-47':
-        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} />
+        return <MockJournalTOC journalCode="embo" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} websiteId={currentWebsiteId} />
       case '/article/advma/67/12/p45':
         return <MockArticlePage />
       case '/journal/advma':
@@ -1266,7 +1285,7 @@ export function MockLiveSite({
       case '/search':
         return <MockSearchPage />
       default:
-        return <MockHomepage canvasItems={canvasItems} schemaObjects={schemaObjects} />
+        return <MockHomepage canvasItems={canvasItems} schemaObjects={schemaObjects} websiteId={currentWebsiteId} />
     }
   }
 

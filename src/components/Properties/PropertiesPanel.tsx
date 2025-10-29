@@ -391,6 +391,28 @@ export function PropertiesPanel({
             )}
           </div>
           
+          {/* Section Behavior Configuration */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Content Behavior</h4>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Content Width Behavior</label>
+              <select
+                value={section.behavior || 'auto'}
+                onChange={(e) => updateSection({
+                  behavior: e.target.value as 'auto' | 'full-width'
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="auto">Auto (Constrained)</option>
+                <option value="full-width">Full Width</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Auto: Content is constrained within breakpoint width. Full Width: Content spans entire screen.
+              </p>
+            </div>
+          </div>
+          
           {/* Sidebar-specific properties */}
           {section.type === 'sidebar' && (
             <div className="space-y-3">

@@ -27,6 +27,7 @@ interface SortableItemProps {
   InteractiveWidgetRenderer: any // TODO: Type this properly
   journalContext?: string // Journal code for branding (advma, embo, etc.)
   sidebarHeight?: React.CSSProperties // Height styles for sidebar
+  isInSidebarGroup?: boolean // If true, section is part of sidebar group
 }
 
 export function SortableItem({ 
@@ -43,7 +44,8 @@ export function SortableItem({
   usePageStore,
   InteractiveWidgetRenderer,
   journalContext,
-  sidebarHeight
+  sidebarHeight,
+  isInSidebarGroup = false
 }: SortableItemProps) {
   const {
     attributes,
@@ -109,6 +111,7 @@ export function SortableItem({
             usePageStore={usePageStore}
             journalContext={journalContext}
             sidebarHeight={sidebarHeight}
+            isInSidebarGroup={isInSidebarGroup}
           />
         </div>
       ) : (

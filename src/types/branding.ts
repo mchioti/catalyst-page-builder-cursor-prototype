@@ -8,6 +8,12 @@ export interface BrandColors {
   background: string;   // Background tint (very light)
 }
 
+export interface WebsiteBreakpoints {
+  desktop: string;  // e.g. '1280px'
+  tablet: string;   // e.g. '768px' 
+  mobile: string;   // e.g. '480px'
+}
+
 export interface WebsiteBranding {
   id: 'website';
   name: string;
@@ -59,6 +65,7 @@ export interface WebsiteBrandingSystem {
   journals: JournalBranding[];
   bookSeries: BookSeriesBranding[];
   rules: BrandingRules;
+  breakpoints: WebsiteBreakpoints;
 }
 
 // Global branding system - contains all website branding systems

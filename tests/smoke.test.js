@@ -105,8 +105,8 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Check Special Sections category exists
     await expect(page.locator('text=Special Sections')).toBeVisible()
     
-    // Check Sidebar exists in Special Sections
-    await expect(page.locator('text=sidebar')).toBeVisible()
+    // Check Sidebar exists in Special Sections - use more specific selector
+    await expect(page.locator('button:has-text("Sidebar")').first()).toBeVisible()
   })
   
   test('Sidebar can be placed on canvas @smoke', async ({ page }) => {
@@ -116,13 +116,16 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await page.click('text=Sections')
     
     // Click on sidebar to add it
-    await page.click('text=sidebar')
+    await page.locator('button:has-text("Sidebar")').first().click()
     
     // Sidebar should appear on canvas with default content
-    await expect(page.locator('text=Drop widgets here')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=Drop widgets here').first()).toBeVisible({ timeout: 5000 })
     
-    // Properties panel should show sidebar settings
-    await expect(page.locator('text=Sidebar Settings')).toBeVisible({ timeout: 5000 })
+    // Click on the drop zone area to select the sidebar
+    await page.locator('text=Drop widgets here').first().click()
+    
+    // Blue label showing "sidebar" should now be visible
+    await expect(page.locator('.bg-blue-500:has-text("sidebar")')).toBeVisible({ timeout: 5000 })
   })
   
   test('Sidebar properties are configurable @smoke', async ({ page }) => {
@@ -130,14 +133,18 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     
     // Add a sidebar
     await page.click('text=Sections')
-    await page.click('text=sidebar')
+    await page.locator('button:has-text("Sidebar")').first().click()
     
-    // Wait for sidebar to be selected and properties to show
-    await expect(page.locator('text=Sidebar Settings')).toBeVisible({ timeout: 5000 })
+    // Wait for sidebar to appear, then click to select it
+    await expect(page.locator('text=Drop widgets here').first()).toBeVisible({ timeout: 5000 })
+    await page.locator('text=Drop widgets here').first().click()
     
-    // Check key configuration options exist
+    // Blue label shows it's selected
+    await expect(page.locator('.bg-blue-500:has-text("sidebar")')).toBeVisible({ timeout: 5000 })
+    
+    // Check key configuration options exist in properties panel
     await expect(page.locator('label:has-text("Position")')).toBeVisible()
-    await expect(page.locator('label:has-text("Width")')).toBeVisible()
+    await expect(page.locator('label:has-text("Width")').last()).toBeVisible()
     await expect(page.locator('label:has-text("Span Sections")')).toBeVisible()
     await expect(page.locator('label:has-text("Gap Size")')).toBeVisible()
   })

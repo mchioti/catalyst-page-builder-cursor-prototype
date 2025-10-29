@@ -10,7 +10,8 @@ import type {
   BrandColors,
   ContentBranding,
   ResolvedBranding,
-  ThemeManagerState
+  ThemeManagerState,
+  WebsiteBreakpoints
 } from '../types/branding';
 
 // Default color palettes
@@ -56,6 +57,12 @@ const DEFAULT_WEBSITE_BRANDING: WebsiteBranding = {
     text: '#312E81',         // Dark indigo text
     background: '#F0F4FF'    // Indigo-50
   }
+};
+
+const DEFAULT_BREAKPOINTS: WebsiteBreakpoints = {
+  desktop: '1280px',
+  tablet: '768px',
+  mobile: '480px'
 };
 
 const DEFAULT_SUBJECTS: SubjectBranding[] = [
@@ -108,6 +115,7 @@ interface BrandingStore {
   
   // Website-scoped Actions
   updateWebsiteBranding: (websiteId: string, colors: Partial<BrandColors>) => void;
+  updateWebsiteBreakpoints: (websiteId: string, breakpoints: Partial<WebsiteBreakpoints>) => void;
   addSubject: (websiteId: string, subject: Omit<SubjectBranding, 'id'>) => void;
   updateSubject: (websiteId: string, id: string, updates: Partial<SubjectBranding>) => void;
   deleteSubject: (websiteId: string, id: string) => void;
@@ -175,7 +183,8 @@ const createDefaultWebsiteBranding = (websiteId: string): WebsiteBrandingSystem 
     journalsOverrideBookSeries: true,
     allowMultipleSubjects: false,
     fallbackToWebsite: true
-  }
+  },
+  breakpoints: DEFAULT_BREAKPOINTS
 });
 
 export const useBrandingStore = create<BrandingStore>((set, get) => ({
@@ -225,6 +234,25 @@ export const useBrandingStore = create<BrandingStore>((set, get) => ({
                 ...websiteBranding.website,
                 colors: { ...websiteBranding.website.colors, ...colors }
               }
+            }
+          }
+        }
+      };
+    }),
+
+  updateWebsiteBreakpoints: (websiteId, breakpoints) =>
+    set((state) => {
+      const websiteBranding = state.branding.websites[websiteId];
+      if (!websiteBranding) return state;
+      
+      return {
+        branding: {
+          ...state.branding,
+          websites: {
+            ...state.branding.websites,
+            [websiteId]: {
+              ...websiteBranding,
+              breakpoints: { ...websiteBranding.breakpoints, ...breakpoints }
             }
           }
         }
