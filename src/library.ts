@@ -3,7 +3,7 @@ export type LibraryItemStatus = 'supported' | 'planned' | 'deprecated' | 'advanc
 export type LibraryItem = {
   id: string
   label: string
-  type: 'text' | 'image' | 'navbar' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'code-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
+  type: 'text' | 'image' | 'navbar' | 'menu' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'code-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
   description?: string
   skin?: 'modern' | 'classic' | 'minimal' | 'accent'
   status: LibraryItemStatus
@@ -44,7 +44,7 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
         id: 'core-navigation',
         name: 'Navigation',
         items: [
-          { id: 'navbar', label: 'Menu', type: 'navbar', description: 'Primary/secondary navigation', skin: 'minimal', status: 'supported', legacy: { axpCategory: 'Navigation widgets', internalName: 'menu' } },
+          { id: 'menu', label: 'Menu', type: 'menu', description: 'Context-aware navigation menu', skin: 'minimal', status: 'supported', legacy: { axpCategory: 'Navigation widgets', internalName: 'menu' } },
           { id: 'breadcrumbs', label: 'Breadcrumbs', type: 'link', description: 'Alternative navigation aid', status: 'planned' },
           { id: 'social-links', label: 'Social Links', type: 'link', description: 'Icons linking to social profiles', status: 'planned' },
         ],

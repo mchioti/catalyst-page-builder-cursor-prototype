@@ -1,5 +1,5 @@
 import React from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 
@@ -207,23 +207,32 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
       )}
     </>
   );
-
-  if (widget.href) {
-    return (
-      <a 
-        href={widget.href} 
-        className={classes}
-        target={widget.target || '_self'}
-      >
-        {renderContent()}
-      </a>
-    )
-  }
   
-  return (
+  // Get alignment classes
+  const alignmentClasses = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  }[widget.align || 'left'];
+
+  const buttonElement = widget.href ? (
+    <a 
+      href={widget.href} 
+      className={classes}
+      target={widget.target || '_self'}
+    >
+      {renderContent()}
+    </a>
+  ) : (
     <span className={classes}>
       {renderContent()}
     </span>
+  );
+  
+  return (
+    <div className={alignmentClasses}>
+      {buttonElement}
+    </div>
   )
 }
 
@@ -390,6 +399,184 @@ const NavbarWidgetRenderer: React.FC<{ widget: NavbarWidget }> = ({ widget }) =>
     </nav>
   )
 }
+
+// Menu Widget Component - Context-aware navigation menu
+const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string }> = ({ widget, journalContext }) => {
+  
+  // Replace template variables in text
+  const replaceTemplateVars = (text: string, context?: any): string => {
+    if (!text) return '';
+    
+    let result = text;
+    
+    // Journal context variables
+    if (context?.journal) {
+      result = result.replace(/\{\{journal\.name\}\}/g, context.journal.name || 'Journal');
+      result = result.replace(/\{\{journal\.code\}\}/g, context.journal.code || '');
+    }
+    
+    // Generic context variables
+    if (context?.pbContext) {
+      result = result.replace(/\{\{pbContext\.csubtype\}\}/g, context.pbContext.csubtype || '');
+    }
+    
+    return result;
+  };
+  
+  // Check if menu item should be displayed based on condition
+  const shouldDisplayItem = (item: MenuItem, context?: any): boolean => {
+    if (!item.displayCondition || item.displayCondition === 'always') {
+      return true;
+    }
+    
+    switch (item.displayCondition) {
+      case 'if-issue-exists':
+        return context?.hasIssues === true;
+      case 'if-has-archive':
+        return context?.hasArchive === true;
+      case 'if-journal-context':
+        return !!context?.journal;
+      default:
+        return true;
+    }
+  };
+  
+  // Get context data (placeholder - in real app this would come from page context)
+  const getContext = () => {
+    // For now, use journalContext if available
+    if (journalContext) {
+      return {
+        journal: {
+          name: journalContext === 'advma' ? 'Advanced Materials' : journalContext === 'embo' ? 'EMBO Journal' : 'Journal',
+          code: journalContext
+        },
+        hasIssues: true,
+        hasArchive: true
+      };
+    }
+    return null;
+  };
+  
+  const context = getContext();
+  
+  // Filter and process items
+  const visibleItems = widget.items
+    .filter(item => shouldDisplayItem(item, context))
+    .sort((a, b) => a.order - b.order)
+    .map(item => ({
+      ...item,
+      label: replaceTemplateVars(item.label, context),
+      url: replaceTemplateVars(item.url, context)
+    }));
+  
+  // Get alignment classes
+  const getAlignmentClasses = () => {
+    const align = widget.align || 'left';
+    switch (align) {
+      case 'center': return 'justify-center';
+      case 'right': return 'justify-end';
+      default: return 'justify-start';
+    }
+  };
+  
+  const getVerticalAlignmentClasses = () => {
+    const align = widget.align || 'left';
+    switch (align) {
+      case 'center': return 'items-center';
+      case 'right': return 'items-end';
+      default: return 'items-start';
+    }
+  };
+  
+  // Show placeholder if no items
+  if (visibleItems.length === 0) {
+    return (
+      <div className="px-4 py-2 bg-gray-50 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 text-center">
+        Empty menu - click to configure menu items
+      </div>
+    );
+  }
+  
+  // Render based on style
+  switch (widget.style) {
+    case 'horizontal':
+      return (
+        <nav className={`flex items-center gap-6 flex-wrap ${getAlignmentClasses()}`}>
+          {visibleItems.map((item) => (
+            <a 
+              key={item.id}
+              href={item.url}
+              target={item.target}
+              className="text-current hover:opacity-75 transition-opacity whitespace-nowrap"
+            >
+              {item.label}
+              {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
+            </a>
+          ))}
+        </nav>
+      );
+      
+    case 'vertical':
+      return (
+        <nav className={`flex flex-col gap-2 ${getVerticalAlignmentClasses()}`}>
+          {visibleItems.map((item) => (
+            <a 
+              key={item.id}
+              href={item.url}
+              target={item.target}
+              className="block px-4 py-2 text-current hover:bg-black/5 transition-colors rounded"
+            >
+              {item.label}
+              {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
+            </a>
+          ))}
+        </nav>
+      );
+      
+    case 'dropdown':
+      return (
+        <div className={`relative group flex ${getAlignmentClasses()}`}>
+          <button className="px-4 py-2 bg-current/10 hover:bg-current/20 rounded transition-colors">
+            ☰ Menu
+          </button>
+          <div className="absolute left-0 top-full mt-2 bg-white border border-gray-200 rounded shadow-lg hidden group-hover:block min-w-[200px] z-50">
+            {visibleItems.map((item) => (
+              <a 
+                key={item.id}
+                href={item.url}
+                target={item.target}
+                className="block px-4 py-2 text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                {item.label}
+                {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+      
+    case 'footer-links':
+      return (
+        <nav className={`flex items-center gap-4 flex-wrap text-sm ${getAlignmentClasses()}`}>
+          {visibleItems.map((item) => (
+            <a 
+              key={item.id}
+              href={item.url}
+              target={item.target}
+              className="text-current hover:underline"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      );
+      
+    default:
+      return (
+        <div className="text-gray-500">Unsupported menu style: {widget.style}</div>
+      );
+  }
+};
 
 // HTML Widget Component
 const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
@@ -769,6 +956,13 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     publication = widget.publication
   }
 
+  // Get alignment class
+  const alignmentClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  }[widget.align || 'left']
+  
   // For journal layout, show issue/volume info with ISSN and editor
   if (widget.layout === 'hero' && publication) {
     const pub = publication
@@ -782,7 +976,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     const textColor = widget.textColor || '#ffffff'
     
     return (
-      <div className="max-w-6xl mx-auto" style={{ color: textColor }}>
+      <div className={`max-w-6xl mx-auto ${alignmentClass}`} style={{ color: textColor }}>
         <h1 className="text-4xl font-bold mb-2">
           Volume {String(volume?.volumeNumber || '')} • Issue {String(pub.issueNumber || '')}
         </h1>
@@ -800,7 +994,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   
   // Default publication details rendering
   return (
-    <div>
+    <div className={alignmentClass}>
       <h3 className="font-semibold">
         {String(publication?.headline || publication?.name || 'Publication')}
       </h3>
@@ -933,6 +1127,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
             key={`${widget.id}-${index}`}
             article={article}
             config={widget.cardConfig}
+            align={widget.align}
           />
         ))}
       </div>
@@ -967,7 +1162,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
 
 
 // Main Widget Renderer Component
-export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[] }> = ({ widget, schemaObjects = [] }) => {
+export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string }> = ({ widget, schemaObjects = [], journalContext }) => {
   const renderWidget = () => {
     switch (widget.type) {
       case 'button':
@@ -978,6 +1173,8 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[] }>
         return <ImageWidgetRenderer widget={widget as ImageWidget} />
       case 'navbar':
         return <NavbarWidgetRenderer widget={widget as NavbarWidget} />
+      case 'menu':
+        return <MenuWidgetRenderer widget={widget as MenuWidget} journalContext={journalContext} />
       case 'html':
         return <HTMLWidgetRenderer widget={widget as HTMLWidget} />
       case 'code':

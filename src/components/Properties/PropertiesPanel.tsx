@@ -1,5 +1,6 @@
-import React from 'react'
-import { Info } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
+import { nanoid } from 'nanoid'
 import { 
   type Widget, 
   type WidgetSection, 
@@ -11,6 +12,8 @@ import {
   type ImageWidget,
   type HeadingWidget,
   type ButtonWidget,
+  type MenuWidget,
+  type MenuItem,
   type PublicationListWidget,
   type PublicationDetailsWidget,
   isSection
@@ -43,6 +46,8 @@ interface PropertiesPanelProps {
     onSave: (data: Omit<SchemaObject, 'id' | 'createdAt' | 'updatedAt'>) => void
     onCancel: () => void
   }>
+  onExpandedChange?: (expanded: boolean) => void
+  isExpanded?: boolean
 }
 
 export function PropertiesPanel({ 
@@ -51,9 +56,34 @@ export function PropertiesPanel({
   onSaveSchema, 
   onCancelSchema, 
   usePageStore,
-  SchemaFormEditor
+  SchemaFormEditor,
+  onExpandedChange,
+  isExpanded
 }: PropertiesPanelProps) {
   const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects } = usePageStore()
+  
+  // State for menu items inline editor (expanded panel)
+  const [isEditingMenuItems, setIsEditingMenuItems] = useState(false)
+  const prevExpandedRef = useRef(isExpanded)
+  
+  // Notify parent when expansion state changes
+  useEffect(() => {
+    onExpandedChange?.(isEditingMenuItems)
+  }, [isEditingMenuItems, onExpandedChange])
+  
+  // Reset editing state when widget selection changes
+  useEffect(() => {
+    setIsEditingMenuItems(false)
+  }, [selectedWidget])
+  
+  // Reset editing state when panel is collapsed from outside (but not on initial mount)
+  useEffect(() => {
+    // Only reset if isExpanded changed from true to false (user clicked collapse)
+    if (prevExpandedRef.current === true && isExpanded === false) {
+      setIsEditingMenuItems(false)
+    }
+    prevExpandedRef.current = isExpanded
+  }, [isExpanded])
   
   // Show schema form if creating or editing schema
   if ((creatingSchemaType || selectedSchemaObject) && SchemaFormEditor) {
@@ -117,12 +147,6 @@ export function PropertiesPanel({
       </div>
     )
   }
-  
-  console.log('🎯 Properties Panel - Found selected item:', { 
-    id: selectedItem.id, 
-    type: selectedItem.type,
-    isSection: isSection(selectedItem)
-  })
 
   const updateWidget = (updates: Partial<Widget>) => {
     const updatedCanvasItems = canvasItems.map((item: CanvasItem) => {
@@ -576,8 +600,245 @@ export function PropertiesPanel({
   const widget = selectedItem as Widget
   
   return (
-    <div className="p-4 space-y-4">
-      <h3 className="font-semibold text-gray-900">Widget Properties</h3>
+    <div className="h-full">
+      {isEditingMenuItems && widget.type === 'menu' ? (
+        // Two-Column Layout: Basic Properties + Menu Items Editor
+        <div className="flex h-full">
+          {/* Left Column: Basic Properties */}
+          <div className="w-[420px] p-4 space-y-4 border-r border-gray-200 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900">Menu Properties</h3>
+              <button
+                onClick={() => setIsEditingMenuItems(false)}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                title="Close editor"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
+                <span className="text-xs px-2 py-1 rounded-full font-medium bg-purple-100 text-purple-700">Menu</span>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Type</label>
+              <select
+                value={(widget as MenuWidget).menuType}
+                onChange={(e) => {
+                  const newMenuType = e.target.value as 'global' | 'context-aware' | 'custom';
+                  updateWidget({ 
+                    menuType: newMenuType,
+                    ...(newMenuType === 'context-aware' && (widget as MenuWidget).items.length === 0 ? {
+                      contextSource: 'journal',
+                      items: [
+                        { id: nanoid(), label: '{{journal.name}} Home', url: '/journals/{{journal.code}}', target: '_self' as const, displayCondition: 'always' as const, isContextGenerated: true, order: 0 },
+                        { id: nanoid(), label: 'Current Issue', url: '/journals/{{journal.code}}/current', target: '_self' as const, displayCondition: 'if-issue-exists' as const, isContextGenerated: true, order: 1 },
+                        { id: nanoid(), label: 'All Issues', url: '/journals/{{journal.code}}/issues', target: '_self' as const, displayCondition: 'always' as const, isContextGenerated: true, order: 2 },
+                        { id: nanoid(), label: 'Archive', url: '/journals/{{journal.code}}/issues', target: '_self' as const, displayCondition: 'if-has-archive' as const, isContextGenerated: true, order: 3 }
+                      ]
+                    } : {})
+                  })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="global">Global</option>
+                <option value="context-aware">Context-Aware</option>
+                <option value="custom">Custom</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {(widget as MenuWidget).menuType === 'global' && 'Static menu items'}
+                {(widget as MenuWidget).menuType === 'context-aware' && 'Adapts to page context'}
+                {(widget as MenuWidget).menuType === 'custom' && 'Blank slate'}
+              </p>
+            </div>
+            
+            {(widget as MenuWidget).menuType === 'context-aware' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Context Source</label>
+                <select
+                  value={(widget as MenuWidget).contextSource || 'journal'}
+                  onChange={(e) => updateWidget({ contextSource: e.target.value as 'journal' | 'book' | 'conference' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="journal">Journal</option>
+                  <option value="book">Book</option>
+                  <option value="conference">Conference</option>
+                </select>
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Style</label>
+              <select
+                value={(widget as MenuWidget).style}
+                onChange={(e) => updateWidget({ style: e.target.value as 'horizontal' | 'vertical' | 'dropdown' | 'footer-links' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+                <option value="dropdown">Dropdown</option>
+                <option value="footer-links">Footer Links</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+              <select
+                value={(widget as MenuWidget).align || 'left'}
+                onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-xs text-blue-800 font-medium mb-1">💡 Template Variables</p>
+              <p className="text-xs text-blue-700">
+                Use <code className="bg-blue-100 px-1 rounded">{'{{journal.name}}'}</code>, <code className="bg-blue-100 px-1 rounded">{'{{journal.code}}'}</code> in labels/URLs
+              </p>
+            </div>
+          </div>
+          
+          {/* Right Column: Menu Items Editor */}
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900">Menu Items ({(widget as MenuWidget).items.length})</h3>
+              <button
+                onClick={() => {
+                  const newItem: MenuItem = {
+                    id: nanoid(),
+                    label: 'New Item',
+                    url: '#',
+                    target: '_self',
+                    displayCondition: 'always',
+                    order: (widget as MenuWidget).items.length,
+                    isContextGenerated: false
+                  }
+                  updateWidget({ items: [...(widget as MenuWidget).items, newItem] })
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Item
+              </button>
+            </div>
+          
+          <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
+            {(widget as MenuWidget).items.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 text-sm">
+                No menu items yet. Click "Add Menu Item" below to get started.
+              </div>
+            ) : (
+              (widget as MenuWidget).items.map((item, index) => (
+                <div key={item.id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                  <div className="flex items-start gap-2">
+                    <div className="mt-2">
+                      <GripVertical className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Label</label>
+                        <input
+                          type="text"
+                          value={item.label}
+                          onChange={(e) => {
+                            const newItems = [...(widget as MenuWidget).items]
+                            newItems[index] = { ...item, label: e.target.value }
+                            updateWidget({ items: newItems })
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Menu item label"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">URL</label>
+                        <input
+                          type="text"
+                          value={item.url}
+                          onChange={(e) => {
+                            const newItems = [...(widget as MenuWidget).items]
+                            newItems[index] = { ...item, url: e.target.value }
+                            updateWidget({ items: newItems })
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="/path or https://..."
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Target</label>
+                          <select
+                            value={item.target}
+                            onChange={(e) => {
+                              const newItems = [...(widget as MenuWidget).items]
+                              newItems[index] = { ...item, target: e.target.value as any }
+                              updateWidget({ items: newItems })
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="_self">Same window</option>
+                            <option value="_blank">New window</option>
+                            <option value="_parent">Parent</option>
+                            <option value="_top">Top</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Show When</label>
+                          <select
+                            value={item.displayCondition || 'always'}
+                            onChange={(e) => {
+                              const newItems = [...(widget as MenuWidget).items]
+                              newItems[index] = { ...item, displayCondition: e.target.value as any }
+                              updateWidget({ items: newItems })
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="always">Always</option>
+                            <option value="if-issue-exists">If issue exists</option>
+                            <option value="if-has-archive">If archive</option>
+                            <option value="if-journal-context">If journal</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      {item.isContextGenerated && (
+                        <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          ℹ️ Context-generated
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        const newItems = (widget as MenuWidget).items.filter((_, i) => i !== index)
+                        updateWidget({ items: newItems })
+                      }}
+                      className="mt-2 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Delete item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          </div>
+        </div>
+      ) : (
+        // Normal Properties View
+        <div className="p-4 space-y-4">
+          <h3 className="font-semibold text-gray-900">Widget Properties</h3>
       
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
         <div className="flex items-center justify-between">
@@ -1194,11 +1455,173 @@ export function PropertiesPanel({
               <option value="_blank">New window/tab</option>
             </select>
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+            <select
+              value={(widget as ButtonWidget).align || 'left'}
+              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
 
           <IconSelector
             icon={(widget as ButtonWidget).icon}
             onChange={(icon) => updateWidget({ icon })}
           />
+        </div>
+      )}
+      
+      {widget.type === 'menu' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Menu Type</label>
+            <select
+              value={(widget as MenuWidget).menuType}
+              onChange={(e) => {
+                const newMenuType = e.target.value as 'global' | 'context-aware' | 'custom';
+                updateWidget({ 
+                  menuType: newMenuType,
+                  // Auto-populate items if switching to context-aware
+                  ...(newMenuType === 'context-aware' && (widget as MenuWidget).items.length === 0 ? {
+                    contextSource: 'journal',
+                    items: [
+                      {
+                        id: nanoid(),
+                        label: '{{journal.name}} Home',
+                        url: '/journals/{{journal.code}}',
+                        target: '_self' as const,
+                        displayCondition: 'always' as const,
+                        isContextGenerated: true,
+                        order: 0
+                      },
+                      {
+                        id: nanoid(),
+                        label: 'Just Accepted',
+                        url: '/journals/{{journal.code}}/early',
+                        target: '_self' as const,
+                        displayCondition: 'if-issue-exists' as const,
+                        isContextGenerated: true,
+                        order: 1
+                      },
+                      {
+                        id: nanoid(),
+                        label: 'Latest Issue',
+                        url: '/journals/{{journal.code}}/current',
+                        target: '_self' as const,
+                        displayCondition: 'if-issue-exists' as const,
+                        isContextGenerated: true,
+                        order: 2
+                      },
+                      {
+                        id: nanoid(),
+                        label: 'Archive',
+                        url: '/journals/{{journal.code}}/issues',
+                        target: '_self' as const,
+                        displayCondition: 'if-has-archive' as const,
+                        isContextGenerated: true,
+                        order: 3
+                      }
+                    ]
+                  } : {})
+                })
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="global">Global (Static, for headers)</option>
+              <option value="context-aware">Context-Aware (Adapts to page context)</option>
+              <option value="custom">Custom (Blank slate)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {(widget as MenuWidget).menuType === 'global' && 'Static menu items, same across all pages'}
+              {(widget as MenuWidget).menuType === 'context-aware' && 'Auto-populates with context-specific items'}
+              {(widget as MenuWidget).menuType === 'custom' && 'Start with an empty menu'}
+            </p>
+          </div>
+          
+          {(widget as MenuWidget).menuType === 'context-aware' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Context Source</label>
+              <select
+                value={(widget as MenuWidget).contextSource || 'journal'}
+                onChange={(e) => updateWidget({ contextSource: e.target.value as 'journal' | 'book' | 'conference' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="journal">Journal</option>
+                <option value="book">Book</option>
+                <option value="conference">Conference</option>
+              </select>
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Menu Style</label>
+            <select
+              value={(widget as MenuWidget).style}
+              onChange={(e) => updateWidget({ style: e.target.value as 'horizontal' | 'vertical' | 'dropdown' | 'footer-links' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+              <option value="dropdown">Dropdown</option>
+              <option value="footer-links">Footer Links</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+            <select
+              value={(widget as MenuWidget).align || 'left'}
+              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Menu Items</label>
+              <span className="text-xs text-gray-500">{(widget as MenuWidget).items.length} items</span>
+            </div>
+            
+            <button
+              onClick={() => setIsEditingMenuItems(true)}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              🎯 Edit Menu Items...
+            </button>
+            
+            {(widget as MenuWidget).items.length > 0 && (
+              <div className="mt-3 space-y-1">
+                <p className="text-xs font-medium text-gray-600 mb-1">Current Items:</p>
+                {(widget as MenuWidget).items.slice(0, 5).map(item => (
+                  <div key={item.id} className="text-xs text-gray-600 pl-2 border-l-2 border-gray-200">
+                    • {item.label}
+                    {item.isContextGenerated && <span className="ml-1 text-blue-500" title="Context-generated">(auto)</span>}
+                  </div>
+                ))}
+                {(widget as MenuWidget).items.length > 5 && (
+                  <div className="text-xs text-gray-500 pl-2">
+                    ...and {(widget as MenuWidget).items.length - 5} more
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-xs text-blue-800 font-medium mb-1">💡 Template Variables</p>
+              <p className="text-xs text-blue-700">
+                Use <code className="bg-blue-100 px-1 rounded">{'{{journal.name}}'}</code>, <code className="bg-blue-100 px-1 rounded">{'{{journal.code}}'}</code> in labels and URLs
+              </p>
+            </div>
+          </div>
         </div>
       )}
       
@@ -1414,6 +1837,19 @@ export function PropertiesPanel({
           </div>
           
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+            <select
+              value={(widget as PublicationListWidget).align || 'left'}
+              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Number of Items: {(widget as PublicationListWidget).maxItems || 6}
             </label>
@@ -1615,6 +2051,19 @@ export function PropertiesPanel({
           </div>
           
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+            <select
+              value={(widget as PublicationDetailsWidget).align || 'left'}
+              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
             <select
               value={(widget as PublicationDetailsWidget).cardVariantId || 'default'}
@@ -1667,6 +2116,8 @@ export function PropertiesPanel({
               Text color for the publication details (defaults to white for hero/journal layouts)
             </p>
           </div>
+        </div>
+      )}
         </div>
       )}
     </div>

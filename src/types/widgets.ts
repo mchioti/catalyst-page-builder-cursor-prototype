@@ -98,6 +98,7 @@ export type PublicationListWidget = WidgetBase & {
   cardVariantId?: string // Reference to saved variant
   layout: 'list' | 'grid' | 'featured'
   maxItems?: number
+  align?: 'left' | 'center' | 'right'
   // Schema objects source configuration
   schemaSource?: {
     selectionType: 'by-id' | 'by-type'
@@ -120,6 +121,7 @@ export type PublicationDetailsWidget = WidgetBase & {
   cardVariantId?: string // Reference to saved variant
   layout: 'default' | 'compact' | 'hero' | 'sidebar'
   textColor?: string // Custom text color (defaults to white for hero/journal layouts)
+  align?: 'left' | 'center' | 'right'
   // Source-specific configuration
   doiSource?: {
     doi: string // Specific DOI to fetch
@@ -150,9 +152,31 @@ export type ButtonWidget = WidgetBase & {
   size: 'small' | 'medium' | 'large'
   target?: '_blank' | '_self'
   icon?: WidgetIcon
+  align?: 'left' | 'center' | 'right'
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget
+// Menu widget types
+export type MenuItem = {
+  id: string
+  label: string // Can include template variables like {{journal.name}}
+  url: string
+  target: '_self' | '_blank' | '_parent' | '_top'
+  displayCondition?: 'always' | 'if-issue-exists' | 'if-has-archive' | 'if-journal-context'
+  isContextGenerated?: boolean // True if auto-populated by context
+  order: number
+  children?: MenuItem[] // For hierarchical nesting (future)
+}
+
+export type MenuWidget = WidgetBase & {
+  type: 'menu'
+  menuType: 'global' | 'context-aware' | 'custom'
+  contextSource?: 'journal' | 'book' | 'conference' // When menuType is 'context-aware'
+  style: 'horizontal' | 'vertical' | 'dropdown' | 'footer-links'
+  items: MenuItem[]
+  align?: 'left' | 'center' | 'right'
+}
+
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'

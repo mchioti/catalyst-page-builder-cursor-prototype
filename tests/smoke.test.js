@@ -148,4 +148,18 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('label:has-text("Span Sections")')).toBeVisible()
     await expect(page.locator('label:has-text("Gap Size")')).toBeVisible()
   })
+
+  test('Menu widget can be placed @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Find and place Menu widget
+    const menuWidget = page.locator('text=Menu').first()
+    await expect(menuWidget).toBeVisible({ timeout: 5000 })
+    await menuWidget.click()
+    
+    // Widget should be added to canvas with default items
+    await expect(page.locator('nav').filter({ hasText: 'Home' })).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('nav').filter({ hasText: 'About' })).toBeVisible()
+    await expect(page.locator('nav').filter({ hasText: 'Contact' })).toBeVisible()
+  })
 })

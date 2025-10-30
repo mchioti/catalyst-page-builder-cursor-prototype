@@ -1,7 +1,7 @@
 import type { PublicationCardConfig } from '../../types/widgets'
 
 // Publication Card component - Schema.org CreativeWork compliant
-export function PublicationCard({ article, config }: { article: any, config?: PublicationCardConfig }) {
+export function PublicationCard({ article, config, align = 'left' }: { article: any, config?: PublicationCardConfig, align?: 'left' | 'center' | 'right' }) {
   // Fallback configuration for publications
   const getConfigForPublication = () => ({
     showContentTypeLabel: true,
@@ -157,11 +157,24 @@ export function PublicationCard({ article, config }: { article: any, config?: Pu
       day: '2-digit' 
     })
   }
+  
+  // Get alignment classes for text alignment
+  const alignmentClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  }[align]
+  
+  const badgeJustifyClass = {
+    left: 'justify-start',
+    center: 'justify-center',
+    right: 'justify-end'
+  }[align]
 
   return (
-    <div className="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
+    <div className={`border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow ${alignmentClass}`}>
       {/* Header with type label and access status */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
         <div className="flex items-center gap-2">
           {finalConfig.showContentTypeLabel && (
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">

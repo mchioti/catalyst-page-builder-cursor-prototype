@@ -209,7 +209,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
           // Standalone widget
           return (
             <div key={item.id} className="w-full">
-              <WidgetRenderer widget={item} schemaObjects={schemaObjects} />
+              <WidgetRenderer widget={item} schemaObjects={schemaObjects} journalContext={journalContext} />
             </div>
           )
         }
@@ -456,7 +456,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                   // Standalone widget
                   return (
                     <div key={item.id} className="w-full">
-                      <WidgetRenderer widget={item} schemaObjects={schemaObjects} />
+                      <WidgetRenderer widget={item} schemaObjects={schemaObjects} journalContext={journalContext} />
                     </div>
                   )
                 }

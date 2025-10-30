@@ -98,6 +98,7 @@ export function PageBuilder({
 
 
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
+  const [isPropertiesPanelExpanded, setIsPropertiesPanelExpanded] = useState(false)
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
@@ -972,9 +973,21 @@ export function PageBuilder({
         </div>
 
       {/* Right Sidebar - Properties Panel - Sticky */}
-      <div className="w-80 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen">
-        <div className="border-b border-slate-200 p-4">
+      <div className={`${isPropertiesPanelExpanded ? 'w-[1000px]' : 'w-80'} transition-all duration-300 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen`}>
+        <div className="border-b border-slate-200 p-4 flex items-center justify-between">
           <h2 className="font-semibold text-slate-800">Properties</h2>
+          {isPropertiesPanelExpanded && (
+            <button
+              onClick={() => setIsPropertiesPanelExpanded(false)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
+              title="Collapse panel"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              Collapse
+            </button>
+          )}
         </div>
         <div 
           className="flex-1 overflow-y-auto" 
@@ -991,6 +1004,8 @@ export function PageBuilder({
             onCancelSchema={handleCancelSchema}
             usePageStore={usePageStore}
             SchemaFormEditor={SchemaFormEditor}
+            onExpandedChange={setIsPropertiesPanelExpanded}
+            isExpanded={isPropertiesPanelExpanded}
           />
         </div>
       </div>

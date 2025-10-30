@@ -15,6 +15,7 @@ import { generateAIContent, generateAISingleContent } from './utils/aiContentGen
 import { WebsiteCreationWizard } from './components/Wizards/WebsiteCreation'
 import { PageBuilder } from './components/PageBuilder'
 import { DynamicBrandingCSS } from './components/BrandingSystem/DynamicBrandingCSS'
+import { WidgetRenderer } from './components/Widgets/WidgetRenderer'
 import { create } from 'zustand'
 import { type LibraryItem as SpecItem } from './library'
 
@@ -22,7 +23,7 @@ import { type LibraryItem as SpecItem } from './library'
 import { 
 // Widget types
   type Widget, type WidgetSection, type CanvasItem, isSection, 
-  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type HTMLWidget, type CodeWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
+  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type MenuWidget, type MenuItem, type HTMLWidget, type CodeWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
   // App types
@@ -1039,6 +1040,15 @@ function InteractiveWidgetRenderer({
           </div>
         </SkinWrap>
       )
+    
+    case 'menu':
+      // Menu widget - delegate to WidgetRenderer for consistent rendering
+      return (
+        <WidgetRenderer 
+          widget={widget} 
+          schemaObjects={schemaObjects}
+        />
+      )
       
     default:
       return (
@@ -1170,6 +1180,41 @@ function buildWidget(item: SpecItem): Widget {
           generatedContent: undefined
         }
       } as PublicationDetailsWidget;
+    
+    case 'menu':
+      // Start with sample menu items so widget is visible
+      return {
+        ...baseWidget,
+        type: 'menu',
+        menuType: 'global',
+        style: 'horizontal',
+        items: [
+          {
+            id: nanoid(),
+            label: 'Home',
+            url: '#',
+            target: '_self',
+            displayCondition: 'always',
+            order: 0
+          },
+          {
+            id: nanoid(),
+            label: 'About',
+            url: '#',
+            target: '_self',
+            displayCondition: 'always',
+            order: 1
+          },
+          {
+            id: nanoid(),
+            label: 'Contact',
+            url: '#',
+            target: '_self',
+            displayCondition: 'always',
+            order: 2
+          }
+        ]
+      } as MenuWidget;
     
     default:
       // Fallback to text widget

@@ -43,7 +43,8 @@ export function DraggableWidgetInSection({
   setActiveWidgetToolbar,
   onWidgetClick,
   usePageStore,
-  isLiveMode = false
+  isLiveMode = false,
+  journalContext
 }: {
   widget: Widget
   sectionId: string
@@ -55,6 +56,7 @@ export function DraggableWidgetInSection({
   onWidgetClick: (id: string, e: React.MouseEvent) => void
   usePageStore: any
   isLiveMode?: boolean
+  journalContext?: string
 }) {
   // Each widget gets its own draggable hook - no hooks rule violation
   const widgetDrag = useDraggable({
@@ -185,6 +187,7 @@ export function DraggableWidgetInSection({
         <WidgetRenderer 
           widget={widget}
           schemaObjects={usePageStore.getState().schemaObjects || []}
+          journalContext={journalContext}
         />
       </div>
     </div>
@@ -714,6 +717,7 @@ export function SectionRenderer({
                   onWidgetClick={onWidgetClick}
                   usePageStore={usePageStore}
                   isLiveMode={isLiveMode}
+                  journalContext={journalContext}
                 />
               ))}
             </div>
