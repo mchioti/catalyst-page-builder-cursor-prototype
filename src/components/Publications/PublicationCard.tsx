@@ -1,7 +1,32 @@
 import type { PublicationCardConfig } from '../../types/widgets'
 
 // Publication Card component - Schema.org CreativeWork compliant
-export function PublicationCard({ article, config, align = 'left' }: { article: any, config?: PublicationCardConfig, align?: 'left' | 'center' | 'right' }) {
+export function PublicationCard({ article, config, align = 'left', contentMode }: { article: any, config?: PublicationCardConfig, align?: 'left' | 'center' | 'right', contentMode?: 'light' | 'dark' }) {
+  
+  // Get text color classes based on content mode
+  const getTextColorClasses = () => {
+    if (contentMode === 'dark') {
+      return {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        muted: 'text-gray-400'
+      };
+    } else if (contentMode === 'light') {
+      return {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-700',
+        muted: 'text-gray-600'
+      };
+    }
+    // Default: use existing colors
+    return {
+      primary: 'text-gray-900',
+      secondary: 'text-gray-700',
+      muted: 'text-gray-600'
+    };
+  };
+  
+  const textColors = getTextColorClasses();
   // Fallback configuration for publications
   const getConfigForPublication = () => ({
     showContentTypeLabel: true,
@@ -189,7 +214,7 @@ export function PublicationCard({ article, config, align = 'left' }: { article: 
 
       {/* Article/Chapter Title */}
       {finalConfig.showTitle && (
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
+        <h3 className={`text-lg font-semibold ${textColors.primary} mb-2 leading-tight`}>
           {getTitle(article)}
         </h3>
       )}
@@ -203,21 +228,21 @@ export function PublicationCard({ article, config, align = 'left' }: { article: 
 
       {/* Authors */}
       {finalConfig.showAuthors && article.author && (
-        <p className="text-gray-700 text-sm mb-2">
+        <p className={`${textColors.secondary} text-sm mb-2`}>
           {formatAuthors(article.author)}
         </p>
       )}
 
       {/* Publication Information (Journal/Book Title) */}
       {finalConfig.showPublicationTitle && (
-        <p className="text-gray-600 text-sm mb-3">
+        <p className={`${textColors.muted} text-sm mb-3`}>
           {formatPublicationInfo(article)}
         </p>
       )}
 
       {/* Publication Date */}
       {finalConfig.showPublicationDate && article.datePublished && (
-        <p className="text-gray-500 text-sm mb-4">
+        <p className={`${textColors.muted} text-sm mb-4`}>
           Published: {formatDate(article.datePublished)}
         </p>
       )}
@@ -225,7 +250,7 @@ export function PublicationCard({ article, config, align = 'left' }: { article: 
       {/* Abstract */}
       {finalConfig.showAbstract && getDescription(article) && (
         <div className="mb-4">
-          <p className="text-gray-700 text-sm leading-relaxed">
+          <p className={`${textColors.secondary} text-sm leading-relaxed`}>
             {finalConfig.abstractLength === 'short' 
               ? getDescription(article).substring(0, 150) + (getDescription(article).length > 150 ? '...' : '')
               : finalConfig.abstractLength === 'medium'
@@ -241,7 +266,7 @@ export function PublicationCard({ article, config, align = 'left' }: { article: 
         <div className="mb-4">
           <div className="flex flex-wrap gap-1">
             {(Array.isArray(article.keywords) ? article.keywords : [article.keywords]).map((keyword: string, index: number) => (
-              <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+              <span key={index} className={`text-xs bg-gray-100 ${textColors.muted} px-2 py-1 rounded`}>
                 {keyword}
               </span>
             ))}
@@ -250,7 +275,7 @@ export function PublicationCard({ article, config, align = 'left' }: { article: 
       )}
 
       {/* DOI/ISBN */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className={`flex items-center justify-between text-xs ${textColors.muted}`}>
         <div className="flex items-center gap-4">
           {finalConfig.showDOI && (() => {
             const doi = getIdentifier(article, 'DOI')

@@ -401,7 +401,23 @@ const NavbarWidgetRenderer: React.FC<{ widget: NavbarWidget }> = ({ widget }) =>
 }
 
 // Menu Widget Component - Context-aware navigation menu
-const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string }> = ({ widget, journalContext }) => {
+const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string; sectionContentMode?: 'light' | 'dark' }> = ({ widget, journalContext, sectionContentMode }) => {
+  
+  // Determine if menu should use content mode (only for Global & Custom, not context-aware)
+  const shouldUseContentMode = widget.menuType !== 'context-aware';
+  
+  // Get text color classes based on content mode
+  const getTextColorClasses = () => {
+    if (shouldUseContentMode && sectionContentMode === 'dark') {
+      return 'text-white';
+    } else if (shouldUseContentMode && sectionContentMode === 'light') {
+      return 'text-gray-900';
+    }
+    // Context-aware menus or no content mode: use journal branding or default
+    return 'text-current';
+  };
+  
+  const textColorClasses = getTextColorClasses();
   
   // Replace template variables in text
   const replaceTemplateVars = (text: string, context?: any): string => {
@@ -507,7 +523,7 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
               key={item.id}
               href={item.url}
               target={item.target}
-              className="text-current hover:opacity-75 transition-opacity whitespace-nowrap"
+              className={`${textColorClasses} hover:opacity-75 transition-opacity whitespace-nowrap`}
             >
               {item.label}
               {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
@@ -524,7 +540,7 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
               key={item.id}
               href={item.url}
               target={item.target}
-              className="block px-4 py-2 text-current hover:bg-black/5 transition-colors rounded"
+              className={`block px-4 py-2 ${textColorClasses} hover:bg-black/5 transition-colors rounded`}
             >
               {item.label}
               {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
@@ -536,7 +552,7 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
     case 'dropdown':
       return (
         <div className={`relative group flex ${getAlignmentClasses()}`}>
-          <button className="px-4 py-2 bg-current/10 hover:bg-current/20 rounded transition-colors">
+          <button className={`px-4 py-2 ${textColorClasses} bg-current/10 hover:bg-current/20 rounded transition-colors`}>
             ☰ Menu
           </button>
           <div className="absolute left-0 top-full mt-2 bg-white border border-gray-200 rounded shadow-lg hidden group-hover:block min-w-[200px] z-50">
@@ -563,7 +579,7 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
               key={item.id}
               href={item.url}
               target={item.target}
-              className="text-current hover:underline"
+              className={`${textColorClasses} hover:underline`}
             >
               {item.label}
             </a>
@@ -878,7 +894,21 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
 }
 
 // Publication Details Widget Component (journal metadata)
-const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWidget; schemaObjects: any[] }> = ({ widget, schemaObjects }) => {
+const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects, sectionContentMode }) => {
+  
+  // Get text color based on content mode
+  const getTextColorClasses = () => {
+    if (sectionContentMode === 'dark') {
+      return 'text-white';
+    } else if (sectionContentMode === 'light') {
+      return 'text-gray-900';
+    }
+    // Default: inherit
+    return '';
+  };
+  
+  const textColorClasses = getTextColorClasses();
+  
   // Helper to safely get identifier from publication data
   const getIdentifierValue = (pub: any, type: string) => {
     if (Array.isArray(pub.identifier)) {
@@ -972,11 +1002,8 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     const printISSN = getIdentifierValue(pub, 'print')
     const onlineISSN = getIdentifierValue(pub, 'online')
     
-    // Default to white text for hero/journal layouts, allow override
-    const textColor = widget.textColor || '#ffffff'
-    
     return (
-      <div className={`max-w-6xl mx-auto ${alignmentClass}`} style={{ color: textColor }}>
+      <div className={`max-w-6xl mx-auto ${alignmentClass} ${textColorClasses}`}>
         <h1 className="text-4xl font-bold mb-2">
           Volume {String(volume?.volumeNumber || '')} • Issue {String(pub.issueNumber || '')}
         </h1>
@@ -994,7 +1021,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   
   // Default publication details rendering
   return (
-    <div className={alignmentClass}>
+    <div className={`${alignmentClass} ${textColorClasses}`}>
       <h3 className="font-semibold">
         {String(publication?.headline || publication?.name || 'Publication')}
       </h3>
@@ -1021,7 +1048,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
 }
 
 // Publication List Widget with full implementation
-const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; schemaObjects: any[] }> = ({ widget, schemaObjects }) => {
+const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects, sectionContentMode }) => {
   // Get publications based on content source
   let publications: any[] = []
   
@@ -1128,6 +1155,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
             article={article}
             config={widget.cardConfig}
             align={widget.align}
+            contentMode={sectionContentMode}
           />
         ))}
       </div>
@@ -1162,7 +1190,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
 
 
 // Main Widget Renderer Component
-export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string }> = ({ widget, schemaObjects = [], journalContext }) => {
+export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects = [], journalContext, sectionContentMode }) => {
   const renderWidget = () => {
     switch (widget.type) {
       case 'button':
@@ -1174,7 +1202,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       case 'navbar':
         return <NavbarWidgetRenderer widget={widget as NavbarWidget} />
       case 'menu':
-        return <MenuWidgetRenderer widget={widget as MenuWidget} journalContext={journalContext} />
+        return <MenuWidgetRenderer widget={widget as MenuWidget} journalContext={journalContext} sectionContentMode={sectionContentMode} />
       case 'html':
         return <HTMLWidgetRenderer widget={widget as HTMLWidget} />
       case 'code':
@@ -1182,9 +1210,9 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       case 'heading':
         return <HeadingWidgetRenderer widget={widget as HeadingWidget} />
       case 'publication-details':
-        return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} />
+        return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
       case 'publication-list':
-        return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} />
+        return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
       default:
         return <div className="text-gray-500">Unsupported widget type: {(widget as any).type}</div>
     }

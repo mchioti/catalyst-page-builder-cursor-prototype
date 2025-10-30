@@ -120,7 +120,6 @@ export type PublicationDetailsWidget = WidgetBase & {
   cardConfig: PublicationCardConfig
   cardVariantId?: string // Reference to saved variant
   layout: 'default' | 'compact' | 'hero' | 'sidebar'
-  textColor?: string // Custom text color (defaults to white for hero/journal layouts)
   align?: 'left' | 'center' | 'right'
   // Source-specific configuration
   doiSource?: {
@@ -235,6 +234,9 @@ export type WidgetSection = {
   
   // Section behavior configuration
   behavior?: 'auto' | 'full-width' // Controls content width behavior
+  
+  // Content mode (text color adaptation)
+  contentMode?: 'light' | 'dark' // Light = dark text (light bg), Dark = white text (dark bg)
   
       // Sidebar-specific properties (only when type === 'sidebar')
       sidebar?: {
