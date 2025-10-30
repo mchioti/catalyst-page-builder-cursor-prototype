@@ -195,9 +195,22 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
     center: 'justify-center',
     right: 'justify-end'
   }[align]
+  
+  // Get background classes based on content mode
+  const getBackgroundClasses = () => {
+    if (contentMode === 'dark') {
+      return 'bg-gray-800/50 border-gray-700'; // Dark semi-transparent background
+    } else if (contentMode === 'light') {
+      return 'bg-white border-gray-200'; // White background
+    }
+    // Default: white background
+    return 'bg-white border-gray-200';
+  };
+  
+  const backgroundClasses = getBackgroundClasses();
 
   return (
-    <div className={`border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow ${alignmentClass}`}>
+    <div className={`border rounded-lg p-6 hover:shadow-md transition-shadow ${alignmentClass} ${backgroundClasses}`}>
       {/* Header with type label and access status */}
       <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
         <div className="flex items-center gap-2">
