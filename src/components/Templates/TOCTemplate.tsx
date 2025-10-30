@@ -1,4 +1,5 @@
 import type { WidgetSection, PublicationCardConfig } from '../../types'
+import { nanoid } from 'nanoid'
 
 
 // TOC Template Configuration
@@ -10,6 +11,21 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       name: 'Header',
       type: 'header',
       layout: 'one-column',
+      // Black background for global header
+      background: {
+        type: 'color',
+        color: '#000000',
+        opacity: 1
+      },
+      // Set content mode to dark (white text for black background)
+      contentMode: 'dark',
+      // Add padding for better spacing
+      styling: {
+        paddingTop: 'small',
+        paddingBottom: 'small',
+        paddingLeft: 'medium',
+        paddingRight: 'medium'
+      },
       areas: [
         {
           id: 'toc-header-area',
@@ -59,6 +75,8 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
         paddingRight: 'medium',
         gap: 'medium'
       },
+      // Set content mode to dark (white text for dark background)
+      contentMode: 'dark',
       areas: [
         // Top area - Journal metadata
         {
@@ -176,6 +194,21 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
       name: 'Journal Menu',
       type: 'navigation',
       layout: 'one-column',
+      // Blue background for journal navigation (matches Wiley Online Library branding)
+      background: {
+        type: 'color',
+        color: '#1d4ed8', // blue-700
+        opacity: 1
+      },
+      // Set content mode to dark (white text for blue background)
+      contentMode: 'dark',
+      // Add padding for better spacing
+      styling: {
+        paddingTop: 'small',
+        paddingBottom: 'small',
+        paddingLeft: 'medium',
+        paddingRight: 'medium'
+      },
       areas: [
         {
           id: 'toc-journal-menu-area',
@@ -183,15 +216,19 @@ export const createTOCTemplate = (journalCode: string): WidgetSection[] => {
           widgets: [
             {
               id: 'toc-journal-menu-widget',
-              type: 'navbar',
+              type: 'menu',
               skin: 'minimal',
-              links: [
-                { label: 'Journal Home', href: `/journal/${journalCode}` },
-                { label: 'Current Issue', href: `/toc/${journalCode}/current` },
-                { label: 'Archive', href: `/journal/${journalCode}/archive` },
-                { label: 'Subscribe/Renew', href: `/journal/${journalCode}/subscribe` },
-                { label: 'About', href: `/journal/${journalCode}/about` },
-                { label: 'For Authors', href: `/journal/${journalCode}/authors` }
+              menuType: 'context-aware',
+              contextSource: 'journal',
+              style: 'horizontal',
+              align: 'center',
+              items: [
+                { id: nanoid(), label: '{{journal.name}} Home', url: '/journal/{{journal.code}}', target: '_self', displayCondition: 'always', order: 0 },
+                { id: nanoid(), label: 'Current Issue', url: '/toc/{{journal.code}}/current', target: '_self', displayCondition: 'if-issue-exists', order: 1 },
+                { id: nanoid(), label: 'Archive', url: '/journal/{{journal.code}}/archive', target: '_self', displayCondition: 'if-has-archive', order: 2 },
+                { id: nanoid(), label: 'Subscribe/Renew', url: '/journal/{{journal.code}}/subscribe', target: '_self', displayCondition: 'always', order: 3 },
+                { id: nanoid(), label: 'About', url: '/journal/{{journal.code}}/about', target: '_self', displayCondition: 'always', order: 4 },
+                { id: nanoid(), label: 'For Authors', url: '/journal/{{journal.code}}/authors', target: '_self', displayCondition: 'always', order: 5 }
               ]
             }
           ]

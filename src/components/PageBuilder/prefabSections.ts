@@ -86,6 +86,9 @@ export const createGlobalHeaderPrefab = (): CanvasItem => {
     color: '#000000',
     opacity: 1
   }
+  
+  // Set content mode to dark (white text for black background)
+  typedSection.contentMode = 'dark'
 
   // University header content (left side)
   const universityHeaderWidget = {
@@ -161,14 +164,21 @@ export const createMainNavigationPrefab = (): CanvasItem => {
     icon: { enabled: false, position: 'left' as const, emoji: '📚' }
   }
 
-  // Navigation links (right side)
+  // Navigation menu (right side) - Global menu
   const navigationWidget = {
     id: nanoid(),
-    type: 'text' as const,
+    type: 'menu' as const,
     sectionId: navSection.id,
     skin: 'minimal' as const,
-    text: 'Journals • Books • Proceedings • Blogs',
-    align: 'right' as const
+    menuType: 'global' as const,
+    style: 'horizontal' as const,
+    align: 'right' as const,
+    items: [
+      { id: nanoid(), label: 'Journals', url: '#', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
+      { id: nanoid(), label: 'Books', url: '#', target: '_self' as const, displayCondition: 'always' as const, order: 1 },
+      { id: nanoid(), label: 'Proceedings', url: '#', target: '_self' as const, displayCondition: 'always' as const, order: 2 },
+      { id: nanoid(), label: 'Blogs', url: '#', target: '_self' as const, displayCondition: 'always' as const, order: 3 }
+    ]
   }
 
   // Assign widgets to areas
@@ -413,6 +423,9 @@ export const createJournalBannerPrefab = (): CanvasItem => {
     paddingRight: 'medium',
     gap: 'medium'
   }
+  
+  // Set content mode to dark (white text for dark background)
+  bannerSection.contentMode = 'dark'
 
   // Publication Details widget (top area)
   const publicationDetailsWidget = {
@@ -421,7 +434,6 @@ export const createJournalBannerPrefab = (): CanvasItem => {
     skin: 'journal' as const,
     contentSource: 'ai-generated' as const,
     layout: 'hero' as const,
-    textColor: '#ffffff',
     // Mock publication data for template preview
     publication: {
       "@context": "https://schema.org",

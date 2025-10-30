@@ -450,7 +450,7 @@ export function PropertiesPanel({
                 <option value="dark">Dark (White text)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                Controls text color for Publication widgets and non-branded menus. Use "Dark" for dark backgrounds.
+                Controls text color for Publication widgets and Menu widgets. Use "Dark" for dark backgrounds. Branding can add accent colors on top.
               </p>
             </div>
           </div>

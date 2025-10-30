@@ -237,12 +237,25 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
 }
 
 // Text Widget Component  
-const TextWidgetRenderer: React.FC<{ widget: TextWidget }> = ({ widget }) => {
+const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
   const alignClasses = {
     left: 'text-left',
     center: 'text-center', 
     right: 'text-right'
   }
+  
+  // Get text color based on content mode
+  const getTextColorClasses = () => {
+    if (sectionContentMode === 'dark') {
+      return 'text-white';
+    } else if (sectionContentMode === 'light') {
+      return 'text-gray-900';
+    }
+    // Default: inherit
+    return '';
+  };
+  
+  const textColorClasses = getTextColorClasses();
   
   // Enhanced text rendering with line break support and better typography
   const renderTextWithBreaks = (text: string) => {
@@ -255,7 +268,7 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget }> = ({ widget }) => {
   }
   
   return (
-    <div className={`${alignClasses[widget.align || 'left']}`}>
+    <div className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}>
       {renderTextWithBreaks(widget.text)}
     </div>
   )
@@ -403,17 +416,16 @@ const NavbarWidgetRenderer: React.FC<{ widget: NavbarWidget }> = ({ widget }) =>
 // Menu Widget Component - Context-aware navigation menu
 const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string; sectionContentMode?: 'light' | 'dark' }> = ({ widget, journalContext, sectionContentMode }) => {
   
-  // Determine if menu should use content mode (only for Global & Custom, not context-aware)
-  const shouldUseContentMode = widget.menuType !== 'context-aware';
-  
   // Get text color classes based on content mode
+  // ALL menus respect contentMode for readability
+  // Branding system can add accent colors on top (hover, borders, etc.)
   const getTextColorClasses = () => {
-    if (shouldUseContentMode && sectionContentMode === 'dark') {
+    if (sectionContentMode === 'dark') {
       return 'text-white';
-    } else if (shouldUseContentMode && sectionContentMode === 'light') {
+    } else if (sectionContentMode === 'light') {
       return 'text-gray-900';
     }
-    // Context-aware menus or no content mode: use journal branding or default
+    // No content mode: use default
     return 'text-current';
   };
   
@@ -909,6 +921,19 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   
   const textColorClasses = getTextColorClasses();
   
+  // Get background classes based on content mode (same as PublicationCard)
+  const getBackgroundClasses = () => {
+    if (sectionContentMode === 'dark') {
+      return 'bg-gray-800/50 border-gray-700'; // Dark semi-transparent background
+    } else if (sectionContentMode === 'light') {
+      return 'bg-white border-gray-200'; // White background
+    }
+    // Default: white background
+    return 'bg-white border-gray-200';
+  };
+  
+  const backgroundClasses = getBackgroundClasses();
+  
   // Helper to safely get identifier from publication data
   const getIdentifierValue = (pub: any, type: string) => {
     if (Array.isArray(pub.identifier)) {
@@ -1003,7 +1028,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     const onlineISSN = getIdentifierValue(pub, 'online')
     
     return (
-      <div className={`max-w-6xl mx-auto ${alignmentClass} ${textColorClasses}`}>
+      <div className={`max-w-6xl mx-auto border rounded-lg p-6 ${alignmentClass} ${textColorClasses} ${backgroundClasses}`}>
         <h1 className="text-4xl font-bold mb-2">
           Volume {String(volume?.volumeNumber || '')} • Issue {String(pub.issueNumber || '')}
         </h1>
@@ -1021,12 +1046,12 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   
   // Default publication details rendering
   return (
-    <div className={`${alignmentClass} ${textColorClasses}`}>
-      <h3 className="font-semibold">
+    <div className={`border rounded-lg p-6 ${alignmentClass} ${backgroundClasses}`}>
+      <h3 className={`font-semibold ${textColorClasses}`}>
         {String(publication?.headline || publication?.name || 'Publication')}
       </h3>
       {publication?.author && (
-        <p className="text-sm text-gray-600">
+        <p className={`text-sm ${textColorClasses}`}>
           {Array.isArray(publication.author) 
             ? publication.author.map((a: any) => {
                 if (typeof a === 'string') return a
@@ -1196,7 +1221,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       case 'button':
         return <ButtonWidgetRenderer widget={widget as ButtonWidget} />
       case 'text':
-        return <TextWidgetRenderer widget={widget as TextWidget} />
+        return <TextWidgetRenderer widget={widget as TextWidget} sectionContentMode={sectionContentMode} />
       case 'image':
         return <ImageWidgetRenderer widget={widget as ImageWidget} />
       case 'navbar':
