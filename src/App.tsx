@@ -2285,10 +2285,24 @@ const usePageStore = create<PageState>((set, get) => ({
   
   promoteToBase: (route, templateId) => {
     const state = get()
-    const { routeCanvasItems, templateCustomizations } = state
-    const customizedCanvas = routeCanvasItems[route]
+    const { routeCanvasItems, journalTemplateCanvas, templateCustomizations } = state
     
-    if (!customizedCanvas) {
+    // Check if this is a journal template (route starts with 'journal/')
+    const isJournalTemplate = route.startsWith('journal/')
+    let customizedCanvas: CanvasItem[]
+    
+    if (isJournalTemplate) {
+      // Promoting from journal template level
+      const journalCode = route.replace('journal/', '')
+      customizedCanvas = journalTemplateCanvas[journalCode] || []
+      console.log(`⬆️ Promoting journal template to base: ${journalCode}`)
+    } else {
+      // Promoting from individual route level (legacy behavior)
+      customizedCanvas = routeCanvasItems[route] || []
+      console.log(`⬆️ Promoting individual route to base: ${route}`)
+    }
+    
+    if (!customizedCanvas || customizedCanvas.length === 0) {
       console.warn(`No customized canvas found for route ${route}`)
       return
     }
@@ -2301,18 +2315,83 @@ const usePageStore = create<PageState>((set, get) => ({
     // Set as global template
     set({ globalTemplateCanvas: customizedCanvas })
     
-    // Clear the promoted route's customization (it now matches base)
-    const newRouteCanvasItems = { ...routeCanvasItems }
-    delete newRouteCanvasItems[route]
+    // Clear the promoted source (either route or journal template)
+    if (isJournalTemplate) {
+      const journalCode = route.replace('journal/', '')
+      const newJournalTemplateCanvas = { ...journalTemplateCanvas }
+      delete newJournalTemplateCanvas[journalCode]
+      set({ journalTemplateCanvas: newJournalTemplateCanvas })
+    } else {
+      const newRouteCanvasItems = { ...routeCanvasItems }
+      delete newRouteCanvasItems[route]
+      set({ routeCanvasItems: newRouteCanvasItems })
+    }
     
     // Remove customizations that now match the new base
     set((s) => ({
-      routeCanvasItems: newRouteCanvasItems,
       templateCustomizations: s.templateCustomizations.filter(c => c.route !== route)
     }))
     
-    console.log(`✅ Promoted route ${route} to base template`)
+    console.log(`✅ Promoted ${route} to base template`)
     console.log(`📊 ${affectedCustomizations.length} journals will inherit this change`)
+  },
+  
+  promoteToJournalTemplate: (route, journalCode, templateId) => {
+    const state = get()
+    const { routeCanvasItems } = state
+    const customizedCanvas = routeCanvasItems[route]
+    
+    if (!customizedCanvas) {
+      console.warn(`No customized canvas found for route ${route}`)
+      return
+    }
+    
+    console.log(`⬆️ Promoting individual issue to journal template: ${journalCode}`)
+    
+    // Set as journal template (affects all issues for this journal)
+    set((s) => ({
+      journalTemplateCanvas: {
+        ...s.journalTemplateCanvas,
+        [journalCode]: customizedCanvas
+      }
+    }))
+    
+    // Clear the promoted route's customization (it now matches journal template)
+    const newRouteCanvasItems = { ...routeCanvasItems }
+    delete newRouteCanvasItems[route]
+    
+    // Update customization tracking - change from individual to journal level
+    set((s) => ({
+      routeCanvasItems: newRouteCanvasItems,
+      templateCustomizations: s.templateCustomizations.map(c =>
+        c.route === route 
+          ? { ...c, route: `journal/${journalCode}`, modificationCount: c.modificationCount }
+          : c
+      )
+    }))
+    
+    console.log(`✅ Promoted to journal template: ${journalCode}`)
+    console.log(`📊 All ${journalCode} issues will inherit this change`)
+  },
+  
+  promoteToPublisherTheme: (templateId, journalCode) => {
+    const state = get()
+    const { globalTemplateCanvas } = state
+    
+    if (!globalTemplateCanvas || globalTemplateCanvas.length === 0) {
+      console.warn(`No base template found to promote to publisher theme`)
+      return
+    }
+    
+    console.log(`⬆️ Promoting base template to publisher theme: ${templateId}`)
+    
+    // TODO: Implement publisher theme storage
+    // For now, just show success message
+    console.log(`✅ Base template promoted to Publisher Theme`)
+    console.log(`📊 All websites in publisher network will inherit this change`)
+    
+    // This would store in a publisherThemeCanvas at a higher level
+    // publisherThemeCanvas[templateId] = globalTemplateCanvas
   },
   
   updateCustomizationCount: (route, count) => {
@@ -3289,6 +3368,7 @@ function DesignConsole() {
               hasSubjectOrganization={true}
               allTemplates={ALL_TEMPLATES}
               usePageStore={usePageStore}
+              consoleMode={consoleMode}
             />
           )}
           {siteManagerView === 'wiley-main-publication-cards' && (
@@ -3333,6 +3413,7 @@ function DesignConsole() {
               hasSubjectOrganization={false}
               allTemplates={ALL_TEMPLATES}
               usePageStore={usePageStore}
+              consoleMode={consoleMode}
             />
           )}
           {siteManagerView === 'research-hub-publication-cards' && (
@@ -3377,6 +3458,7 @@ function DesignConsole() {
               hasSubjectOrganization={true}
               allTemplates={ALL_TEMPLATES}
               usePageStore={usePageStore}
+              consoleMode={consoleMode}
             />
           )}
           {siteManagerView === 'journal-of-science-publication-cards' && (

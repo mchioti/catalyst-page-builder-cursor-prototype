@@ -161,8 +161,16 @@ export function PageBuilder({
     if (isJournalTemplateEdit && templateEditingContext?.journalCode && canvasItems.length > 0) {
       console.log('📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
       setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
+      
+      // Track journal template customization for divergence management
+      if (trackCustomization) {
+        const route = `journal/${templateEditingContext.journalCode}`
+        console.log('📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
+        console.log('📊 Route:', route, 'Template ID: table-of-contents')
+        trackCustomization(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
+      }
     }
-  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas])
+  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas, journalName, trackCustomization])
   
   const handleCreateSchema = (type: SchemaOrgType) => {
     setCreatingSchemaType(type)

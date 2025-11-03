@@ -132,7 +132,7 @@ export function TemplateEditingScopeButton({
           icon: <FileText className="w-4 h-4" />
         })
         
-        // Always show global cross-journal option first (more common)
+        // Always show global cross-journal option
         options.push({
           id: 'global',
           label: `Edit All Issues`,
@@ -141,7 +141,7 @@ export function TemplateEditingScopeButton({
           icon: <Globe className="w-4 h-4" />
         })
         
-        // Show current issue type option second (less common)
+        // Show current issue type option last (less common)
         options.push({
           id: 'issue-type',
           label: `Edit All Current Issues`,

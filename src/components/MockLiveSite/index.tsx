@@ -807,44 +807,44 @@ export function MockLiveSite({
       })
     }
     
-    if (isActiveGlobalTemplate && canvasItems.length > 0) {
-      // Currently editing global template
+    // 🎯 4-LEVEL TEMPLATE HIERARCHY (most specific to most general):
+    // 1. Individual Issue (routeSpecificCanvasItems)
+    // 2. Journal Template (journalTemplateCanvasItems)
+    // 3. Base Template / Global (globalTemplateCanvas)
+    // 4. Static Content (default)
+    
+    if (routeSpecificCanvasItems.length > 0) {
+      // LEVEL 1: Individual issue-specific edits (highest priority)
+      effectiveCanvasItems = routeSpecificCanvasItems
+      canvasSource = `Individual issue edits (${routeSpecificCanvasItems.length} items)`
+    } else if (journalTemplateCanvasItems.length > 0) {
+      // LEVEL 2: Journal-specific template (affects all issues in this journal)
+      effectiveCanvasItems = journalTemplateCanvasItems
+      canvasSource = `Journal template for ${journalCode} (${journalTemplateCanvasItems.length} items)`
+    } else if (isActiveGlobalTemplate && canvasItems.length > 0) {
+      // LEVEL 3: Currently editing base template
       if (shouldSkipGlobalTemplate) {
-        // This journal/route is skipped - check for journal template, then individual edits
-        if (journalTemplateCanvasItems.length > 0) {
-          effectiveCanvasItems = journalTemplateCanvasItems
-          canvasSource = `Skipped journal - journal template (${journalTemplateCanvasItems.length} items)`
-        } else {
-          effectiveCanvasItems = routeSpecificCanvasItems.length > 0 ? routeSpecificCanvasItems : []
-          canvasSource = `Skipped journal - individual edits (${routeSpecificCanvasItems.length} items)`
-        }
+        // This journal is exempted - fallback to static
+        effectiveCanvasItems = []
+        canvasSource = `Exempted journal - static content`
       } else {
-        // Normal global template application
         effectiveCanvasItems = canvasItems
-        canvasSource = `Active global template (${canvasItems.length} items)`
+        canvasSource = `Active base template (${canvasItems.length} items)`
       }
     } else if (globalTemplateCanvas.length > 0 && !shouldSkipGlobalTemplate) {
-      // Saved global template changes override everything (unless journal/route is skipped)
+      // LEVEL 3: Saved base template (affects all journals)
       effectiveCanvasItems = globalTemplateCanvas
-      canvasSource = `Saved global template (${globalTemplateCanvas.length} items)`
+      canvasSource = `Base template (${globalTemplateCanvas.length} items)`
     } else if (isActiveJournalTemplate && canvasItems.length > 0) {
-      // Currently editing journal template
+      // LEVEL 2: Currently editing journal template
       effectiveCanvasItems = canvasItems
       canvasSource = `Active journal template (${canvasItems.length} items)`
-    } else if (journalTemplateCanvasItems.length > 0) {
-      // Saved journal template changes override individual edits
-      effectiveCanvasItems = journalTemplateCanvasItems
-      canvasSource = `Saved journal template (${journalTemplateCanvasItems.length} items)`
     } else if (isActiveIssueTypeTemplate && canvasItems.length > 0) {
-      // Currently editing issue-type template
+      // Currently editing issue-type template (not yet fully implemented)
       effectiveCanvasItems = canvasItems
       canvasSource = `Active issue-type template (${canvasItems.length} items)`
-    } else if (routeSpecificCanvasItems.length > 0) {
-      // Individual route-specific edits
-      effectiveCanvasItems = routeSpecificCanvasItems
-      canvasSource = `Individual edits (${routeSpecificCanvasItems.length} items)`
     } else {
-      // Static content
+      // LEVEL 4: Static content (default from theme)
       effectiveCanvasItems = []
       canvasSource = `Static content (0 items)`
     }
@@ -1028,27 +1028,37 @@ export function MockLiveSite({
       })
       
     } else if (scope === 'journal' && journalCode) {
-      // Journal Template Editing with Individual Issue Inheritance
+      // Journal Template Editing - Load existing journal template or create from base
+      const { getJournalTemplateCanvas } = usePageStore.getState()
       const baseTemplate = createTOCTemplate(journalCode)
-      
-      // Check if there are existing individual edits for current route that we should inherit
-      const currentRouteEdits = getCanvasItemsForRoute(mockLiveSiteRoute)
+      const existingJournalTemplate = getJournalTemplateCanvas(journalCode)
       
       let templateToEdit: CanvasItem[]
       let notificationMessage: string
       
-      if (currentRouteEdits.length > 0) {
-        // Start with existing individual edits as the base for template editing
-        templateToEdit = currentRouteEdits
-        console.log(`🎨 Loading journal template with individual customizations:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
+      if (existingJournalTemplate.length > 0) {
+        // Load existing saved journal template
+        templateToEdit = existingJournalTemplate
+        console.log(`🎨 Loading existing journal template:`, journalCode, templateToEdit.length, 'sections')
         
-        notificationMessage = `Editing ${journalName} template. Starting with your current issue customizations. Changes propagate to all ${journalName} issues.`
+        notificationMessage = `Editing ${journalName} template. Changes apply to all ${journalName} issues.`
       } else {
-        // No individual edits, start with fresh template
-        templateToEdit = baseTemplate
-        console.log(`🎨 Loading fresh journal template:`, journalCode, templateToEdit.length, 'sections')
+        // No journal template yet, check if there are individual edits to inherit
+        const currentRouteEdits = getCanvasItemsForRoute(mockLiveSiteRoute)
         
-        notificationMessage = `Editing ${journalName} template. Changes propagate to all ${journalName} issues.`
+        if (currentRouteEdits.length > 0) {
+          // Start with existing individual edits as the base for template editing
+          templateToEdit = currentRouteEdits
+          console.log(`🎨 Creating journal template from individual customizations:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
+          
+          notificationMessage = `Creating ${journalName} template from your current issue. Changes will apply to all ${journalName} issues.`
+        } else {
+          // No edits, start with fresh base template
+          templateToEdit = baseTemplate
+          console.log(`🎨 Creating fresh journal template:`, journalCode, templateToEdit.length, 'sections')
+          
+          notificationMessage = `Creating ${journalName} template. Changes will apply to all ${journalName} issues.`
+        }
       }
       
       // Load template content for editing

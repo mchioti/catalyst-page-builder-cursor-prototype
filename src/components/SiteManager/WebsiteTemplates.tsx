@@ -33,6 +33,7 @@ interface WebsiteTemplatesProps {
   hasSubjectOrganization: boolean // Whether this website has subject-based organization enabled
   allTemplates: Template[] // All available templates from the theme
   usePageStore?: any // Zustand store for divergence tracking
+  consoleMode?: 'single' | 'multi' // Console mode for showing/hiding promote button
 }
 
 export function WebsiteTemplates({
@@ -41,7 +42,8 @@ export function WebsiteTemplates({
   enabledContentTypes,
   hasSubjectOrganization,
   allTemplates,
-  usePageStore
+  usePageStore,
+  consoleMode = 'multi' // Default to multi for backwards compatibility
 }: WebsiteTemplatesProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
@@ -208,13 +210,36 @@ export function WebsiteTemplates({
     console.log('Delete template:', template.id)
   }
 
+  const handlePromoteToTheme = (templateId: string) => {
+    const template = allTemplates.find(t => t.id === templateId)
+    if (!template) return
+
+    // TODO: Get actual customization count from store
+    const affectedWebsitesCount = 2 // Placeholder
+
+    const confirmed = window.confirm(
+      `Promote "${template.name}" to Publisher Theme?\n\n` +
+      `This will share your modifications with all ${affectedWebsitesCount} websites in your publisher network.\n\n` +
+      `Other websites will inherit these changes unless they've been modified or exempted.`
+    )
+
+    if (confirmed) {
+      console.log('Promoting template to Publisher Theme:', templateId, 'from website:', websiteId)
+      // TODO: Implement promotion logic:
+      // 1. Copy routeCanvasItems[route] → publisherThemeCanvas[templateId]
+      // 2. Update all non-modified/non-exempted websites
+      // 3. Show success notification
+      alert(`✅ Template "${template.name}" promoted to Publisher Theme!\n\nAll websites will now inherit these modifications.`)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
         <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Templates</h2>
         <p className="text-gray-600 mt-1">
-          Manage templates and track customizations for this website
+          Manage templates and track modifications for this website
         </p>
         
         {/* Enabled Content Types */}
@@ -269,7 +294,7 @@ export function WebsiteTemplates({
                       : 'Page Template Name'}
                   </th>
                   <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customizations
+                    Modifications
                   </th>
                   <th className="text-right py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -288,6 +313,9 @@ export function WebsiteTemplates({
                     isCollapsed={collapsedGroups.has(template.id)}
                     childrenCount={getChildren(template.id).length}
                     onToggleGroup={() => toggleGroup(template.id)}
+                    consoleMode={consoleMode}
+                    websiteId={websiteId}
+                    onPromoteToPublisherTheme={handlePromoteToTheme}
                     handleEditTemplate={handleEditTemplate}
                     handlePreviewTemplate={handlePreviewTemplate}
                     handleDuplicateTemplate={handleDuplicateTemplate}

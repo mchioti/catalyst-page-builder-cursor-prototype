@@ -1,7 +1,7 @@
 /**
  * Template Divergence Tracker
  * 
- * Shows which journals/pages have customized a template
+ * Shows which journals/pages have modified a template
  * Provides actions: View Diff, Reset, Promote, Exempt
  */
 
@@ -10,27 +10,42 @@ import { Eye, RotateCcw, ArrowUp, Lock, Unlock, ChevronDown, ChevronUp } from 'l
 export interface TemplateDivergenceTrackerProps {
   templateId: string
   templateName: string
+  templateCategory?: string // Template category for filtering promote button
   usePageStore: any // Zustand store hook
   isExpanded?: boolean
   onToggleExpand?: () => void
   expandedOnly?: boolean // If true, only render expanded content (for expansion row)
+  consoleMode?: 'single' | 'multi' // For showing/hiding promote to publisher theme button
+  websiteId?: string // Current website ID for promotion context
+  onPromoteToPublisherTheme?: (templateId: string) => void // Handler for promoting to publisher theme
 }
 
 export function TemplateDivergenceTracker({ 
   templateId, 
   templateName,
+  templateCategory,
   usePageStore,
   isExpanded = false,
   onToggleExpand,
-  expandedOnly = false
+  expandedOnly = false,
+  consoleMode = 'multi',
+  websiteId,
+  onPromoteToPublisherTheme
 }: TemplateDivergenceTrackerProps) {
   
   // Get customizations from store
   const templateCustomizations = usePageStore((state: any) => state.templateCustomizations || [])
   const getCustomizationsForTemplate = usePageStore((state: any) => state.getCustomizationsForTemplate)
+  const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas)
   
   // Get customizations for this specific template
   const customizations = getCustomizationsForTemplate?.(templateId) || []
+  
+  // "Promote to Publisher Theme" should ONLY show if there's a base template (globalTemplateCanvas)
+  // NOT for individual journal customizations - those need to be promoted to base first!
+  // This enforces the step-by-step governance: Issue → Journal → Base → Publisher Theme
+  const hasBaseTemplate = globalTemplateCanvas && globalTemplateCanvas.length > 0
+  const thisWebsiteHasCustomization = hasBaseTemplate
   
   // Debug logging
   console.log('🎯 TemplateDivergenceTracker render:', {
@@ -38,7 +53,10 @@ export function TemplateDivergenceTracker({
     templateName,
     allCustomizations: templateCustomizations.length,
     thisTemplateCustomizations: customizations.length,
-    customizations
+    customizations,
+    thisWebsiteHasCustomization,
+    websiteId,
+    consoleMode
   })
   
   // Calculate stats
@@ -51,7 +69,7 @@ export function TemplateDivergenceTracker({
     return (
       <div className="space-y-2">
         <div className="text-sm font-medium text-gray-900 mb-3">
-          Journals with customizations for {templateName}:
+          Journals with modifications for {templateName}:
         </div>
         {customizations.map((customization: any) => (
           <CustomizationItem
@@ -66,13 +84,11 @@ export function TemplateDivergenceTracker({
     )
   }
   
-  // If no customizations, show simple badge
+  // If no modifications, show nothing (keep it clean)
   if (customizations.length === 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-          ✓ All using base
-        </span>
+        <span className="text-xs text-gray-400">—</span>
       </div>
     )
   }
@@ -92,7 +108,7 @@ export function TemplateDivergenceTracker({
           className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors"
           data-testid={`customized-badge-${customizedCount}`}
         >
-          {customizedCount} customized
+          {customizedCount} modified
           {isExpanded ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
         </button>
       )}
@@ -101,6 +117,22 @@ export function TemplateDivergenceTracker({
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
           {exemptedCount} exempted
         </span>
+      )}
+      
+      {/* Promote to Publisher Theme button - only for Publication Pages in multi-website console when this website has customizations */}
+      {consoleMode === 'multi' && 
+       templateCategory === 'publication' && 
+       thisWebsiteHasCustomization && 
+       onPromoteToPublisherTheme && (
+        <button
+          onClick={() => onPromoteToPublisherTheme(templateId)}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
+          title="Promote this journal's modifications to Publisher Theme"
+          data-testid="promote-to-publisher-theme"
+        >
+          <ArrowUp className="h-3 w-3" />
+          Promote to Theme
+        </button>
       )}
     </div>
   )
@@ -121,9 +153,14 @@ function CustomizationItem({
 }: CustomizationItemProps) {
   const resetToBase = usePageStore((state: any) => state.resetToBase)
   const promoteToBase = usePageStore((state: any) => state.promoteToBase)
+  const promoteToJournalTemplate = usePageStore((state: any) => state.promoteToJournalTemplate)
   const exemptFromUpdates = usePageStore((state: any) => state.exemptFromUpdates)
   const removeExemption = usePageStore((state: any) => state.removeExemption)
   const addNotification = usePageStore((state: any) => state.addNotification)
+  
+  // Determine if this is an individual issue or journal template
+  const isIndividualIssue = !customization.route.startsWith('journal/')
+  const isJournalTemplate = customization.route.startsWith('journal/')
   
   const handleViewDiff = () => {
     console.log('View diff for:', customization.route)
@@ -136,7 +173,7 @@ function CustomizationItem({
   }
   
   const handleReset = () => {
-    if (confirm(`Reset ${customization.journalName} to base template?\n\nAll ${customization.modificationCount} customizations will be lost.`)) {
+    if (confirm(`Reset ${customization.journalName} to base template?\n\nAll ${customization.modificationCount} modifications will be lost.`)) {
       resetToBase?.(customization.route)
       addNotification?.({
         type: 'success',
@@ -147,13 +184,26 @@ function CustomizationItem({
   }
   
   const handlePromote = () => {
-    if (confirm(`Promote ${customization.journalName}'s customizations to base template?\n\nAll other journals will inherit these changes (except exempted ones).`)) {
-      promoteToBase?.(customization.route, templateId)
-      addNotification?.({
-        type: 'success',
-        title: 'Promoted to Base',
-        message: `${customization.journalName}'s customizations are now the base template`
-      })
+    if (isIndividualIssue) {
+      // Promote individual issue to journal template (Level 1 → Level 2)
+      if (confirm(`Promote this issue's modifications to ALL ${customization.journalName} issues?\n\nAll issues in this journal will inherit these changes.`)) {
+        promoteToJournalTemplate?.(customization.route, customization.journalCode, templateId)
+        addNotification?.({
+          type: 'success',
+          title: 'Promoted to Journal Template',
+          message: `All ${customization.journalName} issues will now inherit these changes`
+        })
+      }
+    } else if (isJournalTemplate) {
+      // Promote journal template to base template (Level 2 → Level 3)
+      if (confirm(`Promote ${customization.journalName}'s template to ALL journals?\n\nAll journals (ADVMA, EMBO, etc.) will inherit these changes (except exempted ones).`)) {
+        promoteToBase?.(customization.route, templateId)
+        addNotification?.({
+          type: 'success',
+          title: 'Promoted to Base Template',
+          message: `All journals will now inherit ${customization.journalName}'s modifications`
+        })
+      }
     }
   }
   
@@ -168,7 +218,7 @@ function CustomizationItem({
         })
       }
     } else {
-      if (confirm(`Exempt ${customization.journalName} from base template updates?\n\nThis journal will keep its customizations even when the base template is updated.`)) {
+      if (confirm(`Exempt ${customization.journalName} from base template updates?\n\nThis journal will keep its modifications even when the base template is updated.`)) {
         exemptFromUpdates?.(customization.route)
         addNotification?.({
           type: 'info',
@@ -221,8 +271,16 @@ function CustomizationItem({
         
         <button
           onClick={handlePromote}
-          className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-          title="Promote to base template"
+          className={`p-1.5 rounded transition-colors ${
+            isIndividualIssue 
+              ? 'text-yellow-600 hover:bg-yellow-50' 
+              : 'text-green-600 hover:bg-green-50'
+          }`}
+          title={
+            isIndividualIssue 
+              ? 'Promote to journal template (all issues in this journal)' 
+              : 'Promote to base template (all journals)'
+          }
           data-testid={`promote-${customization.journalCode}`}
         >
           <ArrowUp className="h-4 w-4" />

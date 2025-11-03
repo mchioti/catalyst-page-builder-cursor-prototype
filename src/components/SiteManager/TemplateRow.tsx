@@ -4,7 +4,7 @@
  */
 
 import { useState, Fragment } from 'react'
-import { ChevronRight, ChevronDown } from 'lucide-react'
+import { ChevronRight, ChevronDown, ArrowUp } from 'lucide-react'
 import { TemplateDivergenceTracker } from './TemplateDivergenceTracker'
 
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'global' | 'section'
@@ -39,6 +39,9 @@ interface TemplateRowProps {
   onToggleGroup?: () => void // Toggle expand/collapse
   isSelected?: boolean // Is this template selected for bulk update?
   onToggleSelect?: (templateId: string) => void // Toggle selection
+  consoleMode?: 'single' | 'multi' // For showing/hiding promote to publisher theme button
+  websiteId?: string // Current website ID for promotion context
+  onPromoteToPublisherTheme?: (templateId: string) => void // Handler for promoting to publisher theme
   handleEditTemplate: (template: Template) => void
   handlePreviewTemplate: (template: Template) => void
   handleDuplicateTemplate: (template: Template) => void
@@ -56,6 +59,9 @@ export function TemplateRow({
   onToggleGroup,
   isSelected = false,
   onToggleSelect,
+  consoleMode,
+  websiteId,
+  onPromoteToPublisherTheme,
   handleEditTemplate,
   handlePreviewTemplate,
   handleDuplicateTemplate,
@@ -66,6 +72,9 @@ export function TemplateRow({
   // Get customizations for expansion row
   const getCustomizationsForTemplate = usePageStore?.((state: any) => state.getCustomizationsForTemplate)
   const customizations = getCustomizationsForTemplate?.(template.id) || []
+  
+  // Get global template canvas for promote button visibility
+  const globalTemplateCanvas = usePageStore?.((state: any) => state.globalTemplateCanvas) || []
 
   // Determine if this template can be edited at theme level
   const isLockedAtThemeLevel = !showDivergence && (template.category === 'publication' || template.category === 'website')
@@ -165,9 +174,13 @@ export function TemplateRow({
               <TemplateDivergenceTracker
                 templateId={template.id}
                 templateName={template.name}
+                templateCategory={template.category}
                 usePageStore={usePageStore}
                 isExpanded={isExpanded}
                 onToggleExpand={() => setIsExpanded(!isExpanded)}
+                consoleMode={consoleMode}
+                websiteId={websiteId}
+                onPromoteToPublisherTheme={onPromoteToPublisherTheme}
               />
             ) : (
               <span className="text-xs text-gray-400">—</span>
@@ -210,8 +223,9 @@ export function TemplateRow({
                   )}
                 </>
               ) : (
-                /* Website View (showDivergence = true) - Full edit capabilities */
+                /* Website View (showDivergence = true) - Minimal view for template divergence management */
                 <>
+                  {/* TODO: Uncomment these when template editing is implemented
                   <button 
                     onClick={() => handleEditTemplate(template)}
                     className="text-blue-600 hover:text-blue-800 text-left transition-colors"
@@ -240,6 +254,24 @@ export function TemplateRow({
                       </button>
                     )}
                   </div>
+                  */}
+                  
+                  {/* Promote to Publisher Theme button - template level */}
+                  {consoleMode === 'multi' && 
+                   template.category === 'publication' && 
+                   template.id === 'table-of-contents' && // Only TOC template can be promoted (has globalTemplateCanvas)
+                   globalTemplateCanvas && 
+                   globalTemplateCanvas.length > 0 &&
+                   onPromoteToPublisherTheme && (
+                    <button
+                      onClick={() => onPromoteToPublisherTheme(template.id)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded transition-colors border border-purple-200"
+                      title="Promote to Publisher Theme"
+                    >
+                      <ArrowUp className="w-3 h-3" />
+                      Promote to Publisher Theme
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -256,10 +288,14 @@ export function TemplateRow({
             <TemplateDivergenceTracker
               templateId={template.id}
               templateName={template.name}
+              templateCategory={template.category}
               usePageStore={usePageStore}
               isExpanded={isExpanded}
               onToggleExpand={() => setIsExpanded(!isExpanded)}
               expandedOnly={true}
+              consoleMode={consoleMode}
+              websiteId={websiteId}
+              onPromoteToPublisherTheme={onPromoteToPublisherTheme}
             />
           </td>
         </tr>

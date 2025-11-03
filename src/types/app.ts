@@ -209,5 +209,7 @@ export type PageState = {
   removeExemption: (route: string) => void
   resetToBase: (route: string) => void
   promoteToBase: (route: string, templateId: string) => void
+  promoteToJournalTemplate: (route: string, journalCode: string, templateId: string) => void
+  promoteToPublisherTheme: (templateId: string, journalCode?: string) => void
   updateCustomizationCount: (route: string, count: number) => void
 }
