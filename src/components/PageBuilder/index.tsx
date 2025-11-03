@@ -81,7 +81,7 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackCustomization } = usePageStore()
   
   // Detect editing context
   const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
@@ -130,9 +130,21 @@ export function PageBuilder({
     // Save canvas changes to route-specific storage when editing individual issues
     if (isIndividualIssueEdit && canvasItems.length > 0) {
       console.log('💾 Saving individual issue changes to route:', mockLiveSiteRoute)
+      console.log('📦 Canvas items being saved:', canvasItems.length, 'items')
       setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
+      
+      // Track customization for divergence management
+      if (journalCode && trackCustomization) {
+        console.log('📊 Tracking template customization for:', journalName, '(', journalCode, ')')
+        console.log('📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
+        trackCustomization(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
+      } else {
+        console.warn('⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackCustomization })
+      }
+    } else {
+      console.log('⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
     }
-  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute])
+  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackCustomization])
   
   // Global template canvas saving
   useEffect(() => {
@@ -584,8 +596,8 @@ export function PageBuilder({
       })
       
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      const targetIndex = canvasItems.findIndex(item => item.id === targetSectionId)
-      const sidebarIndex = canvasItems.findIndex(item => item.id === draggedItem.id)
+      const targetIndex = canvasItems.findIndex((item: CanvasItem) => item.id === targetSectionId)
+      const sidebarIndex = canvasItems.findIndex((item: CanvasItem) => item.id === draggedItem.id)
       
       if (targetIndex !== -1 && sidebarIndex !== -1) {
         // Move sidebar to just before the target section
@@ -844,7 +856,7 @@ export function PageBuilder({
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
                   <Settings className="w-4 h-4" />
-                    Design System Console
+                    Design Console
                 </button>
               </div>
             </div>

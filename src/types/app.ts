@@ -21,14 +21,17 @@ export type DesignConsoleView =
   // Website-level views (per-website customization)
   | 'wiley-main-settings'
   | 'wiley-main-branding'
+  | 'wiley-main-templates'
   | 'wiley-main-publication-cards'
   | 'wiley-main-custom-templates'
   | 'research-hub-settings'
   | 'research-hub-branding'
+  | 'research-hub-templates'
   | 'research-hub-publication-cards'
   | 'research-hub-custom-templates'
   | 'journal-of-science-settings'
   | 'journal-of-science-branding'
+  | 'journal-of-science-templates'
   | 'journal-of-science-publication-cards'
   | 'journal-of-science-custom-templates'
   // System views
@@ -84,6 +87,17 @@ export type PageIssue = {
   suggestions?: string[]
 }
 
+// Template Divergence Management
+export type TemplateCustomization = {
+  route: string           // e.g., 'toc/dgov/current'
+  journalCode: string     // e.g., 'dgov' (ADVMA)
+  journalName: string     // e.g., 'Digital Government: Research and Practice'
+  templateId: string      // e.g., 'toc-template'
+  modificationCount: number
+  lastModified: Date
+  isExempt: boolean       // True = don't inherit base template updates
+}
+
 export type PageState = {
   // Routing
   currentView: AppView
@@ -134,6 +148,10 @@ export type PageState = {
   websites: Website[]
   themes: Theme[]
   
+  // Template Divergence Tracking
+  templateCustomizations: TemplateCustomization[]
+  exemptedRoutes: Set<string>
+  
   // Page Builder Actions
   addWidget: (widget: Widget) => void
   addSection: (section: WidgetSection) => void
@@ -182,4 +200,14 @@ export type PageState = {
   addTheme: (theme: Theme) => void
   updateTheme: (id: string, theme: Partial<Theme>) => void
   removeTheme: (id: string) => void
+  
+  // Template Divergence Management
+  trackCustomization: (route: string, journalCode: string, journalName: string, templateId: string) => void
+  getCustomizationsForTemplate: (templateId: string) => TemplateCustomization[]
+  getCustomizationForRoute: (route: string) => TemplateCustomization | null
+  exemptFromUpdates: (route: string) => void
+  removeExemption: (route: string) => void
+  resetToBase: (route: string) => void
+  promoteToBase: (route: string, templateId: string) => void
+  updateCustomizationCount: (route: string, count: number) => void
 }

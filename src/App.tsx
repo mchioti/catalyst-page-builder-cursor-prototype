@@ -6,7 +6,8 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
-import { SiteManagerTemplates } from './components/SiteManager/SiteManagerTemplates'
+import { SiteManagerTemplates, ALL_TEMPLATES } from './components/SiteManager/SiteManagerTemplates'
+import { WebsiteTemplates } from './components/SiteManager/WebsiteTemplates'
 import { WebsiteBrandingConfiguration } from './components/SiteManager/WebsiteBrandingConfiguration'
 import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
@@ -27,7 +28,7 @@ import {
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
   // App types
-  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType,
+  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType, type TemplateCustomization,
   // Schema.org types
   type SchemaObject, type SchemaOrgType
 } from './types'
@@ -1983,6 +1984,10 @@ const usePageStore = create<PageState>((set, get) => ({
     }
   ] as Theme[],
   
+  // Template Divergence Tracking
+  templateCustomizations: [],
+  exemptedRoutes: new Set<string>(),
+  
   publicationCardVariants: [
     {
       id: 'compact-variant',
@@ -2184,6 +2189,140 @@ const usePageStore = create<PageState>((set, get) => ({
   removeTheme: (id) => set((state) => ({
     themes: state.themes.filter(t => t.id !== id)
   })),
+  
+  // Template Divergence Management
+  trackCustomization: (route, journalCode, journalName, templateId) => {
+    console.log('🔵 trackCustomization CALLED:', { route, journalCode, journalName, templateId })
+    const state = get()
+    const existingCustomization = state.templateCustomizations.find(c => c.route === route)
+    console.log('🔍 Existing customization:', existingCustomization)
+    console.log('📊 Current customizations:', state.templateCustomizations)
+    
+    if (existingCustomization) {
+      // Update existing
+      console.log('♻️ Updating existing customization, count:', existingCustomization.modificationCount + 1)
+      set((s) => ({
+        templateCustomizations: s.templateCustomizations.map(c => 
+          c.route === route 
+            ? { ...c, modificationCount: c.modificationCount + 1, lastModified: new Date() }
+            : c
+        )
+      }))
+    } else {
+      // Add new
+      console.log('✨ Creating NEW customization')
+      const newCustomization: TemplateCustomization = {
+        route,
+        journalCode,
+        journalName,
+        templateId,
+        modificationCount: 1,
+        lastModified: new Date(),
+        isExempt: false
+      }
+      set((s) => ({
+        templateCustomizations: [...s.templateCustomizations, newCustomization]
+      }))
+    }
+    
+    // Verify update
+    const updatedState = get()
+    console.log('✅ Updated customizations:', updatedState.templateCustomizations)
+  },
+  
+  getCustomizationsForTemplate: (templateId) => {
+    const state = get()
+    return state.templateCustomizations.filter(c => c.templateId === templateId)
+  },
+  
+  getCustomizationForRoute: (route) => {
+    const state = get()
+    return state.templateCustomizations.find(c => c.route === route) || null
+  },
+  
+  exemptFromUpdates: (route) => {
+    const state = get()
+    const newExemptedRoutes = new Set(state.exemptedRoutes)
+    newExemptedRoutes.add(route)
+    
+    set((s) => ({
+      exemptedRoutes: newExemptedRoutes,
+      templateCustomizations: s.templateCustomizations.map(c =>
+        c.route === route ? { ...c, isExempt: true } : c
+      )
+    }))
+  },
+  
+  removeExemption: (route) => {
+    const state = get()
+    const newExemptedRoutes = new Set(state.exemptedRoutes)
+    newExemptedRoutes.delete(route)
+    
+    set((s) => ({
+      exemptedRoutes: newExemptedRoutes,
+      templateCustomizations: s.templateCustomizations.map(c =>
+        c.route === route ? { ...c, isExempt: false } : c
+      )
+    }))
+  },
+  
+  resetToBase: (route) => {
+    const state = get()
+    const { routeCanvasItems } = state
+    
+    // Remove route-specific canvas
+    const newRouteCanvasItems = { ...routeCanvasItems }
+    delete newRouteCanvasItems[route]
+    
+    // Remove customization tracking
+    set((s) => ({
+      routeCanvasItems: newRouteCanvasItems,
+      templateCustomizations: s.templateCustomizations.filter(c => c.route !== route)
+    }))
+    
+    console.log(`✅ Reset route ${route} to base template`)
+  },
+  
+  promoteToBase: (route, templateId) => {
+    const state = get()
+    const { routeCanvasItems, templateCustomizations } = state
+    const customizedCanvas = routeCanvasItems[route]
+    
+    if (!customizedCanvas) {
+      console.warn(`No customized canvas found for route ${route}`)
+      return
+    }
+    
+    // Get all customizations for this template that are NOT exempted
+    const affectedCustomizations = templateCustomizations.filter(
+      c => c.templateId === templateId && c.route !== route && !c.isExempt
+    )
+    
+    // Set as global template
+    set({ globalTemplateCanvas: customizedCanvas })
+    
+    // Clear the promoted route's customization (it now matches base)
+    const newRouteCanvasItems = { ...routeCanvasItems }
+    delete newRouteCanvasItems[route]
+    
+    // Remove customizations that now match the new base
+    set((s) => ({
+      routeCanvasItems: newRouteCanvasItems,
+      templateCustomizations: s.templateCustomizations.filter(c => c.route !== route)
+    }))
+    
+    console.log(`✅ Promoted route ${route} to base template`)
+    console.log(`📊 ${affectedCustomizations.length} journals will inherit this change`)
+  },
+  
+  updateCustomizationCount: (route, count) => {
+    set((s) => ({
+      templateCustomizations: s.templateCustomizations.map(c =>
+        c.route === route ? { ...c, modificationCount: count, lastModified: new Date() } : c
+      )
+    }))
+  },
+  
   createContentBlockWithLayout: (layout) => {
     const { canvasItems, insertPosition } = get()
     
@@ -2680,10 +2819,16 @@ function DesignConsole() {
   const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['wiley-main'])) // Default expand wiley-main
+  const [consoleMode, setConsoleMode] = useState<'single' | 'multi'>('multi') // Toggle between single/multi-website publisher
 
-  // Get only themes that are currently used by websites (for this publisher)
+  // Filter websites based on console mode
+  const displayedWebsites = consoleMode === 'single' 
+    ? websites.filter(w => w.id === 'journal-of-science') // Single website example
+    : websites // Show all websites for multi-website publisher
+
+  // Get only themes that are currently used by displayed websites
   const usedThemes = themes.filter(theme => 
-    websites.some(website => website.themeId === theme.id)
+    displayedWebsites.some(website => website.themeId === theme.id)
   )
 
   const toggleTheme = (themeId: string) => {
@@ -2722,7 +2867,31 @@ function DesignConsole() {
               <ArrowLeft className="w-4 h-4" />
               Back to Page Builder
             </button>
-            <h1 className="text-xl font-semibold text-slate-800">Design System Console</h1>
+            <h1 className="text-xl font-semibold text-slate-800">Design Console</h1>
+            
+            {/* Console Mode Toggle */}
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
+              <button
+                onClick={() => setConsoleMode('multi')}
+                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  consoleMode === 'multi'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Multi-Website Console
+              </button>
+              <button
+                onClick={() => setConsoleMode('single')}
+                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  consoleMode === 'single'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Single Website Console
+              </button>
+            </div>
             </div>
           <div className="flex items-center gap-3">
             <button
@@ -2821,7 +2990,7 @@ function DesignConsole() {
                             </div>
                           </div>
             <div className="space-y-1">
-              {websites.map((website) => (
+              {displayedWebsites.map((website) => (
                 <div key={website.id}>
                   <button
                     onClick={() => toggleWebsite(website.id)}
@@ -2860,6 +3029,18 @@ function DesignConsole() {
                       >
                         <Palette className="w-4 h-4" />
                         Branding Configuration
+                      </button>
+
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Templates
                       </button>
 
                       <button
@@ -2976,6 +3157,12 @@ function DesignConsole() {
                         Branding Configuration →
                       </button>
                       <button
+                        onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
+                        className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Templates →
+                      </button>
+                      <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
@@ -2992,7 +3179,7 @@ function DesignConsole() {
                 ))}
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">All Websites</h3>
-                  <p className="text-gray-600 text-sm mb-4">Manage all {websites.length} websites and track modifications</p>
+                  <p className="text-gray-600 text-sm mb-4">Manage all {displayedWebsites.length} websites and track modifications</p>
                   <button 
                     onClick={() => setSiteManagerView('websites')}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -3027,7 +3214,7 @@ function DesignConsole() {
                     </div>
           )}
           {siteManagerView === 'modernist-theme-templates' && (
-            <SiteManagerTemplates themeId="modernist-theme" />
+            <SiteManagerTemplates themeId="modernist-theme" usePageStore={usePageStore} />
           )}
           
           {siteManagerView === 'classicist-theme-theme-settings' && (
@@ -3053,7 +3240,7 @@ function DesignConsole() {
               </div>
             )}
           {siteManagerView === 'classicist-theme-templates' && (
-            <SiteManagerTemplates themeId="classicist-theme" />
+            <SiteManagerTemplates themeId="classicist-theme" usePageStore={usePageStore} />
           )}
             
           {siteManagerView === 'curator-theme-theme-settings' && (
@@ -3079,7 +3266,7 @@ function DesignConsole() {
                   </div>
           )}
           {siteManagerView === 'curator-theme-templates' && (
-            <SiteManagerTemplates themeId="curator-theme" />
+            <SiteManagerTemplates themeId="curator-theme" usePageStore={usePageStore} />
           )}
 
           {siteManagerView === 'wiley-main-settings' && (
@@ -3093,6 +3280,16 @@ function DesignConsole() {
           )}
           {siteManagerView === 'wiley-main-branding' && (
             <WebsiteBrandingConfiguration websiteId="wiley-main" usePageStore={usePageStore} />
+          )}
+          {siteManagerView === 'wiley-main-templates' && (
+            <WebsiteTemplates
+              websiteId="wiley-main"
+              websiteName="Wiley Online Library"
+              enabledContentTypes={['journals', 'books']}
+              hasSubjectOrganization={true}
+              allTemplates={ALL_TEMPLATES}
+              usePageStore={usePageStore}
+            />
           )}
           {siteManagerView === 'wiley-main-publication-cards' && (
                       <div>
@@ -3128,6 +3325,16 @@ function DesignConsole() {
           {siteManagerView === 'research-hub-branding' && (
             <WebsiteBrandingConfiguration websiteId="research-hub" usePageStore={usePageStore} />
           )}
+          {siteManagerView === 'research-hub-templates' && (
+            <WebsiteTemplates
+              websiteId="research-hub"
+              websiteName="Wiley Research Hub"
+              enabledContentTypes={['journals']}
+              hasSubjectOrganization={false}
+              allTemplates={ALL_TEMPLATES}
+              usePageStore={usePageStore}
+            />
+          )}
           {siteManagerView === 'research-hub-publication-cards' && (
             <div>
               <div className="mb-6 border-b pb-4">
@@ -3161,6 +3368,16 @@ function DesignConsole() {
           )}
           {siteManagerView === 'journal-of-science-branding' && (
             <WebsiteBrandingConfiguration websiteId="journal-of-science" usePageStore={usePageStore} />
+          )}
+          {siteManagerView === 'journal-of-science-templates' && (
+            <WebsiteTemplates
+              websiteId="journal-of-science"
+              websiteName="Journal of Advanced Science"
+              enabledContentTypes={['journals']}
+              hasSubjectOrganization={true}
+              allTemplates={ALL_TEMPLATES}
+              usePageStore={usePageStore}
+            />
           )}
           {siteManagerView === 'journal-of-science-publication-cards' && (
             <div>

@@ -1,14 +1,19 @@
 import { useState } from 'react'
-import { Search, Plus, Filter, X } from 'lucide-react'
+import { Search, Plus, Filter, X, RefreshCw } from 'lucide-react'
+import { TemplateRow } from './TemplateRow'
 
 // Template categories - 2 main types: page templates and section templates
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'global' | 'section'
+
+// Content types that templates support
+type ContentType = 'journals' | 'books' | 'proceedings' | 'blogs' | 'news' | 'general'
 
 type Template = {
   id: string
   name: string
   description: string
   category: TemplateCategory
+  contentType?: ContentType // What type of content this template is for (optional for now)
   inheritsFrom: string
   modifications: number
   createdAt: Date
@@ -18,6 +23,8 @@ type Template = {
   tags: string[]
   thumbnail?: string
   status: 'active' | 'draft' | 'archived'
+  version?: string // e.g., "v2.1.3"
+  updateAvailable?: boolean // New version available from platform
 }
 
 // Website Page Templates from mockup
@@ -315,7 +322,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Publication Pages',
     description: 'Root template for all publication-related pages',
     category: 'publication',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'theme-global-sections',
     modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-15'),
@@ -324,40 +331,123 @@ const PUBLICATION_TEMPLATES: Template[] = [
     tags: ['publication', 'root', 'template'],
     status: 'active'
   },
+  // Intermediate category templates
+  {
+    id: 'journal-pages',
+    name: 'Journal Pages',
+    description: 'Parent template for all journal-related pages',
+    category: 'publication',
+    contentType: 'journals',
+    inheritsFrom: 'publication-pages',
+    modifications: 0,
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'Editorial Team',
+    usageCount: 4,
+    tags: ['journal', 'category', 'parent'],
+    status: 'active'
+  },
+  {
+    id: 'book-pages',
+    name: 'Book Pages',
+    description: 'Parent template for all book-related pages',
+    category: 'publication',
+    contentType: 'books',
+    inheritsFrom: 'publication-pages',
+    modifications: 0,
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'Book Team',
+    usageCount: 4,
+    tags: ['book', 'category', 'parent'],
+    status: 'active'
+  },
+  {
+    id: 'conference-pages',
+    name: 'Conference Pages',
+    description: 'Parent template for all conference/proceedings-related pages',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'publication-pages',
+    modifications: 0,
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'Conference Team',
+    usageCount: 5,
+    tags: ['conference', 'proceedings', 'category', 'parent'],
+    status: 'active'
+  },
+  {
+    id: 'blog-pages',
+    name: 'Blog Pages',
+    description: 'Parent template for all blog-related pages',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'publication-pages',
+    modifications: 0,
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'Content Team',
+    usageCount: 5,
+    tags: ['blog', 'category', 'parent'],
+    status: 'active'
+  },
+  {
+    id: 'news-pages',
+    name: 'News Pages',
+    description: 'Parent template for all news-related pages',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'publication-pages',
+    modifications: 0,
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-03-16'),
+    createdBy: 'News Team',
+    usageCount: 6,
+    tags: ['news', 'category', 'parent'],
+    status: 'active'
+  },
+  // Journal Templates
   {
     id: 'journal-home',
     name: 'Journal Home',
     description: 'Homepage for individual journals',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'journals',
+    inheritsFrom: 'journal-pages',
     modifications: 2,
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-03-18'),
     createdBy: 'Editorial Team',
     usageCount: 2,
     tags: ['journal', 'homepage', 'editorial'],
-    status: 'active'
+    status: 'active',
+    version: 'v1.8.2'
   },
   {
     id: 'table-of-contents',
     name: 'Table Of Contents',
     description: 'Table of contents for journal issues',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'journals',
+    inheritsFrom: 'journal-pages',
     modifications: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-20'),
     createdBy: 'Editorial Team',
     usageCount: 0,
     tags: ['toc', 'issue', 'contents'],
-    status: 'active'
+    status: 'active',
+    version: 'v2.3.1',
+    updateAvailable: true // New version v2.4.0 available
   },
   {
     id: 'list-of-issues',
     name: 'List of Issues',
     description: 'Archive listing of journal issues',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'journals',
+    inheritsFrom: 'journal-pages',
     modifications: 0,
     createdAt: new Date('2024-01-28'),
     updatedAt: new Date('2024-03-22'),
@@ -371,21 +461,25 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Article',
     description: 'Individual article page template',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'journals',
+    inheritsFrom: 'journal-pages',
     modifications: 10,
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-03-25'),
     createdBy: 'Publishing Team',
     usageCount: 1,
     tags: ['article', 'content', 'academic'],
-    status: 'active'
+    status: 'active',
+    version: 'v3.1.0'
   },
+  // Book Templates
   {
     id: 'book-series',
     name: 'Book Series',
     description: 'Book series landing page',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'books',
+    inheritsFrom: 'book-pages',
     modifications: 0,
     createdAt: new Date('2024-02-02'),
     updatedAt: new Date('2024-03-28'),
@@ -399,7 +493,8 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Book Set',
     description: 'Book set collection page',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'books',
+    inheritsFrom: 'book-pages',
     modifications: 0,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-03-30'),
@@ -413,7 +508,8 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Book',
     description: 'Individual book page template',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'books',
+    inheritsFrom: 'book-pages',
     modifications: 0,
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-04-02'),
@@ -427,13 +523,257 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Chapter',
     description: 'Individual book chapter page',
     category: 'publication',
-    inheritsFrom: 'Publication Pages',
+    contentType: 'books',
+    inheritsFrom: 'book-pages',
     modifications: 0,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-04-05'),
     createdBy: 'Book Team',
     usageCount: 0,
     tags: ['chapter', 'book', 'content'],
+    status: 'active'
+  },
+  // Conference Proceedings Templates
+  {
+    id: 'conference-home',
+    name: 'Conference Home',
+    description: 'Landing page for conference series with upcoming/past events, keynote speakers, and submission info',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'conference-pages',
+    modifications: 0,
+    createdAt: new Date('2024-02-15'),
+    updatedAt: new Date('2024-04-10'),
+    createdBy: 'Conference Team',
+    usageCount: 0,
+    tags: ['conference', 'events', 'proceedings', 'landing'],
+    status: 'active'
+  },
+  {
+    id: 'conference-proceedings',
+    name: 'Conference Proceedings Volume',
+    description: 'Table of contents for a specific conference event, listing papers by track/session',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'conference-pages',
+    modifications: 0,
+    createdAt: new Date('2024-02-18'),
+    updatedAt: new Date('2024-04-12'),
+    createdBy: 'Conference Team',
+    usageCount: 0,
+    tags: ['conference', 'proceedings', 'toc', 'papers'],
+    status: 'active'
+  },
+  {
+    id: 'conference-paper',
+    name: 'Conference Paper',
+    description: 'Individual conference paper/presentation page with abstract, authors, and media',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'conference-pages',
+    modifications: 0,
+    createdAt: new Date('2024-02-20'),
+    updatedAt: new Date('2024-04-15'),
+    createdBy: 'Conference Team',
+    usageCount: 0,
+    tags: ['conference', 'paper', 'presentation', 'academic'],
+    status: 'active'
+  },
+  {
+    id: 'conference-program',
+    name: 'Conference Program/Schedule',
+    description: 'Interactive conference schedule with session times, tracks, and speaker information',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'conference-pages',
+    modifications: 0,
+    createdAt: new Date('2024-02-22'),
+    updatedAt: new Date('2024-04-18'),
+    createdBy: 'Conference Team',
+    usageCount: 0,
+    tags: ['conference', 'schedule', 'program', 'sessions'],
+    status: 'active'
+  },
+  {
+    id: 'conference-browse',
+    name: 'Conference Browse',
+    description: 'Browse conferences by year, topic, track, or location with timeline view',
+    category: 'publication',
+    contentType: 'proceedings',
+    inheritsFrom: 'conference-pages',
+    modifications: 0,
+    createdAt: new Date('2024-02-25'),
+    updatedAt: new Date('2024-04-20'),
+    createdBy: 'Conference Team',
+    usageCount: 0,
+    tags: ['conference', 'browse', 'archive', 'discovery'],
+    status: 'active'
+  },
+  // Blog Templates
+  {
+    id: 'blog-home',
+    name: 'Blog Home',
+    description: 'Blog landing page with featured posts, recent articles, and category navigation',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'blog-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-01'),
+    updatedAt: new Date('2024-04-22'),
+    createdBy: 'Content Team',
+    usageCount: 0,
+    tags: ['blog', 'landing', 'editorial', 'magazine'],
+    status: 'active'
+  },
+  {
+    id: 'blog-post',
+    name: 'Blog Post',
+    description: 'Individual blog article page with rich media, author bio, and related content',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'blog-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-05'),
+    updatedAt: new Date('2024-04-25'),
+    createdBy: 'Content Team',
+    usageCount: 0,
+    tags: ['blog', 'post', 'article', 'content'],
+    status: 'active'
+  },
+  {
+    id: 'blog-archive',
+    name: 'Blog Archive',
+    description: 'Browse blog posts by date, category, or tag with grid/list views',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'blog-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-08'),
+    updatedAt: new Date('2024-04-28'),
+    createdBy: 'Content Team',
+    usageCount: 0,
+    tags: ['blog', 'archive', 'browse', 'categories'],
+    status: 'active'
+  },
+  {
+    id: 'blog-author-profile',
+    name: 'Blog Author Profile',
+    description: 'Author biography page with photo, credentials, and all posts by author',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'blog-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-10'),
+    updatedAt: new Date('2024-04-30'),
+    createdBy: 'Content Team',
+    usageCount: 0,
+    tags: ['blog', 'author', 'profile', 'biography'],
+    status: 'active'
+  },
+  {
+    id: 'blog-category',
+    name: 'Blog Category Landing',
+    description: 'Category-specific landing page with featured and curated content',
+    category: 'publication',
+    contentType: 'blogs',
+    inheritsFrom: 'blog-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-12'),
+    updatedAt: new Date('2024-05-02'),
+    createdBy: 'Content Team',
+    usageCount: 0,
+    tags: ['blog', 'category', 'curated', 'collection'],
+    status: 'active'
+  },
+  // News Templates
+  {
+    id: 'news-home',
+    name: 'News Home',
+    description: 'News portal with breaking stories, headlines by topic, and multimedia content',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-15'),
+    updatedAt: new Date('2024-05-05'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['news', 'breaking', 'headlines', 'current'],
+    status: 'active'
+  },
+  {
+    id: 'news-article',
+    name: 'News Article',
+    description: 'Individual news story with byline, publication time, and related coverage',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-18'),
+    updatedAt: new Date('2024-05-08'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['news', 'article', 'story', 'coverage'],
+    status: 'active'
+  },
+  {
+    id: 'news-archive',
+    name: 'News Archive',
+    description: 'Browse news by date, topic, or region with timeline view',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-20'),
+    updatedAt: new Date('2024-05-10'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['news', 'archive', 'timeline', 'history'],
+    status: 'active'
+  },
+  {
+    id: 'press-release',
+    name: 'Press Release Archive',
+    description: 'Corporate press releases organized by date and topic with media contact info',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-22'),
+    updatedAt: new Date('2024-05-12'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['press', 'release', 'corporate', 'announcements'],
+    status: 'active'
+  },
+  {
+    id: 'media-resources',
+    name: 'Media Resources',
+    description: 'Media kit with logos, brand guidelines, fact sheets, and downloadable assets',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-25'),
+    updatedAt: new Date('2024-05-15'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['media', 'resources', 'press-kit', 'assets'],
+    status: 'active'
+  },
+  {
+    id: 'news-topic',
+    name: 'News by Topic',
+    description: 'Topic-specific news landing page (e.g., Science Policy, Research Funding)',
+    category: 'publication',
+    contentType: 'news',
+    inheritsFrom: 'news-pages',
+    modifications: 0,
+    createdAt: new Date('2024-03-28'),
+    updatedAt: new Date('2024-05-18'),
+    createdBy: 'News Team',
+    usageCount: 0,
+    tags: ['news', 'topic', 'category', 'curated'],
     status: 'active'
   }
 ]
@@ -698,16 +1038,22 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
   }
 ]
 
+// Export all templates for use in other components (e.g., WebsiteTemplates)
+export const ALL_TEMPLATES = [...WEBSITE_TEMPLATES, ...PUBLICATION_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
+
 interface SiteManagerTemplatesProps {
   themeId?: string // Theme ID to display in header badge
+  usePageStore?: any // Zustand store hook for divergence tracking
 }
 
-export function SiteManagerTemplates({ themeId }: SiteManagerTemplatesProps) {
+export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTemplatesProps) {
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft' | 'archived'>('all')
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set()) // For bulk updates
 
   // Map theme IDs to display names
   const getThemeName = (themeId?: string): string => {
@@ -811,45 +1157,162 @@ export function SiteManagerTemplates({ themeId }: SiteManagerTemplatesProps) {
     alert(`Create New ${categories.find(c => c.key === selectedCategory)?.label.replace(' Templates', '')} Template\n\nThis would launch the Template Creation Wizard:\n\n1. Choose starting point (blank, existing template, or external)\n2. Configure template metadata\n3. Design in Page Builder\n4. Set inheritance and permissions\n5. Publish template`)
   }
 
-  // Helper function to determine indentation level based on inheritance
+  // Helper function to determine indentation level based on inheritance (ID-based)
   const getIndentationLevel = (template: Template): number => {
-    // Root themes (no indentation)
-    if (template.inheritsFrom === 'Modern Theme' || template.inheritsFrom === 'Classic Theme') {
+    // Root template (no parent)
+    if (!template.inheritsFrom) {
       return 0
     }
     
-    // First level templates inheriting directly from Theme (Global sections)
-    if (template.inheritsFrom === 'Theme (Global sections)') {
-      return 1
+    // Find parent by ID
+    const parentTemplate = allTemplates.find(t => t.id === template.inheritsFrom)
+    
+    if (!parentTemplate) {
+      // Legacy fallback for label-based inheritance (if any remain)
+      const parentByName = allTemplates.find(t => t.name === template.inheritsFrom)
+      if (parentByName) {
+        return getIndentationLevel(parentByName) + 1
+      }
+      return 0 // Safety fallback
     }
     
-    // Second level templates (inherit from Publication Pages, Supporting Pages, etc.)
-    if (template.inheritsFrom === 'Publication Pages' || template.inheritsFrom === 'Supporting Pages') {
-      return 2
+    // Recursive: parent's level + 1
+    return getIndentationLevel(parentTemplate) + 1
+  }
+
+  // Check if template is a group header (intermediate category template)
+  const isGroupHeader = (template: Template): boolean => {
+    const groupIds = ['journal-pages', 'book-pages', 'conference-pages', 'blog-pages', 'news-pages']
+    return groupIds.includes(template.id)
+  }
+
+  // Get children of a template
+  const getChildren = (parentId: string): Template[] => {
+    return allTemplates.filter(t => t.inheritsFrom === parentId)
+  }
+
+  // Toggle group expansion
+  const toggleGroup = (templateId: string) => {
+    setCollapsedGroups(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId)
+      } else {
+        newSet.add(templateId)
+      }
+      return newSet
+    })
+  }
+
+  // Toggle template selection for bulk update
+  const toggleTemplateSelection = (templateId: string) => {
+    setSelectedTemplates(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId)
+      } else {
+        newSet.add(templateId)
+      }
+      return newSet
+    })
+  }
+
+  // Select/deselect all templates
+  const toggleSelectAll = () => {
+    if (selectedTemplates.size === filteredTemplates.length) {
+      // Deselect all
+      setSelectedTemplates(new Set())
+    } else {
+      // Select all (excluding group headers)
+      const allIds = new Set(
+        filteredTemplates
+          .filter(t => !isGroupHeader(t))
+          .map(t => t.id)
+      )
+      setSelectedTemplates(allIds)
+    }
+  }
+
+  // Handle bulk update from platform
+  const handleBulkUpdate = () => {
+    const selectedCount = selectedTemplates.size
+    if (selectedCount === 0) {
+      alert('Please select at least one template to update.')
+      return
+    }
+
+    const selectedNames = Array.from(selectedTemplates)
+      .map(id => allTemplates.find(t => t.id === id)?.name)
+      .filter(Boolean)
+      .join(', ')
+
+    console.log('Bulk updating templates:', selectedNames)
+    
+    // TODO: Check if any selected templates have website customizations
+    // If yes, trigger conflict resolution dialog
+    alert(`Update Selected Templates from Platform\n\n${selectedCount} template(s) selected:\n${selectedNames}\n\nThis would:\n1. Check for website customizations\n2. Show conflict dialog if needed\n3. Pull latest changes from platform release\n4. Apply updates to theme templates`)
+    
+    // Clear selection after update
+    setSelectedTemplates(new Set())
+  }
+
+  // Check if template should be visible (based on parent collapse state)
+  const isTemplateVisible = (template: Template): boolean => {
+    if (!template.inheritsFrom) return true
+    
+    // Check if parent is collapsed
+    const parent = allTemplates.find(t => t.id === template.inheritsFrom)
+    if (parent && isGroupHeader(parent) && collapsedGroups.has(parent.id)) {
+      return false
     }
     
-    // Third level templates (inherit from Supporting Journal Pages, etc.)
-    if (template.inheritsFrom === 'Supporting Journal Pages') {
-      return 3
+    // Recursively check all ancestors
+    if (parent) {
+      return isTemplateVisible(parent)
     }
     
-    // Base section templates (no indentation)
-    if (template.inheritsFrom === 'Base Section') {
-      return 0
+    return true
+  }
+
+  // Render templates in tree order (parent followed immediately by children)
+  const renderTemplatesInOrder = (templates: Template[]): Template[] => {
+    const result: Template[] = []
+    const processed = new Set<string>()
+    
+    const processTemplate = (template: Template) => {
+      if (processed.has(template.id)) return
+      processed.add(template.id)
+      
+      result.push(template)
+      
+      // If this is a group header and not collapsed, add its children immediately after
+      if (isGroupHeader(template) && !collapsedGroups.has(template.id)) {
+        const children = templates.filter(t => t.inheritsFrom === template.id)
+        children.forEach(child => processTemplate(child))
+      }
     }
     
-    // Templates with multiple inheritance options
-    if (template.inheritsFrom.includes('Option:') || template.inheritsFrom.includes(',')) {
-      return 2
-    }
+    // Only process top-level templates and group headers
+    // Children of group headers will be processed recursively when their parent is processed
+    templates.forEach(template => {
+      // Skip if already processed
+      if (processed.has(template.id)) return
+      
+      const parent = allTemplates.find(t => t.id === template.inheritsFrom)
+      
+      // Only process if:
+      // 1. No parent (root template)
+      // 2. Parent is not a group header (regular hierarchical template)
+      // 3. This template IS a group header itself
+      const isChildOfGroupHeader = parent && isGroupHeader(parent)
+      
+      if (!isChildOfGroupHeader) {
+        processTemplate(template)
+      }
+      // Skip children of group headers - they'll be processed when parent expands
+    })
     
-    // Dynamic lookup for other inheritance patterns
-    const parentTemplate = allTemplates.find(t => t.name === template.inheritsFrom)
-    if (parentTemplate) {
-      return getIndentationLevel(parentTemplate) + 1
-    }
-    
-    return 1 // Default fallback
+    return result
   }
 
   return (
@@ -904,6 +1367,17 @@ export function SiteManagerTemplates({ themeId }: SiteManagerTemplatesProps) {
                     <option value="archived">Archived</option>
                   </select>
                   
+                  {/* Update Selected Button - Only show if templates are selected */}
+                  {selectedTemplates.size > 0 && (
+                    <button 
+                      onClick={handleBulkUpdate}
+                      className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Update Selected ({selectedTemplates.size})
+                    </button>
+                  )}
+                  
                   <button 
                     onClick={handleCreateTemplate}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -930,107 +1404,44 @@ export function SiteManagerTemplates({ themeId }: SiteManagerTemplatesProps) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Template Name
+                      <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedTemplates.size > 0 && selectedTemplates.size === filteredTemplates.filter(t => !isGroupHeader(t)).length}
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          title="Select all"
+                        />
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Inherits From
+                        {selectedCategory === 'global' || selectedCategory === 'section' 
+                          ? 'Section Template Name' 
+                          : 'Page Template Name'}
                       </th>
-                      <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="text-right py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center">
-                            <div style={{ marginLeft: `${getIndentationLevel(template) * 20}px` }}>
-                              <div className="flex items-center">
-                                {getIndentationLevel(template) > 0 && (
-                                  <div className="flex items-center mr-3">
-                                    <div className="w-4 h-px bg-gray-300"></div>
-                                    <div className="w-2 h-px bg-gray-300 transform rotate-90 -ml-1"></div>
-                                  </div>
-                                )}
-                                <div className="flex items-center">
-                                  {/* Category color indicator */}
-                                  <div className={`w-2 h-2 rounded-full mr-2 ${
-                                    template.category === 'website' ? 'bg-blue-500' :
-                                    template.category === 'publication' ? 'bg-purple-500' :
-                                    template.category === 'supporting' ? 'bg-green-500' :
-                                    'bg-indigo-500'
-                                  }`}></div>
-                                  <div>
-                                    <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                      {template.name}
-                                      {template.modifications > 0 && (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                          {template.modifications}
-                                        </span>
-                                      )}
-                                      {template.status !== 'active' && (
-                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                                          template.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                          {template.status}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-gray-500 mt-0.5">
-                                      {template.usageCount} {template.category === 'website' || template.category === 'publication' ? 'website' : 'usage'}{template.usageCount !== 1 ? 's' : ''} using this template
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-500">
-                          <span className="italic">{template.inheritsFrom}</span>
-                        </td>
-                        <td className="py-4 px-6 text-sm">
-                          <div className="flex flex-col gap-1">
-                            <button 
-                              onClick={() => handleEditTemplate(template)}
-                              className="text-blue-600 hover:text-blue-800 text-left transition-colors"
-                            >
-                              Edit Page Template
-                            </button>
-                            {template.modifications > 0 && (
-                              <button 
-                                onClick={() => handleManageModifications(template)}
-                                className="text-orange-600 hover:text-orange-800 text-left transition-colors"
-                              >
-                                Manage Template Modifications ({template.modifications})
-                              </button>
-                            )}
-                            <div className="flex gap-2 mt-1">
-                              <button 
-                                onClick={() => handlePreviewTemplate(template)}
-                                className="text-green-600 hover:text-green-800 text-xs transition-colors"
-                              >
-                                Preview
-                              </button>
-                              <button 
-                                onClick={() => handleDuplicateTemplate(template)}
-                                className="text-purple-600 hover:text-purple-800 text-xs transition-colors"
-                              >
-                                Duplicate
-                              </button>
-                              {template.usageCount === 0 && (
-                                <button 
-                                  onClick={() => handleDeleteTemplate(template)}
-                                  className="text-red-600 hover:text-red-800 text-xs transition-colors"
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+                    {renderTemplatesInOrder(filteredTemplates).map((template) => (
+                      <TemplateRow 
+                        key={template.id} 
+                        template={template}
+                        showDivergence={false} // Theme view: no divergence tracking
+                        usePageStore={usePageStore}
+                        getIndentationLevel={getIndentationLevel}
+                        isGroupHeader={isGroupHeader(template)}
+                        isCollapsed={collapsedGroups.has(template.id)}
+                        childrenCount={getChildren(template.id).length}
+                        onToggleGroup={() => toggleGroup(template.id)}
+                        isSelected={selectedTemplates.has(template.id)}
+                        onToggleSelect={toggleTemplateSelection}
+                        handleEditTemplate={handleEditTemplate}
+                        handlePreviewTemplate={handlePreviewTemplate}
+                        handleDuplicateTemplate={handleDuplicateTemplate}
+                        handleDeleteTemplate={handleDeleteTemplate}
+                      />
                     ))}
                   </tbody>
                 </table>
