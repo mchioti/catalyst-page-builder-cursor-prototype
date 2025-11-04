@@ -1217,6 +1217,28 @@ function buildWidget(item: SpecItem): Widget {
         ]
       } as MenuWidget;
     
+    case 'tabs':
+      // Start with 2 empty tabs so widget is visible
+      return {
+        ...baseWidget,
+        type: 'tabs',
+        tabs: [
+          {
+            id: nanoid(),
+            label: 'Tab 1',
+            widgets: []
+          },
+          {
+            id: nanoid(),
+            label: 'Tab 2',
+            widgets: []
+          }
+        ],
+        activeTabIndex: 0,
+        tabStyle: 'underline',
+        align: 'left'
+      } as any; // TabsWidget
+    
     default:
       // Fallback to text widget
       return {
@@ -1973,6 +1995,243 @@ const usePageStore = create<PageState>((set, get) => ({
           canModifyCardRadius: false, // Sharp cards maintained for gallery feel
           canModifyCardShadow: true, // Allow shadow customization for depth
           canModifyFormRadius: false // Sharp forms for consistency
+        }
+      },
+      
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
+      },
+      publicationCardVariants: []
+    },
+    
+    {
+      id: 'wiley-theme',
+      name: 'Wiley Publishing',
+      description: 'Professional publishing theme extracted from Wiley.com. Features bright green CTAs, dark teal accents, and clean modern layouts with black hero sections and white content areas. Perfect for scholarly publishers and research platforms.',
+      version: '1.0.0',
+      publishingType: 'journals' as const,
+      author: 'Catalyst Design Team',
+      createdAt: new Date('2025-11-04'),
+      updatedAt: new Date('2025-11-04'),
+      
+      templates: [
+        {
+          id: 'wiley-home',
+          name: 'Wiley Homepage',
+          description: 'Homepage template with dark hero section and three-column feature cards',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.0.0',
+          author: 'Catalyst Design Team',
+          createdAt: new Date('2025-11-04'),
+          updatedAt: new Date('2025-11-04'),
+          tags: ['homepage', 'wiley', 'hero', 'features'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1400px',
+            spacing: 'comfortable'
+          },
+          allowedModifications: ['branding.logo', 'colors.primary'],
+          lockedElements: [],
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
+        }
+      ],
+      
+      colors: {
+        primary: '#00d98a',    // Bright green CTA buttons
+        secondary: '#e8f5f5',  // Light teal backgrounds
+        accent: '#1a5757',     // Dark teal headers/footer
+        background: '#f9fafb', // Light gray page background
+        text: '#1f2937',       // Dark text for light backgrounds
+        muted: '#6b7280'       // Gray for secondary text
+      },
+      typography: {
+        headingFont: 'system-ui, -apple-system, sans-serif',
+        bodyFont: 'system-ui, -apple-system, sans-serif',
+        baseSize: '16px',
+        scale: 1.25
+      },
+      spacing: {
+        base: '1rem',
+        scale: 1.5
+      },
+      components: {
+        button: {
+          borderRadius: '6px',
+          fontWeight: '600',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          transition: 'all 0.2s'
+        },
+        card: {
+          borderRadius: '8px',
+          boxShadow: 'none',
+          border: '1px solid #e5e7eb'
+        },
+        form: {
+          borderRadius: '6px',
+          border: '1px solid #d1d5db',
+          focusColor: '#00d98a'
+        }
+      },
+      
+      modificationRules: {
+        colors: {
+          canModifyPrimary: true
+        }
+      },
+      
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true,
+          canModifyText: false,
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: true,
+          canModifyBodyFont: true,
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: true,
+          canModifyButtonWeight: true,
+          canModifyCardRadius: true,
+          canModifyCardShadow: true,
+          canModifyFormRadius: true
+        }
+      },
+      
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
+      },
+      publicationCardVariants: []
+    },
+    
+    {
+      id: 'wiley-figma-design-system',
+      name: 'Wiley Figma Design System',
+      description: 'Official Wiley design system extracted from Figma with precise design tokens, Inter typography, and comprehensive color palette. Features #00D875 primary green and professional component styling.',
+      version: '1.0.0',
+      publishingType: 'journals' as const,
+      author: 'Wiley Design Team (via Figma)',
+      createdAt: new Date('2025-11-04'),
+      updatedAt: new Date('2025-11-04'),
+      
+      templates: [
+        {
+          id: 'wiley-figma-home',
+          name: 'Wiley Figma Homepage',
+          description: 'Official homepage template based on Figma design system',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '1.0.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2025-11-04'),
+          updatedAt: new Date('2025-11-04'),
+          tags: ['homepage', 'figma', 'design-system', 'official'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1400px',
+            spacing: 'comfortable'
+          },
+          allowedModifications: ['branding.logo'],
+          lockedElements: [],
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
+        }
+      ],
+      
+      colors: {
+        primary: '#00D875',    // Official Figma primary green
+        secondary: '#F8F8F5',  // Off-white cream background
+        accent: '#005E3A',     // Dark green for emphasis
+        background: '#FFFFFF', // Pure white
+        text: '#302F2F',       // Dark gray text
+        muted: '#5D5E5C'       // Mid gray for secondary text
+      },
+      
+      typography: {
+        headingFont: 'Inter, system-ui, -apple-system, sans-serif',
+        bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
+        baseSize: '16px',
+        scale: 1.333 // Perfect fourth scale
+      },
+      
+      spacing: {
+        base: '1rem',
+        scale: 1.5
+      },
+      
+      components: {
+        button: {
+          borderRadius: '6px',
+          fontWeight: '500',
+          textTransform: 'none', // Figma uses normal case
+          letterSpacing: 'normal',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+        },
+        card: {
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #E5E4E0'
+        },
+        form: {
+          borderRadius: '6px',
+          border: '1px solid #ADACA8',
+          focusColor: '#00D875'
+        }
+      },
+      
+      modificationRules: {
+        colors: {
+          canModifyPrimary: true
+        }
+      },
+      
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true,
+          canModifyText: false, // Locked for accessibility
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: false, // Inter is part of brand
+          canModifyBodyFont: false,    // Inter is part of brand
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: true,
+          canModifyButtonWeight: true,
+          canModifyCardRadius: true,
+          canModifyCardShadow: true,
+          canModifyFormRadius: true
         }
       },
       
@@ -2912,7 +3171,9 @@ function SiteManagerWebsites() {
 const themePreviewImages = {
   'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
   'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
-  'curator-theme': '/theme-previews/lumina-press.png'               // Artistic overlays - "ART • VISION • CREATION"
+  'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
+  'wiley-theme': 'https://placehold.co/400x250/1a5757/00d98a?text=Wiley+Theme', // Wiley theme - Green & teal professional
+  'wiley-figma-design-system': 'https://placehold.co/400x250/005E3A/00D875?text=Wiley+Figma+DS' // Official Figma design system
 }
 
 // NOTE: WebsiteCreationWizard component moved to src/components/Wizards/WebsiteCreation.tsx

@@ -230,9 +230,22 @@ export function PageBuilder({
     })
   )
   
-  // Custom collision detection that prioritizes section-area drop zones
+  // Custom collision detection that prioritizes tab-panel first, then section-area drop zones
   const customCollisionDetection = (args: any) => {
-    // First try to find section-area collisions
+    // FIRST: Try to find tab-panel collisions (most specific, highest priority)
+    const tabPanelCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter((container: any) => 
+        container.data?.current?.type === 'tab-panel'
+      )
+    })
+    
+    if (tabPanelCollisions.length > 0) {
+      console.log('🎯 Tab panel collision detected!', tabPanelCollisions)
+      return tabPanelCollisions
+    }
+    
+    // SECOND: Try to find section-area collisions
     const sectionAreaCollisions = rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter((container: any) => 
@@ -278,6 +291,15 @@ export function PageBuilder({
     if (event.over) {
       const activeItem = event.active.data?.current?.item
       const isDraggingSidebar = activeItem && isSection(activeItem) && activeItem.type === 'sidebar'
+      
+      // Special logging for tab panels
+      if (event.over.data?.current?.type === 'tab-panel') {
+        console.log('🎯 DRAGGING OVER TAB PANEL!', {
+          tabId: event.over.data.current.tabId,
+          widgetId: event.over.data.current.widgetId,
+          activeType: event.active.data?.current?.type
+        })
+      }
       
       // DEBUG: Log what we're detecting
       console.log('🔍 Drag Over Debug:', {
@@ -357,14 +379,25 @@ export function PageBuilder({
       activeType: active.data?.current?.type,
       overId: over?.id,
       overType: over?.data?.current?.type,
+      overData: over?.data?.current,
       hasOver: !!over,
       isLibraryWidget: active.data?.current?.type === 'library-widget',
-      isSortableItem: !active.data?.current?.type || active.data?.current?.type === 'sortable'
+      isSortableItem: !active.data?.current?.type || active.data?.current?.type === 'sortable',
+      isTabPanel: over?.data?.current?.type === 'tab-panel'
     })
 
     if (!over) {
       console.log('❌ No drop target found')
       return
+    }
+    
+    // Log tab panel detection
+    if (over?.data?.current?.type === 'tab-panel') {
+      console.log('✨ TAB PANEL DETECTED!', {
+        tabId: over.data.current.tabId,
+        widgetId: over.data.current.widgetId,
+        activeType: active.data?.current?.type
+      })
     }
 
     // Handle library widget drop into section area
@@ -475,6 +508,102 @@ export function PageBuilder({
         return canvasItem
       })
       replaceCanvasItems(updatedCanvasItems)
+      return
+    }
+    
+    // Handle library widget drop into tab panel
+    if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'tab-panel') {
+      console.log('✅ Library widget dropped into tab panel!', {
+        libraryItem: active.data.current.item,
+        tabId: over.data.current.tabId,
+        widgetId: over.data.current.widgetId
+      })
+      
+      const libraryItem = active.data.current.item
+      const tabId = over.data.current.tabId
+      const tabsWidgetId = over.data.current.widgetId
+      
+      // Create new widget from library item
+      const newWidget = buildWidget(libraryItem)
+      
+      console.log('🔧 Created widget:', newWidget.type, newWidget.id, 'for tab:', tabId)
+      
+      // Add widget to the specific tab panel
+      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+      
+      const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+        // Check if item is the tabs widget (could be standalone or in a section)
+        if (!isSection(canvasItem) && canvasItem.id === tabsWidgetId && canvasItem.type === 'tabs') {
+          const tabsWidget = canvasItem as any // TabsWidget
+          // Find which tab index we're dropping into
+          const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
+          console.log('🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget')
+          console.log('📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
+            id: t.id,
+            label: t.label,
+            widgetCount: t.widgets.length
+          })))
+          const updatedTabs = tabsWidget.tabs.map((tab: any) => 
+            tab.id === tabId 
+              ? { ...tab, widgets: [...tab.widgets, newWidget] }
+              : tab
+          )
+          console.log('📦 Tabs after update:', updatedTabs.map((t: any) => ({
+            id: t.id,
+            label: t.label,
+            widgetCount: t.widgets.length
+          })))
+          return {
+            ...tabsWidget,
+            activeTabIndex: targetTabIndex >= 0 ? targetTabIndex : tabsWidget.activeTabIndex,
+            tabs: updatedTabs
+          }
+        }
+        
+        // Check in section areas for the tabs widget
+        if (isSection(canvasItem)) {
+          return {
+            ...canvasItem,
+            areas: (canvasItem as WidgetSection).areas.map((area: any) => ({
+              ...area,
+              widgets: area.widgets.map((widget: Widget) => {
+                if (widget.id === tabsWidgetId && widget.type === 'tabs') {
+                  const tabsWidget = widget as any // TabsWidget
+                  // Find which tab index we're dropping into
+                  const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
+                  console.log('🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget (in section)')
+                  console.log('📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
+                    id: t.id,
+                    label: t.label,
+                    widgetCount: t.widgets.length
+                  })))
+                  const updatedTabs = tabsWidget.tabs.map((tab: any) => 
+                    tab.id === tabId 
+                      ? { ...tab, widgets: [...tab.widgets, newWidget] }
+                      : tab
+                  )
+                  console.log('📦 Tabs after update:', updatedTabs.map((t: any) => ({
+                    id: t.id,
+                    label: t.label,
+                    widgetCount: t.widgets.length
+                  })))
+                  return {
+                    ...tabsWidget,
+                    activeTabIndex: targetTabIndex >= 0 ? targetTabIndex : tabsWidget.activeTabIndex,
+                    tabs: updatedTabs
+                  }
+                }
+                return widget
+              })
+            }))
+          }
+        }
+        
+        return canvasItem
+      })
+      
+      replaceCanvasItems(updatedCanvasItems)
+      console.log('✅ Widget added to tab panel!')
       return
     }
     

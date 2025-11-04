@@ -175,7 +175,26 @@ export type MenuWidget = WidgetBase & {
   align?: 'left' | 'center' | 'right'
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget
+// Tabs widget types
+export type TabItem = {
+  id: string
+  label: string
+  url?: string        // Optional: for navigation
+  class?: string      // Optional: custom CSS class
+  icon?: string       // Optional: emoji or icon
+  simpleTabId?: string // Optional: unique identifier
+  widgets: Widget[]   // Array of widgets in this tab panel (DROP ZONE)
+}
+
+export type TabsWidget = WidgetBase & {
+  type: 'tabs'
+  tabs: TabItem[]
+  activeTabIndex: number
+  tabStyle: 'underline' | 'pills' | 'buttons'
+  align?: 'left' | 'center' | 'right'
+}
+
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'

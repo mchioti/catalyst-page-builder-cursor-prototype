@@ -80,9 +80,30 @@ export function DraggableWidgetInSection({
       className={`${!isLiveMode ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} group relative ${
         widgetDrag.isDragging ? 'opacity-50' : ''
       }`}
+      onClick={(e) => {
+        // Handle clicks for tabs widget (since it has no overlay)
+        if (!isLiveMode && widget.type === 'tabs') {
+          const target = e.target as HTMLElement
+          // Don't interfere with tab buttons, drop zones, or widgets inside panels
+          if (target.closest('.tab-button') || target.closest('.droppable-tab-panel')) {
+            return
+          }
+          // If click is on outer container or tab navigation area
+          if (target.closest('.tabs-widget')) {
+            e.preventDefault()
+            e.stopPropagation()
+            console.log('🎯 Tabs widget container clicked for properties')
+            if (activeSectionToolbar !== widget.sectionId) {
+              setActiveSectionToolbar?.(null)
+            }
+            setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+            onWidgetClick(widget.id, e)
+          }
+        }
+      }}
     >
       {/* Overlay to capture clicks on interactive widgets - only in editor mode */}
-      {!isLiveMode && (
+      {!isLiveMode && widget.type !== 'tabs' && (
         <div 
           className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
           style={{ pointerEvents: 'auto' }}
@@ -109,6 +130,8 @@ export function DraggableWidgetInSection({
           }}
         />
       )}
+      
+      
       {/* Widget Action Toolbar - appears on click (outside non-interactive area) - only in editor mode */}
       {!isLiveMode && activeWidgetToolbar === widget.id && (
         <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
@@ -185,12 +208,18 @@ export function DraggableWidgetInSection({
       )}
       
       {/* Make widget content non-interactive in edit mode */}
-      <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
+      {/* Exception: tabs widget needs pointer events for drop zones and tab navigation */}
+      <div style={{ 
+        pointerEvents: widget.type === 'tabs' ? 'auto' : 'none', 
+        position: 'relative', 
+        zIndex: 1 
+      }}>
         <WidgetRenderer 
           widget={widget}
           schemaObjects={usePageStore.getState().schemaObjects || []}
           journalContext={journalContext}
           sectionContentMode={sectionContentMode}
+          isLiveMode={isLiveMode}
         />
       </div>
     </div>

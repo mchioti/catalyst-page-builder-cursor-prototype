@@ -18,6 +18,22 @@
   --brand-background: #F0F4FF;
 }
 
+/* Wiley Publishing Theme */
+.wiley-brand {
+  --brand-primary: #00d98a;
+  --brand-secondary: #e8f5f5;
+  --brand-accent: #1a5757;
+  --brand-text: #1f2937;
+  --brand-background: #f9fafb;
+  
+  /* Additional Wiley-specific colors */
+  --wiley-dark-bg: #000000;
+  --wiley-dark-text: #ffffff;
+  --wiley-card-border: #e5e7eb;
+  --wiley-pill-bg: #2d3748;
+  --wiley-pill-active: #ffffff;
+}
+
 /* Subject-based branding (highest priority) */
 .subject-biology {
   --brand-primary: #F59E0B;
@@ -206,5 +222,336 @@
   .branded-button,
   .branded-link {
     transition: none;
+  }
+}
+
+/* ========================================
+   Wiley Theme-Specific Styles
+   ======================================== */
+
+/* Wiley Primary CTA Button */
+.wiley-btn-primary {
+  background-color: var(--brand-primary, #00d98a);
+  color: #1a5757;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wiley-btn-primary:hover {
+  background-color: #00c07d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 217, 138, 0.3);
+}
+
+/* Wiley Outline Button (Light - for dark backgrounds) */
+.wiley-btn-outline-light {
+  background-color: transparent;
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  border: 2px solid #ffffff;
+  transition: all 0.2s ease;
+}
+
+.wiley-btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--brand-primary, #00d98a);
+  color: var(--brand-primary, #00d98a);
+}
+
+/* Wiley Outline Button (Dark - for light backgrounds) */
+.wiley-btn-outline-dark {
+  background-color: transparent;
+  color: #1f2937;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  border: 2px solid #1f2937;
+  transition: all 0.2s ease;
+}
+
+.wiley-btn-outline-dark:hover {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+/* Wiley Dark Section */
+.wiley-section-dark {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* Wiley Light Section */
+.wiley-section-light {
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+/* Wiley Card with Border */
+.wiley-card {
+  background-color: #ffffff;
+  border: 1px solid var(--wiley-card-border, #e5e7eb);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.wiley-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Wiley Pill/Segmented Navigation */
+.wiley-pill-nav {
+  background-color: var(--wiley-pill-bg, #2d3748);
+  border-radius: 9999px;
+  padding: 0.25rem;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.wiley-pill-nav-item {
+  padding: 0.625rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.wiley-pill-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.wiley-pill-nav-item.active {
+  background-color: var(--wiley-pill-active, #ffffff);
+  color: #1f2937;
+}
+
+/* Wiley Section Header Accent */
+.wiley-section-header {
+  color: var(--brand-accent, #1a5757);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Wiley Hero Text */
+.wiley-hero-text {
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .wiley-hero-text {
+    font-size: 1.875rem;
+  }
+}
+
+/* Wiley Three-Column Grid */
+.wiley-three-col-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .wiley-three-col-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .wiley-three-col-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Wiley Content Section with Side Image */
+.wiley-content-with-image {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .wiley-content-with-image {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Wiley Footer Dark */
+.wiley-footer {
+  background-color: var(--brand-accent, #1a5757);
+  color: #ffffff;
+  padding: 3rem 0;
+}
+
+/* ==========================================
+   Tabs Widget Styles
+   ========================================== */
+
+/* Tab Widget Container */
+.tabs-widget {
+  width: 100%;
+}
+
+/* Tab Navigation Base Styles */
+.tabs-nav {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
+}
+
+/* Tab Button Base */
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  position: relative;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #374151;
+}
+
+.tab-button.active {
+  color: #1f2937;
+}
+
+/* Underline Style (default) - ONLY apply red underline for underline style */
+.tabs-nav:not(.tabs-pills):not(.tabs-buttons) .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ef4444; /* Red underline */
+}
+
+/* Pills Style */
+.tabs-pills .tab-button {
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  background-color: #f3f4f6;
+}
+
+.tabs-pills .tab-button.active {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.tabs-pills .tab-button:hover:not(.active) {
+  background-color: #e5e7eb;
+}
+
+/* Buttons Style */
+.tabs-buttons {
+  border-bottom: none;
+  gap: 0.5rem;
+}
+
+.tabs-buttons .tab-button {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  padding: 0.625rem 1.25rem;
+}
+
+.tabs-buttons .tab-button.active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.tabs-buttons .tab-button:hover:not(.active) {
+  border-color: #9ca3af;
+}
+
+/* Tab Panel */
+.tab-panel {
+  min-height: 200px;
+  padding: 0;
+}
+
+/* Droppable Tab Panel */
+.droppable-tab-panel {
+  min-height: 150px;
+  border: 2px dashed transparent;
+  border-radius: 4px;
+  transition: all 0.2s;
+  padding: 1rem;
+}
+
+.droppable-tab-panel.drag-over {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+/* Empty State */
+.droppable-tab-panel .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* Tab Widgets Container */
+.tab-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Wiley Theme Pill Style */
+.wiley-brand .tabs-pills .tab-button {
+  background-color: #2d3748;
+  color: #ffffff;
+}
+
+.wiley-brand .tabs-pills .tab-button.active {
+  background-color: #00d98a;
+  color: #1f2937;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .tab-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.813rem;
+  }
+  
+  .tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

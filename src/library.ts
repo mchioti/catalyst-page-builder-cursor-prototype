@@ -55,7 +55,7 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
         items: [
           { id: 'table', label: 'Table', type: 'table', description: 'Responsive data grid', status: 'planned' },
           { id: 'page-index', label: 'Page Index', type: 'page-index', description: 'Table of contents', status: 'planned' },
-          { id: 'tabs', label: 'Tabs', type: 'tabs', description: 'Tabbed content', status: 'planned' },
+          { id: 'tabs', label: 'Tabs', type: 'tabs', description: 'Tabbed content', status: 'supported' },
           { id: 'collapse', label: 'Collapse', type: 'collapse', description: 'Expandable content (accordion)', status: 'planned' },
           { id: 'slideshow', label: 'Slideshow', type: 'slideshow', description: 'Carousel / slideshow', status: 'planned' },
           { id: 'cta', label: 'Generic CTA', type: 'cta', description: 'Call to action', status: 'planned' },

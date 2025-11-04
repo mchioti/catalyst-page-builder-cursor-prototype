@@ -1,7 +1,10 @@
-import React from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem } from '../../types'
+import React, { useState } from 'react'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, TabItem } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
+import { useDroppable } from '@dnd-kit/core'
+import { nanoid } from 'nanoid'
+import { Edit, Trash2, Copy } from 'lucide-react'
 
 // Import usePageStore for updating widget state
 declare global {
@@ -1213,9 +1216,470 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
   )
 }
 
+// Clickable Widget in Tab Panel Component
+const ClickableWidgetInTabPanel: React.FC<{
+  widget: Widget
+  tabsWidgetId: string
+  tabId: string
+  schemaObjects: any[]
+  journalContext?: string
+  sectionContentMode?: 'light' | 'dark'
+}> = ({ widget, tabsWidgetId, tabId, schemaObjects, journalContext, sectionContentMode }) => {
+  const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
+
+  const handleWidgetClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('🖱️ Widget in tab panel clicked:', widget.id, widget.type)
+    setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+    
+    // Update selected widget in store - access from window directly
+    const store = window.usePageStore || usePageStore
+    console.log('🔍 Store exists?', !!store)
+    if (store) {
+      try {
+        const state = store.getState()
+        console.log('🔍 Store state:', { hasSelectWidget: !!state.selectWidget })
+        if (state.selectWidget) {
+          state.selectWidget(widget.id)
+          console.log('✅ Selected widget in store:', widget.id)
+        } else {
+          console.error('❌ selectWidget function not found in store')
+        }
+      } catch (error) {
+        console.error('❌ Error selecting widget:', error)
+      }
+    } else {
+      console.error('❌ Store is undefined (neither window.usePageStore nor module usePageStore available)')
+    }
+  }
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    console.log('📋 Duplicating widget in tab panel:', widget.id)
+    
+    const store = window.usePageStore || usePageStore
+    if (!store) return
+    
+    const { canvasItems, replaceCanvasItems } = store.getState()
+    const duplicatedWidget = { ...widget, id: nanoid() }
+    
+    // Find and update the tabs widget containing this widget
+    const updatedCanvasItems = canvasItems.map((item: any) => {
+      // Check standalone tabs widget
+      if (item.id === tabsWidgetId && item.type === 'tabs') {
+        return {
+          ...item,
+          tabs: item.tabs.map((tab: any) => 
+            tab.id === tabId 
+              ? { ...tab, widgets: [...tab.widgets, duplicatedWidget] }
+              : tab
+          )
+        }
+      }
+      // Check tabs widget in sections
+      if (item.areas) {
+        return {
+          ...item,
+          areas: item.areas.map((area: any) => ({
+            ...area,
+            widgets: area.widgets.map((w: any) => {
+              if (w.id === tabsWidgetId && w.type === 'tabs') {
+                return {
+                  ...w,
+                  tabs: w.tabs.map((tab: any) => 
+                    tab.id === tabId 
+                      ? { ...tab, widgets: [...tab.widgets, duplicatedWidget] }
+                      : tab
+                  )
+                }
+              }
+              return w
+            })
+          }))
+        }
+      }
+      return item
+    })
+    
+    replaceCanvasItems(updatedCanvasItems)
+  }
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('🗑️ Deleting widget from tab panel:', widget.id)
+    
+    const store = window.usePageStore || usePageStore
+    if (!store) return
+    
+    const { canvasItems, replaceCanvasItems } = store.getState()
+    
+    // Find and update the tabs widget containing this widget
+    const updatedCanvasItems = canvasItems.map((item: any) => {
+      // Check standalone tabs widget
+      if (item.id === tabsWidgetId && item.type === 'tabs') {
+        return {
+          ...item,
+          tabs: item.tabs.map((tab: any) => 
+            tab.id === tabId 
+              ? { ...tab, widgets: tab.widgets.filter((w: any) => w.id !== widget.id) }
+              : tab
+          )
+        }
+      }
+      // Check tabs widget in sections
+      if (item.areas) {
+        return {
+          ...item,
+          areas: item.areas.map((area: any) => ({
+            ...area,
+            widgets: area.widgets.map((w: any) => {
+              if (w.id === tabsWidgetId && w.type === 'tabs') {
+                return {
+                  ...w,
+                  tabs: w.tabs.map((tab: any) => 
+                    tab.id === tabId 
+                      ? { ...tab, widgets: tab.widgets.filter((tw: any) => tw.id !== widget.id) }
+                      : tab
+                  )
+                }
+              }
+              return w
+            })
+          }))
+        }
+      }
+      return item
+    })
+    
+    replaceCanvasItems(updatedCanvasItems)
+  }
+
+  return (
+    <div className="cursor-pointer hover:ring-2 hover:ring-purple-300 rounded transition-all group relative">
+      {/* Overlay to capture clicks */}
+      <div 
+        className="absolute inset-0 z-10 bg-transparent hover:bg-purple-50/10 transition-colors"
+        style={{ pointerEvents: 'auto' }}
+        onClick={handleWidgetClick}
+      />
+      
+      {/* Widget Action Toolbar */}
+      {activeWidgetToolbar === widget.id && (
+        <div className="absolute -top-2 -right-2 transition-opacity z-20" style={{ pointerEvents: 'auto' }}>
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+            <button
+              onClick={handleDuplicate}
+              className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+              title="Duplicate widget"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+            <button
+              onClick={handleWidgetClick}
+              className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
+              title="Properties"
+              type="button"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+              title="Delete widget"
+              type="button"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Widget Content - non-interactive */}
+      <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
+        <WidgetRenderer 
+          widget={widget}
+          schemaObjects={schemaObjects}
+          journalContext={journalContext}
+          sectionContentMode={sectionContentMode}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Droppable Tab Panel Component
+const DroppableTabPanel: React.FC<{
+  tabId: string
+  widgets: Widget[]
+  widgetId: string
+  schemaObjects: any[]
+  journalContext?: string
+  sectionContentMode?: 'light' | 'dark'
+  isActive?: boolean
+  isLiveMode?: boolean
+}> = ({ tabId, widgets, widgetId, schemaObjects, journalContext, sectionContentMode, isActive = false, isLiveMode = false }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `tab-panel-${tabId}`,
+    data: {
+      type: 'tab-panel',
+      tabId: tabId,
+      widgetId: widgetId,
+      accepts: ['widget']
+    }
+  })
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (isOver) {
+      console.log('🎯 Tab panel hover detected:', { tabId, widgetId })
+    }
+  }, [isOver, tabId, widgetId])
+  
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative min-h-[200px] ${!isLiveMode ? 'border-2' : ''} rounded-md p-4 transition-all ${
+        !isLiveMode && isOver 
+          ? 'border-blue-400 bg-blue-50 border-solid' 
+          : !isLiveMode && widgets.length === 0
+          ? isActive 
+            ? 'border-blue-300 bg-blue-50/30 border-dashed'
+            : 'border-gray-300 bg-gray-50 border-dashed'
+          : !isLiveMode && isActive
+          ? 'border-blue-300 bg-blue-50/20 border-solid'
+          : !isLiveMode
+          ? 'border-gray-200 bg-transparent border-dashed'
+          : '' // No border/background in live mode
+      }`}
+      style={{ 
+        minHeight: isLiveMode && widgets.length === 0 ? '0px' : '200px',
+        width: '100%',
+        position: 'relative',
+        zIndex: 5
+      }}
+      data-droppable-type="tab-panel"
+      data-tab-id={tabId}
+    >
+      {/* Active tab indicator - only show in editor mode */}
+      {!isLiveMode && isActive && (
+        <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-medium z-10 shadow-sm">
+          Active Tab
+        </div>
+      )}
+      
+      {widgets.length === 0 ? (
+        !isLiveMode && (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm italic">
+            {isOver ? 'Drop widget here' : isActive ? 'Drop widgets here (Active Tab)' : 'Drag widgets here from the library'}
+          </div>
+        )
+      ) : (
+        <>
+          {/* Drop zone indicator when dragging over - only in editor mode */}
+          {!isLiveMode && isOver && (
+            <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/50 rounded-md z-10 flex items-center justify-center pointer-events-none">
+              <span className="text-blue-600 font-medium text-sm">Drop widget here</span>
+            </div>
+          )}
+          <div className="space-y-3">
+            {widgets.map(widget => (
+              isLiveMode ? (
+                <WidgetRenderer 
+                  key={widget.id}
+                  widget={widget}
+                  schemaObjects={schemaObjects}
+                  journalContext={journalContext}
+                  sectionContentMode={sectionContentMode}
+                  isLiveMode={isLiveMode}
+                />
+              ) : (
+                <ClickableWidgetInTabPanel
+                  key={widget.id}
+                  widget={widget}
+                  tabsWidgetId={widgetId}
+                  tabId={tabId}
+                  schemaObjects={schemaObjects}
+                  journalContext={journalContext}
+                  sectionContentMode={sectionContentMode}
+                />
+              )
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Tabs Widget Renderer
+const TabsWidgetRenderer: React.FC<{
+  widget: TabsWidget
+  schemaObjects?: any[]
+  journalContext?: string
+  sectionContentMode?: 'light' | 'dark'
+  isLiveMode?: boolean
+}> = ({ widget, schemaObjects = [], journalContext, sectionContentMode, isLiveMode = false }) => {
+  const [activeIndex, setActiveIndex] = useState(widget.activeTabIndex || 0)
+  
+  // Sync activeIndex with widget's activeTabIndex when widget updates from external source
+  React.useEffect(() => {
+    const widgetIndex = widget.activeTabIndex !== undefined ? widget.activeTabIndex : 0
+    console.log('🔄 Widget prop changed, setting activeIndex to:', widgetIndex)
+    setActiveIndex(widgetIndex)
+  }, [widget.activeTabIndex, widget.id]) // Watch both activeTabIndex and widget ID
+  
+  // Update widget's activeTabIndex when local state changes
+  const handleTabChange = (index: number) => {
+    console.log('🔘 Tab clicked! Switching from', activeIndex, 'to', index)
+    console.log('📊 Tabs available:', widget.tabs.map((t, i) => ({ index: i, label: t.label, id: t.id, widgetCount: t.widgets?.length || 0 })))
+    setActiveIndex(index)
+    console.log('✅ Local activeIndex updated to:', index)
+    
+    // We need to update the widget in the store so the activeTabIndex persists
+    const store = window.usePageStore || usePageStore
+    if (store) {
+      const { canvasItems, replaceCanvasItems } = store.getState()
+      const updatedItems = canvasItems.map((item: any) => {
+        // Update standalone tabs widget
+        if (item.id === widget.id && item.type === 'tabs') {
+          console.log('🔧 Updating standalone tabs widget in store, setting activeTabIndex to:', index)
+          return { ...item, activeTabIndex: index }
+        }
+        // Update tabs widget inside sections
+        if (item.areas) {
+          return {
+            ...item,
+            areas: item.areas.map((area: any) => ({
+              ...area,
+              widgets: area.widgets.map((w: any) => {
+                if (w.id === widget.id && w.type === 'tabs') {
+                  console.log('🔧 Updating tabs widget in section, setting activeTabIndex to:', index)
+                  return { ...w, activeTabIndex: index }
+                }
+                return w
+              })
+            }))
+          }
+        }
+        return item
+      })
+      replaceCanvasItems(updatedItems)
+      console.log('💾 Store updated with activeTabIndex:', index)
+    } else {
+      console.error('❌ Store not available in handleTabChange - tab switching will not persist')
+    }
+  }
+  
+  // Get alignment classes
+  const getAlignmentClasses = () => {
+    switch (widget.align) {
+      case 'center':
+        return 'justify-center'
+      case 'right':
+        return 'justify-end'
+      default:
+        return 'justify-start'
+    }
+  }
+  
+  // Get tab style classes
+  const getTabNavClasses = () => {
+    const baseClasses = 'tabs-nav flex gap-1'
+    const styleClasses = widget.tabStyle === 'pills' ? 'tabs-pills' : widget.tabStyle === 'buttons' ? 'tabs-buttons' : ''
+    const borderClasses = widget.tabStyle === 'underline' || !widget.tabStyle ? 'border-b-2 border-gray-200' : ''
+    return `${baseClasses} ${styleClasses} ${borderClasses} ${getAlignmentClasses()}`
+  }
+  
+  const getTabButtonClasses = (isActive: boolean) => {
+    const baseClasses = 'px-4 py-2 font-medium text-sm transition-all cursor-pointer relative'
+    
+    switch (widget.tabStyle) {
+      case 'underline':
+        return `${baseClasses} ${
+          isActive 
+            ? 'text-gray-900 border-b-2 border-red-500 -mb-[2px]' 
+            : 'text-gray-500 hover:text-gray-700'
+        }`
+      case 'pills':
+        return `${baseClasses} rounded-full ${
+          isActive 
+            ? 'bg-blue-600 text-white' 
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`
+      case 'buttons':
+        return `${baseClasses} rounded-md border ${
+          isActive 
+            ? 'bg-blue-600 text-white border-blue-600' 
+            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+        }`
+      default:
+        return `${baseClasses} ${
+          isActive 
+            ? 'text-gray-900 border-b-2 border-red-500 -mb-[2px]' 
+            : 'text-gray-500 hover:text-gray-700'
+        }`
+    }
+  }
+  
+  return (
+    <div className="tabs-widget w-full" onClick={(e) => {
+      // Allow clicking on the tabs widget background to select it for properties
+      // But don't interfere with tab button clicks or drop zone interactions
+      const target = e.target as HTMLElement
+      if (target.closest('.tab-button') || target.closest('.droppable-tab-panel')) {
+        return
+      }
+      console.log('📋 Tabs widget background clicked')
+    }}>
+      {/* Tab Navigation */}
+      <div className={getTabNavClasses()} style={{ pointerEvents: 'auto', position: 'relative', zIndex: 30 }}>
+        {widget.tabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              console.log('🔘 Tab button clicked:', index, 'label:', tab.label)
+              handleTabChange(index)
+            }}
+            className={`tab-button ${activeIndex === index ? 'active' : ''} ${getTabButtonClasses(activeIndex === index)}`}
+            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 31 }}
+            type="button"
+          >
+            {tab.icon && <span className="mr-2">{tab.icon}</span>}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      
+      {/* Active Tab Panel */}
+      <div className="tab-panel mt-4">
+        {(() => {
+          const currentTab = widget.tabs[activeIndex]
+          console.log('🖼️ Rendering tab panel for index:', activeIndex, 'tab:', currentTab?.label, 'id:', currentTab?.id, 'widgets:', currentTab?.widgets?.length || 0)
+          return currentTab ? (
+            <DroppableTabPanel
+              tabId={currentTab.id}
+              widgets={currentTab.widgets}
+              widgetId={widget.id}
+              schemaObjects={schemaObjects}
+              journalContext={journalContext}
+              sectionContentMode={sectionContentMode}
+              isActive={true}
+              isLiveMode={isLiveMode}
+            />
+          ) : null
+        })()}
+      </div>
+    </div>
+  )
+}
+
 
 // Main Widget Renderer Component
-export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects = [], journalContext, sectionContentMode }) => {
+export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string; sectionContentMode?: 'light' | 'dark'; isLiveMode?: boolean }> = ({ widget, schemaObjects = [], journalContext, sectionContentMode, isLiveMode = false }) => {
   const renderWidget = () => {
     switch (widget.type) {
       case 'button':
@@ -1228,6 +1692,8 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
         return <NavbarWidgetRenderer widget={widget as NavbarWidget} />
       case 'menu':
         return <MenuWidgetRenderer widget={widget as MenuWidget} journalContext={journalContext} sectionContentMode={sectionContentMode} />
+      case 'tabs':
+        return <TabsWidgetRenderer widget={widget as TabsWidget} schemaObjects={schemaObjects} journalContext={journalContext} sectionContentMode={sectionContentMode} isLiveMode={isLiveMode} />
       case 'html':
         return <HTMLWidgetRenderer widget={widget as HTMLWidget} />
       case 'code':

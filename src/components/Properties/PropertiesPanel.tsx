@@ -14,6 +14,8 @@ import {
   type ButtonWidget,
   type MenuWidget,
   type MenuItem,
+  type TabsWidget,
+  type TabItem,
   type PublicationListWidget,
   type PublicationDetailsWidget,
   isSection
@@ -125,10 +127,51 @@ export function PropertiesPanel({
             selectedItem = foundWidget
             break
           }
+          // Also search within tabs widgets in this area
+          for (const areaWidget of area.widgets) {
+            if (areaWidget.type === 'tabs') {
+              const tabsWidget = areaWidget as any // TabsWidget
+              for (const tab of tabsWidget.tabs) {
+                const foundInTab = tab.widgets.find((w: any) => w.id === selectedWidget)
+                if (foundInTab) {
+                  selectedItem = foundInTab
+                  break
+                }
+              }
+              if (selectedItem) break
+            }
+          }
+          if (selectedItem) break
         }
         if (selectedItem) break
       }
     }
+  }
+  
+  // If still not found, search in standalone tabs widgets
+  if (!selectedItem) {
+    for (const canvasItem of canvasItems) {
+      if (canvasItem.type === 'tabs') {
+        const tabsWidget = canvasItem as any // TabsWidget
+        for (const tab of tabsWidget.tabs) {
+          const foundInTab = tab.widgets.find((w: any) => w.id === selectedWidget)
+          if (foundInTab) {
+            selectedItem = foundInTab
+            console.log('✅ Found widget in standalone tabs widget:', foundInTab.type, foundInTab.id)
+            break
+          }
+        }
+        if (selectedItem) break
+      }
+    }
+  }
+  
+  // Log if we found the item
+  if (selectedItem && !isSection(selectedItem)) {
+    console.log('✅ Properties Panel - Widget found:', { 
+      id: selectedItem.id,
+      type: (selectedItem as any).type 
+    })
   }
   
   if (!selectedItem) {
@@ -137,7 +180,25 @@ export function PropertiesPanel({
       canvasItemIds: canvasItems.map((item: CanvasItem) => item.id),
       sectionWidgetIds: canvasItems.flatMap((item: CanvasItem) => 
         isSection(item) ? item.areas.flatMap(area => area.widgets.map(w => w.id)) : []
-      )
+      ),
+      tabsWidgetIds: canvasItems.flatMap((item: CanvasItem) => {
+        if (item.type === 'tabs') {
+          const tabsWidget = item as any
+          return tabsWidget.tabs.flatMap((tab: any) => tab.widgets.map((w: any) => w.id))
+        }
+        if (isSection(item)) {
+          return item.areas.flatMap(area => 
+            area.widgets.flatMap(w => {
+              if (w.type === 'tabs') {
+                const tabsWidget = w as any
+                return tabsWidget.tabs.flatMap((tab: any) => tab.widgets.map((tw: any) => tw.id))
+              }
+              return []
+            })
+          )
+        }
+        return []
+      })
     })
     return (
       <div className="p-4">
@@ -155,12 +216,42 @@ export function PropertiesPanel({
           ...item,
           areas: item.areas.map(area => ({
             ...area,
-            widgets: area.widgets.map(w => 
-              w.id === selectedWidget ? { ...w, ...updates } : w
-            )
+            widgets: area.widgets.map(w => {
+              // Direct match
+              if (w.id === selectedWidget) {
+                return { ...w, ...updates }
+              }
+              // Search in tabs widgets
+              if (w.type === 'tabs') {
+                const tabsWidget = w as any // TabsWidget
+                return {
+                  ...tabsWidget,
+                  tabs: tabsWidget.tabs.map((tab: any) => ({
+                    ...tab,
+                    widgets: tab.widgets.map((tw: any) =>
+                      tw.id === selectedWidget ? { ...tw, ...updates } : tw
+                    )
+                  }))
+                }
+              }
+              return w
+            })
           }))
         }
       } else {
+        // Check if it's a standalone tabs widget
+        if (item.type === 'tabs') {
+          const tabsWidget = item as any // TabsWidget
+          return {
+            ...tabsWidget,
+            tabs: tabsWidget.tabs.map((tab: any) => ({
+              ...tab,
+              widgets: tab.widgets.map((tw: any) =>
+                tw.id === selectedWidget ? { ...tw, ...updates } : tw
+              )
+            }))
+          }
+        }
         return item.id === selectedWidget ? { ...item, ...updates } : item
       }
     })
@@ -1637,6 +1728,139 @@ export function PropertiesPanel({
               <p className="text-xs text-blue-800 font-medium mb-1">💡 Template Variables</p>
               <p className="text-xs text-blue-700">
                 Use <code className="bg-blue-100 px-1 rounded">{'{{journal.name}}'}</code>, <code className="bg-blue-100 px-1 rounded">{'{{journal.code}}'}</code> in labels and URLs
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'tabs' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tab Style</label>
+            <select
+              value={(widget as TabsWidget).tabStyle}
+              onChange={(e) => updateWidget({ tabStyle: e.target.value as 'underline' | 'pills' | 'buttons' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="underline">Underline</option>
+              <option value="pills">Pills</option>
+              <option value="buttons">Buttons</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
+            <select
+              value={(widget as TabsWidget).align || 'left'}
+              onChange={(e) => updateWidget({ align: e.target.value as 'left' | 'center' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">Tabs</label>
+              <button
+                onClick={() => {
+                  const newTab: TabItem = {
+                    id: nanoid(),
+                    label: `Tab ${(widget as TabsWidget).tabs.length + 1}`,
+                    widgets: []
+                  }
+                  updateWidget({ tabs: [...(widget as TabsWidget).tabs, newTab] })
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Tab
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {(widget as TabsWidget).tabs.map((tab, index) => (
+                <div key={tab.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={tab.label}
+                      onChange={(e) => {
+                        const newTabs = [...(widget as TabsWidget).tabs]
+                        newTabs[index] = { ...tab, label: e.target.value }
+                        updateWidget({ tabs: newTabs })
+                      }}
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                      placeholder="Tab label"
+                    />
+                    <button
+                      onClick={() => {
+                        // Don't allow deleting the last tab
+                        if ((widget as TabsWidget).tabs.length > 1) {
+                          const newTabs = (widget as TabsWidget).tabs.filter((_, i) => i !== index)
+                          updateWidget({ 
+                            tabs: newTabs,
+                            activeTabIndex: Math.min((widget as TabsWidget).activeTabIndex, newTabs.length - 1)
+                          })
+                        }
+                      }}
+                      disabled={(widget as TabsWidget).tabs.length === 1}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={
+                        (widget as TabsWidget).tabs.length === 1 
+                          ? "Cannot delete the last tab" 
+                          : "Delete tab"
+                      }
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <label className="block text-gray-600 mb-1">Icon (emoji)</label>
+                      <input
+                        type="text"
+                        value={tab.icon || ''}
+                        onChange={(e) => {
+                          const newTabs = [...(widget as TabsWidget).tabs]
+                          newTabs[index] = { ...tab, icon: e.target.value }
+                          updateWidget({ tabs: newTabs })
+                        }}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                        placeholder="e.g., 📊"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-600 mb-1">URL (optional)</label>
+                      <input
+                        type="text"
+                        value={tab.url || ''}
+                        onChange={(e) => {
+                          const newTabs = [...(widget as TabsWidget).tabs]
+                          newTabs[index] = { ...tab, url: e.target.value }
+                          updateWidget({ tabs: newTabs })
+                        }}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                        placeholder="/path"
+                      />
+                    </div>
+                    <div className="text-gray-500 text-xs pt-1">
+                      {tab.widgets.length} widget{tab.widgets.length !== 1 ? 's' : ''} in this tab
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-xs text-blue-800 font-medium mb-1">💡 How to use</p>
+              <p className="text-xs text-blue-700">
+                Configure tabs here, then drag widgets from the library into each tab's drop zone on the canvas.
               </p>
             </div>
           </div>

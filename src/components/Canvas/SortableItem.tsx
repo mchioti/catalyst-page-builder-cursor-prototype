@@ -119,8 +119,17 @@ export function SortableItem({
           {/* Overlay to capture clicks on interactive widgets */}
           <div 
             className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
-            style={{ pointerEvents: 'auto' }}
+            style={{ 
+              pointerEvents: 'auto',
+              // Don't block clicks on tabs widget navigation
+              ...(item.type === 'tabs' && { pointerEvents: 'none' })
+            }}
             onClick={(e) => {
+              // Skip overlay click for tabs widget - let tab buttons handle clicks
+              if (item.type === 'tabs') {
+                return
+              }
+              
               e.stopPropagation()
               console.log('🎯 Standalone overlay click detected:', { 
                 widgetId: item.id, 
@@ -184,7 +193,12 @@ export function SortableItem({
           )}
           
           {/* Make widget content non-interactive in edit mode */}
-          <div style={{ pointerEvents: 'none', position: 'relative', zIndex: 1 }}>
+          {/* Exception: tabs widget needs pointer events for drop zones and tab navigation */}
+          <div style={{ 
+            pointerEvents: item.type === 'tabs' ? 'auto' : 'none', 
+            position: 'relative', 
+            zIndex: 1 
+          }}>
             <InteractiveWidgetRenderer 
               widget={item}
               dragAttributes={attributes}
