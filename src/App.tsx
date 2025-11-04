@@ -2268,19 +2268,46 @@ const usePageStore = create<PageState>((set, get) => ({
   
   resetToBase: (route) => {
     const state = get()
-    const { routeCanvasItems } = state
+    const { routeCanvasItems, journalTemplateCanvas } = state
     
-    // Remove route-specific canvas
+    // Extract journal code from route - handle BOTH patterns:
+    // 1. Individual issue: 'toc/embo/current' → 'embo'
+    // 2. Journal template: 'journal/embo' → 'embo'
+    let journalCode: string | null = null
+    
+    if (route.startsWith('journal/')) {
+      // Journal template route: 'journal/embo' → 'embo'
+      journalCode = route.replace('journal/', '')
+    } else {
+      // Individual issue route: 'toc/embo/current' → 'embo'
+      const journalCodeMatch = route.match(/\/toc\/([^\/]+)/)
+      journalCode = journalCodeMatch ? journalCodeMatch[1] : null
+    }
+    
+    console.log(`🔄 Resetting ${route} to base template`, { journalCode, routeType: route.startsWith('journal/') ? 'journal template' : 'individual issue' })
+    
+    // Remove route-specific canvas (individual issue)
     const newRouteCanvasItems = { ...routeCanvasItems }
     delete newRouteCanvasItems[route]
     
-    // Remove customization tracking
+    // ALSO remove journal template if we have a journal code
+    // This ensures the base template can be inherited properly
+    const newJournalTemplateCanvas = { ...journalTemplateCanvas }
+    if (journalCode) {
+      delete newJournalTemplateCanvas[journalCode]
+      console.log(`  ↳ Also clearing journal template for: ${journalCode}`)
+    }
+    
+    // Remove modification tracking for BOTH individual issue AND journal template
     set((s) => ({
       routeCanvasItems: newRouteCanvasItems,
-      templateModifications: s.templateModifications.filter(c => c.route !== route)
+      journalTemplateCanvas: newJournalTemplateCanvas,
+      templateModifications: s.templateModifications.filter(c => 
+        c.route !== route && c.route !== `journal/${journalCode}`
+      )
     }))
     
-    console.log(`✅ Reset route ${route} to base template`)
+    console.log(`✅ Reset complete - ${route} will now inherit from base template`)
   },
   
   promoteToBase: (route, templateId) => {

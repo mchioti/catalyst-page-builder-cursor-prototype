@@ -5,10 +5,11 @@
  * Provides actions: View Diff, Reset, Promote, Exempt
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Eye, RotateCcw, ArrowUp, Lock, Unlock, ChevronDown, ChevronUp } from 'lucide-react'
 import { detectTemplateChanges } from '../../utils/templateDiff'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
+import { TemplateDiffModal } from './TemplateDiffModal'
 
 export interface TemplateDivergenceTrackerProps {
   templateId: string
@@ -154,6 +155,8 @@ function CustomizationItem({
   templateName,
   usePageStore 
 }: CustomizationItemProps) {
+  const [isDiffModalOpen, setIsDiffModalOpen] = useState(false)
+  
   const resetToBase = usePageStore((state: any) => state.resetToBase)
   const promoteToBase = usePageStore((state: any) => state.promoteToBase)
   const promoteToJournalTemplate = usePageStore((state: any) => state.promoteToJournalTemplate)
@@ -162,6 +165,8 @@ function CustomizationItem({
   const addNotification = usePageStore((state: any) => state.addNotification)
   const getCanvasItemsForRoute = usePageStore((state: any) => state.getCanvasItemsForRoute)
   const getJournalTemplateCanvas = usePageStore((state: any) => state.getJournalTemplateCanvas)
+  const getModificationsForTemplate = usePageStore((state: any) => state.getModificationsForTemplate)
+  const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas)
   
   // Determine if this is an individual issue or journal template
   const isIndividualIssue = !modification.route.startsWith('journal/')
@@ -199,14 +204,27 @@ function CustomizationItem({
     return breakdown
   }, [modification.route, modification.journalCode, isJournalTemplate, getCanvasItemsForRoute, getJournalTemplateCanvas])
   
+  // Get templates for diff modal
+  const getTemplatesForDiff = () => {
+    // Get the modified canvas based on route type
+    let modifiedCanvas
+    if (isJournalTemplate) {
+      modifiedCanvas = getJournalTemplateCanvas?.(modification.journalCode) || []
+    } else {
+      modifiedCanvas = getCanvasItemsForRoute?.(modification.route) || []
+    }
+    
+    // Get base template (use global template canvas if available, otherwise use theme default)
+    const baseCanvas = globalTemplateCanvas && globalTemplateCanvas.length > 0 
+      ? globalTemplateCanvas 
+      : createTOCTemplate(modification.journalCode)
+    
+    return { baseCanvas, modifiedCanvas }
+  }
+
   const handleViewDiff = () => {
     console.log('View diff for:', modification.route)
-    // TODO: Open diff modal
-    addNotification?.({
-      type: 'info',
-      title: 'View Diff',
-      message: `Opening visual diff for ${modification.journalName}...`
-    })
+    setIsDiffModalOpen(true)
   }
   
   const handleReset = () => {
@@ -233,12 +251,34 @@ function CustomizationItem({
       }
     } else if (isJournalTemplate) {
       // Promote journal template to base template (Level 2 → Level 3)
-      if (confirm(`Promote ${modification.journalName}'s template to ALL journals?\n\nAll journals (ADVMA, EMBO, etc.) will inherit these changes (except exempted ones).`)) {
+      
+      // Get all modifications for this template to check for conflicts
+      const allModifications = getModificationsForTemplate?.(templateId) || []
+      
+      // Find other journals that have modifications and won't be affected
+      const otherModifiedJournals = allModifications
+        .filter(m => m.route !== modification.route && m.route.startsWith('journal/'))
+        .map(m => m.journalName)
+      
+      // Build accurate dialog message with explicit template name
+      let message = `Promote ${modification.journalName}'s ${templateName} to ALL journals?\n\n`
+      message += `This will update the base ${templateName} used across all journals.\n\n`
+      
+      if (otherModifiedJournals.length > 0) {
+        message += `⚠️ ${otherModifiedJournals.join(', ')} will NOT be affected because they have their own ${templateName} modifications.\n\n`
+        message += `Only journals without modifications will inherit this ${templateName}.`
+      } else {
+        message += `All journals will inherit this ${templateName} (except exempted ones).`
+      }
+      
+      if (confirm(message)) {
         promoteToBase?.(modification.route, templateId)
         addNotification?.({
           type: 'success',
-          title: 'Promoted to Base Template',
-          message: `All journals will now inherit ${modification.journalName}'s modifications`
+          title: `Promoted to Base ${templateName}`,
+          message: otherModifiedJournals.length > 0 
+            ? `Base ${templateName} updated. ${otherModifiedJournals.join(', ')} kept their own modifications.`
+            : `All journals will now use ${modification.journalName}'s ${templateName}`
         })
       }
     }
@@ -371,6 +411,16 @@ function CustomizationItem({
           {modification.isExempt ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
         </button>
       </div>
+      
+      {/* Diff Modal */}
+      <TemplateDiffModal
+        isOpen={isDiffModalOpen}
+        onClose={() => setIsDiffModalOpen(false)}
+        templateName={templateName}
+        journalName={modification.journalName || modification.journalCode}
+        baseTemplate={getTemplatesForDiff().baseCanvas}
+        modifiedTemplate={getTemplatesForDiff().modifiedCanvas}
+      />
     </div>
   )
 }
