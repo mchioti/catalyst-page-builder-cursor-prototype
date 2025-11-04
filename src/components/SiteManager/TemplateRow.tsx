@@ -69,9 +69,9 @@ export function TemplateRow({
 }: TemplateRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   
-  // Get customizations for expansion row
-  const getCustomizationsForTemplate = usePageStore?.((state: any) => state.getCustomizationsForTemplate)
-  const customizations = getCustomizationsForTemplate?.(template.id) || []
+  // Get modifications for expansion row
+  const getModificationsForTemplate = usePageStore?.((state: any) => state.getModificationsForTemplate)
+  const modifications = getModificationsForTemplate?.(template.id) || []
   
   // Get global template canvas for promote button visibility
   const globalTemplateCanvas = usePageStore?.((state: any) => state.globalTemplateCanvas) || []
@@ -282,7 +282,7 @@ export function TemplateRow({
       </tr>
       
       {/* Expansion Row - Full Width (only in Website view with divergence) */}
-      {showDivergence && isExpanded && customizations.length > 0 && (
+      {showDivergence && isExpanded && modifications.length > 0 && (
         <tr>
           <td colSpan={3} className="px-6 py-4 bg-amber-50 border-t border-amber-200">
             <TemplateDivergenceTracker

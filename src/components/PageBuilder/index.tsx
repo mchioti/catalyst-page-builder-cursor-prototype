@@ -81,7 +81,7 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackCustomization } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification } = usePageStore()
   
   // Detect editing context
   const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
@@ -133,18 +133,18 @@ export function PageBuilder({
       console.log('📦 Canvas items being saved:', canvasItems.length, 'items')
       setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
       
-      // Track customization for divergence management
-      if (journalCode && trackCustomization) {
-        console.log('📊 Tracking template customization for:', journalName, '(', journalCode, ')')
+      // Track modification for divergence management
+      if (journalCode && trackModification) {
+        console.log('📊 Tracking template modification for:', journalName, '(', journalCode, ')')
         console.log('📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
-        trackCustomization(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
+        trackModification(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
       } else {
-        console.warn('⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackCustomization })
+        console.warn('⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackModification })
       }
     } else {
       console.log('⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
     }
-  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackCustomization])
+  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackModification])
   
   // Global template canvas saving
   useEffect(() => {
@@ -162,15 +162,15 @@ export function PageBuilder({
       console.log('📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
       setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
       
-      // Track journal template customization for divergence management
-      if (trackCustomization) {
+      // Track journal template modification for divergence management
+      if (trackModification) {
         const route = `journal/${templateEditingContext.journalCode}`
         console.log('📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
         console.log('📊 Route:', route, 'Template ID: table-of-contents')
-        trackCustomization(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
+        trackModification(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
       }
     }
-  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas, journalName, trackCustomization])
+  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas, journalName, trackModification])
   
   const handleCreateSchema = (type: SchemaOrgType) => {
     setCreatingSchemaType(type)

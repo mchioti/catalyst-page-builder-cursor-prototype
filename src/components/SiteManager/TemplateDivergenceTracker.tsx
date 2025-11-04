@@ -5,7 +5,10 @@
  * Provides actions: View Diff, Reset, Promote, Exempt
  */
 
+import { useMemo } from 'react'
 import { Eye, RotateCcw, ArrowUp, Lock, Unlock, ChevronDown, ChevronUp } from 'lucide-react'
+import { detectTemplateChanges } from '../../utils/templateDiff'
+import { createTOCTemplate } from '../Templates/TOCTemplate'
 
 export interface TemplateDivergenceTrackerProps {
   templateId: string
@@ -33,35 +36,35 @@ export function TemplateDivergenceTracker({
   onPromoteToPublisherTheme
 }: TemplateDivergenceTrackerProps) {
   
-  // Get customizations from store
-  const templateCustomizations = usePageStore((state: any) => state.templateCustomizations || [])
-  const getCustomizationsForTemplate = usePageStore((state: any) => state.getCustomizationsForTemplate)
+  // Get modifications from store
+  const templateModifications = usePageStore((state: any) => state.templateModifications || [])
+  const getModificationsForTemplate = usePageStore((state: any) => state.getModificationsForTemplate)
   const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas)
   
-  // Get customizations for this specific template
-  const customizations = getCustomizationsForTemplate?.(templateId) || []
+  // Get modifications for this specific template
+  const modifications = getModificationsForTemplate?.(templateId) || []
   
   // "Promote to Publisher Theme" should ONLY show if there's a base template (globalTemplateCanvas)
-  // NOT for individual journal customizations - those need to be promoted to base first!
+  // NOT for individual journal modifications - those need to be promoted to base first!
   // This enforces the step-by-step governance: Issue → Journal → Base → Publisher Theme
   const hasBaseTemplate = globalTemplateCanvas && globalTemplateCanvas.length > 0
-  const thisWebsiteHasCustomization = hasBaseTemplate
+  const thisWebsiteHasModification = hasBaseTemplate
   
   // Debug logging
   console.log('🎯 TemplateDivergenceTracker render:', {
     templateId,
     templateName,
-    allCustomizations: templateCustomizations.length,
-    thisTemplateCustomizations: customizations.length,
-    customizations,
-    thisWebsiteHasCustomization,
+    allModifications: templateModifications.length,
+    thisTemplateModifications: modifications.length,
+    modifications,
+    thisWebsiteHasModification,
     websiteId,
     consoleMode
   })
   
   // Calculate stats
-  const customizedCount = customizations.filter((c: any) => !c.isExempt).length
-  const exemptedCount = customizations.filter((c: any) => c.isExempt).length
+  const customizedCount = modifications.filter((c: any) => !c.isExempt).length
+  const exemptedCount = modifications.filter((c: any) => c.isExempt).length
   const usingBaseCount = 0 // TODO: Calculate from actual journal count - customized count
   
   // If expandedOnly mode, only show the expanded list
@@ -71,10 +74,10 @@ export function TemplateDivergenceTracker({
         <div className="text-sm font-medium text-gray-900 mb-3">
           Journals with modifications for {templateName}:
         </div>
-        {customizations.map((customization: any) => (
+        {modifications.map((modification: any) => (
           <CustomizationItem
-            key={customization.route}
-            customization={customization}
+            key={modification.route}
+            modification={modification}
             templateId={templateId}
             templateName={templateName}
             usePageStore={usePageStore}
@@ -85,7 +88,7 @@ export function TemplateDivergenceTracker({
   }
   
   // If no modifications, show nothing (keep it clean)
-  if (customizations.length === 0) {
+  if (modifications.length === 0) {
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-400">—</span>
@@ -119,10 +122,10 @@ export function TemplateDivergenceTracker({
         </span>
       )}
       
-      {/* Promote to Publisher Theme button - only for Publication Pages in multi-website console when this website has customizations */}
+      {/* Promote to Publisher Theme button - only for Publication Pages in multi-website console when this website has modifications */}
       {consoleMode === 'multi' && 
        templateCategory === 'publication' && 
-       thisWebsiteHasCustomization && 
+       thisWebsiteHasModification && 
        onPromoteToPublisherTheme && (
         <button
           onClick={() => onPromoteToPublisherTheme(templateId)}
@@ -139,14 +142,14 @@ export function TemplateDivergenceTracker({
 }
 
 interface CustomizationItemProps {
-  customization: any
+  modification: any
   templateId: string
   templateName: string
   usePageStore: any
 }
 
 function CustomizationItem({ 
-  customization, 
+  modification, 
   templateId,
   templateName,
   usePageStore 
@@ -157,28 +160,62 @@ function CustomizationItem({
   const exemptFromUpdates = usePageStore((state: any) => state.exemptFromUpdates)
   const removeExemption = usePageStore((state: any) => state.removeExemption)
   const addNotification = usePageStore((state: any) => state.addNotification)
+  const getCanvasItemsForRoute = usePageStore((state: any) => state.getCanvasItemsForRoute)
+  const getJournalTemplateCanvas = usePageStore((state: any) => state.getJournalTemplateCanvas)
   
   // Determine if this is an individual issue or journal template
-  const isIndividualIssue = !customization.route.startsWith('journal/')
-  const isJournalTemplate = customization.route.startsWith('journal/')
+  const isIndividualIssue = !modification.route.startsWith('journal/')
+  const isJournalTemplate = modification.route.startsWith('journal/')
+  
+  // Calculate detailed modification breakdown using diff engine
+  const modificationBreakdown = useMemo(() => {
+    // Get the customized canvas based on route type
+    let customizedCanvas
+    if (isJournalTemplate) {
+      // Journal template: get from journalTemplateCanvas
+      customizedCanvas = getJournalTemplateCanvas?.(modification.journalCode) || []
+    } else {
+      // Individual issue: get from routeCanvasItems
+      customizedCanvas = getCanvasItemsForRoute?.(modification.route) || []
+    }
+    
+    // Get base template for comparison
+    const baseTemplate = createTOCTemplate(modification.journalCode)
+    
+    // Calculate diff
+    const changes = detectTemplateChanges(baseTemplate, customizedCanvas)
+    
+    // Categorize changes
+    const breakdown = {
+      sectionsAdded: changes.filter(c => c.type === 'added' && c.element === 'section').length,
+      widgetsAdded: changes.filter(c => c.type === 'added' && c.element === 'widget').length,
+      sectionsRemoved: changes.filter(c => c.type === 'removed' && c.element === 'section').length,
+      widgetsRemoved: changes.filter(c => c.type === 'removed' && c.element === 'widget').length,
+      sectionsModified: changes.filter(c => c.type === 'modified' && c.element === 'section').length,
+      widgetsModified: changes.filter(c => c.type === 'modified' && c.element === 'widget').length,
+      total: changes.length
+    }
+    
+    return breakdown
+  }, [modification.route, modification.journalCode, isJournalTemplate, getCanvasItemsForRoute, getJournalTemplateCanvas])
   
   const handleViewDiff = () => {
-    console.log('View diff for:', customization.route)
+    console.log('View diff for:', modification.route)
     // TODO: Open diff modal
     addNotification?.({
       type: 'info',
       title: 'View Diff',
-      message: `Opening visual diff for ${customization.journalName}...`
+      message: `Opening visual diff for ${modification.journalName}...`
     })
   }
   
   const handleReset = () => {
-    if (confirm(`Reset ${customization.journalName} to base template?\n\nAll ${customization.modificationCount} modifications will be lost.`)) {
-      resetToBase?.(customization.route)
+    if (confirm(`Reset ${modification.journalName} to base template?\n\nAll ${modificationBreakdown.total} modifications will be lost.`)) {
+      resetToBase?.(modification.route)
       addNotification?.({
         type: 'success',
         title: 'Reset Complete',
-        message: `${customization.journalName} reset to base template`
+        message: `${modification.journalName} reset to base template`
       })
     }
   }
@@ -186,44 +223,44 @@ function CustomizationItem({
   const handlePromote = () => {
     if (isIndividualIssue) {
       // Promote individual issue to journal template (Level 1 → Level 2)
-      if (confirm(`Promote this issue's modifications to ALL ${customization.journalName} issues?\n\nAll issues in this journal will inherit these changes.`)) {
-        promoteToJournalTemplate?.(customization.route, customization.journalCode, templateId)
+      if (confirm(`Promote this issue's modifications to ALL ${modification.journalName} issues?\n\nAll issues in this journal will inherit these changes.`)) {
+        promoteToJournalTemplate?.(modification.route, modification.journalCode, templateId)
         addNotification?.({
           type: 'success',
           title: 'Promoted to Journal Template',
-          message: `All ${customization.journalName} issues will now inherit these changes`
+          message: `All ${modification.journalName} issues will now inherit these changes`
         })
       }
     } else if (isJournalTemplate) {
       // Promote journal template to base template (Level 2 → Level 3)
-      if (confirm(`Promote ${customization.journalName}'s template to ALL journals?\n\nAll journals (ADVMA, EMBO, etc.) will inherit these changes (except exempted ones).`)) {
-        promoteToBase?.(customization.route, templateId)
+      if (confirm(`Promote ${modification.journalName}'s template to ALL journals?\n\nAll journals (ADVMA, EMBO, etc.) will inherit these changes (except exempted ones).`)) {
+        promoteToBase?.(modification.route, templateId)
         addNotification?.({
           type: 'success',
           title: 'Promoted to Base Template',
-          message: `All journals will now inherit ${customization.journalName}'s modifications`
+          message: `All journals will now inherit ${modification.journalName}'s modifications`
         })
       }
     }
   }
   
   const handleToggleExempt = () => {
-    if (customization.isExempt) {
-      if (confirm(`Remove exemption for ${customization.journalName}?\n\nThis journal will inherit future base template updates.`)) {
-        removeExemption?.(customization.route)
+    if (modification.isExempt) {
+      if (confirm(`Remove exemption for ${modification.journalName}?\n\nThis journal will inherit future base template updates.`)) {
+        removeExemption?.(modification.route)
         addNotification?.({
           type: 'info',
           title: 'Exemption Removed',
-          message: `${customization.journalName} will now inherit template updates`
+          message: `${modification.journalName} will now inherit template updates`
         })
       }
     } else {
-      if (confirm(`Exempt ${customization.journalName} from base template updates?\n\nThis journal will keep its modifications even when the base template is updated.`)) {
-        exemptFromUpdates?.(customization.route)
+      if (confirm(`Exempt ${modification.journalName} from base template updates?\n\nThis journal will keep its modifications even when the base template is updated.`)) {
+        exemptFromUpdates?.(modification.route)
         addNotification?.({
           type: 'info',
           title: 'Journal Exempted',
-          message: `${customization.journalName} will not inherit future template updates`
+          message: `${modification.journalName} will not inherit future template updates`
         })
       }
     }
@@ -232,21 +269,56 @@ function CustomizationItem({
   return (
     <div 
       className="flex items-center justify-between bg-white rounded p-2 border border-gray-200"
-      data-testid={`customization-${customization.journalCode}`}
+      data-testid={`modification-${modification.journalCode}`}
     >
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-900">
-            {customization.journalName || customization.journalCode}
+            {modification.journalName || modification.journalCode}
           </span>
-          {customization.isExempt && (
+          {modification.isExempt && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
               Exempted
             </span>
           )}
         </div>
-        <div className="text-xs text-gray-600 mt-0.5">
-          {customization.modificationCount} modification{customization.modificationCount !== 1 ? 's' : ''}
+        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+          {modificationBreakdown.sectionsAdded > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-green-600">+{modificationBreakdown.sectionsAdded}</span>
+              <span>section{modificationBreakdown.sectionsAdded !== 1 ? 's' : ''} added</span>
+            </div>
+          )}
+          {modificationBreakdown.widgetsAdded > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-green-600">+{modificationBreakdown.widgetsAdded}</span>
+              <span>widget{modificationBreakdown.widgetsAdded !== 1 ? 's' : ''} added</span>
+            </div>
+          )}
+          {modificationBreakdown.sectionsRemoved > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-red-600">−{modificationBreakdown.sectionsRemoved}</span>
+              <span>section{modificationBreakdown.sectionsRemoved !== 1 ? 's' : ''} removed</span>
+            </div>
+          )}
+          {modificationBreakdown.widgetsRemoved > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-red-600">−{modificationBreakdown.widgetsRemoved}</span>
+              <span>widget{modificationBreakdown.widgetsRemoved !== 1 ? 's' : ''} removed</span>
+            </div>
+          )}
+          {modificationBreakdown.sectionsModified > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-blue-600">~{modificationBreakdown.sectionsModified}</span>
+              <span>section{modificationBreakdown.sectionsModified !== 1 ? 's' : ''} modified</span>
+            </div>
+          )}
+          {modificationBreakdown.widgetsModified > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-blue-600">~{modificationBreakdown.widgetsModified}</span>
+              <span>widget{modificationBreakdown.widgetsModified !== 1 ? 's' : ''} modified</span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -255,7 +327,7 @@ function CustomizationItem({
           onClick={handleViewDiff}
           className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
           title="View diff"
-          data-testid={`view-diff-${customization.journalCode}`}
+          data-testid={`view-diff-${modification.journalCode}`}
         >
           <Eye className="h-4 w-4" />
         </button>
@@ -264,7 +336,7 @@ function CustomizationItem({
           onClick={handleReset}
           className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
           title="Reset to base template"
-          data-testid={`reset-${customization.journalCode}`}
+          data-testid={`reset-${modification.journalCode}`}
         >
           <RotateCcw className="h-4 w-4" />
         </button>
@@ -281,7 +353,7 @@ function CustomizationItem({
               ? 'Promote to journal template (all issues in this journal)' 
               : 'Promote to base template (all journals)'
           }
-          data-testid={`promote-${customization.journalCode}`}
+          data-testid={`promote-${modification.journalCode}`}
         >
           <ArrowUp className="h-4 w-4" />
         </button>
@@ -289,14 +361,14 @@ function CustomizationItem({
         <button
           onClick={handleToggleExempt}
           className={`p-1.5 rounded transition-colors ${
-            customization.isExempt 
+            modification.isExempt 
               ? 'text-purple-600 hover:bg-purple-50' 
               : 'text-gray-600 hover:bg-gray-50'
           }`}
-          title={customization.isExempt ? "Remove exemption" : "Exempt from updates"}
-          data-testid={`exempt-${customization.journalCode}`}
+          title={modification.isExempt ? "Remove exemption" : "Exempt from updates"}
+          data-testid={`exempt-${modification.journalCode}`}
         >
-          {customization.isExempt ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+          {modification.isExempt ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
         </button>
       </div>
     </div>

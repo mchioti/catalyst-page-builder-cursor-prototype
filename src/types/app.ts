@@ -88,7 +88,7 @@ export type PageIssue = {
 }
 
 // Template Divergence Management
-export type TemplateCustomization = {
+export type TemplateModification = {
   route: string           // e.g., 'toc/dgov/current'
   journalCode: string     // e.g., 'dgov' (ADVMA)
   journalName: string     // e.g., 'Digital Government: Research and Practice'
@@ -149,7 +149,7 @@ export type PageState = {
   themes: Theme[]
   
   // Template Divergence Tracking
-  templateCustomizations: TemplateCustomization[]
+  templateModifications: TemplateModification[]
   exemptedRoutes: Set<string>
   
   // Page Builder Actions
@@ -202,14 +202,14 @@ export type PageState = {
   removeTheme: (id: string) => void
   
   // Template Divergence Management
-  trackCustomization: (route: string, journalCode: string, journalName: string, templateId: string) => void
-  getCustomizationsForTemplate: (templateId: string) => TemplateCustomization[]
-  getCustomizationForRoute: (route: string) => TemplateCustomization | null
+  trackModification: (route: string, journalCode: string, journalName: string, templateId: string) => void
+  getModificationsForTemplate: (templateId: string) => TemplateModification[]
+  getModificationForRoute: (route: string) => TemplateModification | null
   exemptFromUpdates: (route: string) => void
   removeExemption: (route: string) => void
   resetToBase: (route: string) => void
   promoteToBase: (route: string, templateId: string) => void
   promoteToJournalTemplate: (route: string, journalCode: string, templateId: string) => void
   promoteToPublisherTheme: (templateId: string, journalCode?: string) => void
-  updateCustomizationCount: (route: string, count: number) => void
+  updateModificationCount: (route: string, count: number) => void
 }

@@ -879,19 +879,19 @@ export function MockLiveSite({
     }
 
     if (action === 'override') {
-      // User chose to override - clear both individual and journal template customizations
+      // User chose to override - clear both individual and journal template modifications
       const { clearCanvasItemsForRoute, setJournalTemplateCanvas } = usePageStore.getState()
       
       affectedJournals.forEach(journal => {
-        // Clear individual issue customizations
+        // Clear individual issue modifications
         clearCanvasItemsForRoute(journal.route)
-        // Clear journal template customizations
+        // Clear journal template modifications
         setJournalTemplateCanvas(journal.journalCode, [])
       })
       
       addNotification({
         type: 'warning',
-        title: 'Customizations Cleared',
+        title: 'Modifications Cleared',
         message: `Cleared journal templates and individual edits for ${affectedJournals.map(j => j.journalName).join(', ')} to apply global template everywhere.`
       })
       
@@ -912,7 +912,7 @@ export function MockLiveSite({
       addNotification({
         type: 'info',
         title: 'Selective Template Application',
-        message: `Global changes will apply to other journals. ${affectedJournals.map(j => j.journalName).join(', ')} will keep their existing templates and customizations.`
+        message: `Global changes will apply to other journals. ${affectedJournals.map(j => j.journalName).join(', ')} will keep their existing templates and modifications.`
       })
       
       // Set selective global context
@@ -1049,7 +1049,7 @@ export function MockLiveSite({
         if (currentRouteEdits.length > 0) {
           // Start with existing individual edits as the base for template editing
           templateToEdit = currentRouteEdits
-          console.log(`🎨 Creating journal template from individual customizations:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
+          console.log(`🎨 Creating journal template from individual modifications:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
           
           notificationMessage = `Creating ${journalName} template from your current issue. Changes will apply to all ${journalName} issues.`
         } else {
@@ -1114,11 +1114,11 @@ export function MockLiveSite({
       // Global Template Editing with Conflict Detection
       const templateSections = createTOCTemplate('advma') // Use base template
       
-      // Check for existing customizations that would be overridden
+      // Check for existing modifications that would be overridden
       const storeState = usePageStore.getState()
       
-      // Check 1: Individual issue customizations (routeCanvasItems)
-      const routesWithActualCustomizations = Object.keys(storeState.routeCanvasItems || {})
+      // Check 1: Individual issue modifications (routeCanvasItems)
+      const routesWithActualModifications = Object.keys(storeState.routeCanvasItems || {})
         .filter(route => {
           if (!route.includes('/toc/')) return false
           
@@ -1154,8 +1154,8 @@ export function MockLiveSite({
           return hasActualChanges
         })
 
-      // Check 2: Journal template customizations (journalTemplateCanvas)
-      const journalsWithTemplateCustomizations: string[] = []
+      // Check 2: Journal template modifications (journalTemplateCanvas)
+      const journalsWithTemplateModifications: string[] = []
       const journalCodes = ['advma', 'embo'] // Known journal codes
       
       journalCodes.forEach(code => {
@@ -1188,15 +1188,15 @@ export function MockLiveSite({
           })
           
           if (hasJournalChanges) {
-            journalsWithTemplateCustomizations.push(code)
+            journalsWithTemplateModifications.push(code)
           }
         }
       })
       
-      // Combine both types of customizations  
+      // Combine both types of modifications  
       const allAffectedJournals = [
-        ...routesWithActualCustomizations.map(route => route.match(/\/toc\/([^\/]+)/)?.[1]).filter((code): code is string => Boolean(code)),
-        ...journalsWithTemplateCustomizations
+        ...routesWithActualModifications.map(route => route.match(/\/toc\/([^\/]+)/)?.[1]).filter((code): code is string => Boolean(code)),
+        ...journalsWithTemplateModifications
       ]
       
       // Remove duplicates
@@ -1204,8 +1204,8 @@ export function MockLiveSite({
       
       console.log('🔍 Global template conflict check:', {
         allRoutes: Object.keys(storeState.routeCanvasItems || {}),
-        routesWithActualCustomizations,
-        journalsWithTemplateCustomizations,
+        routesWithActualModifications,
+        journalsWithTemplateModifications,
         uniqueAffectedJournals,
         scope
       })
@@ -1266,7 +1266,7 @@ export function MockLiveSite({
       addNotification({
         type: 'warning',
         title: 'Global Template Editing',
-        message: 'Changes will affect ALL issues across ALL journals. Individual customizations have been handled per your choice.'
+        message: 'Changes will affect ALL issues across ALL journals. Individual modifications have been handled per your choice.'
       })
     }
   }

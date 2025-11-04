@@ -33,7 +33,7 @@ interface Theme {
   typography: {
     headingFont: string
   }
-  customizationRules: {
+  modificationRules: {
     colors: {
       canModifyPrimary: boolean
     }
@@ -63,7 +63,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       logoUrl: '',
       fontFamily: ''
     },
-    customizations: [] as Array<{path: string, value: string, reason: string}>
+    modifications: [] as Array<{path: string, value: string, reason: string}>
   })
   
   const totalSteps = 3
@@ -85,7 +85,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       status: 'staging',
       createdAt: new Date(),
       updatedAt: new Date(),
-      modifications: websiteData.customizations.map(c => ({
+      modifications: websiteData.modifications.map(c => ({
         path: c.path,
         originalValue: getDefaultValueForPath(c.path),
         modifiedValue: c.value,
@@ -103,7 +103,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       },
       // Store the purpose configuration for future use
       purpose: websiteData.purpose,
-      deviationScore: calculateInitialDeviation(websiteData.customizations, selectedTheme),
+      deviationScore: calculateInitialDeviation(websiteData.modifications, selectedTheme),
       lastThemeSync: new Date()
     }
     
@@ -122,11 +122,11 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
     return defaults[path] || 'default-value'
   }
   
-  const calculateInitialDeviation = (customizations: any[], theme: Theme | undefined) => {
+  const calculateInitialDeviation = (modifications: any[], theme: Theme | undefined) => {
     if (!theme) return 0
     let score = 0
-    // For themes, we calculate deviation based on how many customizations diverge from theme standards
-    score = customizations.length * 10 // Simple scoring for now
+    // For themes, we calculate deviation based on how many modifications diverge from theme standards
+    score = modifications.length * 10 // Simple scoring for now
     return Math.min(score, 100)
   }
   
@@ -376,7 +376,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                 <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
                   <p className="text-gray-600 mb-6">
-                    Complete your website setup with naming and optional branding customizations.
+                    Complete your website setup with naming and optional branding modifications.
                   </p>
                   
                   <div className="mb-6">
@@ -433,7 +433,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                         />
                       </div>
                       
-                      {selectedTheme?.customizationRules.colors.canModifyPrimary && (
+                      {selectedTheme?.modificationRules.colors.canModifyPrimary && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
                           <input
@@ -449,11 +449,11 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                       )}
                     </div>
                     
-                    {selectedTheme && !selectedTheme.customizationRules.colors.canModifyPrimary && (
+                    {selectedTheme && !selectedTheme.modificationRules.colors.canModifyPrimary && (
                       <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                         <p className="text-amber-700 text-sm">
                           <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
-                          You can set a logo, but color customization will be limited after website creation.
+                          You can set a logo, but color modification will be limited after website creation.
                         </p>
                       </div>
                     )}

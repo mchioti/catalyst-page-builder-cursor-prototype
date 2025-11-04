@@ -1117,7 +1117,7 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
         setCurrentView('page-builder')
         // Small delay to ensure state is updated before showing alert
         setTimeout(() => {
-          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see customizations.`)
+          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see modifications.`)
         }, 100)
       } else {
         alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
@@ -1248,9 +1248,9 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
 
     console.log('Bulk updating templates:', selectedNames)
     
-    // TODO: Check if any selected templates have website customizations
+    // TODO: Check if any selected templates have website modifications
     // If yes, trigger conflict resolution dialog
-    alert(`Update Selected Templates from Platform\n\n${selectedCount} template(s) selected:\n${selectedNames}\n\nThis would:\n1. Check for website customizations\n2. Show conflict dialog if needed\n3. Pull latest changes from platform release\n4. Apply updates to theme templates`)
+    alert(`Update Selected Templates from Platform\n\n${selectedCount} template(s) selected:\n${selectedNames}\n\nThis would:\n1. Check for website modifications\n2. Show conflict dialog if needed\n3. Pull latest changes from platform release\n4. Apply updates to theme templates`)
     
     // Clear selection after update
     setSelectedTemplates(new Set())

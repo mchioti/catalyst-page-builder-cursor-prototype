@@ -54,7 +54,7 @@ export function ConflictResolutionDialog({
                 </h3>
                 <p className="text-sm text-blue-800">
                   You're editing a {scopeLabel.toLowerCase()} that normally applies to {impactMessage}. 
-                  However, some journals have individual customizations that would be overridden.
+                  However, some journals have individual modifications that would be overridden.
                 </p>
               </div>
             </div>
@@ -63,7 +63,7 @@ export function ConflictResolutionDialog({
           {/* Affected Journals */}
           <div>
             <h3 className="font-medium text-gray-900 mb-3">
-              Journals with existing customizations:
+              Journals with existing modifications:
             </h3>
             <div className="space-y-2">
               {affectedJournals.map((journal) => (
@@ -72,7 +72,7 @@ export function ConflictResolutionDialog({
                   <div>
                     <span className="font-medium text-amber-900">{journal.journalName}</span>
                     <p className="text-xs text-amber-700 mt-1">
-                      Has individual customizations that would be lost
+                      Has individual modifications that would be lost
                     </p>
                   </div>
                 </div>
@@ -97,11 +97,11 @@ export function ConflictResolutionDialog({
                       className="text-left w-full"
                     >
                       <h4 className="font-medium text-gray-900 mb-1">
-                        Apply Everywhere (Override Customizations)
+                        Apply Everywhere (Override Modifications)
                       </h4>
                       <p className="text-sm text-gray-600">
-                        Clear all individual customizations and apply template changes to all journals. 
-                        <strong className="text-red-600"> This will permanently delete existing customizations.</strong>
+                        Clear all individual modifications and apply template changes to all journals. 
+                        <strong className="text-red-600"> This will permanently delete existing modifications.</strong>
                       </p>
                     </button>
                   </div>
@@ -121,7 +121,7 @@ export function ConflictResolutionDialog({
                         Skip Changed Journals (Recommended)
                       </h4>
                       <p className="text-sm text-green-700">
-                        Apply template changes to all other journals, but preserve existing customizations for {affectedJournals.map(j => j.journalName).join(', ')}. 
+                        Apply template changes to all other journals, but preserve existing modifications for {affectedJournals.map(j => j.journalName).join(', ')}. 
                         <strong> You can override them individually later if needed.</strong>
                       </p>
                     </button>
@@ -161,7 +161,7 @@ export function ConflictResolutionDialog({
                 </p>
                 <p>
                   Changes at higher levels propagate down unless overridden at lower levels. 
-                  Individual customizations take precedence over templates.
+                  Individual modifications take precedence over templates.
                 </p>
               </div>
             </div>

@@ -214,7 +214,7 @@ export function WebsiteTemplates({
     const template = allTemplates.find(t => t.id === templateId)
     if (!template) return
 
-    // TODO: Get actual customization count from store
+    // TODO: Get actual modification count from store
     const affectedWebsitesCount = 2 // Placeholder
 
     const confirmed = window.confirm(

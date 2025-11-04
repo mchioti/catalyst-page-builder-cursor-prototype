@@ -28,7 +28,7 @@ import {
   // Template types  
   type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
   // App types
-  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType, type TemplateCustomization,
+  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType, type TemplateModification,
   // Schema.org types
   type SchemaObject, type SchemaOrgType
 } from './types'
@@ -1985,7 +1985,7 @@ const usePageStore = create<PageState>((set, get) => ({
   ] as Theme[],
   
   // Template Divergence Tracking
-  templateCustomizations: [],
+  templateModifications: [],
   exemptedRoutes: new Set<string>(),
   
   publicationCardVariants: [
@@ -2191,18 +2191,18 @@ const usePageStore = create<PageState>((set, get) => ({
   })),
   
   // Template Divergence Management
-  trackCustomization: (route, journalCode, journalName, templateId) => {
-    console.log('🔵 trackCustomization CALLED:', { route, journalCode, journalName, templateId })
+  trackModification: (route, journalCode, journalName, templateId) => {
+    console.log('🔵 trackModification CALLED:', { route, journalCode, journalName, templateId })
     const state = get()
-    const existingCustomization = state.templateCustomizations.find(c => c.route === route)
-    console.log('🔍 Existing customization:', existingCustomization)
-    console.log('📊 Current customizations:', state.templateCustomizations)
+    const existingModification = state.templateModifications.find(c => c.route === route)
+    console.log('🔍 Existing modification:', existingModification)
+    console.log('📊 Current modifications:', state.templateModifications)
     
-    if (existingCustomization) {
+    if (existingModification) {
       // Update existing
-      console.log('♻️ Updating existing customization, count:', existingCustomization.modificationCount + 1)
+      console.log('♻️ Updating existing modification, count:', existingModification.modificationCount + 1)
       set((s) => ({
-        templateCustomizations: s.templateCustomizations.map(c => 
+        templateModifications: s.templateModifications.map(c => 
           c.route === route 
             ? { ...c, modificationCount: c.modificationCount + 1, lastModified: new Date() }
             : c
@@ -2210,8 +2210,8 @@ const usePageStore = create<PageState>((set, get) => ({
       }))
     } else {
       // Add new
-      console.log('✨ Creating NEW customization')
-      const newCustomization: TemplateCustomization = {
+      console.log('✨ Creating NEW modification')
+      const newModification: TemplateModification = {
         route,
         journalCode,
         journalName,
@@ -2221,23 +2221,23 @@ const usePageStore = create<PageState>((set, get) => ({
         isExempt: false
       }
       set((s) => ({
-        templateCustomizations: [...s.templateCustomizations, newCustomization]
+        templateModifications: [...s.templateModifications, newModification]
       }))
     }
     
     // Verify update
     const updatedState = get()
-    console.log('✅ Updated customizations:', updatedState.templateCustomizations)
+    console.log('✅ Updated modifications:', updatedState.templateModifications)
   },
   
-  getCustomizationsForTemplate: (templateId) => {
+  getModificationsForTemplate: (templateId) => {
     const state = get()
-    return state.templateCustomizations.filter(c => c.templateId === templateId)
+    return state.templateModifications.filter(c => c.templateId === templateId)
   },
   
-  getCustomizationForRoute: (route) => {
+  getModificationForRoute: (route) => {
     const state = get()
-    return state.templateCustomizations.find(c => c.route === route) || null
+    return state.templateModifications.find(c => c.route === route) || null
   },
   
   exemptFromUpdates: (route) => {
@@ -2247,7 +2247,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     set((s) => ({
       exemptedRoutes: newExemptedRoutes,
-      templateCustomizations: s.templateCustomizations.map(c =>
+      templateModifications: s.templateModifications.map(c =>
         c.route === route ? { ...c, isExempt: true } : c
       )
     }))
@@ -2260,7 +2260,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     set((s) => ({
       exemptedRoutes: newExemptedRoutes,
-      templateCustomizations: s.templateCustomizations.map(c =>
+      templateModifications: s.templateModifications.map(c =>
         c.route === route ? { ...c, isExempt: false } : c
       )
     }))
@@ -2277,7 +2277,7 @@ const usePageStore = create<PageState>((set, get) => ({
     // Remove customization tracking
     set((s) => ({
       routeCanvasItems: newRouteCanvasItems,
-      templateCustomizations: s.templateCustomizations.filter(c => c.route !== route)
+      templateModifications: s.templateModifications.filter(c => c.route !== route)
     }))
     
     console.log(`✅ Reset route ${route} to base template`)
@@ -2285,7 +2285,7 @@ const usePageStore = create<PageState>((set, get) => ({
   
   promoteToBase: (route, templateId) => {
     const state = get()
-    const { routeCanvasItems, journalTemplateCanvas, templateCustomizations } = state
+    const { routeCanvasItems, journalTemplateCanvas, templateModifications } = state
     
     // Check if this is a journal template (route starts with 'journal/')
     const isJournalTemplate = route.startsWith('journal/')
@@ -2307,8 +2307,8 @@ const usePageStore = create<PageState>((set, get) => ({
       return
     }
     
-    // Get all customizations for this template that are NOT exempted
-    const affectedCustomizations = templateCustomizations.filter(
+    // Get all modifications for this template that are NOT exempted
+    const affectedModifications = templateModifications.filter(
       c => c.templateId === templateId && c.route !== route && !c.isExempt
     )
     
@@ -2329,11 +2329,11 @@ const usePageStore = create<PageState>((set, get) => ({
     
     // Remove customizations that now match the new base
     set((s) => ({
-      templateCustomizations: s.templateCustomizations.filter(c => c.route !== route)
+      templateModifications: s.templateModifications.filter(c => c.route !== route)
     }))
     
     console.log(`✅ Promoted ${route} to base template`)
-    console.log(`📊 ${affectedCustomizations.length} journals will inherit this change`)
+    console.log(`📊 ${affectedModifications.length} journals will inherit this change`)
   },
   
   promoteToJournalTemplate: (route, journalCode, templateId) => {
@@ -2363,7 +2363,7 @@ const usePageStore = create<PageState>((set, get) => ({
     // Update customization tracking - change from individual to journal level
     set((s) => ({
       routeCanvasItems: newRouteCanvasItems,
-      templateCustomizations: s.templateCustomizations.map(c =>
+      templateModifications: s.templateModifications.map(c =>
         c.route === route 
           ? { ...c, route: `journal/${journalCode}`, modificationCount: c.modificationCount }
           : c
@@ -2394,9 +2394,9 @@ const usePageStore = create<PageState>((set, get) => ({
     // publisherThemeCanvas[templateId] = globalTemplateCanvas
   },
   
-  updateCustomizationCount: (route, count) => {
+  updateModificationCount: (route, count) => {
     set((s) => ({
-      templateCustomizations: s.templateCustomizations.map(c =>
+      templateModifications: s.templateModifications.map(c =>
         c.route === route ? { ...c, modificationCount: count, lastModified: new Date() } : c
       )
     }))
