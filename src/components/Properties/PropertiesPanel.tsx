@@ -1002,6 +1002,22 @@ export function PropertiesPanel({
               <option value="right">Right</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Inline Styles
+              <span className="text-xs text-gray-500 ml-1">(CSS properties)</span>
+            </label>
+            <textarea
+              value={widget.inlineStyles || ''}
+              onChange={(e) => updateWidget({ inlineStyles: e.target.value })}
+              placeholder="font-family: courier;&#10;font-weight: 800;&#10;color: #333;"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono resize-none"
+              rows={4}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Add CSS properties separated by semicolons
+            </p>
+          </div>
         </div>
       )}
       
@@ -1527,16 +1543,42 @@ export function PropertiesPanel({
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Style</label>
             <select
               value={(widget as ButtonWidget).variant}
-              onChange={(e) => updateWidget({ variant: e.target.value as 'primary' | 'secondary' | 'outline' | 'link' })}
+              onChange={(e) => updateWidget({ variant: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="primary">Primary</option>
-              <option value="secondary">Secondary</option>
-              <option value="outline">Outline</option>
-              <option value="link">Link</option>
+              {(() => {
+                // Get current theme to show theme-specific button variants
+                const { currentWebsiteId, websites, themes } = usePageStore.getState()
+                const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+                const currentTheme = currentWebsite 
+                  ? themes.find((t: any) => t.id === currentWebsite.themeId)
+                  : null
+                
+                // DS V2 uses Primary, Secondary, Tertiary (matches Figma)
+                if (currentTheme?.id === 'wiley-figma-ds-v2') {
+                  return (
+                    <>
+                      <option value="primary">Primary</option>
+                      <option value="secondary">Secondary</option>
+                      <option value="tertiary">Tertiary</option>
+                      <option value="link">Link</option>
+                    </>
+                  )
+                }
+                
+                // Other themes use Primary, Secondary, Outline, Link
+                return (
+                  <>
+                    <option value="primary">Primary</option>
+                    <option value="secondary">Secondary</option>
+                    <option value="outline">Outline</option>
+                    <option value="link">Link</option>
+                  </>
+                )
+              })()}
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              💡 Button styles automatically use journal branding colors when on journal pages (ADVMA, EMBO, etc.)
+              💡 Button styles automatically adapt to light/dark backgrounds for perfect contrast
             </p>
           </div>
           

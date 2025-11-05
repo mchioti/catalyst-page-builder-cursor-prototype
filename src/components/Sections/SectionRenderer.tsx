@@ -551,15 +551,33 @@ export function SectionRenderer({
         }`}
         style={{
           ...getSectionBackgroundStyles(section),
-          // Fallback inline styles in case Tailwind classes don't exist
-          ...(section.styling?.paddingTop === 'large' && { paddingTop: '32px' }),
-          ...(section.styling?.paddingBottom === 'large' && { paddingBottom: '32px' }),
-          ...(section.styling?.paddingTop === 'medium' && { paddingTop: '24px' }),
-          ...(section.styling?.paddingBottom === 'medium' && { paddingBottom: '24px' }),
-          ...(section.styling?.paddingTop === 'small' && { paddingTop: '16px' }),
-          ...(section.styling?.paddingBottom === 'small' && { paddingBottom: '16px' }),
-          ...(section.styling?.paddingLeft && { paddingLeft: section.styling.paddingLeft === 'large' ? '32px' : section.styling.paddingLeft === 'medium' ? '24px' : '16px' }),
-          ...(section.styling?.paddingRight && { paddingRight: section.styling.paddingRight === 'large' ? '32px' : section.styling.paddingRight === 'medium' ? '24px' : '16px' })
+          // Support both semantic values ('small', 'medium', 'large') and pixel values ('80px', '96px')
+          ...(section.styling?.paddingTop && { 
+            paddingTop: section.styling.paddingTop === 'large' ? '32px' 
+              : section.styling.paddingTop === 'medium' ? '24px'
+              : section.styling.paddingTop === 'small' ? '16px'
+              : section.styling.paddingTop // Use as-is if it's a pixel value like '80px'
+          }),
+          ...(section.styling?.paddingBottom && { 
+            paddingBottom: section.styling.paddingBottom === 'large' ? '32px'
+              : section.styling.paddingBottom === 'medium' ? '24px'
+              : section.styling.paddingBottom === 'small' ? '16px'
+              : section.styling.paddingBottom
+          }),
+          ...(section.styling?.paddingLeft && { 
+            paddingLeft: section.styling.paddingLeft === 'large' ? '32px'
+              : section.styling.paddingLeft === 'medium' ? '24px'
+              : section.styling.paddingLeft === 'small' ? '16px'
+              : section.styling.paddingLeft
+          }),
+          ...(section.styling?.paddingRight && { 
+            paddingRight: section.styling.paddingRight === 'large' ? '32px'
+              : section.styling.paddingRight === 'medium' ? '24px'
+              : section.styling.paddingRight === 'small' ? '16px'
+              : section.styling.paddingRight
+          }),
+          // Figma Hero Banner: min-height support
+          ...(section.styling?.minHeight && { minHeight: section.styling.minHeight })
         }}
         tabIndex={-1}
         onFocus={(e) => {
@@ -657,7 +675,7 @@ export function SectionRenderer({
           className={`grid gap-2 ${getLayoutClasses(section.layout)}`}
           style={sidebarHeight || {}}
         >
-        {section.areas.map((area) => {
+        {section.areas.map((area, areaIndex) => {
           // Make area droppable for library widgets
           const { isOver, setNodeRef: setDropRef } = useDroppable({
             id: `drop-${area.id}`,
@@ -675,13 +693,18 @@ export function SectionRenderer({
             }
           }, [isOver, area.id, section.id])
           
+          // Check if this is a card area in header-plus-grid layout (areas 1, 2, 3)
+          const isCardArea = section.layout === 'header-plus-grid' && areaIndex > 0
+          
           return (
           <div 
             ref={setDropRef}
             key={area.id} 
             className={`relative ${
               isLiveMode
-                ? '' // Live mode: no editor styling
+                ? isCardArea 
+                  ? 'border border-gray-300 rounded-lg p-8' // Card styling in live mode - no bg-white, transparent!
+                  : '' // No styling for non-card areas in live mode
                 : isSpecialSection 
                   ? '' 
                   : area.widgets.length === 0 
@@ -700,7 +723,9 @@ export function SectionRenderer({
                       ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
                       : activeDropZone === `drop-${area.id}` 
                         ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
-                        : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
+                        : isCardArea 
+                          ? 'border border-gray-300 rounded-lg p-8' // Card styling in editor mode - no bg-white, transparent!
+                          : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
                           ? 'rounded p-2' // Transparent background to show section gradient/color/image or hero styling
                           : 'bg-white rounded p-2'
             }`}

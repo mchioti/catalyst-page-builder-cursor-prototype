@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { X, Palette } from 'lucide-react'
+import { getStarterTemplateForTheme } from '../../utils/themeStarters'
+import { useBrandingStore } from '../../stores/brandingStore'
 
 // TODO: Add proper type imports when extracting store
 interface Website {
@@ -46,8 +48,17 @@ interface WebsiteCreationWizardProps {
   themePreviewImages: Record<string, string>
 }
 
+interface PageStore {
+  addWebsite: (website: any) => void
+  themes: any[]
+  setCurrentWebsiteId: (id: string) => void
+  replaceCanvasItems: (items: any[]) => void
+  setCurrentView: (view: string) => void
+}
+
 export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImages }: WebsiteCreationWizardProps) {
-  const { addWebsite, themes: availableThemes } = usePageStore()
+  const { addWebsite, themes: availableThemes, setCurrentWebsiteId, replaceCanvasItems, setCurrentView } = usePageStore() as PageStore
+  const { initializeWebsiteBranding, updateWebsiteBranding } = useBrandingStore()
   const [step, setStep] = useState(1)
   const [websiteData, setWebsiteData] = useState({
     name: '',
@@ -107,7 +118,31 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       lastThemeSync: new Date()
     }
     
+    // Add website to store
     addWebsite(newWebsite)
+    
+    // Initialize branding store with theme colors
+    initializeWebsiteBranding(newWebsite.id)
+    if (selectedTheme) {
+      updateWebsiteBranding(newWebsite.id, {
+        primary: selectedTheme.colors.primary,
+        secondary: selectedTheme.colors.secondary,
+        accent: selectedTheme.colors.accent,
+        background: selectedTheme.colors.background,
+        text: selectedTheme.colors.text
+      })
+    }
+    
+    // Get starter template for the selected theme
+    const starterTemplate = getStarterTemplateForTheme(websiteData.themeId)
+    
+    // Set as active website and populate with starter template
+    setCurrentWebsiteId(newWebsite.id)
+    replaceCanvasItems(starterTemplate)
+    
+    // Navigate to page builder
+    setCurrentView('page-builder')
+    
     onClose()
   }
   

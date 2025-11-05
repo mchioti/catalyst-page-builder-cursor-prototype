@@ -12,6 +12,7 @@ import { WebsiteBrandingConfiguration } from './components/SiteManager/WebsiteBr
 import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
 import { PublicationCard } from './components/Publications/PublicationCard'
+import { CanvasThemeProvider } from './components/Canvas/CanvasThemeProvider'
 import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
 import { WebsiteCreationWizard } from './components/Wizards/WebsiteCreation'
 import { PageBuilder } from './components/PageBuilder'
@@ -489,14 +490,37 @@ function InteractiveWidgetRenderer({
       }
       
       // General text widget rendering
+      // Parse inline styles string into React style object
+      const parseInlineStyles = (stylesString?: string): React.CSSProperties => {
+        if (!stylesString) return {};
+        
+        const styleObject: React.CSSProperties = {};
+        const declarations = stylesString.split(';').filter(d => d.trim());
+        
+        declarations.forEach(declaration => {
+          const [property, value] = declaration.split(':').map(s => s.trim());
+          if (property && value) {
+            // Convert kebab-case to camelCase for React
+            const camelProperty = property.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+            (styleObject as any)[camelProperty] = value;
+          }
+        });
+        
+        return styleObject;
+      };
+      
+      const inlineStyles = parseInlineStyles(textWidget.inlineStyles);
+      const baseStyles = {
+        color: 'var(--theme-color-text, #374151)',
+        fontFamily: 'var(--theme-body-font, Inter, sans-serif)',
+        fontSize: 'var(--theme-base-size, 16px)',
+        ...inlineStyles // Apply user's inline styles on top
+      };
+      
       return (
         <SkinWrap skin={widget.skin}>
           <div className={`px-6 py-4 ${alignClass}`}>
-            <p style={{ 
-              color: 'var(--theme-color-text, #374151)',
-              fontFamily: 'var(--theme-body-font, Inter, sans-serif)',
-              fontSize: 'var(--theme-base-size, 16px)'
-            }}>
+            <p style={baseStyles}>
               {widget.text}
             </p>
           </div>
@@ -2006,144 +2030,27 @@ const usePageStore = create<PageState>((set, get) => ({
     },
     
     {
-      id: 'wiley-theme',
-      name: 'Wiley Publishing',
-      description: 'Professional publishing theme extracted from Wiley.com. Features bright green CTAs, dark teal accents, and clean modern layouts with black hero sections and white content areas. Perfect for scholarly publishers and research platforms.',
-      version: '1.0.0',
+      id: 'wiley-figma-ds-v2',
+      name: 'Wiley Figma DS V2',
+      description: 'Systematically extracted Figma design system with 3-brand journal theme support (Wiley/WT/Dummies). Foundation-first approach with essential component specs.',
+      version: '2.0.0',
       publishingType: 'journals' as const,
-      author: 'Catalyst Design Team',
-      createdAt: new Date('2025-11-04'),
-      updatedAt: new Date('2025-11-04'),
+      author: 'Wiley Design Team (Systematic Extraction)',
+      createdAt: new Date('2025-11-05'),
+      updatedAt: new Date('2025-11-05'),
       
       templates: [
         {
-          id: 'wiley-home',
-          name: 'Wiley Homepage',
-          description: 'Homepage template with dark hero section and three-column feature cards',
+          id: 'wiley-ds-v2-home',
+          name: 'DS V2 Homepage',
+          description: 'Foundation template with essential components',
           category: 'website' as TemplateCategory,
           status: 'active' as TemplateStatus,
-          version: '1.0.0',
-          author: 'Catalyst Design Team',
-          createdAt: new Date('2025-11-04'),
-          updatedAt: new Date('2025-11-04'),
-          tags: ['homepage', 'wiley', 'hero', 'features'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1400px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['branding.logo', 'colors.primary'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        primary: '#00d98a',    // Bright green CTA buttons
-        secondary: '#e8f5f5',  // Light teal backgrounds
-        accent: '#1a5757',     // Dark teal headers/footer
-        background: '#f9fafb', // Light gray page background
-        text: '#1f2937',       // Dark text for light backgrounds
-        muted: '#6b7280'       // Gray for secondary text
-      },
-      typography: {
-        headingFont: 'system-ui, -apple-system, sans-serif',
-        bodyFont: 'system-ui, -apple-system, sans-serif',
-        baseSize: '16px',
-        scale: 1.25
-      },
-      spacing: {
-        base: '1rem',
-        scale: 1.5
-      },
-      components: {
-        button: {
-          borderRadius: '6px',
-          fontWeight: '600',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          transition: 'all 0.2s'
-        },
-        card: {
-          borderRadius: '8px',
-          boxShadow: 'none',
-          border: '1px solid #e5e7eb'
-        },
-        form: {
-          borderRadius: '6px',
-          border: '1px solid #d1d5db',
-          focusColor: '#00d98a'
-        }
-      },
-      
-      modificationRules: {
-        colors: {
-          canModifyPrimary: true
-        }
-      },
-      
-      customizationRules: {
-        colors: {
-          canModifyPrimary: true,
-          canModifySecondary: true,
-          canModifyAccent: true,
-          canModifyBackground: true,
-          canModifyText: false,
-          canModifyMuted: true
-        },
-        typography: {
-          canModifyHeadingFont: true,
-          canModifyBodyFont: true,
-          canModifyBaseSize: true,
-          canModifyScale: true
-        },
-        spacing: {
-          canModifyBase: true,
-          canModifyScale: true
-        },
-        components: {
-          canModifyButtonRadius: true,
-          canModifyButtonWeight: true,
-          canModifyCardRadius: true,
-          canModifyCardShadow: true,
-          canModifyFormRadius: true
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
-      id: 'wiley-figma-design-system',
-      name: 'Wiley Figma Design System',
-      description: 'Official Wiley design system extracted from Figma with precise design tokens, Inter typography, and comprehensive color palette. Features #00D875 primary green and professional component styling.',
-      version: '1.0.0',
-      publishingType: 'journals' as const,
-      author: 'Wiley Design Team (via Figma)',
-      createdAt: new Date('2025-11-04'),
-      updatedAt: new Date('2025-11-04'),
-      
-      templates: [
-        {
-          id: 'wiley-figma-home',
-          name: 'Wiley Figma Homepage',
-          description: 'Official homepage template based on Figma design system',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.0.0',
+          version: '2.0.0',
           author: 'Wiley Design Team',
-          createdAt: new Date('2025-11-04'),
-          updatedAt: new Date('2025-11-04'),
-          tags: ['homepage', 'figma', 'design-system', 'official'],
+          createdAt: new Date('2025-11-05'),
+          updatedAt: new Date('2025-11-05'),
+          tags: ['homepage', 'figma', 'ds-v2', 'multi-brand', 'journals'],
           sections: [],
           layout: {
             header: true,
@@ -2152,7 +2059,7 @@ const usePageStore = create<PageState>((set, get) => ({
             maxWidth: '1400px',
             spacing: 'comfortable'
           },
-          allowedModifications: ['branding.logo'],
+          allowedModifications: ['branding.logo', 'branding.colors'],
           lockedElements: [],
           defaultModificationScope: 'Website (this)',
           broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
@@ -2161,19 +2068,169 @@ const usePageStore = create<PageState>((set, get) => ({
       ],
       
       colors: {
-        primary: '#00D875',    // Official Figma primary green
-        secondary: '#F8F8F5',  // Off-white cream background
-        accent: '#005E3A',     // Dark green for emphasis
-        background: '#FFFFFF', // Pure white
-        text: '#302F2F',       // Dark gray text
-        muted: '#5D5E5C'       // Mid gray for secondary text
+        // Base Website Theme (Wiley mode) - Legacy support
+        primary: '#00d875',       // Wiley green (light variant - default)
+        secondary: '#f2f2eb',     // Light cream
+        accent: '#008f8a',        // Teal accent
+        background: '#ffffff',
+        text: '#5d5e5c',
+        muted: '#5d5e5c',
+        
+        // 🎨 SEMANTIC COLOR SYSTEM: Light/Dark Pairs for Accessibility
+        // "Light" = bright colors for DARK backgrounds
+        // "Dark" = muted colors for LIGHT backgrounds
+        semanticColors: {
+          primary: {
+            light: '#00d875',     // Bright green - use on dark backgrounds
+            dark: '#008f8a',      // Teal - use on light backgrounds
+            hover: {
+              light: '#60e7a9',   // Lighter green hover
+              dark: '#006663'     // Darker teal hover
+            }
+          },
+          secondary: {
+            // Figma Brand 2: Solid button with light bg and dark text
+            // Content Color=Dark variant from Figma API
+            bg: {
+              light: '#f2f2eb',    // Paper 100 (cream) - use on dark backgrounds
+              dark: '#f2f2eb'      // Paper 100 (cream) - use on light backgrounds
+            },
+            text: {
+              light: '#003b44',    // Heritage 900 (dark teal) - use on dark backgrounds
+              dark: '#003b44'      // Heritage 900 (dark teal) - use on light backgrounds
+            },
+            hover: {
+              bg: {
+                light: '#ffffff',  // Neutral/0 (white) on hover
+                dark: '#ffffff'
+              },
+              text: {
+                light: '#003b44',  // Keep dark teal text
+                dark: '#003b44'
+              }
+            }
+          },
+          tertiary: {
+            // Figma Brand 3: Solid button with dark bg and light text
+            // Content Color=Light variant from Figma API
+            bg: {
+              light: '#003b44',    // Heritage 900 (dark teal) - use on dark backgrounds  
+              dark: '#003b44'      // Heritage 900 (dark teal) - use on light backgrounds
+            },
+            text: {
+              light: '#ffffff',    // White text - use on dark backgrounds
+              dark: '#ffffff'      // White text - use on light backgrounds
+            },
+            hover: {
+              bg: {
+                light: '#005662',  // Slightly lighter teal on hover (Heritage 800)
+                dark: '#005662'
+              },
+              text: {
+                light: '#ffffff',  // Keep white text
+                dark: '#ffffff'
+              }
+            }
+          }
+        },
+        
+        // Multi-Brand Journal Theme Presets
+        journalThemes: {
+          wiley: {
+            name: 'Wiley (Green)',
+            primary: '#00d875',
+            primaryLight: '#bff5dd',
+            primaryHover: '#60e7a9',
+            accent: '#008f8a',
+            accentDark: '#003b44',
+            background: '#f2f2eb',
+            text: '#5d5e5c'
+          },
+          wt: {
+            name: 'WT (Olive)',
+            primary: '#3c711a',
+            primaryLight: '#f3fce9',
+            primaryHover: '#68b929',
+            accent: '#448874',
+            accentDark: '#10231e',
+            background: '#b0b0b0',
+            text: '#313131'
+          },
+          dummies: {
+            name: 'Dummies (Gold)',
+            primary: '#74520f',
+            primaryLight: '#f7ffc1',
+            primaryHover: '#a68202',
+            accent: '#75dbff',
+            accentDark: '#065074',
+            background: '#b0b0b0',
+            text: '#313131'
+          }
+        },
+        
+        // Core Figma tokens (simplified)
+        brand: {
+          primaryData: {
+            100: '#bff5dd',
+            400: '#60e7a9',
+            600: '#00d875',
+          },
+          primaryHeritage: {
+            600: '#008f8a',
+            900: '#003b44',
+          }
+        },
+        neutral: {
+          0: '#FFFFFF',
+          50: '#FAFAFA',
+          100: '#F5F5F5',
+          200: '#EEEEEE',
+          300: '#D6D6D6',
+          400: '#ADADAD',    // For button borders
+          500: '#838383',
+          600: '#5A5A5A',    // For button text
+          700: '#313131',
+          800: '#212121',
+          900: '#141414'
+        }
       },
       
       typography: {
         headingFont: 'Inter, system-ui, -apple-system, sans-serif',
         bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
         baseSize: '16px',
-        scale: 1.333 // Perfect fourth scale
+        scale: 1.333,
+        
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        
+        weights: {
+          light: 300,
+          regular: 400,
+          medium: 500,
+          semibold: 600,
+          bold: 700
+        },
+        
+        // Essential sizes (simplified from full extraction)
+        desktop: {
+          body: {
+            sm: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px' },
+            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px' },
+            lg: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' }
+          },
+          heading: {
+            md: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px' },
+            lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px' },
+            xl: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px' }
+          }
+        },
+        
+        components: {
+          button: {
+            sm: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500 },
+            lg: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500 }
+          }
+        }
       },
       
       spacing: {
@@ -2185,25 +2242,46 @@ const usePageStore = create<PageState>((set, get) => ({
         button: {
           borderRadius: '6px',
           fontWeight: '500',
-          textTransform: 'none', // Figma uses normal case
-          letterSpacing: 'normal',
+          textTransform: 'none',
+          fontSize: '16px',
+          letterSpacing: '1.6px',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
         },
         card: {
+          // Content Card specs from Figma
           borderRadius: '8px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E4E0'
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          padding: '24px',
+          layout: 'vertical-left',
+          spacing: 'small',
+          variants: {
+            contentCard: {
+              width: '375px',
+              minHeight: '800px',
+              layout: 'vertical',
+              innerPadding: true,
+              spacing: '16px'
+            },
+            productCard: {
+              // To be extracted
+            },
+            journalCard: {
+              // To be extracted
+            }
+          }
         },
         form: {
           borderRadius: '6px',
           border: '1px solid #ADACA8',
-          focusColor: '#00D875'
+          focusColor: '#00d875'
         }
       },
       
       modificationRules: {
         colors: {
-          canModifyPrimary: true
+          canModifyPrimary: true,
+          canSelectJournalTheme: true  // NEW: Allow selecting from 3 brand modes
         }
       },
       
@@ -2213,12 +2291,13 @@ const usePageStore = create<PageState>((set, get) => ({
           canModifySecondary: true,
           canModifyAccent: true,
           canModifyBackground: true,
-          canModifyText: false, // Locked for accessibility
-          canModifyMuted: true
+          canModifyText: false,
+          canModifyMuted: true,
+          canSelectJournalPreset: true  // NEW: Can select from Wiley/WT/Dummies
         },
         typography: {
-          canModifyHeadingFont: false, // Inter is part of brand
-          canModifyBodyFont: false,    // Inter is part of brand
+          canModifyHeadingFont: false,
+          canModifyBodyFont: false,
           canModifyBaseSize: true,
           canModifyScale: true
         },
@@ -3172,8 +3251,7 @@ const themePreviewImages = {
   'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
   'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
   'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
-  'wiley-theme': 'https://placehold.co/400x250/1a5757/00d98a?text=Wiley+Theme', // Wiley theme - Green & teal professional
-  'wiley-figma-design-system': 'https://placehold.co/400x250/005E3A/00D875?text=Wiley+Figma+DS' // Official Figma design system
+  'wiley-figma-ds-v2': 'https://placehold.co/400x250/00D875/003B44?text=DS+V2+Multi-Brand' // Systematic extraction with 3-brand support
 }
 
 // NOTE: WebsiteCreationWizard component moved to src/components/Wizards/WebsiteCreation.tsx
@@ -3779,6 +3857,147 @@ function DesignConsole() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">System Settings</h2>
               <p className="text-gray-600">Global system configuration - Coming soon</p>
             </div>
+          )}
+          
+          {/* Dynamic fallback for any theme settings not explicitly handled */}
+          {siteManagerView.endsWith('-theme-settings') && 
+           !['modernist-theme-theme-settings', 'classicist-theme-theme-settings', 'curator-theme-theme-settings'].includes(siteManagerView) && (
+            (() => {
+              const themeId = siteManagerView.replace('-theme-settings', '')
+              const theme = themes.find(t => t.id === themeId)
+              return theme ? (
+                <div>
+                  <div className="mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">{theme.name} Theme - Settings</h2>
+                    <p className="text-slate-600 mt-1">{theme.description}</p>
+                  </div>
+                  <ThemeEditor usePageStore={usePageStore} themeId={themeId} />
+                </div>
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any theme publication cards not explicitly handled */}
+          {siteManagerView.endsWith('-publication-cards') && siteManagerView.includes('-theme-') &&
+           !['modernist-theme-publication-cards', 'classicist-theme-publication-cards', 'curator-theme-publication-cards'].includes(siteManagerView) && (
+            (() => {
+              const themeId = siteManagerView.replace('-publication-cards', '')
+              const theme = themes.find(t => t.id === themeId)
+              return theme ? (
+                <div>
+                  <div className="mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">{theme.name} Theme - Publication Cards</h2>
+                    <p className="text-slate-600 mt-1">Predefined publication card designs for this theme</p>
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
+                      <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the {theme.name} theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                    </div>
+                  </div>
+                  <ThemePublicationCards themeId={themeId} />
+                </div>
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any theme templates not explicitly handled */}
+          {siteManagerView.endsWith('-templates') && !siteManagerView.includes('-custom-templates') &&
+           !['modernist-theme-templates', 'classicist-theme-templates', 'curator-theme-templates'].includes(siteManagerView) && (
+            (() => {
+              const themeId = siteManagerView.replace('-templates', '')
+              const theme = themes.find(t => t.id === themeId)
+              return theme ? (
+                <SiteManagerTemplates themeId={themeId} usePageStore={usePageStore} />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any website settings not explicitly handled */}
+          {siteManagerView.endsWith('-settings') && !siteManagerView.endsWith('-theme-settings') &&
+           !['wiley-main-settings', 'research-hub-settings', 'journal-of-science-settings'].includes(siteManagerView) && (
+            (() => {
+              const websiteId = siteManagerView.replace('-settings', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <div>
+                  <div className="mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">{website.name} - Website Settings</h2>
+                    <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
+                  </div>
+                  <WebsiteSettings websiteId={websiteId} />
+                </div>
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any website branding not explicitly handled */}
+          {siteManagerView.endsWith('-branding') &&
+           !['wiley-main-branding', 'research-hub-branding', 'journal-of-science-branding'].includes(siteManagerView) && (
+            (() => {
+              const websiteId = siteManagerView.replace('-branding', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <WebsiteBrandingConfiguration websiteId={websiteId} usePageStore={usePageStore} />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any website templates not explicitly handled */}
+          {siteManagerView.endsWith('-templates') && !siteManagerView.endsWith('-custom-templates') && !siteManagerView.endsWith('-theme-templates') &&
+           !['wiley-main-templates', 'research-hub-templates', 'journal-of-science-templates'].includes(siteManagerView) && (
+            (() => {
+              const websiteId = siteManagerView.replace('-templates', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <WebsiteTemplates
+                  websiteId={websiteId}
+                  websiteName={website.name}
+                  enabledContentTypes={(website.purpose?.contentTypes || []) as any}
+                  hasSubjectOrganization={website.purpose?.hasSubjectOrganization || false}
+                  allTemplates={ALL_TEMPLATES}
+                  usePageStore={usePageStore}
+                  consoleMode={consoleMode}
+                />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any website publication cards not explicitly handled */}
+          {siteManagerView.endsWith('-publication-cards') && !siteManagerView.includes('-theme-') &&
+           !['wiley-main-publication-cards', 'research-hub-publication-cards', 'journal-of-science-publication-cards'].includes(siteManagerView) && (
+            (() => {
+              const websiteId = siteManagerView.replace('-publication-cards', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <div>
+                  <div className="mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">{website.name} - Publication Cards</h2>
+                    <p className="text-slate-600 mt-1">Design publication cards optimized for this website</p>
+                  </div>
+                  <PublicationCards usePageStore={usePageStore} />
+                </div>
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic fallback for any website custom templates not explicitly handled */}
+          {siteManagerView.endsWith('-custom-templates') &&
+           !['wiley-main-custom-templates', 'research-hub-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
+            (() => {
+              const websiteId = siteManagerView.replace('-custom-templates', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <div>
+                  <div className="mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">{website.name} - Custom Templates</h2>
+                    <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
+                    <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
+                  </div>
+                </div>
+              ) : null
+            })()
           )}
         </div>
       </div>
@@ -4758,13 +4977,15 @@ export default function App() {
     return (
       <>
         <DynamicBrandingCSS websiteId={currentWebsiteId} />
-        <MockLiveSite 
-          mockLiveSiteRoute={mockLiveSiteRoute}
-          setMockLiveSiteRoute={setMockLiveSiteRoute}
-          setCurrentView={setCurrentView}
-          setEditingContext={setEditingContext}
-          usePageStore={usePageStore}
-        />
+        <CanvasThemeProvider usePageStore={usePageStore}>
+          <MockLiveSite 
+            mockLiveSiteRoute={mockLiveSiteRoute}
+            setMockLiveSiteRoute={setMockLiveSiteRoute}
+            setCurrentView={setCurrentView}
+            setEditingContext={setEditingContext}
+            usePageStore={usePageStore}
+          />
+        </CanvasThemeProvider>
         <NotificationContainer />
       </>
     )
@@ -4773,13 +4994,15 @@ export default function App() {
   return (
     <>
       <DynamicBrandingCSS websiteId={currentWebsiteId} />
-      <PageBuilder 
-        usePageStore={usePageStore}
-        buildWidget={buildWidget}
-        TemplateCanvas={TemplateCanvas}
-        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-        isSection={isSection}
-      />
+      <CanvasThemeProvider usePageStore={usePageStore}>
+        <PageBuilder 
+          usePageStore={usePageStore}
+          buildWidget={buildWidget}
+          TemplateCanvas={TemplateCanvas}
+          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+          isSection={isSection}
+        />
+      </CanvasThemeProvider>
       <NotificationContainer />
       <IssuesSidebar />
     </>

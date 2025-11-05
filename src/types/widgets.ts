@@ -18,7 +18,7 @@ export type WidgetBase = {
   }
 }
 
-export type TextWidget = WidgetBase & { type: 'text'; text: string; align?: 'left'|'center'|'right' }
+export type TextWidget = WidgetBase & { type: 'text'; text: string; align?: 'left'|'center'|'right'; inlineStyles?: string }
 export type ImageWidget = WidgetBase & { 
   type: 'image'; 
   src: string; 
@@ -147,7 +147,7 @@ export type ButtonWidget = WidgetBase & {
   type: 'button'
   text: string
   href: string
-  variant: 'primary' | 'secondary' | 'outline' | 'link'
+  variant: string  // Theme-specific: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'link' etc.
   size: 'small' | 'medium' | 'large'
   target?: '_blank' | '_self'
   icon?: WidgetIcon
@@ -232,11 +232,12 @@ export type WidgetSection = {
   
   // Section styling configuration
   styling?: {
-    paddingTop?: 'none' | 'small' | 'medium' | 'large'
-    paddingBottom?: 'none' | 'small' | 'medium' | 'large'
-    paddingLeft?: 'none' | 'small' | 'medium' | 'large'
-    paddingRight?: 'none' | 'small' | 'medium' | 'large'
-    gap?: 'none' | 'small' | 'medium' | 'large'
+    paddingTop?: 'none' | 'small' | 'medium' | 'large' | string // Allow pixel values like '96px'
+    paddingBottom?: 'none' | 'small' | 'medium' | 'large' | string
+    paddingLeft?: 'none' | 'small' | 'medium' | 'large' | string
+    paddingRight?: 'none' | 'small' | 'medium' | 'large' | string
+    gap?: 'none' | 'small' | 'medium' | 'large' | string
+    minHeight?: string // Figma Hero Banner: '600px', '800px', etc.
     variant?: 'default' | 'full-width' | 'contained' | 'wide'
     textColor?: 'default' | 'white' | 'dark' | 'muted'
     border?: {

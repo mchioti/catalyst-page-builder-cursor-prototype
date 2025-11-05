@@ -8,8 +8,10 @@ import { StandaloneWidgetDragHandle } from './StandaloneWidgetDragHandle'
 import type { WidgetSection, CanvasItem } from '../../types/widgets'
 
 // Helper function to check if item is a section
+// Sections have BOTH layout AND areas properties
+// Widgets like publication-details may have layout but not areas
 function isSection(item: CanvasItem): item is WidgetSection {
-  return 'layout' in item
+  return 'layout' in item && 'areas' in item
 }
 
 interface SortableItemProps {

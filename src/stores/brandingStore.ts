@@ -59,6 +59,20 @@ const DEFAULT_WEBSITE_BRANDING: WebsiteBranding = {
   }
 };
 
+// Wiley Publishing Theme - extracted from Wiley.com screenshots
+const WILEY_WEBSITE_BRANDING: WebsiteBranding = {
+  id: 'website',
+  name: 'Wiley Publishing',
+  isDefault: true,
+  colors: {
+    primary: '#00d98a',      // Bright green - CTA buttons
+    secondary: '#e8f5f5',    // Very light teal - subtle backgrounds
+    accent: '#1a5757',       // Dark teal - headers, footer
+    text: '#1f2937',         // Dark gray for light backgrounds
+    background: '#f9fafb'    // Light gray page background
+  }
+};
+
 const DEFAULT_BREAKPOINTS: WebsiteBreakpoints = {
   desktop: '1280px',
   tablet: '768px',
@@ -186,6 +200,28 @@ const createDefaultWebsiteBranding = (websiteId: string): WebsiteBrandingSystem 
   },
   breakpoints: DEFAULT_BREAKPOINTS
 });
+
+// Wiley-specific website branding creator
+const createWileyWebsiteBranding = (websiteId: string): WebsiteBrandingSystem => ({
+  websiteId,
+  website: {
+    ...WILEY_WEBSITE_BRANDING,
+    name: 'Wiley Publishing'
+  },
+  subjects: DEFAULT_SUBJECTS,
+  journals: DEFAULT_JOURNALS,
+  bookSeries: [],
+  rules: {
+    subjectsOverrideJournals: true,
+    journalsOverrideBookSeries: true,
+    allowMultipleSubjects: false,
+    fallbackToWebsite: true
+  },
+  breakpoints: DEFAULT_BREAKPOINTS
+});
+
+// Export theme creators for external use
+export { createDefaultWebsiteBranding, createWileyWebsiteBranding };
 
 export const useBrandingStore = create<BrandingStore>((set, get) => ({
   // Initial State

@@ -87,44 +87,48 @@ function ColorInput({
   value, 
   onChange, 
   backgroundColor, 
-  description 
+  description,
+  strikeWCAG = false
 }: { 
   label: string
   value: string
   onChange: (value: string) => void
   backgroundColor?: string
   description?: string
+  strikeWCAG?: boolean  // Strike out WCAG warning for demo purposes
 }) {
   const contrastRatio = backgroundColor ? getContrastRatio(value, backgroundColor) : null
   const accessibilityStatus = contrastRatio ? getAccessibilityStatus(contrastRatio) : null
   
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      )}
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
+          className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-28 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {accessibilityStatus && (
           <div className="flex items-center gap-1 ml-2">
             {accessibilityStatus.icon}
-            <span className={`text-xs font-medium ${accessibilityStatus.color}`}>
+            <span className={`text-sm ${accessibilityStatus.color} ${strikeWCAG ? 'line-through opacity-50' : ''}`}>
               {accessibilityStatus.message}
             </span>
           </div>
         )}
       </div>
       {description && (
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
+        <p className="text-sm text-gray-600 mt-1.5">{description}</p>
       )}
     </div>
   )
@@ -148,6 +152,56 @@ type Theme = {
     background: string
     text: string
     muted: string
+    semanticColors?: {
+      primary?: {
+        light: string
+        dark: string
+        hover?: {
+          light: string
+          dark: string
+        }
+      }
+      secondary?: {
+        bg?: {
+          light: string
+          dark: string
+        }
+        text?: {
+          light: string
+          dark: string
+        }
+        hover?: {
+          bg?: {
+            light: string
+            dark: string
+          }
+          text?: {
+            light: string
+            dark: string
+          }
+        }
+      }
+      tertiary?: {
+        bg?: {
+          light: string
+          dark: string
+        }
+        text?: {
+          light: string
+          dark: string
+        }
+        hover?: {
+          bg?: {
+            light: string
+            dark: string
+          }
+          text?: {
+            light: string
+            dark: string
+          }
+        }
+      }
+    }
   }
   
   typography: {
@@ -432,66 +486,382 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <Info className="w-4 h-4 text-gray-400" />
             </div>
           </div>
-          <div className="space-y-3">
-            {currentTheme.customizationRules.colors.canModifyPrimary && (
-              <ColorInput
-                label="Primary Color"
-                value={effectiveTheme.colors.primary}
-                onChange={(value) => updateThemeColors({ primary: value })}
-                backgroundColor={effectiveTheme.colors.background}
-                description="Used for buttons, links, and key interactive elements"
-              />
-            )}
-            
-            {currentTheme.customizationRules.colors.canModifySecondary && (
-              <ColorInput
-                label="Secondary Color"
-                value={effectiveTheme.colors.secondary}
-                onChange={(value) => updateThemeColors({ secondary: value })}
-                backgroundColor={effectiveTheme.colors.background}
-                description="Supporting color for borders, dividers, and secondary elements"
-              />
-            )}
-            
-            {currentTheme.customizationRules.colors.canModifyAccent && (
-              <ColorInput
-                label="Accent Color"
-                value={effectiveTheme.colors.accent}
-                onChange={(value) => updateThemeColors({ accent: value })}
-                backgroundColor={effectiveTheme.colors.background}
-                description="Highlight color for notifications, badges, and emphasis"
-              />
-            )}
-            
-            {currentTheme.customizationRules.colors.canModifyText && (
-              <ColorInput
-                label="Text Color"
-                value={effectiveTheme.colors.text}
-                onChange={(value) => updateThemeColors({ text: value })}
-                backgroundColor={effectiveTheme.colors.background}
-                description="Main text color - should have high contrast with background"
-              />
-            )}
-            
-            {currentTheme.customizationRules.colors.canModifyBackground && (
-              <ColorInput
-                label="Background Color"
-                value={effectiveTheme.colors.background}
-                onChange={(value) => updateThemeColors({ background: value })}
-                description="Main background color for pages and content areas"
-              />
-            )}
-            
-            {currentTheme.customizationRules.colors.canModifyMuted && (
-              <ColorInput
-                label="Muted Color"
-                value={effectiveTheme.colors.muted}
-                onChange={(value) => updateThemeColors({ muted: value })}
-                backgroundColor={effectiveTheme.colors.background}
-                description="Subtle text color for captions, metadata, and secondary information"
-              />
-            )}
-          </div>
+          
+          {/* Check if theme supports semantic colors (DS V2) */}
+          {effectiveTheme.colors.semanticColors ? (
+            <div className="space-y-6">
+              {/* Publisher Main Branding */}
+              <div>
+                <h4 className="text-base font-semibold text-gray-800 mb-2">Publisher Main branding</h4>
+                <p className="text-sm text-gray-600 mb-4">Affects menu, backgrounds, buttons</p>
+                <div className="space-y-4">
+                  <ColorInput
+                    label="Primary color"
+                    value={effectiveTheme.colors.primary}
+                    onChange={(value) => updateThemeColors({ primary: value })}
+                    backgroundColor="#1a1a1a"
+                    strikeWCAG={true}
+                  />
+                  <ColorInput
+                    label="Secondary color"
+                    value={effectiveTheme.colors.secondary}
+                    onChange={(value) => updateThemeColors({ secondary: value })}
+                    backgroundColor="#ffffff"
+                    strikeWCAG={true}
+                  />
+                </div>
+              </div>
+              
+              {/* Button Variants */}
+              <div className="pt-6 border-t border-gray-200">
+                <h4 className="text-base font-semibold text-gray-800 mb-2">Button</h4>
+                <p className="text-sm text-gray-600 mb-5">Affects Style of the Button Link widget</p>
+                
+                {/* Primary Button */}
+                <div className="mb-5">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Primary Button (Brand 1)</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.primary?.light || '#00d875'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentPrimary = currentSemantic.primary || { light: '#00d875', dark: '#008f8a' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              primary: {
+                                ...currentPrimary,
+                                light: value
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#1a1a1a"
+                        description="Used on dark backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.primary?.dark || '#008f8a'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentPrimary = currentSemantic.primary || { light: '#00d875', dark: '#008f8a' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              primary: {
+                                ...currentPrimary,
+                                dark: value
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#ffffff"
+                        description="Used on light backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Secondary Button */}
+                <div className="mb-5">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Secondary Button (Brand 2)</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.secondary?.bg?.light || '#f2f2eb'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentSecondary = currentSemantic.secondary || {}
+                          const currentBg = currentSecondary.bg || { light: '#f2f2eb', dark: '#f2f2eb' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              secondary: {
+                                ...currentSecondary,
+                                bg: {
+                                  ...currentBg,
+                                  light: value
+                                }
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#1a1a1a"
+                        description="Used in dark backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.secondary?.text?.dark || '#003b44'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentSecondary = currentSemantic.secondary || {}
+                          const currentText = currentSecondary.text || { light: '#003b44', dark: '#003b44' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              secondary: {
+                                ...currentSecondary,
+                                text: {
+                                  ...currentText,
+                                  dark: value
+                                }
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#f2f2eb"
+                        description="Used on Light Backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Tertiary Button */}
+                <div>
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Tertiary Button (Brand 3)</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.tertiary?.bg?.light || '#003b44'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentTertiary = currentSemantic.tertiary || {}
+                          const currentBg = currentTertiary.bg || { light: '#003b44', dark: '#003b44' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              tertiary: {
+                                ...currentTertiary,
+                                bg: {
+                                  ...currentBg,
+                                  light: value
+                                }
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#1a1a1a"
+                        description="Used in dark backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                    <div>
+                      <ColorInput
+                        label=""
+                        value={effectiveTheme.colors.semanticColors?.tertiary?.text?.dark || '#ffffff'}
+                        onChange={(value) => {
+                          const currentSemantic = effectiveTheme.colors.semanticColors || {}
+                          const currentTertiary = currentSemantic.tertiary || {}
+                          const currentText = currentTertiary.text || { light: '#ffffff', dark: '#ffffff' }
+                          updateThemeColors({ 
+                            semanticColors: {
+                              ...currentSemantic,
+                              tertiary: {
+                                ...currentTertiary,
+                                text: {
+                                  ...currentText,
+                                  dark: value
+                                }
+                              }
+                            }
+                          } as any)
+                        }}
+                        backgroundColor="#003b44"
+                        description="Used on Light Backgrounds"
+                        strikeWCAG={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Legacy themes: Show standard color inputs with button mapping
+            <div className="space-y-6">
+              {/* Publisher Main Branding */}
+              <div>
+                <h4 className="text-base font-semibold text-gray-800 mb-2">Publisher Main branding</h4>
+                <p className="text-sm text-gray-600 mb-4">Affects menu, backgrounds, buttons</p>
+                <div className="space-y-4">
+                  {currentTheme.customizationRules.colors.canModifyPrimary && (
+                    <ColorInput
+                      label="Primary color"
+                      value={effectiveTheme.colors.primary}
+                      onChange={(value) => updateThemeColors({ primary: value })}
+                      backgroundColor={effectiveTheme.colors.background}
+                      strikeWCAG={true}
+                    />
+                  )}
+                  
+                  {currentTheme.customizationRules.colors.canModifySecondary && (
+                    <ColorInput
+                      label="Secondary color"
+                      value={effectiveTheme.colors.secondary}
+                      onChange={(value) => updateThemeColors({ secondary: value })}
+                      backgroundColor={effectiveTheme.colors.background}
+                      strikeWCAG={true}
+                    />
+                  )}
+                  
+                  {currentTheme.customizationRules.colors.canModifyAccent && (
+                    <ColorInput
+                      label="Accent color"
+                      value={effectiveTheme.colors.accent}
+                      onChange={(value) => updateThemeColors({ accent: value })}
+                      backgroundColor={effectiveTheme.colors.background}
+                      strikeWCAG={true}
+                    />
+                  )}
+                </div>
+              </div>
+              
+              {/* Button Section - Read-only at theme level, editable at website level */}
+              <div className="pt-6 border-t border-gray-200">
+                <h4 className="text-base font-semibold text-gray-800 mb-2">Button</h4>
+                <p className="text-sm text-gray-600 mb-5">
+                  {isThemeLevel 
+                    ? 'Affects Style of the Button Link widget (customize at website level)'
+                    : 'Affects Style of the Button Link widget'
+                  }
+                </p>
+                
+                {isThemeLevel ? (
+                  // Theme-level: Read-only mapping display
+                  <div className="space-y-4">
+                    {/* Primary Button */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Primary Button</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Uses Primary color</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: effectiveTheme.colors.primary }}></div>
+                        <span className="text-sm font-mono text-gray-600">{effectiveTheme.colors.primary}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Secondary Button */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Secondary Button</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Uses Secondary color</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: effectiveTheme.colors.secondary }}></div>
+                        <span className="text-sm font-mono text-gray-600">{effectiveTheme.colors.secondary}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Outline Button */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Outline Button</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Uses Primary color (border & text)</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded border-2" style={{ borderColor: effectiveTheme.colors.primary, backgroundColor: 'transparent' }}></div>
+                        <span className="text-sm font-mono text-gray-600">{effectiveTheme.colors.primary}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Link Button */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Link Button</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Uses Primary color (text only)</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center" style={{ color: effectiveTheme.colors.primary }}>
+                          <span className="text-lg font-bold">A</span>
+                        </div>
+                        <span className="text-sm font-mono text-gray-600">{effectiveTheme.colors.primary}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Website-level: Editable color pickers (same as publisher branding section)
+                  <div className="space-y-4">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <p className="text-xs text-blue-700">
+                        💡 Customize button colors for this website by editing the Publisher Main branding colors above.
+                      </p>
+                    </div>
+                    
+                    {/* Show current mappings */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-600">Primary Button</span>
+                        <span className="text-xs font-mono text-gray-500">→ Primary color</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-600">Secondary Button</span>
+                        <span className="text-xs font-mono text-gray-500">→ Secondary color</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-600">Outline Button</span>
+                        <span className="text-xs font-mono text-gray-500">→ Primary color</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-600">Link Button</span>
+                        <span className="text-xs font-mono text-gray-500">→ Primary color</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Additional Colors */}
+              {(currentTheme.customizationRules.colors.canModifyText || 
+                currentTheme.customizationRules.colors.canModifyBackground || 
+                currentTheme.customizationRules.colors.canModifyMuted) && (
+                <div className="pt-6 border-t border-gray-200">
+                  <h4 className="text-base font-semibold text-gray-800 mb-2">Additional Colors</h4>
+                  <div className="space-y-4">
+                    {currentTheme.customizationRules.colors.canModifyBackground && (
+                      <ColorInput
+                        label="Background Color"
+                        value={effectiveTheme.colors.background}
+                        onChange={(value) => updateThemeColors({ background: value })}
+                        description="Main background color for pages and content areas"
+                      />
+                    )}
+                    
+                    {currentTheme.customizationRules.colors.canModifyText && (
+                      <ColorInput
+                        label="Text Color"
+                        value={effectiveTheme.colors.text}
+                        onChange={(value) => updateThemeColors({ text: value })}
+                        backgroundColor={effectiveTheme.colors.background}
+                        description="Main text color - should have high contrast with background"
+                      />
+                    )}
+                    
+                    {currentTheme.customizationRules.colors.canModifyMuted && (
+                      <ColorInput
+                        label="Muted Color"
+                        value={effectiveTheme.colors.muted}
+                        onChange={(value) => updateThemeColors({ muted: value })}
+                        backgroundColor={effectiveTheme.colors.background}
+                        description="Subtle text color for captions, metadata, and secondary information"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Typography Section */}

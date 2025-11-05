@@ -1668,7 +1668,14 @@ function SectionsContent({ showToast, usePageStore }: {
   showToast: (message: string, type: 'success' | 'error') => void
   usePageStore: any
 }) {
-  const { replaceCanvasItems, canvasItems } = usePageStore()
+  const { replaceCanvasItems, canvasItems, websites, currentWebsiteId, themes } = usePageStore()
+  
+  // Get current website's theme to show theme-specific prefabs
+  const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+  const currentTheme = currentWebsite 
+    ? themes.find((t: any) => t.id === currentWebsite.themeId)
+    : null
+  const isWileyTheme = currentTheme?.id === 'wiley-figma-ds-v2'
 
   // Create a new section with the specified layout and default areas
   const createSection = (layout: ContentBlockLayout, name: string) => {
@@ -1729,7 +1736,7 @@ function SectionsContent({ showToast, usePageStore }: {
 
   // Prefab sections are now handled by the modular prefabSections.ts
 
-  const addPrefabSection = (type: 'hero' | 'features' | 'globalHeader' | 'journalBanner' | 'sidebar') => {
+  const addPrefabSection = (type: string) => {
     let section: CanvasItem
     
     // Check if adding a sidebar and one already exists
@@ -1750,6 +1757,16 @@ function SectionsContent({ showToast, usePageStore }: {
       section = PREFAB_SECTIONS.globalHeader()
     } else if (type === 'journalBanner') {
       section = PREFAB_SECTIONS.journalBanner()
+    } else if (type === 'wileyFigmaCardGrid') {
+      section = PREFAB_SECTIONS.wileyFigmaCardGrid()
+    } else if (type === 'wileyFigmaFeaturedContent') {
+      section = PREFAB_SECTIONS.wileyFigmaFeaturedContent()
+    } else if (type === 'wileyFigmaLogoGrid') {
+      section = PREFAB_SECTIONS.wileyFigmaLogoGrid()
+    } else if (type === 'wileyThreeColumn') {
+      section = PREFAB_SECTIONS.wileyThreeColumn()
+    } else if (type === 'wileyContentImage') {
+      section = PREFAB_SECTIONS.wileyContentImage()
     } else {
       return // Invalid type
     }
@@ -1760,120 +1777,121 @@ function SectionsContent({ showToast, usePageStore }: {
 
   return (
     <div className="space-y-6">
-
+      {/* Theme Indicator */}
+      {currentTheme && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="text-xs font-semibold text-blue-900 mb-1">Current Theme</div>
+          <div className="text-sm text-blue-700">{currentTheme.name}</div>
+        </div>
+      )}
       
       {/* Template-Ready Sections */}
       <div>
-
         <h3 className="font-semibold text-gray-900 mb-3">
-          Template-Ready Sections
+          {isWileyTheme ? 'Wiley Theme Sections' : 'Template-Ready Sections'}
         </h3>
         <div className="grid grid-cols-1 gap-2">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Global Sections
-          </h4>
-          <div className="space-y-3">
-            <button
-              onClick={() => addPrefabSection('globalHeader')}
-              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
-            >
-              <img 
-                src="/layout-previews/globalHeader.png" 
-                alt="Global Header Preview"
-                className="w-full h-20 object-cover rounded border border-gray-200"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div>
-                <div className="font-medium text-sm text-gray-900">Global Header</div>
-                <div className="text-xs text-gray-700">University header + main navigation (reusable across pages)</div>
+          
+          {/* Wiley Figma DS V2 Sections - Only Shop Today (others can be built with basic layouts) */}
+          {currentTheme?.id === 'wiley-figma-ds-v2' && (
+            <>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-green-600" />
+                DS V2 Sections
+              </h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => addPrefabSection('wileyFigmaLogoGrid')}
+                  className="w-full p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors flex flex-col gap-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Shop Today (Bordered Grid)</div>
+                    <div className="text-xs text-gray-700">3-column grid with borders around each card - Special layout</div>
+                  </div>
+                </button>
+                <div className="text-xs text-gray-500 italic mt-2 p-2 bg-gray-50 rounded">
+                  💡 Tip: Other sections (Hero, Card Grid, etc.) can be built using basic section layouts + widgets from the Library tab
+                </div>
               </div>
-            </button>
-          </div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Special Sections
-          </h4>
-          <div className="space-y-3">
-            <button
-              onClick={() => addPrefabSection('sidebar')}
-              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
-            >
-              <img 
-                src="/layout-previews/sidebar.png" 
-                alt="Sidebar Preview"
-                className="w-full h-20 object-cover rounded border border-gray-200"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-          <div>
-            <div className="font-medium text-sm text-gray-900">sidebar</div>
-            <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
-          </div>
-            </button>
-          </div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Full Width Sections
-          </h4>
-          <div className="space-y-3">
-            <button
-              onClick={() => addPrefabSection('hero')}
-              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
-            >
-              <img 
-                src="/layout-previews/hero.png" 
-                alt="Hero Section Preview"
-                className="w-full h-20 object-cover rounded border border-gray-200"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div>
-                <div className="font-medium text-sm text-gray-900">Hero Section</div>
-                <div className="text-xs text-gray-700">Full hero with heading, text, and action buttons</div>
+            </>
+          )}
+          
+          {/* Default Sections (for non-Wiley themes) */}
+          {!isWileyTheme && (
+            <>
+              {/* Special Sections */}
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                Special Sections
+              </h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => addPrefabSection('sidebar')}
+                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Sidebar</div>
+                    <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
+                  </div>
+                </button>
               </div>
-            </button>
-            
-            <button
-              onClick={() => addPrefabSection('features')}
-              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
-            >
-              <img 
-                src="/layout-previews/featuredResearch.png" 
-                alt="Featured Research Preview"
-                className="w-full h-20 object-cover rounded border border-gray-200"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div>
-                <div className="font-medium text-sm text-gray-900">Featured Research</div>
-                <div className="text-xs text-gray-700">Header with 3 research highlight cards</div>
+              
+              {/* Full Width Sections with Preview Images */}
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-6 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                Full Width Sections
+              </h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => addPrefabSection('hero')}
+                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                >
+                  {/* Preview Image */}
+                  <div className="relative w-full h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded overflow-hidden">
+                    <img src="/layout-previews/hero.png" alt="Hero preview" className="w-full h-full object-cover" onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }} />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Hero Section</div>
+                    <div className="text-xs text-gray-700">Full hero with heading, text, and action buttons</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('features')}
+                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                >
+                  {/* Preview Image */}
+                  <div className="relative w-full h-20 bg-gray-100 rounded overflow-hidden">
+                    <img src="/layout-previews/featuredResearch.png" alt="Featured Research preview" className="w-full h-full object-cover" onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }} />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Featured Research</div>
+                    <div className="text-xs text-gray-700">Header with 3 research highlight cards</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('journalBanner')}
+                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                >
+                  {/* Preview Image */}
+                  <div className="relative w-full h-20 bg-gradient-to-r from-gray-800 to-gray-900 rounded overflow-hidden">
+                    <img src="/layout-previews/journalBanner.png" alt="Journal Banner preview" className="w-full h-full object-cover" onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }} />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Journal Banner</div>
+                    <div className="text-xs text-gray-700">Dark gradient banner with publication details</div>
+                  </div>
+                </button>
               </div>
-            </button>
-            
-            <button
-              onClick={() => addPrefabSection('journalBanner')}
-              className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3 cursor-grab active:cursor-grabbing"
-            >
-              <img 
-                src="/layout-previews/journalBanner.png" 
-                alt="Journal Banner Preview"
-                className="w-full h-20 object-cover rounded border border-gray-200"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div>
-                <div className="font-medium text-sm text-gray-900">Journal Banner</div>
-                <div className="text-xs text-gray-700">Dark gradient banner with publication details & CTA buttons</div>
-              </div>
-            </button>
-        </div>
+            </>
+          )}
         </div>
       </div>
     </div>

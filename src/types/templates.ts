@@ -102,6 +102,15 @@ export type Theme = {
   // Complete template package for this publishing type
   templates: BaseTemplate[] // All templates included in this theme
   
+  // Optional starter template for new websites
+  // When specified, new websites will auto-populate with these sections
+  // instead of starting with a blank canvas
+  starterTemplate?: {
+    name: string
+    description: string
+    sections: any[] // Will be populated by getStarterTemplateForTheme()
+  }
+  
   // Global styling that applies across all templates
   colors: {
     primary: string

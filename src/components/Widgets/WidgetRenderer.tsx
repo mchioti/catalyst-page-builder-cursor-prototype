@@ -144,7 +144,7 @@ const WidgetLayoutWrapper: React.FC<{ widget: Widget; children: React.ReactNode 
 }
 
 // Button Widget Component
-const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) => {
+const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
   // Check if we're in a journal context by looking for journal CSS classes on parent elements
   const isInJournalContext = React.useMemo(() => {
     // Look up the DOM tree for journal-* classes
@@ -152,7 +152,7 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
     return !!element;
   }, []);
 
-  const getVariantClasses = (variant: string, isJournalContext: boolean) => {
+  const getVariantClasses = (variant: string, isJournalContext: boolean, contentMode?: 'light' | 'dark') => {
     // For standard variants, use journal colors when in journal context, default colors otherwise
     if (isJournalContext) {
       switch (variant) {
@@ -169,13 +169,42 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
       }
     }
     
-    // Default (non-journal) styling
+    // 🎨 SEMANTIC COLOR SYSTEM: Context-Aware Button Colors
+    // Uses CSS variable fallback chain - if semantic colors don't exist, falls back to theme colors
+    // Light backgrounds → use DARK variants (teal for DS V2, theme primary for others)
+    // Dark backgrounds → use LIGHT variants (green for DS V2, theme primary for others)
+    const useDarkVariant = contentMode === 'light' // Light bg needs dark colors
+    
     return {
-      primary: 'bg-white text-blue-600 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 shadow-sm border border-blue-200',
-      secondary: 'border border-white text-white hover:bg-white hover:text-blue-600 focus:ring-2 focus:ring-blue-500',
-      outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white focus:ring-2 focus:ring-blue-500',
-      link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
-    }[variant] || 'bg-white text-blue-600 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 shadow-sm border border-blue-200';
+      // Primary: Solid button with context-aware colors
+      primary: useDarkVariant
+        ? 'bg-[var(--semantic-primary-dark,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] focus:ring-offset-2 shadow-sm'
+        : 'bg-[var(--semantic-primary-light,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-light-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-offset-2 shadow-sm',
+      
+      // Secondary (DS V2 Figma Brand 2): Solid button with cream bg and dark text
+      // Paper 100 (#F2F2EB) + Heritage 900 (#003B44)
+      secondary: useDarkVariant
+        ? 'bg-[var(--semantic-secondary-bg-dark,#ffffff)] text-[var(--semantic-secondary-text-dark,var(--theme-color-text))] hover:bg-[var(--semantic-secondary-bg-dark-hover,#f5f5f5)] focus:ring-2 focus:ring-[var(--semantic-secondary-bg-dark,#ffffff)] focus:ring-offset-2 shadow-sm'
+        : 'bg-[var(--semantic-secondary-bg-light,#ffffff)] text-[var(--semantic-secondary-text-light,var(--theme-color-text))] hover:bg-[var(--semantic-secondary-bg-light-hover,#f5f5f5)] focus:ring-2 focus:ring-[var(--semantic-secondary-bg-light,#ffffff)] focus:ring-offset-2 shadow-sm',
+      
+      // Tertiary (DS V2 Figma Brand 3): Solid button with light bg and dark text
+      // Cream background (#F2F2EB) + Dark teal text (#003B44)
+      tertiary: useDarkVariant
+        ? 'bg-[var(--semantic-tertiary-bg-dark,#f2f2eb)] text-[var(--semantic-tertiary-text-dark,#003b44)] hover:bg-[var(--semantic-tertiary-bg-dark-hover,#e5e4e0)] focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-dark)] focus:ring-offset-2 shadow-sm'
+        : 'bg-[var(--semantic-tertiary-bg-light,#f2f2eb)] text-[var(--semantic-tertiary-text-light,#003b44)] hover:bg-[var(--semantic-tertiary-bg-light-hover,#e5e4e0)] focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-light)] focus:ring-offset-2 shadow-sm',
+      
+      // Outline: Legacy support for other themes (same as tertiary)
+      outline: useDarkVariant
+        ? 'border-2 text-[var(--semantic-primary-dark,var(--theme-color-primary))] border-[var(--semantic-primary-dark,var(--theme-color-primary))] bg-transparent hover:bg-gray-50 hover:border-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] focus:ring-offset-2 transition-all duration-200'
+        : 'border-2 text-[var(--semantic-primary-light,var(--theme-color-primary))] border-[var(--semantic-primary-light,var(--theme-color-primary))] bg-transparent hover:bg-[var(--semantic-primary-light,var(--theme-color-primary))] hover:text-white hover:border-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-offset-2 transition-all duration-200',
+      
+      // Link: Text-only button (context-aware)
+      link: useDarkVariant
+        ? 'text-[var(--semantic-primary-dark,var(--theme-color-primary))] hover:opacity-75 hover:underline font-medium bg-transparent'
+        : 'text-[var(--semantic-primary-light,var(--theme-color-primary))] hover:opacity-75 hover:underline font-medium bg-transparent'
+    }[variant] || (useDarkVariant
+      ? 'bg-[var(--semantic-primary-dark,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] shadow-sm'
+      : 'bg-[var(--semantic-primary-light,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-light-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] shadow-sm');
   };
   
   const sizeClasses = {
@@ -186,12 +215,12 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
   
   const baseClasses = widget.variant === 'link' 
     ? 'font-medium transition-colors duration-200 cursor-pointer inline-block'
-    : 'font-medium rounded transition-colors duration-200 cursor-pointer inline-block'
+    : 'font-medium rounded-md transition-colors duration-200 cursor-pointer inline-block' // rounded-md = 6px (matches Figma)
   
   // Build classes array
   const classesArray = [
     baseClasses,
-    getVariantClasses(widget.variant, isInJournalContext),
+    getVariantClasses(widget.variant, isInJournalContext, sectionContentMode),
     sizeClasses[widget.size as keyof typeof sizeClasses] || sizeClasses.medium
   ]
   
@@ -227,9 +256,13 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget }> = ({ widget }) =>
       {renderContent()}
     </a>
   ) : (
-    <span className={classes}>
+    <button 
+      type="button"
+      className={classes}
+      onClick={() => console.log('Button clicked:', widget.text)}
+    >
       {renderContent()}
-    </span>
+    </button>
   );
   
   return (
@@ -260,6 +293,32 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'l
   
   const textColorClasses = getTextColorClasses();
   
+  // Parse inline styles string into React style object
+  const parseInlineStyles = (stylesString?: string): React.CSSProperties => {
+    if (!stylesString) return {};
+    
+    const styleObject: React.CSSProperties = {};
+    const declarations = stylesString.split(';').filter(d => d.trim());
+    
+    declarations.forEach(declaration => {
+      const [property, value] = declaration.split(':').map(s => s.trim());
+      if (property && value) {
+        // Convert kebab-case to camelCase for React
+        const camelProperty = property.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+        (styleObject as any)[camelProperty] = value;
+      }
+    });
+    
+    return styleObject;
+  };
+  
+  const inlineStyles = parseInlineStyles(widget.inlineStyles);
+  
+  // Check if text contains HTML tags
+  const containsHTML = (text: string) => {
+    return /<[^>]+>/.test(text);
+  };
+  
   // Enhanced text rendering with line break support and better typography
   const renderTextWithBreaks = (text: string) => {
     return text.split('\n').map((line, index, array) => (
@@ -270,8 +329,22 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'l
     ))
   }
   
+  // Render HTML content if it contains HTML tags, otherwise render as plain text
+  if (containsHTML(widget.text)) {
+    return (
+      <div 
+        className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}
+        style={inlineStyles}
+        dangerouslySetInnerHTML={{ __html: widget.text }}
+      />
+    );
+  }
+  
   return (
-    <div className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}>
+    <div 
+      className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}
+      style={inlineStyles}
+    >
       {renderTextWithBreaks(widget.text)}
     </div>
   )
@@ -1683,7 +1756,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
   const renderWidget = () => {
     switch (widget.type) {
       case 'button':
-        return <ButtonWidgetRenderer widget={widget as ButtonWidget} />
+        return <ButtonWidgetRenderer widget={widget as ButtonWidget} sectionContentMode={sectionContentMode} />
       case 'text':
         return <TextWidgetRenderer widget={widget as TextWidget} sectionContentMode={sectionContentMode} />
       case 'image':
