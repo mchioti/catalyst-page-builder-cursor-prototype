@@ -1002,69 +1002,8 @@ function InteractiveWidgetRenderer({
       )
       
     case 'button':
-      const buttonWidget = widget as ButtonWidget
-      
-      // Check if we're in a journal context by looking for journal CSS classes on parent elements
-      const isInJournalContext = !!document.querySelector('.journal-advma, .journal-embo, .journal-nature, .journal-science');
-
-      const getVariantClasses = (variant: string, isJournalContext: boolean) => {
-        // For standard variants, use journal colors when in journal context, default colors otherwise
-        if (isJournalContext) {
-          switch (variant) {
-            case 'primary':
-              return 'journal-primary-button'; // Use journal primary color
-            case 'secondary':
-              return 'journal-secondary-button'; // Use journal secondary color
-            case 'outline':
-              return 'journal-outline-button'; // Use journal primary for border
-            case 'link':
-              return 'journal-link bg-transparent'; // Use journal primary for text
-            default:
-              return 'journal-primary-button';
-          }
-        }
-        
-        // Default (non-journal) styling
-        return {
-          primary: 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200',
-          secondary: 'border border-white text-white hover:bg-white hover:text-blue-600',
-          outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white',
-          link: 'text-blue-600 hover:text-blue-800 font-medium bg-transparent'
-        }[variant] || 'bg-white text-blue-600 hover:bg-blue-50 shadow-sm border border-blue-200';
-      };
-      
-      const sizeClasses = {
-        small: 'px-3 py-1.5 text-sm',
-        medium: 'px-4 py-2 text-base',
-        large: 'px-6 py-3 text-lg'
-      }
-      
-      // Build classes array
-      const classesArray = [
-        'font-medium rounded transition-colors duration-200 cursor-pointer inline-block',
-        getVariantClasses(buttonWidget.variant, isInJournalContext),
-        sizeClasses[buttonWidget.size as keyof typeof sizeClasses] || sizeClasses.medium
-      ]
-      
-      // Note: customClasses removed - button variants now automatically use journal branding when in journal context
-      
-      const buttonClasses = classesArray.filter(Boolean).join(' ').trim()
-      
-      return (
-        <SkinWrap skin={widget.skin}>
-          <div className="flex items-center justify-center p-2">
-            {buttonWidget.href ? (
-              <a href={buttonWidget.href} className={buttonClasses}>
-                {buttonWidget.text}
-              </a>
-            ) : (
-              <button className={buttonClasses}>
-                {buttonWidget.text}
-              </button>
-            )}
-          </div>
-        </SkinWrap>
-      )
+      // ✅ Delegate to WidgetRenderer for consistent rendering (NO TAILWIND)
+      return <WidgetRenderer widget={widget} isLiveMode={false} />
     
     case 'menu':
       // Menu widget - delegate to WidgetRenderer for consistent rendering
@@ -2423,45 +2362,49 @@ const usePageStore = create<PageState>((set, get) => ({
               }
             }
           },
-          // NEW: color4 = Neutral Dark (black/dark grey)
+          // color4 = Neutral Dark (from Figma)
+          // On LIGHT backgrounds: light beige (#d4d2cf) with black text
+          // On DARK backgrounds: black (#000000) with white text
           neutralDark: {
             bg: {
-              light: '#000000',    // Black
-              dark: '#000000'      // Black
+              light: '#d4d2cf',    // Figma: --foreground/medium/primary (light beige) - use on light backgrounds
+              dark: '#000000'      // Figma: --foreground/dark/primary (black) - use on dark backgrounds
             },
             text: {
-              light: '#ffffff',    // White text
-              dark: '#ffffff'      // White text
+              light: '#000000',    // Figma: --text/dark/primary (black) - for light backgrounds
+              dark: '#ffffff'      // Figma: --text/light/primary (white) - for dark backgrounds
             },
             hover: {
               bg: {
-                light: '#313131',  // Dark grey on hover
-                dark: '#313131'
+                light: '#c4c2bf',  // Slightly darker beige on hover
+                dark: '#313131'    // Dark grey on hover
               },
               text: {
-                light: '#ffffff',  // Keep white text
-                dark: '#ffffff'
+                light: '#000000',  // Keep black text
+                dark: '#ffffff'    // Keep white text
               }
             }
           },
-          // NEW: color5 = Neutral Light (white/light grey)
+          // color5 = Neutral Light (from Figma)
+          // On LIGHT backgrounds: white (#ffffff) with black text
+          // On DARK backgrounds: medium grey (#5d5e5c) with white text
           neutralLight: {
             bg: {
-              light: '#ffffff',    // White
-              dark: '#ffffff'      // White
+              light: '#ffffff',    // Figma: --foreground/light/primary (white) - use on light backgrounds
+              dark: '#5d5e5c'      // Figma: --foreground/dark/secondary (medium grey) - use on dark backgrounds
             },
             text: {
-              light: '#000000',    // Black text
-              dark: '#000000'      // Black text
+              light: '#000000',    // Figma: --text/dark/primary (black) - for light backgrounds
+              dark: '#ffffff'      // Figma: --text/light/primary (white) - for dark backgrounds
             },
             hover: {
               bg: {
                 light: '#f5f5f5',  // Light grey on hover
-                dark: '#f5f5f5'
+                dark: '#6d6e6c'    // Slightly lighter grey on hover
               },
               text: {
                 light: '#000000',  // Keep black text
-                dark: '#000000'
+                dark: '#ffffff'    // Keep white text
               }
             }
           }

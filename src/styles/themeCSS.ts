@@ -1,0 +1,456 @@
+/**
+ * Theme CSS Generator
+ * 
+ * Generates pure CSS from theme configuration.
+ * NO TAILWIND in output - only semantic classes driven by theme variables.
+ * 
+ * Architecture:
+ * - Page Builder UI uses Tailwind ✅
+ * - Rendered websites use this generated CSS ✅
+ */
+
+export const generateThemeCSS = (theme: any): string => {
+  return `
+/* ====================================
+   THEME: ${theme.name}
+   Generated CSS (NO TAILWIND)
+   ==================================== */
+
+/* RESET & BASE STYLES */
+* {
+  box-sizing: border-box;
+}
+
+/* ====================================
+   BUTTONS
+   ==================================== */
+
+.btn {
+  display: inline-block;
+  font-family: var(--theme-body-font);
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  transition: all 200ms ease;
+  line-height: 1.5;
+  
+  /* Theme-specific styling */
+  border-radius: var(--theme-button-radius);
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+/* Button Sizes */
+.btn-small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-medium {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
+/* Button Styles - SOLID */
+.btn-solid-color1 {
+  background: var(--theme-color-primary);
+  color: white;
+}
+
+.btn-solid-color1:hover {
+  opacity: 0.9;
+}
+
+.btn-solid-color2 {
+  background: var(--semantic-secondary-bg-light, var(--theme-color-secondary));
+  color: var(--semantic-secondary-text-light, white);
+}
+
+.btn-solid-color2:hover {
+  background: var(--semantic-secondary-bg-light-hover, var(--theme-color-secondary));
+  opacity: 0.9;
+}
+
+.btn-solid-color3 {
+  background: var(--semantic-tertiary-bg-light, var(--theme-color-accent));
+  color: var(--semantic-tertiary-text-light, white);
+}
+
+.btn-solid-color3:hover {
+  background: var(--semantic-tertiary-bg-light-hover, var(--theme-color-accent));
+  opacity: 0.9;
+}
+
+.btn-solid-color4 {
+  background: var(--semantic-neutraldark-bg-light, var(--theme-color-text, #313131));
+  color: var(--semantic-neutraldark-text-light, white);
+}
+
+.btn-solid-color4:hover {
+  background: var(--semantic-neutraldark-bg-light-hover, var(--theme-color-text, #313131));
+  opacity: 0.9;
+}
+
+.btn-solid-color5 {
+  background: var(--semantic-neutrallight-bg-light, var(--theme-color-background, white));
+  color: var(--semantic-neutrallight-text-light, var(--theme-color-text, #313131));
+}
+
+.btn-solid-color5:hover {
+  background: var(--semantic-neutrallight-bg-light-hover, var(--theme-color-background, white));
+  opacity: 0.9;
+}
+
+/* Button Styles - OUTLINE */
+.btn-outline-color1 {
+  background: transparent;
+  color: var(--theme-color-primary);
+  border: 2px solid var(--theme-color-primary);
+}
+
+.btn-outline-color1:hover {
+  background: var(--theme-color-primary);
+  color: white;
+}
+
+.btn-outline-color2 {
+  background: transparent;
+  color: var(--theme-color-secondary);
+  border: 2px solid var(--theme-color-secondary);
+}
+
+.btn-outline-color2:hover {
+  background: var(--theme-color-secondary);
+  color: white;
+}
+
+.btn-outline-color3 {
+  background: transparent;
+  color: var(--semantic-tertiary-text-light, var(--theme-color-accent));
+  border: 2px solid var(--semantic-tertiary-bg-light, var(--theme-color-accent));
+}
+
+.btn-outline-color3:hover {
+  background: var(--semantic-tertiary-bg-light, var(--theme-color-accent));
+  color: var(--semantic-tertiary-text-light, white);
+}
+
+.btn-outline-color4 {
+  background: transparent;
+  color: var(--semantic-neutraldark-bg-light, var(--theme-color-text, #313131));
+  border: 2px solid var(--semantic-neutraldark-bg-light, var(--theme-color-text, #313131));
+}
+
+.btn-outline-color4:hover {
+  background: var(--semantic-neutraldark-bg-light, var(--theme-color-text, #313131));
+  color: var(--semantic-neutraldark-text-light, white);
+}
+
+.btn-outline-color5 {
+  background: transparent;
+  color: var(--semantic-neutrallight-text-light, var(--theme-color-text, #313131));
+  border: 2px solid var(--semantic-neutrallight-text-light, var(--theme-color-text, #313131));
+}
+
+.btn-outline-color5:hover {
+  background: var(--semantic-neutrallight-bg-light, var(--theme-color-background, white));
+  color: var(--semantic-neutrallight-text-light, var(--theme-color-text, #313131));
+}
+
+/* Button Styles - LINK */
+.btn-link-color1 {
+  background: transparent;
+  color: var(--theme-color-primary);
+  padding: 0;
+  border: none;
+}
+
+.btn-link-color1:hover {
+  text-decoration: underline;
+  opacity: 0.75;
+}
+
+.btn-link-color2 {
+  background: transparent;
+  color: var(--theme-color-secondary);
+  padding: 0;
+  border: none;
+}
+
+.btn-link-color2:hover {
+  text-decoration: underline;
+  opacity: 0.75;
+}
+
+.btn-link-color3 {
+  background: transparent;
+  color: var(--semantic-tertiary-bg-light, var(--theme-color-accent));
+  padding: 0;
+  border: none;
+}
+
+.btn-link-color3:hover {
+  text-decoration: underline;
+  opacity: 0.75;
+}
+
+.btn-link-color4 {
+  background: transparent;
+  color: var(--semantic-neutraldark-bg-light, var(--theme-color-text, #313131));
+  padding: 0;
+  border: none;
+}
+
+.btn-link-color4:hover {
+  text-decoration: underline;
+  opacity: 0.75;
+}
+
+.btn-link-color5 {
+  background: transparent;
+  color: var(--semantic-neutrallight-text-light, var(--theme-color-text, #313131));
+  padding: 0;
+  border: none;
+}
+
+.btn-link-color5:hover {
+  text-decoration: underline;
+  opacity: 0.75;
+}
+
+/* Button Alignment Wrappers */
+.btn-wrapper-left {
+  text-align: left;
+}
+
+.btn-wrapper-center {
+  text-align: center;
+}
+
+.btn-wrapper-right {
+  text-align: right;
+}
+
+/* ====================================
+   CARDS
+   ==================================== */
+
+.card {
+  border: 1px solid #e5e7eb;
+  background: white;
+  padding: 2rem;
+  
+  /* Theme-specific styling */
+  border-radius: var(--theme-card-radius);
+}
+
+.card-dark {
+  border-color: #4b5563;
+}
+
+/* ====================================
+   TYPOGRAPHY
+   ==================================== */
+
+.heading {
+  font-family: var(--theme-heading-font);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--theme-color-text);
+}
+
+.heading-1 { font-size: 2.5rem; }
+.heading-2 { font-size: 2rem; }
+.heading-3 { font-size: 1.75rem; }
+.heading-4 { font-size: 1.5rem; }
+.heading-5 { font-size: 1.25rem; }
+.heading-6 { font-size: 1rem; }
+
+.heading-xs { font-size: 1.25rem; }
+.heading-sm { font-size: 1.5rem; }
+.heading-md { font-size: 1.875rem; }
+.heading-lg { font-size: 2.25rem; }
+.heading-xl { font-size: 3rem; }
+
+.heading-left { text-align: left; }
+.heading-center { text-align: center; }
+.heading-right { text-align: right; }
+
+.text {
+  font-family: var(--theme-body-font);
+  line-height: 1.7;
+  margin: 0;
+  color: var(--theme-color-text);
+}
+
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* ====================================
+   IMAGES
+   ==================================== */
+
+.image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-rounded {
+  border-radius: var(--theme-card-radius);
+}
+
+.image-circle {
+  border-radius: 50%;
+}
+
+/* ====================================
+   UTILITY CLASSES
+   ==================================== */
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+
+/* ====================================
+   THEME-SPECIFIC OVERRIDES
+   ==================================== */
+
+${generateThemeSpecificCSS(theme)}
+`
+}
+
+/**
+ * Generate theme-specific CSS overrides
+ * This is where we handle special cases like:
+ * - Modern theme: White background, blue text buttons
+ * - Wiley DS V2: Monospace, uppercase buttons
+ * - IBM Carbon: Sharp corners, specific sizing
+ */
+const generateThemeSpecificCSS = (theme: any): string => {
+  const themeId = theme.id
+  
+  // Modern/Modernist Theme: WHITE background with BLUE text (not blue background!)
+  if (themeId === 'modernist-theme' || themeId === 'modern-theme') {
+    return `
+/* Modern Theme Overrides - White/Blue Button Style */
+.btn-solid-color1 {
+  background: white !important;
+  color: var(--theme-color-primary) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-solid-color1:hover {
+  background: rgba(59, 130, 246, 0.05) !important;
+  color: var(--theme-color-primary) !important;
+}
+
+.btn-solid-color2 {
+  background: transparent !important;
+  color: white !important;
+  border: 1px solid white;
+}
+
+.btn-solid-color2:hover {
+  background: white !important;
+  color: var(--theme-color-primary) !important;
+}
+
+.btn-outline-color1 {
+  background: transparent !important;
+  color: var(--theme-color-primary) !important;
+  border: 2px solid var(--theme-color-primary);
+}
+
+.btn-outline-color1:hover {
+  background: var(--theme-color-primary) !important;
+  color: white !important;
+}
+
+.btn-link-color1 {
+  color: var(--theme-color-primary) !important;
+}
+
+.btn-link-color1:hover {
+  color: rgba(59, 130, 246, 0.8) !important;
+}
+`
+  }
+  
+  // Wiley DS V2 & MCP: Monospace, uppercase buttons
+  if (themeId === 'wiley-figma-ds-v2' || themeId === 'wiley-ds-mcp') {
+    return `
+/* Wiley DS V2 Theme Overrides */
+.btn {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-small { font-size: 0.75rem; }
+.btn-medium { font-size: 0.875rem; }
+.btn-large { font-size: 1rem; }
+`
+  }
+  
+  // IBM Carbon: Specific sizing from Carbon DS
+  if (themeId === 'ibm-carbon-ds') {
+    return `
+/* IBM Carbon DS Theme Overrides */
+.btn {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  transition: all 70ms cubic-bezier(0, 0, 0.38, 0.9);
+}
+
+.btn-small { 
+  padding: 0 1rem;
+  height: 32px;
+  font-size: 0.75rem;
+  line-height: 32px;
+}
+
+.btn-medium { 
+  padding: 0 1rem;
+  height: 48px;
+  font-size: 0.875rem;
+  line-height: 48px;
+}
+
+.btn-large { 
+  padding: 0 1rem;
+  height: 64px;
+  font-size: 1rem;
+  line-height: 64px;
+}
+`
+  }
+  
+  // Default: No overrides
+  return '/* No theme-specific overrides */'
+}
+

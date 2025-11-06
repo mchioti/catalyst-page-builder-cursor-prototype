@@ -146,10 +146,10 @@ const WidgetLayoutWrapper: React.FC<{ widget: Widget; children: React.ReactNode 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
   // 🔄 MIGRATION: Convert old 'variant' field to new 'style' + 'color' structure
-  const migrateVariant = (widget: ButtonWidget): { style: 'solid' | 'outline' | 'link'; color: 'color1' | 'color2' | 'color3' } => {
+  const migrateVariant = (widget: ButtonWidget): { style: 'solid' | 'outline' | 'link'; color: 'color1' | 'color2' | 'color3' | 'color4' | 'color5' } => {
     // Migrate from old 'variant' field first to get defaults
     const variant = widget.variant || 'primary'
-    const migrations: Record<string, { style: 'solid' | 'outline' | 'link'; color: 'color1' | 'color2' | 'color3' }> = {
+    const migrations: Record<string, { style: 'solid' | 'outline' | 'link'; color: 'color1' | 'color2' | 'color3' | 'color4' | 'color5' }> = {
       'primary': { style: 'solid', color: 'color1' },
       'secondary': { style: 'solid', color: 'color2' },
       'tertiary': { style: 'solid', color: 'color3' },
@@ -167,168 +167,15 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
 
   const { style, color } = migrateVariant(widget)
   
-  // Check if we're in a journal context by looking for journal CSS classes on parent elements
-  const isInJournalContext = React.useMemo(() => {
-    // Look up the DOM tree for journal-* classes
-    let element = document.querySelector('.journal-advma, .journal-embo, .journal-nature, .journal-science');
-    return !!element;
-  }, []);
-
-  // 🎨 NEW ARCHITECTURE: Get classes based on STYLE + COLOR combination
-  const getButtonClasses = (
-    style: 'solid' | 'outline' | 'link', 
-    color: 'color1' | 'color2' | 'color3' | 'color4' | 'color5',
-    contentMode?: 'light' | 'dark'
-  ) => {
-    // Handle journal context (legacy support)
-    if (isInJournalContext) {
-      if (style === 'solid' && color === 'color1') return 'journal-primary-button'
-      if (style === 'solid' && color === 'color2') return 'journal-secondary-button'
-      if (style === 'outline') return 'journal-outline-button'
-      if (style === 'link') return 'journal-link bg-transparent'
-      return 'journal-primary-button'
-    }
-    
-    // 🎨 SEMANTIC COLOR SYSTEM: Context-Aware Button Colors
-    // Light backgrounds → use DARK variants (teal for DS V2, theme primary for others)
-    // Dark backgrounds → use LIGHT variants (green for DS V2, theme primary for others)
-    const useDarkVariant = contentMode === 'light'
-    
-    // COLOR 1 (Primary/Brand 1)
-    if (color === 'color1') {
-      if (style === 'solid') {
-        return useDarkVariant
-          ? 'bg-[var(--semantic-primary-dark,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] focus:ring-offset-2 shadow-sm'
-          : 'bg-[var(--semantic-primary-light,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-light-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-offset-2 shadow-sm'
-      }
-      if (style === 'outline') {
-        return useDarkVariant
-          ? 'border-2 text-[var(--semantic-primary-dark,var(--theme-color-primary))] border-[var(--semantic-primary-dark,var(--theme-color-primary))] bg-transparent hover:bg-gray-50 hover:border-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] focus:ring-offset-2 transition-all duration-200'
-          : 'border-2 text-[var(--semantic-primary-light,var(--theme-color-primary))] border-[var(--semantic-primary-light,var(--theme-color-primary))] bg-transparent hover:bg-[var(--semantic-primary-light,var(--theme-color-primary))] hover:text-white hover:border-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] focus:ring-offset-2 transition-all duration-200'
-      }
-      if (style === 'link') {
-        return useDarkVariant
-          ? 'text-[var(--semantic-primary-dark,var(--theme-color-primary))] hover:opacity-75 hover:underline font-medium bg-transparent'
-          : 'text-[var(--semantic-primary-light,var(--theme-color-primary))] hover:opacity-75 hover:underline font-medium bg-transparent'
-      }
-    }
-    
-    // COLOR 2 (Secondary/Brand 2)
-    if (color === 'color2') {
-      if (style === 'solid') {
-        return useDarkVariant
-          ? 'bg-[var(--semantic-secondary-bg-dark,#ffffff)] text-[var(--semantic-secondary-text-dark,var(--theme-color-text))] hover:bg-[var(--semantic-secondary-bg-dark-hover,#f5f5f5)] focus:ring-2 focus:ring-[var(--semantic-secondary-bg-dark,#ffffff)] focus:ring-offset-2 shadow-sm'
-          : 'bg-[var(--semantic-secondary-bg-light,#ffffff)] text-[var(--semantic-secondary-text-light,var(--theme-color-text))] hover:bg-[var(--semantic-secondary-bg-light-hover,#f5f5f5)] focus:ring-2 focus:ring-[var(--semantic-secondary-bg-light,#ffffff)] focus:ring-offset-2 shadow-sm'
-      }
-      if (style === 'outline') {
-        return useDarkVariant
-          ? 'border-2 text-[var(--semantic-secondary-text-dark,var(--theme-color-text))] border-[var(--semantic-secondary-bg-dark,#ffffff)] bg-transparent hover:bg-gray-50 focus:ring-2 focus:ring-[var(--semantic-secondary-bg-dark,#ffffff)] focus:ring-offset-2 transition-all duration-200'
-          : 'border-2 text-[var(--semantic-secondary-text-light,var(--theme-color-text))] border-[var(--semantic-secondary-bg-light,#ffffff)] bg-transparent hover:bg-[var(--semantic-secondary-bg-light,#ffffff)] hover:text-[var(--semantic-secondary-text-light,var(--theme-color-text))] focus:ring-2 focus:ring-[var(--semantic-secondary-bg-light,#ffffff)] focus:ring-offset-2 transition-all duration-200'
-      }
-      if (style === 'link') {
-        return useDarkVariant
-          ? 'text-[var(--semantic-secondary-text-dark,var(--theme-color-text))] hover:opacity-75 hover:underline font-medium bg-transparent'
-          : 'text-[var(--semantic-secondary-text-light,var(--theme-color-text))] hover:opacity-75 hover:underline font-medium bg-transparent'
-      }
-    }
-    
-    // COLOR 3 (Tertiary/Brand 3)
-    if (color === 'color3') {
-      if (style === 'solid') {
-        return useDarkVariant
-          ? 'bg-[var(--semantic-tertiary-bg-dark,#f2f2eb)] text-[var(--semantic-tertiary-text-dark,#003b44)] hover:bg-[var(--semantic-tertiary-bg-dark-hover,#e5e4e0)] focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-dark)] focus:ring-offset-2 shadow-sm'
-          : 'bg-[var(--semantic-tertiary-bg-light,#f2f2eb)] text-[var(--semantic-tertiary-text-light,#003b44)] hover:bg-[var(--semantic-tertiary-bg-light-hover,#e5e4e0)] focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-light)] focus:ring-offset-2 shadow-sm'
-      }
-      if (style === 'outline') {
-        return useDarkVariant
-          ? 'border-2 text-[var(--semantic-tertiary-text-dark,#003b44)] border-[var(--semantic-tertiary-bg-dark,#f2f2eb)] bg-transparent hover:bg-gray-50 focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-dark)] focus:ring-offset-2 transition-all duration-200'
-          : 'border-2 text-[var(--semantic-tertiary-text-light,#003b44)] border-[var(--semantic-tertiary-bg-light,#f2f2eb)] bg-transparent hover:bg-[var(--semantic-tertiary-bg-light,#f2f2eb)] hover:text-[var(--semantic-tertiary-text-light,#003b44)] focus:ring-2 focus:ring-[var(--semantic-tertiary-bg-light)] focus:ring-offset-2 transition-all duration-200'
-      }
-      if (style === 'link') {
-        return useDarkVariant
-          ? 'text-[var(--semantic-tertiary-text-dark,#003b44)] hover:opacity-75 hover:underline font-medium bg-transparent'
-          : 'text-[var(--semantic-tertiary-text-light,#003b44)] hover:opacity-75 hover:underline font-medium bg-transparent'
-      }
-    }
-    
-    // COLOR 4 (Neutral Dark - Black/Dark Grey)
-    if (color === 'color4') {
-      if (style === 'solid') {
-        return useDarkVariant
-          ? 'bg-[var(--semantic-neutraldark-bg-dark,#000000)] text-[var(--semantic-neutraldark-text-dark,#ffffff)] hover:bg-[var(--semantic-neutraldark-bg-dark-hover,#313131)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 shadow-sm'
-          : 'bg-[var(--semantic-neutraldark-bg-light,#000000)] text-[var(--semantic-neutraldark-text-light,#ffffff)] hover:bg-[var(--semantic-neutraldark-bg-light-hover,#313131)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 shadow-sm'
-      }
-      if (style === 'outline') {
-        return useDarkVariant
-          ? 'border-2 text-[var(--semantic-neutraldark-text-dark,#000000)] border-[var(--semantic-neutraldark-bg-dark,#000000)] bg-transparent hover:bg-gray-50 focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-all duration-200'
-          : 'border-2 text-[var(--semantic-neutraldark-text-light,#000000)] border-[var(--semantic-neutraldark-bg-light,#000000)] bg-transparent hover:bg-[var(--semantic-neutraldark-bg-light,#000000)] hover:text-[var(--semantic-neutraldark-text-light,#ffffff)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-all duration-200'
-      }
-      if (style === 'link') {
-        return useDarkVariant
-          ? 'text-[var(--semantic-neutraldark-text-dark,#000000)] hover:opacity-75 hover:underline font-medium bg-transparent'
-          : 'text-[var(--semantic-neutraldark-text-light,#000000)] hover:opacity-75 hover:underline font-medium bg-transparent'
-      }
-    }
-    
-    // COLOR 5 (Neutral Light - White/Light Grey)
-    if (color === 'color5') {
-      if (style === 'solid') {
-        return useDarkVariant
-          ? 'bg-[var(--semantic-neutrallight-bg-dark,#ffffff)] text-[var(--semantic-neutrallight-text-dark,#000000)] hover:bg-[var(--semantic-neutrallight-bg-dark-hover,#f5f5f5)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 shadow-sm'
-          : 'bg-[var(--semantic-neutrallight-bg-light,#ffffff)] text-[var(--semantic-neutrallight-text-light,#000000)] hover:bg-[var(--semantic-neutrallight-bg-light-hover,#f5f5f5)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 shadow-sm'
-      }
-      if (style === 'outline') {
-        return useDarkVariant
-          ? 'border-2 text-[var(--semantic-neutrallight-text-dark,#ffffff)] border-[var(--semantic-neutrallight-bg-dark,#ffffff)] bg-transparent hover:bg-white/10 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200'
-          : 'border-2 text-[var(--semantic-neutrallight-text-light,#ffffff)] border-[var(--semantic-neutrallight-bg-light,#ffffff)] bg-transparent hover:bg-[var(--semantic-neutrallight-bg-light,#ffffff)] hover:text-[var(--semantic-neutrallight-text-light,#000000)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200'
-      }
-      if (style === 'link') {
-        return useDarkVariant
-          ? 'text-[var(--semantic-neutrallight-text-dark,#ffffff)] hover:opacity-75 hover:underline font-medium bg-transparent'
-          : 'text-[var(--semantic-neutrallight-text-light,#ffffff)] hover:opacity-75 hover:underline font-medium bg-transparent'
-      }
-    }
-    
-    // Fallback: Color 1 Solid
-    return useDarkVariant
-      ? 'bg-[var(--semantic-primary-dark,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-dark-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-dark,var(--theme-color-primary))] shadow-sm'
-      : 'bg-[var(--semantic-primary-light,var(--theme-color-primary))] text-white hover:bg-[var(--semantic-primary-light-hover,var(--theme-color-primary))] focus:ring-2 focus:ring-[var(--semantic-primary-light,var(--theme-color-primary))] shadow-sm'
-  };
+  // ✅ NO MORE TAILWIND! Buttons now use semantic CSS classes.
   
-  // Detect if we're in DS V2 theme for button styling
-  const isDS2Theme = React.useMemo(() => {
-    const root = document.documentElement
-    // Check if DS V2 semantic colors are defined
-    const hasDSV2Colors = getComputedStyle(root).getPropertyValue('--semantic-primary-dark').trim() !== ''
-    return hasDSV2Colors
-  }, [])
-  
-  const sizeClasses = isDS2Theme 
-    ? {
-        small: 'px-3 py-1.5 text-xs',    // DS V2: Smaller text
-        medium: 'px-4 py-2 text-sm',     // DS V2: Smaller text
-        large: 'px-6 py-3 text-base'     // DS V2: Smaller text
-      }
-    : {
-        small: 'px-3 py-1.5 text-sm',    // Modern: Standard sizes
-        medium: 'px-4 py-2 text-base',
-        large: 'px-6 py-3 text-lg'
-      }
-  
-  const baseClasses = style === 'link' 
-    ? 'font-medium transition-colors duration-200 cursor-pointer inline-block'
-    : isDS2Theme
-      ? 'font-mono font-semibold uppercase tracking-wide rounded-md transition-colors duration-200 cursor-pointer inline-block' // DS V2: Monospace, uppercase
-      : 'font-medium rounded-md transition-colors duration-200 cursor-pointer inline-block' // Modern: Normal font
-  
-  // Build classes array using new architecture
-  const classesArray = [
-    baseClasses,
-    getButtonClasses(style, color, sectionContentMode),
-    sizeClasses[widget.size as keyof typeof sizeClasses] || sizeClasses.medium
-  ]
-  
-  const classes = classesArray.filter(Boolean).join(' ').trim()
+  // 🎨 NEW: Build semantic CSS classes (NO TAILWIND)
+  // Classes are defined in themeCSS.ts and injected by CanvasThemeProvider
+  const buttonClasses = [
+    'btn',                                    // Base button class
+    `btn-${style}-${color}`,                  // Style + color (e.g., btn-solid-color1)
+    `btn-${widget.size}`                      // Size (e.g., btn-medium)
+  ].join(' ')
   
   const renderContent = () => (
     <>
@@ -342,17 +189,13 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
     </>
   );
   
-  // Get alignment classes
-  const alignmentClasses = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right'
-  }[widget.align || 'left'];
+  // 🎨 NEW: Semantic alignment wrapper class
+  const wrapperClass = `btn-wrapper-${widget.align || 'left'}`
 
   const buttonElement = widget.href ? (
     <a 
       href={widget.href} 
-      className={classes}
+      className={buttonClasses}
       target={widget.target || '_self'}
     >
       {renderContent()}
@@ -360,7 +203,7 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
   ) : (
     <button 
       type="button"
-      className={classes}
+      className={buttonClasses}
       onClick={() => console.log('Button clicked:', widget.text)}
     >
       {renderContent()}
@@ -368,7 +211,7 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
   );
   
   return (
-    <div className={alignmentClasses}>
+    <div className={wrapperClass}>
       {buttonElement}
     </div>
   )

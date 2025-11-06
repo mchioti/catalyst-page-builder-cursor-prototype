@@ -702,17 +702,31 @@ export function SectionRenderer({
           // Check if this is a card area in header-plus-grid layout (areas 1, 2, 3)
           const isCardArea = section.layout === 'header-plus-grid' && areaIndex > 0
           
+          // Detect theme for card border-radius
+          const cardBorderRadius = React.useMemo(() => {
+            const root = document.documentElement
+            const style = getComputedStyle(root)
+            const radius = style.getPropertyValue('--theme-card-radius').trim()
+            return radius || '0.5rem' // Default to 8px (rounded-lg)
+          }, [])
+          
           // Determine border color based on section background (lighter for dark backgrounds)
           const isDarkBackground = section.contentMode === 'dark' || 
             (section.background?.type === 'color' && section.background?.color === '#000000')
           const cardBorderClass = isDarkBackground 
-            ? 'border border-gray-600 rounded-lg p-8'  // Lighter border for dark backgrounds
-            : 'border border-gray-300 rounded-lg p-8'  // Standard border for light backgrounds
+            ? `border border-gray-600 p-8`  // Lighter border for dark backgrounds
+            : `border border-gray-300 p-8`  // Standard border for light backgrounds
+          
+          // Apply border-radius as inline style for cards
+          const cardStyle: React.CSSProperties = isCardArea ? {
+            borderRadius: cardBorderRadius
+          } : {}
           
           return (
           <div 
             ref={setDropRef}
-            key={area.id} 
+            key={area.id}
+            style={cardStyle}
             className={`relative ${
               isLiveMode
                 ? isCardArea 

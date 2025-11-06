@@ -6,6 +6,7 @@ import type { EditingScope, IssueType } from './TemplateEditingScopeButton'
 import { ConflictResolutionDialog } from './ConflictResolutionDialog'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { useBrandingStore } from '../../stores/brandingStore'
+import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import '../../styles/journal-themes.css'
 
 // Utility function to extract journal code from route/context
@@ -1300,8 +1301,9 @@ export function MockLiveSite({
   }
 
   return (
-    <>
-      <div className={`min-h-screen bg-white journal-${journalCode}`}>
+    <CanvasThemeProvider usePageStore={usePageStore}>
+      <>
+        <div className={`min-h-screen bg-white journal-${journalCode}`}>
         {/* Mock Live Site Navigation */}
         <div className="bg-gray-900 text-white px-6 py-3">
           <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -1361,14 +1363,15 @@ export function MockLiveSite({
         />
       </div>
 
-      {/* Conflict Resolution Dialog */}
-      <ConflictResolutionDialog
-        isOpen={conflictDialog.isOpen}
-        affectedJournals={conflictDialog.affectedJournals}
-        scope={conflictDialog.scope}
-        onResolve={handleConflictResolution}
-      />
-    </>
+        {/* Conflict Resolution Dialog */}
+        <ConflictResolutionDialog
+          isOpen={conflictDialog.isOpen}
+          affectedJournals={conflictDialog.affectedJournals}
+          scope={conflictDialog.scope}
+          onResolve={handleConflictResolution}
+        />
+      </>
+    </CanvasThemeProvider>
   )
 }
 

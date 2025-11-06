@@ -17,6 +17,235 @@ import {
 } from '../components/PageBuilder/prefabSections'
 
 /**
+ * Creates IBM Carbon DS starter homepage
+ * Uses Wiley template structure with Carbon-specific styling
+ * Showcases Carbon's signature features: sharp corners, IBM Blue, 5 button styles
+ */
+export const createCarbonDSStarterTemplate = (): CanvasItem[] => {
+  // 1. HERO SECTION - IBM Blue background, sharp corners
+  const heroSection = createWileyDSV2HeroPrefab() as any
+  heroSection.background = {
+    type: 'color',
+    color: '#0f62fe',  // IBM Blue
+    opacity: 1
+  }
+  heroSection.contentMode = 'dark'
+  
+  // 2. BUTTON SHOWCASE - All 5 Carbon button styles
+  const buttonShowcase: any = {
+    id: nanoid(),
+    name: 'Carbon Button Showcase',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
+  }
+  buttonShowcase.styling = {
+    paddingTop: '64px',
+    paddingBottom: '64px',
+    paddingLeft: '80px',
+    paddingRight: '80px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  buttonShowcase.background = {
+    type: 'color',
+    color: '#f4f4f4',  // Carbon Layer 01
+    opacity: 1
+  }
+  buttonShowcase.contentMode = 'light'
+  
+  buttonShowcase.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'IBM Carbon Button System',
+      level: 2,
+      align: 'center',
+      style: 'default',
+      color: 'default',
+      size: 'xl',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Five semantic button styles for enterprise applications',
+      align: 'center',
+      inlineStyles: 'margin-bottom: 48px; color: #525252;'
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'PRIMARY',
+      style: 'solid',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'SECONDARY',
+      style: 'solid',
+      color: 'color2',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'TERTIARY',
+      style: 'solid',
+      color: 'color3',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'DANGER',
+      style: 'solid',
+      color: 'color4',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'GHOST',
+      style: 'solid',
+      color: 'color5',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    }
+  ]
+  
+  // 3. CARD GRID - Layer system showcase
+  const cardGridSection = createWileyDSV2CardGridPrefab() as any
+  cardGridSection.background = {
+    type: 'color',
+    color: '#ffffff',  // White layer
+    opacity: 1
+  }
+  cardGridSection.contentMode = 'light'
+  
+  // 4. ABOUT SECTION - Grey layer
+  const aboutSection: any = {
+    id: nanoid(),
+    name: 'About IBM Carbon',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
+  }
+  aboutSection.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '80px',
+    paddingRight: '80px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  aboutSection.background = {
+    type: 'color',
+    color: '#f4f4f4',  // Carbon Layer 01
+    opacity: 1
+  }
+  aboutSection.contentMode = 'light'
+  
+  aboutSection.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: aboutSection.id,
+      skin: 'minimal',
+      text: 'ENTERPRISE DESIGN',
+      align: 'center',
+      inlineStyles: 'font-size: 12px; font-weight: 600; letter-spacing: 2px; color: #525252; margin-bottom: 16px;'
+    },
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: aboutSection.id,
+      skin: 'minimal',
+      text: 'Built for Scale',
+      level: 2,
+      align: 'center',
+      style: 'default',
+      color: 'default',
+      size: 'xl',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: aboutSection.id,
+      skin: 'minimal',
+      text: 'IBM Carbon Design System powers enterprise applications with structured, accessible, and scalable components. Sharp corners, consistent spacing, and semantic color systems ensure clarity at any scale.',
+      align: 'center',
+      inlineStyles: 'font-size: 18px; line-height: 1.7; color: #161616; max-width: 900px; margin: 0 auto 32px auto;'
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: aboutSection.id,
+      skin: 'minimal',
+      text: 'LEARN MORE',
+      style: 'solid',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    }
+  ]
+  
+  return [
+    heroSection,
+    buttonShowcase,
+    cardGridSection,
+    aboutSection
+  ]
+}
+
+/**
  * Creates DS V2 starter homepage - PREFAB SECTIONS approach
  * Uses Figma-accurate prefab sections with proper styling
  * All sections now use prefabs to ensure consistency with Figma designs
@@ -164,8 +393,8 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
       return createWileyDSV2StarterTemplate()
     
     case 'ibm-carbon-ds':
-      // IBM Carbon: Enterprise design with same section structure, IBM styling
-      return createWileyDSV2StarterTemplate()  // Reuse structure, Carbon theme will apply its styling
+      // IBM Carbon: Enterprise design with Carbon-specific styling
+      return createCarbonDSStarterTemplate()
     
     case 'academic-classic':
     case 'academic-review':

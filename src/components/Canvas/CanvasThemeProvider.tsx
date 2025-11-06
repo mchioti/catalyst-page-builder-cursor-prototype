@@ -1,4 +1,5 @@
-import React from 'react'
+import { useEffect } from 'react'
+import { generateThemeCSS } from '../../styles/themeCSS'
 
 interface CanvasThemeProviderProps {
   children: React.ReactNode
@@ -14,7 +15,17 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : themes.find((t: any) => t.id === 'modernist-theme') // Fallback to modernist
   
+  console.log('🔍 CanvasThemeProvider Debug:', {
+    currentWebsiteId,
+    currentWebsite: currentWebsite?.name,
+    themeId: currentWebsite?.themeId,
+    currentTheme: currentTheme?.name,
+    themesCount: themes.length,
+    websitesCount: websites.length
+  })
+  
   if (!currentTheme) {
+    console.error('❌ No theme found! Provider rendering without CSS injection.')
     return <>{children}</>
   }
 
@@ -32,6 +43,10 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
       '--theme-body-font': currentTheme.typography.bodyFont,
       '--theme-base-size': currentTheme.typography.baseSize,
       '--theme-scale': currentTheme.typography.scale,
+      // Component styling
+      '--theme-button-radius': currentTheme.components?.button?.borderRadius || '0.375rem',
+      '--theme-card-radius': currentTheme.components?.card?.borderRadius || '0.5rem',
+      '--theme-id': currentTheme.id,
       // Backward compatibility with journal variables
       '--journal-primary': currentTheme.colors.primary,
       '--journal-primary-dark': currentTheme.colors.accent,
@@ -188,6 +203,53 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
 
     return vars
   }
+
+  // Inject generated theme CSS into document head
+  useEffect(() => {
+    console.log('🚀 useEffect RUNNING! Theme:', currentTheme?.id, 'Full theme:', currentTheme)
+    
+    const styleId = `theme-styles-${currentTheme.id}`
+    
+    console.log('🧹 Removing old style:', styleId)
+    // Remove old theme styles if they exist
+    const oldStyle = document.getElementById(styleId)
+    if (oldStyle) {
+      oldStyle.remove()
+      console.log('✅ Old style removed')
+    }
+    
+    console.log('🎨 Generating CSS for theme:', currentTheme.name)
+    // Generate and inject new theme CSS
+    const styleEl = document.createElement('style')
+    styleEl.id = styleId
+    
+    try {
+      styleEl.textContent = generateThemeCSS(currentTheme)
+      console.log('✅ CSS Generated, length:', styleEl.textContent.length, 'characters')
+    } catch (error) {
+      console.error('❌ CSS Generation failed:', error)
+      return
+    }
+    
+    document.head.appendChild(styleEl)
+    console.log('✅ Style element appended to head with id:', styleId)
+    
+    console.log('🎨 Theme CSS Injected:', {
+      themeId: currentTheme.id,
+      themeName: currentTheme.name,
+      buttonRadius: currentTheme.components?.button?.borderRadius,
+      cardRadius: currentTheme.components?.card?.borderRadius
+    })
+    
+    // Cleanup on unmount or theme change
+    return () => {
+      const el = document.getElementById(styleId)
+      if (el) {
+        el.remove()
+        console.log('🧹 Cleanup: Removed theme styles:', styleId)
+      }
+    }
+  }, [])
 
   return (
     <div 
