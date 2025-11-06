@@ -147,7 +147,14 @@ export type ButtonWidget = WidgetBase & {
   type: 'button'
   text: string
   href: string
-  variant: string  // Theme-specific: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'link' etc.
+  
+  // NEW: Separate style and color for better flexibility
+  style?: 'solid' | 'outline' | 'link'  // Visual treatment (universal)
+  color?: 'color1' | 'color2' | 'color3'  // Color scheme (theme-specific mapping)
+  
+  // DEPRECATED: Legacy field for backward compatibility
+  variant?: string  // Old: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'link'
+  
   size: 'small' | 'medium' | 'large'
   target?: '_blank' | '_self'
   icon?: WidgetIcon

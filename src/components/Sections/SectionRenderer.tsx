@@ -71,13 +71,19 @@ export function DraggableWidgetInSection({
     }
   })
   
+  // Get selected widget from store to show persistent selection
+  const selectedWidget = usePageStore?.getState?.()?.selectedWidget || null
+  const isSelected = selectedWidget === widget.id
+  
   return (
     <div 
       ref={widgetDrag.setNodeRef}
       style={widgetDrag.transform ? {
         transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
       } : undefined}
-      className={`${!isLiveMode ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} group relative ${
+      className={`${!isLiveMode ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
+        !isLiveMode && isSelected ? 'ring-2 ring-blue-500' : ''
+      } group relative ${
         widgetDrag.isDragging ? 'opacity-50' : ''
       }`}
       onClick={(e) => {
@@ -696,6 +702,13 @@ export function SectionRenderer({
           // Check if this is a card area in header-plus-grid layout (areas 1, 2, 3)
           const isCardArea = section.layout === 'header-plus-grid' && areaIndex > 0
           
+          // Determine border color based on section background (lighter for dark backgrounds)
+          const isDarkBackground = section.contentMode === 'dark' || 
+            (section.background?.type === 'color' && section.background?.color === '#000000')
+          const cardBorderClass = isDarkBackground 
+            ? 'border border-gray-600 rounded-lg p-8'  // Lighter border for dark backgrounds
+            : 'border border-gray-300 rounded-lg p-8'  // Standard border for light backgrounds
+          
           return (
           <div 
             ref={setDropRef}
@@ -703,7 +716,7 @@ export function SectionRenderer({
             className={`relative ${
               isLiveMode
                 ? isCardArea 
-                  ? 'border border-gray-300 rounded-lg p-8' // Card styling in live mode - no bg-white, transparent!
+                  ? cardBorderClass // Card styling in live mode - context-aware border
                   : '' // No styling for non-card areas in live mode
                 : isSpecialSection 
                   ? '' 
@@ -724,7 +737,7 @@ export function SectionRenderer({
                       : activeDropZone === `drop-${area.id}` 
                         ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
                         : isCardArea 
-                          ? 'border border-gray-300 rounded-lg p-8' // Card styling in editor mode - no bg-white, transparent!
+                          ? cardBorderClass // Card styling in editor mode - context-aware border
                           : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
                           ? 'rounded p-2' // Transparent background to show section gradient/color/image or hero styling
                           : 'bg-white rounded p-2'

@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { X, FileText, Eye, Plus, Minus, Edit3, ArrowRightLeft } from 'lucide-react'
 import { detectTemplateChanges, type TemplateChange } from '../../utils/templateDiff'
 import type { CanvasItem } from '../../types'
-import { isSection } from '../../types/widgets'
 
 interface TemplateDiffModalProps {
   isOpen: boolean

@@ -257,8 +257,8 @@ function CustomizationItem({
       
       // Find other journals that have modifications and won't be affected
       const otherModifiedJournals = allModifications
-        .filter(m => m.route !== modification.route && m.route.startsWith('journal/'))
-        .map(m => m.journalName)
+        .filter((m: any) => m.route !== modification.route && m.route.startsWith('journal/'))
+        .map((m: any) => m.journalName)
       
       // Build accurate dialog message with explicit template name
       let message = `Promote ${modification.journalName}'s ${templateName} to ALL journals?\n\n`

@@ -1767,6 +1767,10 @@ function SectionsContent({ showToast, usePageStore }: {
       section = PREFAB_SECTIONS.wileyThreeColumn()
     } else if (type === 'wileyContentImage') {
       section = PREFAB_SECTIONS.wileyContentImage()
+    } else if (type === 'wileyDSV2Hero') {
+      section = PREFAB_SECTIONS.wileyDSV2Hero()
+    } else if (type === 'wileyDSV2CardGrid') {
+      section = PREFAB_SECTIONS.wileyDSV2CardGrid()
     } else {
       return // Invalid type
     }
@@ -1806,7 +1810,7 @@ function SectionsContent({ showToast, usePageStore }: {
                 >
                   <div>
                     <div className="font-medium text-sm text-gray-900">Hero Section</div>
-                    <div className="text-xs text-gray-700">Taller hero with 600px minHeight + dark background</div>
+                    <div className="text-xs text-gray-700">500px hero with energy burst background image (L1 template VAR 2)</div>
                   </div>
                 </button>
                 
@@ -1816,7 +1820,7 @@ function SectionsContent({ showToast, usePageStore }: {
                 >
                   <div>
                     <div className="font-medium text-sm text-gray-900">Card Grid</div>
-                    <div className="text-xs text-gray-700">3-column grid with title drop zone + dark background</div>
+                    <div className="text-xs text-gray-700">3-column grid with title drop zone + Heritage 900 background</div>
                   </div>
                 </button>
                 
@@ -1832,7 +1836,7 @@ function SectionsContent({ showToast, usePageStore }: {
                 
                 <div className="text-xs text-gray-500 italic mt-2 p-2 bg-blue-50 rounded border border-blue-200">
                   💡 <strong>Why these are prefabs:</strong><br/>
-                  • Hero: Taller with minHeight (600px)<br/>
+                  • Hero: 500px tall with background image (L1 template VAR 2)<br/>
                   • Card Grid: Has title drop zone (not in basic layouts)<br/>
                   • Shop Today: Unique bordered grid styling
                 </div>

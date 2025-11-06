@@ -9,244 +9,39 @@
 import { nanoid } from 'nanoid'
 import type { CanvasItem } from '../types/widgets'
 import {
-  createWileyHeroPrefab,
-  createWileyThreeColumnPrefab,
-  createWileyContentImagePrefab,
-  createWileyFigmaHeroPrefab,
-  createWileyFigmaCardGridPrefab,
-  createWileyFigmaFeaturedContentPrefab,
   createWileyFigmaLogoGridPrefab,
   createHeroPrefab,
-  createFeaturesPrefab
+  createFeaturesPrefab,
+  createWileyDSV2HeroPrefab,
+  createWileyDSV2CardGridPrefab
 } from '../components/PageBuilder/prefabSections'
 
 /**
- * Creates DS V2 starter homepage - BASIC SECTIONS approach
- * Uses basic section layouts (two-columns, header-plus-grid, one-column)
- * + widgets to compose sections, instead of special prefabs
- * Only "Shop Today" uses a prefab because it has unique grid styling
- * Philosophy: Build with basic layouts, only use prefabs for special styling
+ * Creates DS V2 starter homepage - PREFAB SECTIONS approach
+ * Uses Figma-accurate prefab sections with proper styling
+ * All sections now use prefabs to ensure consistency with Figma designs
+ * 
+ * Figma references:
+ * - Hero: https://www.figma.com/design/abbxQgAseYSVNmX3b5EcDv?node-id=2016-17
+ * - Cards: https://www.figma.com/design/abbxQgAseYSVNmX3b5EcDv?node-id=8195-54472
  */
 export const createWileyDSV2StarterTemplate = (): CanvasItem[] => {
-  // Helper to create basic section structure
-  const createBasicSection = (layout: string, name: string) => {
-    const section: any = {
-      id: nanoid(),
-      name: name,
-      type: 'content-block',
-      layout: layout,
-      areas: []
-    }
-    
-    // Create areas based on layout
-    if (layout === 'two-columns') {
-      section.areas = [
-        { id: nanoid(), name: 'Left Column', widgets: [] },
-        { id: nanoid(), name: 'Right Column', widgets: [] }
-      ]
-    } else if (layout === 'header-plus-grid') {
-      section.areas = [
-        { id: nanoid(), name: 'Header', widgets: [] },
-        { id: nanoid(), name: 'Left Card', widgets: [] },
-        { id: nanoid(), name: 'Center Card', widgets: [] },
-        { id: nanoid(), name: 'Right Card', widgets: [] }
-      ]
-    } else if (layout === 'one-column') {
-      section.areas = [
-        { id: nanoid(), name: 'Content', widgets: [] }
-      ]
-    }
-    
-    return section
+  // 1. HERO SECTION - Prefab with 800px height + Heritage 900 background
+  const heroSection = createWileyDSV2HeroPrefab()
+  
+  // 2. CARD GRID - Prefab with title drop zone + Heritage 900 background
+  const cardGridSection = createWileyDSV2CardGridPrefab()
+  
+  // 3. ABOUT WILEY - Basic one-column layout (no prefab needed)
+  const aboutSection: any = {
+    id: nanoid(),
+    name: 'About Wiley + Partners',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
   }
-  
-  // 1. HERO SECTION - Built with basic two-columns layout
-  const heroSection = createBasicSection('two-columns', 'Hero Section')
-  heroSection.styling = {
-    paddingTop: '80px',
-    paddingBottom: '80px',
-    paddingLeft: '80px',
-    paddingRight: '80px',
-    minHeight: '600px',
-    gap: 'large',
-    variant: 'full-width',
-    textColor: 'white'
-  }
-  heroSection.background = {
-    type: 'color',
-    color: '#1a4d4d',
-    opacity: 1
-  }
-  heroSection.contentMode = 'dark'
-  
-  // Hero widgets (left column)
-  heroSection.areas[0].widgets = [
-    {
-      id: nanoid(),
-      type: 'heading',
-      sectionId: heroSection.id,
-      skin: 'minimal',
-      text: 'Where ideas ignite and impact endures',
-      level: 1,
-      align: 'left',
-      style: 'hero',
-      color: 'default',
-      size: 'xl',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    },
-    {
-      id: nanoid(),
-      type: 'text',
-      sectionId: heroSection.id,
-      skin: 'minimal',
-      text: 'Wiley brings together research, learning, and technology to spark breakthroughs and power progress across industries and society.',
-      align: 'left'
-    }
-  ]
-  
-  // Hero logo placeholder (right column)
-  heroSection.areas[1].widgets = [
-    {
-      id: nanoid(),
-      type: 'text',
-      sectionId: heroSection.id,
-      skin: 'minimal',
-      text: 'WILEY',
-      align: 'center'
-    }
-  ]
-  
-  // 2. CARD GRID - Built with basic header-plus-grid layout
-  const cardGridSection = createBasicSection('header-plus-grid', 'Card Grid')
-  cardGridSection.styling = {
-    paddingTop: '80px',
-    paddingBottom: '80px',
-    paddingLeft: '40px',
-    paddingRight: '40px',
-    gap: 'large',
-    variant: 'full-width',
-    textColor: 'white'
-  }
-  cardGridSection.background = {
-    type: 'color',
-    color: '#1a4d4d',
-    opacity: 1
-  }
-  cardGridSection.contentMode = 'dark'
-  
-  // Card 1: AI in Research
-  cardGridSection.areas[1].widgets = [
-    {
-      id: nanoid(),
-      type: 'heading',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'AI in Research',
-      level: 2,
-      align: 'left',
-      style: 'default',
-      color: 'default',
-      size: 'xl',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    },
-    {
-      id: nanoid(),
-      type: 'text',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'Explore how AI is transforming research methodologies.',
-      align: 'left'
-    },
-    {
-      id: nanoid(),
-      type: 'button',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'LEARN MORE',
-      variant: 'primary',
-      size: 'medium',
-      href: '#',
-      target: '_self',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    }
-  ]
-  
-  // Card 2: The Wiley Difference
-  cardGridSection.areas[2].widgets = [
-    {
-      id: nanoid(),
-      type: 'heading',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'The Wiley Difference',
-      level: 2,
-      align: 'left',
-      style: 'default',
-      color: 'default',
-      size: 'xl',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    },
-    {
-      id: nanoid(),
-      type: 'text',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'Discover what sets us apart in scholarly publishing.',
-      align: 'left'
-    },
-    {
-      id: nanoid(),
-      type: 'button',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'EXPLORE',
-      variant: 'primary',
-      size: 'medium',
-      href: '#',
-      target: '_self',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    }
-  ]
-  
-  // Card 3: Insights
-  cardGridSection.areas[3].widgets = [
-    {
-      id: nanoid(),
-      type: 'heading',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'Insights Shaping Scholarly Publishing',
-      level: 2,
-      align: 'left',
-      style: 'default',
-      color: 'default',
-      size: 'xl',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    },
-    {
-      id: nanoid(),
-      type: 'text',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'Stay informed with the latest industry trends.',
-      align: 'left'
-    },
-    {
-      id: nanoid(),
-      type: 'button',
-      sectionId: cardGridSection.id,
-      skin: 'minimal',
-      text: 'READ MORE',
-      variant: 'primary',
-      size: 'medium',
-      href: '#',
-      target: '_self',
-      icon: { enabled: false, position: 'left', emoji: '' }
-    }
-  ]
-  
-  // 3. ABOUT WILEY - Built with basic one-column layout
-  const aboutSection = createBasicSection('one-column', 'About Wiley + Partners')
   aboutSection.styling = {
     paddingTop: '80px',
     paddingBottom: '80px',
@@ -361,7 +156,7 @@ export const createDefaultStarterTemplate = (): CanvasItem[] => {
 export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
   switch (themeId) {
     case 'wiley-figma-ds-v2':
-      // DS V2: Minimal approach - only unique layouts
+      // DS V2: Figma-accurate prefab sections (Hero 800px, Card Grid, About, Shop Today)
       return createWileyDSV2StarterTemplate()
     
     case 'academic-classic':
@@ -382,10 +177,10 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
 export const AVAILABLE_STARTERS = {
   'wiley-figma-ds-v2': {
     name: 'Wiley Figma DS V2',
-    description: 'Smart approach - starter sections built with basic layouts + widgets. Only Shop Today uses prefab.',
-    sections: ['Hero (basic two-columns)', 'Card Grid (basic header-plus-grid)', 'About Wiley (basic one-column)', 'Shop Today (prefab - bordered grid)'],
-    philosophy: 'Compose sections using basic layouts. Only use prefabs for special styling that cannot be replicated.',
-    features: ['Multi-brand colors (Wiley/WT/Dummies)', 'Essential component specs', 'Journal theme presets']
+    description: 'Figma-accurate sections with energy burst hero and Heritage 900 card backgrounds.',
+    sections: ['Hero (prefab - 500px with bg image)', 'Card Grid (prefab - title drop zone)', 'About Wiley (basic one-column)', 'Shop Today (prefab - bordered grid)'],
+    philosophy: 'Use prefabs for sections with unique styling (background images, title drop zones, borders). Build with basic layouts for simple content.',
+    features: ['Multi-brand colors (Wiley/WT/Dummies)', 'Figma L1 template VAR 2', 'Background image hero', 'Journal theme presets']
   },
   'default': {
     name: 'Default Academic',

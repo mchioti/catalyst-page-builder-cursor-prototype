@@ -1539,46 +1539,61 @@ export function PropertiesPanel({
             />
           </div>
           
+          {/* 🎨 NEW BUTTON ARCHITECTURE: Separate Style and Color */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Style</label>
             <select
-              value={(widget as ButtonWidget).variant}
-              onChange={(e) => updateWidget({ variant: e.target.value })}
+              value={(widget as ButtonWidget).style || 'solid'}
+              onChange={(e) => updateWidget({ style: e.target.value as 'solid' | 'outline' | 'link' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="solid">Solid - Filled background</option>
+              <option value="outline">Outline - Border only</option>
+              <option value="link">Link - Text only</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              💡 Visual treatment applies to all button colors
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Button Color</label>
+            <select
+              value={(widget as ButtonWidget).color || 'color1'}
+              onChange={(e) => updateWidget({ color: e.target.value as 'color1' | 'color2' | 'color3' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {(() => {
-                // Get current theme to show theme-specific button variants
+                // Get current theme to show theme-specific color labels
                 const { currentWebsiteId, websites, themes } = usePageStore.getState()
                 const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
                 const currentTheme = currentWebsite 
                   ? themes.find((t: any) => t.id === currentWebsite.themeId)
                   : null
                 
-                // DS V2 uses Primary, Secondary, Tertiary (matches Figma)
+                // DS V2 uses Brand 1, Brand 2, Brand 3 (matches Figma)
                 if (currentTheme?.id === 'wiley-figma-ds-v2') {
                   return (
                     <>
-                      <option value="primary">Primary</option>
-                      <option value="secondary">Secondary</option>
-                      <option value="tertiary">Tertiary</option>
-                      <option value="link">Link</option>
+                      <option value="color1">Brand 1 (Primary Green/Teal)</option>
+                      <option value="color2">Brand 2 (Cream/Dark Teal)</option>
+                      <option value="color3">Brand 3 (Dark Teal/White)</option>
                     </>
                   )
                 }
                 
-                // Other themes use Primary, Secondary, Outline, Link
+                // Modern and other themes use Primary, Secondary, Accent
                 return (
                   <>
-                    <option value="primary">Primary</option>
-                    <option value="secondary">Secondary</option>
-                    <option value="outline">Outline</option>
-                    <option value="link">Link</option>
+                    <option value="color1">Primary (Blue)</option>
+                    <option value="color2">Secondary (Gray)</option>
+                    <option value="color3">Accent (Orange)</option>
                   </>
                 )
               })()}
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              💡 Button styles automatically adapt to light/dark backgrounds for perfect contrast
+              💡 Colors automatically adapt to light/dark backgrounds for perfect contrast
             </p>
           </div>
           

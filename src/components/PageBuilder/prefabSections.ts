@@ -1081,34 +1081,44 @@ export const createWileyFigmaCardGridPrefab = (): CanvasItem => {
  * WILEY FIGMA DS V2 PREFAB SECTIONS
  * ========================================
  * These sections have unique styling that justifies being prefabs:
- * - Hero: Taller with minHeight (600px)
- * - Card Grid: Has title drop zone (not in basic layouts)
+ * - Hero: 500px with background image (L1 template VAR 2)
+ * - Card Grid: Has title drop zone (not in basic layouts) + Heritage 900 background
  * - Shop Today: Bordered grid with unique styling
+ * 
+ * Figma references:
+ * - Hero: Hub - L1 template VAR 2 (Desktop)
+ * - Cards: https://www.figma.com/design/abbxQgAseYSVNmX3b5EcDv?node-id=8195-54472
  */
 
 /**
  * Creates DS V2 Hero Section
- * Two-column layout with taller minHeight and dark background
+ * Two-column layout with background image
+ * Figma specs: Hub - L1 template VAR 2 (Desktop), Content Color=Light, Background=Image
  */
 export const createWileyDSV2HeroPrefab = (): CanvasItem => {
   const heroSection = createBaseSection('two-columns', 'Hero Section')
   const typedSection = heroSection as WidgetSection
   
-  // Styling: Taller hero with minHeight
+  // Styling: Shorter hero with background image (L1 template VAR 2)
   typedSection.styling = {
     paddingTop: '80px',
     paddingBottom: '80px',
     paddingLeft: '80px',
     paddingRight: '80px',
-    minHeight: '600px',  // THIS IS THE UNIQUE STYLING
+    minHeight: '500px',  // Figma spec: L1 template VAR 2 (shorter hero)
     gap: 'large',
     variant: 'full-width',
     textColor: 'white'
   }
   
   typedSection.background = {
-    type: 'color',
-    color: '#1a4d4d',  // Dark teal
+    type: 'image',
+    image: {
+      url: 'https://www.wiley.com/content/dam/wiley-com/en/images/Photography/brand-and-hero/homepage/homepage-only-energy-burst-visual.jpg',
+      position: 'center',
+      repeat: 'no-repeat',
+      size: 'cover'
+    },
     opacity: 1
   }
   
@@ -1157,12 +1167,13 @@ export const createWileyDSV2HeroPrefab = (): CanvasItem => {
 /**
  * Creates DS V2 Card Grid Section
  * Header-plus-grid layout with title drop zone (unique to this prefab)
+ * Figma specs: Background=#003b44 (Heritage 900), 3-column grid layout
  */
 export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
   const cardGridSection = createBaseSection('header-plus-grid', 'Card Grid')
   const typedSection = cardGridSection as WidgetSection
   
-  // Styling: Dark background with generous padding
+  // Styling: Dark Heritage 900 background with generous padding
   typedSection.styling = {
     paddingTop: '80px',
     paddingBottom: '80px',
@@ -1175,7 +1186,7 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
   
   typedSection.background = {
     type: 'color',
-    color: '#1a4d4d',  // Dark teal
+    color: '#003b44',  // Figma spec: Heritage 900 (dark teal)
     opacity: 1
   }
   
@@ -1212,7 +1223,8 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'Learn More',
     href: '#',
-    variant: 'primary' as const,
+    style: 'solid' as const,  // NEW: Filled background
+    color: 'color1' as const, // Brand 1 (Primary Green/Teal)
     size: 'medium' as const,
     align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
@@ -1249,7 +1261,8 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'Explore OA',
     href: '#',
-    variant: 'primary' as const,
+    style: 'solid' as const,  // NEW: Filled background
+    color: 'color1' as const, // Brand 1 (Primary Green/Teal)
     size: 'medium' as const,
     align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
@@ -1286,7 +1299,8 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'Read More',
     href: '#',
-    variant: 'primary' as const,
+    style: 'solid' as const,  // NEW: Filled background
+    color: 'color1' as const, // Brand 1 (Primary Green/Teal)
     size: 'medium' as const,
     align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
@@ -1392,9 +1406,10 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'SHOP NOW →',
     href: '#',
-    variant: 'tertiary' as const,  // DS V2 Figma uses "tertiary" for outline style
+    style: 'outline' as const,  // NEW: Outline (border only)
+    color: 'color1' as const,   // Brand 1 (teal border on light bg)
     size: 'medium' as const,
-    align: 'left' as const,  // Align left to match Figma
+    align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
   }
   
@@ -1430,9 +1445,10 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'SHOP NOW →',
     href: '#',
-    variant: 'tertiary' as const,  // DS V2 Figma uses "tertiary" for outline style
+    style: 'outline' as const,  // NEW: Outline (border only)
+    color: 'color1' as const,   // Brand 1 (teal border on light bg)
     size: 'medium' as const,
-    align: 'left' as const,  // Align left to match Figma
+    align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
   }
   
@@ -1468,9 +1484,10 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     skin: 'minimal' as const,
     text: 'SHOP NOW →',
     href: '#',
-    variant: 'tertiary' as const,  // DS V2 Figma uses "tertiary" for outline style
+    style: 'outline' as const,  // NEW: Outline (border only)
+    color: 'color1' as const,   // Brand 1 (teal border on light bg)
     size: 'medium' as const,
-    align: 'left' as const,  // Align left to match Figma
+    align: 'left' as const,
     icon: { enabled: false, position: 'right' as const, emoji: '' }
   }
   

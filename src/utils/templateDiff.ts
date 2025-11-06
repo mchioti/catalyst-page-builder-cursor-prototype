@@ -79,8 +79,8 @@ export function detectTemplateChanges(
           type: 'moved',
           element: 'widget',
           elementId: widgetId,
-          elementName: widget.name || getWidgetTypeName(widget),
-          description: `Widget "${widget.name || getWidgetTypeName(widget)}" moved from "${baseLocation}" to "${customLocation}"`,
+          elementName: getWidgetTypeName(widget),
+          description: `Widget "${getWidgetTypeName(widget)}" moved from "${baseLocation}" to "${customLocation}"`,
           fromLocation: baseLocation,
           toLocation: customLocation
         })
@@ -119,12 +119,13 @@ export function detectTemplateChanges(
         }
       } else if (!movedWidgetIds.has(baseItem.id)) {
         // Only mark as removed if it wasn't moved
+        const elementName = isSection(baseItem) ? baseItem.name : getWidgetTypeName(baseItem as Widget)
         changes.push({
           type: 'removed',
           element: isSection(baseItem) ? 'section' : 'widget',
           elementId: baseItem.id,
-          elementName: baseItem.name || 'Unnamed',
-          description: `${isSection(baseItem) ? 'Section' : 'Widget'} "${baseItem.name}" was removed`
+          elementName: elementName || 'Unnamed',
+          description: `${isSection(baseItem) ? 'Section' : 'Widget'} "${elementName}" was removed`
         })
       }
     } else {
@@ -147,12 +148,13 @@ export function detectTemplateChanges(
   customizedCanvas.forEach(customItem => {
     if (!checkedCustomizedIds.has(customItem.id)) {
       // Item was added
+      const elementName = isSection(customItem) ? customItem.name : getWidgetTypeName(customItem as Widget)
       changes.push({
         type: 'added',
         element: isSection(customItem) ? 'section' : 'widget',
         elementId: customItem.id,
-        elementName: customItem.name || 'Unnamed',
-        description: `${isSection(customItem) ? 'Section' : 'Widget'} "${customItem.name}" was added`
+        elementName: elementName || 'Unnamed',
+        description: `${isSection(customItem) ? 'Section' : 'Widget'} "${elementName}" was added`
       })
     }
   })
@@ -184,17 +186,19 @@ function compareSections(
     })
   }
   
-  // Compare padding
-  if (baseSection.padding !== customSection.padding) {
+  // Compare padding (check styling object)
+  const basePadding = JSON.stringify(baseSection.styling || {})
+  const customPadding = JSON.stringify(customSection.styling || {})
+  if (basePadding !== customPadding) {
     changes.push({
       type: 'modified',
       element: 'section',
       elementId: baseSection.id,
       elementName: baseSection.name || 'Unnamed Section',
-      property: 'padding',
-      description: `Section "${baseSection.name}" padding changed`,
-      oldValue: baseSection.padding,
-      newValue: customSection.padding
+      property: 'styling',
+      description: `Section "${baseSection.name}" styling changed`,
+      oldValue: baseSection.styling,
+      newValue: customSection.styling
     })
   }
   
@@ -306,13 +310,14 @@ function compareWidgets(
   
   // Type changed (unlikely but possible)
   if (baseWidget.type !== customWidget.type) {
+    const widgetName = getWidgetTypeName(baseWidget)
     changes.push({
       type: 'modified',
       element: 'widget',
       elementId: baseWidget.id,
-      elementName: baseWidget.name || 'Unnamed Widget',
+      elementName: widgetName,
       property: 'type',
-      description: `Widget "${baseWidget.name}" type changed from ${baseWidget.type} to ${customWidget.type}`,
+      description: `Widget "${widgetName}" type changed from ${baseWidget.type} to ${customWidget.type}`,
       oldValue: baseWidget.type,
       newValue: customWidget.type
     })
@@ -327,9 +332,9 @@ function compareWidgets(
             type: 'modified',
             element: 'widget',
             elementId: baseWidget.id,
-            elementName: baseWidget.name || 'Text Widget',
+            elementName: 'Text Widget',
             property: 'content',
-            description: `Widget "${baseWidget.name}" text content changed`
+            description: `Widget "Text Widget" text content changed`
           })
         }
       }
@@ -337,14 +342,14 @@ function compareWidgets(
       
     case 'heading':
       if ('text' in baseWidget && 'text' in customWidget) {
-        if (baseWidget.text !== customWidget.text || baseWidget.level !== customWidget.level) {
+        if (baseWidget.text !== customWidget.text || (baseWidget as any).level !== (customWidget as any).level) {
           changes.push({
             type: 'modified',
             element: 'widget',
             elementId: baseWidget.id,
-            elementName: baseWidget.name || 'Heading Widget',
+            elementName: 'Heading Widget',
             property: 'text',
-            description: `Widget "${baseWidget.name}" heading changed`
+            description: `Widget "Heading Widget" heading changed`
           })
         }
       }
@@ -357,9 +362,9 @@ function compareWidgets(
             type: 'modified',
             element: 'widget',
             elementId: baseWidget.id,
-            elementName: baseWidget.name || 'Image Widget',
+            elementName: 'Image Widget',
             property: 'src',
-            description: `Widget "${baseWidget.name}" image source changed`
+            description: `Widget "Image Widget" image source changed`
           })
         }
       }
@@ -367,14 +372,14 @@ function compareWidgets(
       
     case 'button':
       if ('text' in baseWidget && 'text' in customWidget) {
-        if (baseWidget.text !== customWidget.text || baseWidget.variant !== customWidget.variant) {
+        if (baseWidget.text !== customWidget.text || (baseWidget as any).variant !== (customWidget as any).variant) {
           changes.push({
             type: 'modified',
             element: 'widget',
             elementId: baseWidget.id,
-            elementName: baseWidget.name || 'Button Widget',
+            elementName: 'Button Widget',
             property: 'text',
-            description: `Widget "${baseWidget.name}" button properties changed`
+            description: `Widget "Button Widget" button properties changed`
           })
         }
       }
@@ -387,9 +392,9 @@ function compareWidgets(
             type: 'modified',
             element: 'widget',
             elementId: baseWidget.id,
-            elementName: baseWidget.name || 'Publication Details',
+            elementName: 'Publication Details',
             property: 'textColor',
-            description: `Widget "${baseWidget.name}" text color changed`,
+            description: `Widget "Publication Details" text color changed`,
             oldValue: baseWidget.textColor,
             newValue: customWidget.textColor
           })
