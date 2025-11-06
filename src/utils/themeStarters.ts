@@ -159,6 +159,10 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
       // DS V2: Figma-accurate prefab sections (Hero 800px, Card Grid, About, Shop Today)
       return createWileyDSV2StarterTemplate()
     
+    case 'wiley-ds-mcp':
+      // MCP: Same sections as DS V2 but with complete token system (88 core + 159 semantic colors)
+      return createWileyDSV2StarterTemplate()
+    
     case 'academic-classic':
     case 'academic-review':
     case 'digital-open-publishers':

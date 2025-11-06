@@ -1675,7 +1675,7 @@ function SectionsContent({ showToast, usePageStore }: {
   const currentTheme = currentWebsite 
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : null
-  const isWileyTheme = currentTheme?.id === 'wiley-figma-ds-v2'
+  const isWileyTheme = currentTheme?.id === 'wiley-figma-ds-v2' || currentTheme?.id === 'wiley-ds-mcp'
 
   // Create a new section with the specified layout and default areas
   const createSection = (layout: ContentBlockLayout, name: string) => {
@@ -1796,8 +1796,8 @@ function SectionsContent({ showToast, usePageStore }: {
         </h3>
         <div className="grid grid-cols-1 gap-2">
           
-          {/* Wiley Figma DS V2 Sections - Prefabs with unique styling */}
-          {currentTheme?.id === 'wiley-figma-ds-v2' && (
+          {/* Wiley Figma DS V2 & MCP Sections - Prefabs with unique styling */}
+          {(currentTheme?.id === 'wiley-figma-ds-v2' || currentTheme?.id === 'wiley-ds-mcp') && (
             <>
               <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-green-600" />

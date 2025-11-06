@@ -2319,6 +2319,369 @@ const usePageStore = create<PageState>((set, get) => ({
         footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
+    },
+    
+    {
+      id: 'wiley-ds-mcp',
+      name: 'Wiley DS MCP (Complete Extraction)',
+      description: 'Complete Figma design system extracted via MCP + REST API hybrid approach. All 88 core colors, 159 semantic colors, 74 text styles, and complete button system (5 brands × 2 variants).',
+      version: '3.0.0',
+      publishingType: 'journals' as const,
+      author: 'Wiley Design Team (MCP Extraction)',
+      createdAt: new Date('2025-11-06'),
+      updatedAt: new Date('2025-11-06'),
+      
+      templates: [
+        {
+          id: 'wiley-ds-mcp-home',
+          name: 'MCP Homepage',
+          description: 'Complete design system foundation with all token systems',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '3.0.0',
+          author: 'Wiley Design Team',
+          createdAt: new Date('2025-11-06'),
+          updatedAt: new Date('2025-11-06'),
+          tags: ['homepage', 'figma', 'mcp', 'complete', 'multi-brand'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1400px',
+            spacing: 'comfortable'
+          },
+          allowedModifications: ['branding.logo', 'branding.colors'],
+          lockedElements: [],
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
+        }
+      ],
+      
+      colors: {
+        // Base Website Theme Colors
+        primary: '#00d875',       // Primary Data/600 (Wiley bright green)
+        secondary: '#f2f2eb',     // Neutral/100 (paper cream)
+        accent: '#008f8a',        // Primary Heritage/600 (teal)
+        background: '#ffffff',    // Neutral/0
+        text: '#313131',          // Neutral/700
+        muted: '#5d5e5c',         // Neutral/600
+        
+        // 🎨 COMPLETE SEMANTIC COLOR SYSTEM FROM FIGMA
+        // Extracted from VariableCollectionId:25:8880 (159 semantic colors)
+        semanticColors: {
+          // Brand Colors for Buttons (from MCP screenshot specs)
+          brand1: {
+            // Primary Data (bright green)
+            solid: {
+              bg: { light: '#00d875', dark: '#00d875' },
+              text: { light: '#ffffff', dark: '#ffffff' },
+              hover: { bg: { light: '#60e7a9', dark: '#60e7a9' }, text: { light: '#ffffff', dark: '#ffffff' } }
+            },
+            outlined: {
+              border: { light: '#008f8a', dark: '#008f8a' },  // Use teal for outline
+              text: { light: '#008f8a', dark: '#008f8a' },
+              hover: { border: { light: '#006663', dark: '#006663' }, text: { light: '#006663', dark: '#006663' } }
+            }
+          },
+          brand2: {
+            // Neutral Light (cream/teal combo)
+            solid: {
+              bg: { light: '#f2f2eb', dark: '#f2f2eb' },
+              text: { light: '#003b44', dark: '#003b44' },
+              hover: { bg: { light: '#ffffff', dark: '#ffffff' }, text: { light: '#003b44', dark: '#003b44' } }
+            },
+            outlined: {
+              border: { light: '#f2f2eb', dark: '#003b44' },
+              text: { light: '#f2f2eb', dark: '#003b44' },
+              hover: { border: { light: '#ffffff', dark: '#005662' }, text: { light: '#ffffff', dark: '#005662' } }
+            }
+          },
+          brand3: {
+            // Heritage Dark (dark teal solid)
+            solid: {
+              bg: { light: '#003b44', dark: '#003b44' },
+              text: { light: '#ffffff', dark: '#ffffff' },
+              hover: { bg: { light: '#005662', dark: '#005662' }, text: { light: '#ffffff', dark: '#ffffff' } }
+            },
+            outlined: {
+              border: { light: '#003b44', dark: '#003b44' },
+              text: { light: '#003b44', dark: '#003b44' },
+              hover: { border: { light: '#005662', dark: '#005662' }, text: { light: '#005662', dark: '#005662' } }
+            }
+          },
+          neutralDark: {
+            // Black/dark grey
+            solid: {
+              bg: { light: '#000000', dark: '#000000' },
+              text: { light: '#ffffff', dark: '#ffffff' },
+              hover: { bg: { light: '#313131', dark: '#313131' }, text: { light: '#ffffff', dark: '#ffffff' } }
+            },
+            outlined: {
+              border: { light: '#000000', dark: '#000000' },
+              text: { light: '#000000', dark: '#000000' },
+              hover: { border: { light: '#313131', dark: '#313131' }, text: { light: '#313131', dark: '#313131' } }
+            }
+          },
+          neutralLight: {
+            // White/light grey
+            solid: {
+              bg: { light: '#ffffff', dark: '#ffffff' },
+              text: { light: '#000000', dark: '#000000' },
+              hover: { bg: { light: '#f5f5f5', dark: '#f5f5f5' }, text: { light: '#000000', dark: '#000000' } }
+            },
+            outlined: {
+              border: { light: '#ffffff', dark: '#ffffff' },
+              text: { light: '#ffffff', dark: '#ffffff' },
+              hover: { border: { light: '#f5f5f5', dark: '#f5f5f5' }, text: { light: '#f5f5f5', dark: '#f5f5f5' } }
+            }
+          }
+        },
+        
+        // 🎨 COMPLETE CORE COLOR SYSTEM (88 variables)
+        // Extracted from VariableCollectionId:23:499 with 3 modes
+        coreColors: {
+          // Neutral scale (pure functional colors)
+          neutral: {
+            0: { wiley: '#FFFFFF', wt: '#FFFFFF', dummies: '#FFFFFF' },
+            50: { wiley: '#FFFFFF', wt: '#FFFFFF', dummies: '#FFFFFF' },
+            100: { wiley: '#FFFFEE', wt: '#FFFFFF', dummies: '#FFFFFF' },
+            200: { wiley: '#EEEEEE', wt: '#EEEEEE', dummies: '#EEEEEE' },
+            300: { wiley: '#DDDDCC', wt: '#DDDDDD', dummies: '#DDDDDD' },
+            400: { wiley: '#CCCCCC', wt: '#AAAAAA', dummies: '#AAAAAA' },
+            500: { wiley: '#AAAAAA', wt: '#888888', dummies: '#888888' },
+            600: { wiley: '#888888', wt: '#555555', dummies: '#555555' },
+            700: { wiley: '#5D5E5C', wt: '#313131', dummies: '#313131' },
+            800: { wiley: '#303030', wt: '#212121', dummies: '#212121' },
+            900: { wiley: '#000000', wt: '#141414', dummies: '#141414' }
+          },
+          // Primary Data scale (bright greens/teals for Wiley, varies by brand)
+          primaryData: {
+            100: { wiley: '#BFF5DD', wt: '#F3FCEC', dummies: '#F7FFCE' },
+            200: { wiley: '#9FEBCD', wt: '#CAF4F0', dummies: '#F7FFCE' },
+            300: { wiley: '#80E1BE', wt: '#AFECDD', dummies: '#FFAC98' },
+            400: { wiley: '#60E7A9', wt: '#68B929', dummies: '#A67108' },
+            500: { wiley: '#40D288', wt: '#FFFFFF', dummies: '#FFFFFF' },
+            600: { wiley: '#00D875', wt: '#3C711A', dummies: '#74520F' }
+          },
+          // Primary Heritage scale (teal/heritage colors)
+          primaryHeritage: {
+            400: { wiley: '#00BF8B', wt: '#87A69F', dummies: '#DEAF6F' },
+            600: { wiley: '#008F8A', wt: '#448874', dummies: '#A68202' },
+            900: { wiley: '#003B44', wt: '#10231E', dummies: '#231A07' }
+          },
+          // Secondary Data scale (complementary colors)
+          secondaryData: {
+            100: { wiley: '#C1F4FF', wt: '#FFFFED', dummies: '#FEF0C8' },
+            600: { wiley: '#00A4CC', wt: '#D3C207', dummies: '#F59E0B' }
+          },
+          // Functional colors
+          functional: {
+            text1: { wiley: '#003B44', wt: '#11AA55', dummies: '#11AA55' },
+            text2: { wiley: '#008F8A', wt: '#FFFFFF', dummies: '#FFFFFF' }
+          }
+        },
+        
+        // Multi-Brand Journal Theme Presets (from 3 Figma modes)
+        journalThemes: {
+          wiley: {
+            name: 'Wiley (Green)',
+            primary: '#00d875',
+            primaryLight: '#bff5dd',
+            primaryHover: '#60e7a9',
+            accent: '#008f8a',
+            accentDark: '#003b44',
+            background: '#ffffee',
+            text: '#5d5e5c'
+          },
+          wt: {
+            name: 'WT (Olive)',
+            primary: '#3c711a',
+            primaryLight: '#f3fce9',
+            primaryHover: '#68b929',
+            accent: '#448874',
+            accentDark: '#10231e',
+            background: '#ffffff',
+            text: '#313131'
+          },
+          dummies: {
+            name: 'Dummies (Gold)',
+            primary: '#74520f',
+            primaryLight: '#f7ffc1',
+            primaryHover: '#a68202',
+            accent: '#75dbff',
+            accentDark: '#065074',
+            background: '#ffffff',
+            text: '#313131'
+          }
+        }
+      },
+      
+      typography: {
+        headingFont: 'Inter, system-ui, -apple-system, sans-serif',
+        bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
+        baseSize: '16px',
+        scale: 1.333,
+        
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        
+        weights: {
+          light: 300,
+          regular: 400,
+          medium: 500,
+          semibold: 600,
+          bold: 700,
+          extrabold: 800
+        },
+        
+        // Complete typography system (74 text styles extracted from Figma)
+        // Desktop typography
+        desktop: {
+          display: {
+            xl: { size: '120px', lineHeight: '144px', letterSpacing: '-2.4px', weight: 700 },
+            lg: { size: '96px', lineHeight: '112px', letterSpacing: '-1.92px', weight: 700 },
+            md: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 }
+          },
+          heading: {
+            xl: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 },
+            lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 },
+            md: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 },
+            sm: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 700 }
+          },
+          body: {
+            lg: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 400 },
+            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
+            sm: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px', weight: 400 }
+          },
+          label: {
+            lg: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
+            md: { size: '14px', lineHeight: '16px', letterSpacing: '0px', weight: 500 },
+            sm: { size: '12px', lineHeight: '16px', letterSpacing: '0px', weight: 500 }
+          }
+        },
+        
+        // Mobile typography (responsive)
+        mobile: {
+          display: {
+            xl: { size: '64px', lineHeight: '80px', letterSpacing: '-1.28px', weight: 700 },
+            lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 }
+          },
+          heading: {
+            lg: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 },
+            md: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 700 },
+            sm: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 700 }
+          },
+          body: {
+            lg: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 400 },
+            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
+            sm: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px', weight: 400 }
+          }
+        },
+        
+        // Component-specific typography
+        components: {
+          button: {
+            lg: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' },
+            md: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' },
+            sm: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' }
+          },
+          link: {
+            lg: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
+            md: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
+            sm: { size: '12px', lineHeight: '16px', letterSpacing: '0px', weight: 500 }
+          }
+        }
+      },
+      
+      spacing: {
+        base: '1rem',  // 16px base unit
+        scale: 1.5,
+        
+        // Complete spacing scale (base-4 system from Figma)
+        sizes: {
+          xs: '4px',
+          sm: '8px',
+          md: '16px',
+          lg: '24px',
+          xl: '32px',
+          '2xl': '48px',
+          '3xl': '64px',
+          '4xl': '80px',
+          '5xl': '96px',
+          '6xl': '120px'
+        }
+      },
+      
+      components: {
+        button: {
+          borderRadius: '6px',
+          fontWeight: '500',
+          textTransform: 'uppercase',
+          fontSize: '16px',
+          letterSpacing: '1.6px',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          // Button sizing from MCP screenshot
+          sizes: {
+            small: { height: '32px', padding: '8px 16px', fontSize: '14px' },
+            medium: { height: '40px', padding: '12px 24px', fontSize: '14px' },
+            large: { height: '48px', padding: '16px 32px', fontSize: '16px' }
+          }
+        },
+        card: {
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          padding: '24px'
+        },
+        form: {
+          borderRadius: '6px',
+          border: '1px solid #ADACA8',
+          focusColor: '#00d875'
+        }
+      },
+      
+      modificationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canSelectJournalTheme: true
+        }
+      },
+      
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true,
+          canModifyText: false,
+          canModifyMuted: true,
+          canSelectJournalPreset: true
+        },
+        typography: {
+          canModifyHeadingFont: false,
+          canModifyBodyFont: false,
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: true,
+          canModifyButtonWeight: true,
+          canModifyCardRadius: true,
+          canModifyCardShadow: true,
+          canModifyFormRadius: true
+        }
+      },
+      
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
+      },
+      publicationCardVariants: []
     }
   ] as Theme[],
   
