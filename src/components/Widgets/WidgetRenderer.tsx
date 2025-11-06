@@ -177,7 +177,7 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
   // 🎨 NEW ARCHITECTURE: Get classes based on STYLE + COLOR combination
   const getButtonClasses = (
     style: 'solid' | 'outline' | 'link', 
-    color: 'color1' | 'color2' | 'color3',
+    color: 'color1' | 'color2' | 'color3' | 'color4' | 'color5',
     contentMode?: 'light' | 'dark'
   ) => {
     // Handle journal context (legacy support)
@@ -248,6 +248,44 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
         return useDarkVariant
           ? 'text-[var(--semantic-tertiary-text-dark,#003b44)] hover:opacity-75 hover:underline font-medium bg-transparent'
           : 'text-[var(--semantic-tertiary-text-light,#003b44)] hover:opacity-75 hover:underline font-medium bg-transparent'
+      }
+    }
+    
+    // COLOR 4 (Neutral Dark - Black/Dark Grey)
+    if (color === 'color4') {
+      if (style === 'solid') {
+        return useDarkVariant
+          ? 'bg-[var(--semantic-neutraldark-bg-dark,#000000)] text-[var(--semantic-neutraldark-text-dark,#ffffff)] hover:bg-[var(--semantic-neutraldark-bg-dark-hover,#313131)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 shadow-sm'
+          : 'bg-[var(--semantic-neutraldark-bg-light,#000000)] text-[var(--semantic-neutraldark-text-light,#ffffff)] hover:bg-[var(--semantic-neutraldark-bg-light-hover,#313131)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 shadow-sm'
+      }
+      if (style === 'outline') {
+        return useDarkVariant
+          ? 'border-2 text-[var(--semantic-neutraldark-text-dark,#000000)] border-[var(--semantic-neutraldark-bg-dark,#000000)] bg-transparent hover:bg-gray-50 focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-all duration-200'
+          : 'border-2 text-[var(--semantic-neutraldark-text-light,#000000)] border-[var(--semantic-neutraldark-bg-light,#000000)] bg-transparent hover:bg-[var(--semantic-neutraldark-bg-light,#000000)] hover:text-[var(--semantic-neutraldark-text-light,#ffffff)] focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-all duration-200'
+      }
+      if (style === 'link') {
+        return useDarkVariant
+          ? 'text-[var(--semantic-neutraldark-text-dark,#000000)] hover:opacity-75 hover:underline font-medium bg-transparent'
+          : 'text-[var(--semantic-neutraldark-text-light,#000000)] hover:opacity-75 hover:underline font-medium bg-transparent'
+      }
+    }
+    
+    // COLOR 5 (Neutral Light - White/Light Grey)
+    if (color === 'color5') {
+      if (style === 'solid') {
+        return useDarkVariant
+          ? 'bg-[var(--semantic-neutrallight-bg-dark,#ffffff)] text-[var(--semantic-neutrallight-text-dark,#000000)] hover:bg-[var(--semantic-neutrallight-bg-dark-hover,#f5f5f5)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 shadow-sm'
+          : 'bg-[var(--semantic-neutrallight-bg-light,#ffffff)] text-[var(--semantic-neutrallight-text-light,#000000)] hover:bg-[var(--semantic-neutrallight-bg-light-hover,#f5f5f5)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 shadow-sm'
+      }
+      if (style === 'outline') {
+        return useDarkVariant
+          ? 'border-2 text-[var(--semantic-neutrallight-text-dark,#ffffff)] border-[var(--semantic-neutrallight-bg-dark,#ffffff)] bg-transparent hover:bg-white/10 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200'
+          : 'border-2 text-[var(--semantic-neutrallight-text-light,#ffffff)] border-[var(--semantic-neutrallight-bg-light,#ffffff)] bg-transparent hover:bg-[var(--semantic-neutrallight-bg-light,#ffffff)] hover:text-[var(--semantic-neutrallight-text-light,#000000)] focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200'
+      }
+      if (style === 'link') {
+        return useDarkVariant
+          ? 'text-[var(--semantic-neutrallight-text-dark,#ffffff)] hover:opacity-75 hover:underline font-medium bg-transparent'
+          : 'text-[var(--semantic-neutrallight-text-light,#ffffff)] hover:opacity-75 hover:underline font-medium bg-transparent'
       }
     }
     

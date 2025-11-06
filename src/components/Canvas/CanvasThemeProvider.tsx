@@ -140,6 +140,50 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
           }
         }
       }
+      
+      // Neutral Dark (color4) - NEW for MCP theme
+      if (currentTheme.colors.semanticColors.neutralDark) {
+        if (currentTheme.colors.semanticColors.neutralDark.bg) {
+          vars['--semantic-neutraldark-bg-light'] = currentTheme.colors.semanticColors.neutralDark.bg.light
+          vars['--semantic-neutraldark-bg-dark'] = currentTheme.colors.semanticColors.neutralDark.bg.dark
+        }
+        if (currentTheme.colors.semanticColors.neutralDark.text) {
+          vars['--semantic-neutraldark-text-light'] = currentTheme.colors.semanticColors.neutralDark.text.light
+          vars['--semantic-neutraldark-text-dark'] = currentTheme.colors.semanticColors.neutralDark.text.dark
+        }
+        if (currentTheme.colors.semanticColors.neutralDark.hover) {
+          if (currentTheme.colors.semanticColors.neutralDark.hover.bg) {
+            vars['--semantic-neutraldark-bg-light-hover'] = currentTheme.colors.semanticColors.neutralDark.hover.bg.light
+            vars['--semantic-neutraldark-bg-dark-hover'] = currentTheme.colors.semanticColors.neutralDark.hover.bg.dark
+          }
+          if (currentTheme.colors.semanticColors.neutralDark.hover.text) {
+            vars['--semantic-neutraldark-text-light-hover'] = currentTheme.colors.semanticColors.neutralDark.hover.text.light
+            vars['--semantic-neutraldark-text-dark-hover'] = currentTheme.colors.semanticColors.neutralDark.hover.text.dark
+          }
+        }
+      }
+      
+      // Neutral Light (color5) - NEW for MCP theme
+      if (currentTheme.colors.semanticColors.neutralLight) {
+        if (currentTheme.colors.semanticColors.neutralLight.bg) {
+          vars['--semantic-neutrallight-bg-light'] = currentTheme.colors.semanticColors.neutralLight.bg.light
+          vars['--semantic-neutrallight-bg-dark'] = currentTheme.colors.semanticColors.neutralLight.bg.dark
+        }
+        if (currentTheme.colors.semanticColors.neutralLight.text) {
+          vars['--semantic-neutrallight-text-light'] = currentTheme.colors.semanticColors.neutralLight.text.light
+          vars['--semantic-neutrallight-text-dark'] = currentTheme.colors.semanticColors.neutralLight.text.dark
+        }
+        if (currentTheme.colors.semanticColors.neutralLight.hover) {
+          if (currentTheme.colors.semanticColors.neutralLight.hover.bg) {
+            vars['--semantic-neutrallight-bg-light-hover'] = currentTheme.colors.semanticColors.neutralLight.hover.bg.light
+            vars['--semantic-neutrallight-bg-dark-hover'] = currentTheme.colors.semanticColors.neutralLight.hover.bg.dark
+          }
+          if (currentTheme.colors.semanticColors.neutralLight.hover.text) {
+            vars['--semantic-neutrallight-text-light-hover'] = currentTheme.colors.semanticColors.neutralLight.hover.text.light
+            vars['--semantic-neutrallight-text-dark-hover'] = currentTheme.colors.semanticColors.neutralLight.hover.text.dark
+          }
+        }
+      }
     }
 
     return vars

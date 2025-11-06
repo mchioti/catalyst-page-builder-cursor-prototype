@@ -150,7 +150,7 @@ export type ButtonWidget = WidgetBase & {
   
   // NEW: Separate style and color for better flexibility
   style?: 'solid' | 'outline' | 'link'  // Visual treatment (universal)
-  color?: 'color1' | 'color2' | 'color3'  // Color scheme (theme-specific mapping)
+  color?: 'color1' | 'color2' | 'color3' | 'color4' | 'color5'  // Color scheme (5 Figma options)
   
   // DEPRECATED: Legacy field for backward compatibility
   variant?: string  // Old: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'link'

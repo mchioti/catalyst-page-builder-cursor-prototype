@@ -1560,7 +1560,7 @@ export function PropertiesPanel({
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Color</label>
             <select
               value={(widget as ButtonWidget).color || 'color1'}
-              onChange={(e) => updateWidget({ color: e.target.value as 'color1' | 'color2' | 'color3' })}
+              onChange={(e) => updateWidget({ color: e.target.value as 'color1' | 'color2' | 'color3' | 'color4' | 'color5' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {(() => {
@@ -1571,18 +1571,20 @@ export function PropertiesPanel({
                   ? themes.find((t: any) => t.id === currentWebsite.themeId)
                   : null
                 
-                // DS V2 uses Brand 1, Brand 2, Brand 3 (matches Figma)
-                if (currentTheme?.id === 'wiley-figma-ds-v2') {
+                // MCP and DS V2 use all 5 Figma button colors (matches Figma exactly)
+                if (currentTheme?.id === 'wiley-ds-mcp' || currentTheme?.id === 'wiley-figma-ds-v2') {
                   return (
                     <>
-                      <option value="color1">Brand 1 (Primary Green/Teal)</option>
-                      <option value="color2">Brand 2 (Cream/Dark Teal)</option>
-                      <option value="color3">Brand 3 (Dark Teal/White)</option>
+                      <option value="color1">Brand 1</option>
+                      <option value="color2">Brand 2</option>
+                      <option value="color3">Brand 3</option>
+                      <option value="color4">Neutral Dark</option>
+                      <option value="color5">Neutral Light</option>
                     </>
                   )
                 }
                 
-                // Modern and other themes use Primary, Secondary, Accent
+                // Modern and other themes use Primary, Secondary, Accent (3 colors)
                 return (
                   <>
                     <option value="color1">Primary (Blue)</option>

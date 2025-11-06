@@ -2370,71 +2370,99 @@ const usePageStore = create<PageState>((set, get) => ({
         
         // 🎨 COMPLETE SEMANTIC COLOR SYSTEM FROM FIGMA
         // Extracted from VariableCollectionId:25:8880 (159 semantic colors)
+        // Structure matches DS V2 for compatibility with CanvasThemeProvider
         semanticColors: {
-          // Brand Colors for Buttons (from MCP screenshot specs)
-          brand1: {
-            // Primary Data (bright green)
-            solid: {
-              bg: { light: '#00d875', dark: '#00d875' },
-              text: { light: '#ffffff', dark: '#ffffff' },
-              hover: { bg: { light: '#60e7a9', dark: '#60e7a9' }, text: { light: '#ffffff', dark: '#ffffff' } }
-            },
-            outlined: {
-              border: { light: '#008f8a', dark: '#008f8a' },  // Use teal for outline
-              text: { light: '#008f8a', dark: '#008f8a' },
-              hover: { border: { light: '#006663', dark: '#006663' }, text: { light: '#006663', dark: '#006663' } }
+          // color1 = Brand 1 (Primary Data - bright green)
+          primary: {
+            light: '#00d875',     // Bright green - use on dark backgrounds
+            dark: '#008f8a',      // Teal - use on light backgrounds
+            hover: {
+              light: '#60e7a9',   // Lighter green hover
+              dark: '#006663'     // Darker teal hover
             }
           },
-          brand2: {
-            // Neutral Light (cream/teal combo)
-            solid: {
-              bg: { light: '#f2f2eb', dark: '#f2f2eb' },
-              text: { light: '#003b44', dark: '#003b44' },
-              hover: { bg: { light: '#ffffff', dark: '#ffffff' }, text: { light: '#003b44', dark: '#003b44' } }
+          // color2 = Brand 2 (Neutral Light - cream/teal combo)
+          secondary: {
+            bg: {
+              light: '#f2f2eb',    // Paper 100 (cream)
+              dark: '#f2f2eb'      // Paper 100 (cream)
             },
-            outlined: {
-              border: { light: '#f2f2eb', dark: '#003b44' },
-              text: { light: '#f2f2eb', dark: '#003b44' },
-              hover: { border: { light: '#ffffff', dark: '#005662' }, text: { light: '#ffffff', dark: '#005662' } }
+            text: {
+              light: '#003b44',    // Heritage 900 (dark teal)
+              dark: '#003b44'      // Heritage 900 (dark teal)
+            },
+            hover: {
+              bg: {
+                light: '#ffffff',  // White on hover
+                dark: '#ffffff'
+              },
+              text: {
+                light: '#003b44',  // Keep dark teal text
+                dark: '#003b44'
+              }
             }
           },
-          brand3: {
-            // Heritage Dark (dark teal solid)
-            solid: {
-              bg: { light: '#003b44', dark: '#003b44' },
-              text: { light: '#ffffff', dark: '#ffffff' },
-              hover: { bg: { light: '#005662', dark: '#005662' }, text: { light: '#ffffff', dark: '#ffffff' } }
+          // color3 = Brand 3 (Heritage Dark - dark teal solid)
+          tertiary: {
+            bg: {
+              light: '#003b44',    // Heritage 900 (dark teal)
+              dark: '#003b44'      // Heritage 900 (dark teal)
             },
-            outlined: {
-              border: { light: '#003b44', dark: '#003b44' },
-              text: { light: '#003b44', dark: '#003b44' },
-              hover: { border: { light: '#005662', dark: '#005662' }, text: { light: '#005662', dark: '#005662' } }
+            text: {
+              light: '#ffffff',    // White text
+              dark: '#ffffff'      // White text
+            },
+            hover: {
+              bg: {
+                light: '#005662',  // Slightly lighter teal on hover
+                dark: '#005662'
+              },
+              text: {
+                light: '#ffffff',  // Keep white text
+                dark: '#ffffff'
+              }
             }
           },
+          // NEW: color4 = Neutral Dark (black/dark grey)
           neutralDark: {
-            // Black/dark grey
-            solid: {
-              bg: { light: '#000000', dark: '#000000' },
-              text: { light: '#ffffff', dark: '#ffffff' },
-              hover: { bg: { light: '#313131', dark: '#313131' }, text: { light: '#ffffff', dark: '#ffffff' } }
+            bg: {
+              light: '#000000',    // Black
+              dark: '#000000'      // Black
             },
-            outlined: {
-              border: { light: '#000000', dark: '#000000' },
-              text: { light: '#000000', dark: '#000000' },
-              hover: { border: { light: '#313131', dark: '#313131' }, text: { light: '#313131', dark: '#313131' } }
+            text: {
+              light: '#ffffff',    // White text
+              dark: '#ffffff'      // White text
+            },
+            hover: {
+              bg: {
+                light: '#313131',  // Dark grey on hover
+                dark: '#313131'
+              },
+              text: {
+                light: '#ffffff',  // Keep white text
+                dark: '#ffffff'
+              }
             }
           },
+          // NEW: color5 = Neutral Light (white/light grey)
           neutralLight: {
-            // White/light grey
-            solid: {
-              bg: { light: '#ffffff', dark: '#ffffff' },
-              text: { light: '#000000', dark: '#000000' },
-              hover: { bg: { light: '#f5f5f5', dark: '#f5f5f5' }, text: { light: '#000000', dark: '#000000' } }
+            bg: {
+              light: '#ffffff',    // White
+              dark: '#ffffff'      // White
             },
-            outlined: {
-              border: { light: '#ffffff', dark: '#ffffff' },
-              text: { light: '#ffffff', dark: '#ffffff' },
-              hover: { border: { light: '#f5f5f5', dark: '#f5f5f5' }, text: { light: '#f5f5f5', dark: '#f5f5f5' } }
+            text: {
+              light: '#000000',    // Black text
+              dark: '#000000'      // Black text
+            },
+            hover: {
+              bg: {
+                light: '#f5f5f5',  // Light grey on hover
+                dark: '#f5f5f5'
+              },
+              text: {
+                light: '#000000',  // Keep black text
+                dark: '#000000'
+              }
             }
           }
         },
