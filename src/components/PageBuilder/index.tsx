@@ -1792,7 +1792,7 @@ function SectionsContent({ showToast, usePageStore }: {
         </h3>
         <div className="grid grid-cols-1 gap-2">
           
-          {/* Wiley Figma DS V2 Sections - Only Shop Today (others can be built with basic layouts) */}
+          {/* Wiley Figma DS V2 Sections - Prefabs with unique styling */}
           {currentTheme?.id === 'wiley-figma-ds-v2' && (
             <>
               <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
@@ -1801,16 +1801,40 @@ function SectionsContent({ showToast, usePageStore }: {
               </h4>
               <div className="space-y-3">
                 <button
+                  onClick={() => addPrefabSection('wileyDSV2Hero')}
+                  className="w-full p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors flex flex-col gap-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Hero Section</div>
+                    <div className="text-xs text-gray-700">Taller hero with 600px minHeight + dark background</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('wileyDSV2CardGrid')}
+                  className="w-full p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors flex flex-col gap-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Card Grid</div>
+                    <div className="text-xs text-gray-700">3-column grid with title drop zone + dark background</div>
+                  </div>
+                </button>
+                
+                <button
                   onClick={() => addPrefabSection('wileyFigmaLogoGrid')}
                   className="w-full p-3 text-left border-2 border-green-200 bg-green-50 rounded-md hover:bg-green-100 transition-colors flex flex-col gap-3"
                 >
                   <div>
-                    <div className="font-medium text-sm text-gray-900">Shop Today (Bordered Grid)</div>
-                    <div className="text-xs text-gray-700">3-column grid with borders around each card - Special layout</div>
+                    <div className="font-medium text-sm text-gray-900">Shop Today</div>
+                    <div className="text-xs text-gray-700">Bordered 3-column grid with light cream background</div>
                   </div>
                 </button>
-                <div className="text-xs text-gray-500 italic mt-2 p-2 bg-gray-50 rounded">
-                  💡 Tip: Other sections (Hero, Card Grid, etc.) can be built using basic section layouts + widgets from the Library tab
+                
+                <div className="text-xs text-gray-500 italic mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                  💡 <strong>Why these are prefabs:</strong><br/>
+                  • Hero: Taller with minHeight (600px)<br/>
+                  • Card Grid: Has title drop zone (not in basic layouts)<br/>
+                  • Shop Today: Unique bordered grid styling
                 </div>
               </div>
             </>

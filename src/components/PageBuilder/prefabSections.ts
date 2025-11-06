@@ -1077,6 +1077,234 @@ export const createWileyFigmaCardGridPrefab = (): CanvasItem => {
 }
 
 /**
+ * ========================================
+ * WILEY FIGMA DS V2 PREFAB SECTIONS
+ * ========================================
+ * These sections have unique styling that justifies being prefabs:
+ * - Hero: Taller with minHeight (600px)
+ * - Card Grid: Has title drop zone (not in basic layouts)
+ * - Shop Today: Bordered grid with unique styling
+ */
+
+/**
+ * Creates DS V2 Hero Section
+ * Two-column layout with taller minHeight and dark background
+ */
+export const createWileyDSV2HeroPrefab = (): CanvasItem => {
+  const heroSection = createBaseSection('two-columns', 'Hero Section')
+  const typedSection = heroSection as WidgetSection
+  
+  // Styling: Taller hero with minHeight
+  typedSection.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '80px',
+    paddingRight: '80px',
+    minHeight: '600px',  // THIS IS THE UNIQUE STYLING
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#1a4d4d',  // Dark teal
+    opacity: 1
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  // Left column: Hero content
+  const heroHeading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: heroSection.id,
+    skin: 'minimal' as const,
+    text: 'Where ideas ignite and impact endures',
+    level: 1 as const,
+    align: 'left' as const,
+    style: 'hero' as const,
+    color: 'default' as const,
+    size: 'xl' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const heroText = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: heroSection.id,
+    skin: 'minimal' as const,
+    text: 'Wiley brings together research, learning, and technology to spark breakthroughs and power progress across industries and society.',
+    align: 'left' as const
+  }
+  
+  // Right column: Logo placeholder
+  const logoPlaceholder = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: heroSection.id,
+    skin: 'minimal' as const,
+    text: 'WILEY',
+    align: 'center' as const
+  }
+  
+  typedSection.areas[0].widgets = [heroHeading, heroText]
+  typedSection.areas[1].widgets = [logoPlaceholder]
+  
+  return typedSection
+}
+
+/**
+ * Creates DS V2 Card Grid Section
+ * Header-plus-grid layout with title drop zone (unique to this prefab)
+ */
+export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
+  const cardGridSection = createBaseSection('header-plus-grid', 'Card Grid')
+  const typedSection = cardGridSection as WidgetSection
+  
+  // Styling: Dark background with generous padding
+  typedSection.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '40px',
+    paddingRight: '40px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#1a4d4d',  // Dark teal
+    opacity: 1
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  // Card 1: AI in Research
+  const card1Heading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'AI in Research',
+    level: 2 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'xl' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const card1Text = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Explore how artificial intelligence is transforming research methodologies and accelerating discovery.',
+    align: 'left' as const
+  }
+  
+  const card1Button = {
+    id: nanoid(),
+    type: 'button' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Learn More',
+    href: '#',
+    variant: 'primary' as const,
+    size: 'medium' as const,
+    align: 'left' as const,
+    icon: { enabled: false, position: 'right' as const, emoji: '' }
+  }
+  
+  // Card 2: Open Access
+  const card2Heading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Open Access',
+    level: 2 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'xl' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const card2Text = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Making research freely available to accelerate knowledge sharing and global collaboration.',
+    align: 'left' as const
+  }
+  
+  const card2Button = {
+    id: nanoid(),
+    type: 'button' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Explore OA',
+    href: '#',
+    variant: 'primary' as const,
+    size: 'medium' as const,
+    align: 'left' as const,
+    icon: { enabled: false, position: 'right' as const, emoji: '' }
+  }
+  
+  // Card 3: Future of Learning
+  const card3Heading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Future of Learning',
+    level: 2 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'xl' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const card3Text = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Discover innovative approaches to education that prepare learners for tomorrow\'s challenges.',
+    align: 'left' as const
+  }
+  
+  const card3Button = {
+    id: nanoid(),
+    type: 'button' as const,
+    sectionId: cardGridSection.id,
+    skin: 'minimal' as const,
+    text: 'Read More',
+    href: '#',
+    variant: 'primary' as const,
+    size: 'medium' as const,
+    align: 'left' as const,
+    icon: { enabled: false, position: 'right' as const, emoji: '' }
+  }
+  
+  // Assign widgets to areas
+  // Area 0: Header (title drop zone - EMPTY by default, user can add title)
+  typedSection.areas[0].widgets = []
+  
+  // Areas 1-3: Cards
+  typedSection.areas[1].widgets = [card1Heading, card1Text, card1Button]
+  typedSection.areas[2].widgets = [card2Heading, card2Text, card2Button]
+  typedSection.areas[3].widgets = [card3Heading, card3Text, card3Button]
+  
+  return typedSection
+}
+
+/**
  * Creates a Figma-accurate "Shop Today" Section
  * Based on "Shop today" section from Figma Homepage
  * - Section header + description (with more spacing)
@@ -1365,7 +1593,10 @@ export const PREFAB_SECTIONS = {
   wileyFigmaHero: createWileyFigmaHeroPrefab,
   wileyFigmaCardGrid: createWileyFigmaCardGridPrefab,
   wileyFigmaLogoGrid: createWileyFigmaLogoGridPrefab,
-  wileyFigmaFeaturedContent: createWileyFigmaFeaturedContentPrefab
+  wileyFigmaFeaturedContent: createWileyFigmaFeaturedContentPrefab,
+  // Wiley Figma DS V2 prefabs
+  wileyDSV2Hero: createWileyDSV2HeroPrefab,
+  wileyDSV2CardGrid: createWileyDSV2CardGridPrefab
 } as const
 
 export type PrefabSectionType = keyof typeof PREFAB_SECTIONS
