@@ -2710,6 +2710,324 @@ const usePageStore = create<PageState>((set, get) => ({
         footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
+    },
+    
+    {
+      id: 'ibm-carbon-ds',
+      name: 'IBM Carbon DS',
+      description: 'IBM Carbon Design System v11 - Enterprise design with structured layers and comprehensive button system',
+      version: '11.0.0',
+      publishingType: 'journals' as const,
+      author: 'IBM Design Team (Carbon DS)',
+      createdAt: new Date('2025-11-06'),
+      updatedAt: new Date('2025-11-06'),
+      
+      templates: [
+        {
+          id: 'carbon-ds-home',
+          name: 'Carbon DS Homepage',
+          description: 'Enterprise design with IBM Carbon styling',
+          category: 'website' as TemplateCategory,
+          status: 'active' as TemplateStatus,
+          version: '11.0.0',
+          author: 'IBM Design Team',
+          createdAt: new Date('2025-11-06'),
+          updatedAt: new Date('2025-11-06'),
+          tags: ['homepage', 'carbon', 'enterprise', 'ibm'],
+          sections: [],
+          layout: {
+            header: true,
+            footer: true,
+            sidebar: 'none',
+            maxWidth: '1400px',
+            spacing: 'comfortable'
+          },
+          allowedModifications: ['branding.logo', 'branding.colors'],
+          lockedElements: [],
+          defaultModificationScope: 'Website (this)',
+          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
+          narrowModificationOptions: []
+        }
+      ],
+      
+      colors: {
+        // Base colors (IBM Blue + Grey)
+        primary: '#0f62fe',       // IBM Blue
+        secondary: '#393939',     // Carbon Grey
+        accent: '#0f62fe',        // IBM Blue (same as primary)
+        background: '#ffffff',    // White theme
+        text: '#161616',          // Carbon Black
+        muted: '#525252',         // Carbon Grey 70
+        
+        // IBM Carbon Semantic Colors
+        semanticColors: {
+          // color1 = Primary (IBM Blue)
+          primary: {
+            light: '#0f62fe',     // IBM Blue
+            dark: '#0f62fe',      // Same in both contexts
+            hover: {
+              light: '#0353e9',   // IBM Blue 60 hover
+              dark: '#0353e9'
+            }
+          },
+          // color2 = Secondary (Carbon Grey)
+          secondary: {
+            bg: {
+              light: '#393939',   // Carbon Grey 80
+              dark: '#393939'
+            },
+            text: {
+              light: '#ffffff',   // White text
+              dark: '#ffffff'
+            },
+            hover: {
+              bg: {
+                light: '#474747',  // Carbon Grey 70 hover
+                dark: '#474747'
+              },
+              text: {
+                light: '#ffffff',
+                dark: '#ffffff'
+              }
+            }
+          },
+          // color3 = Tertiary (IBM Blue - same as Primary for Carbon)
+          tertiary: {
+            bg: {
+              light: '#0f62fe',   // IBM Blue
+              dark: '#0f62fe'
+            },
+            text: {
+              light: '#ffffff',
+              dark: '#ffffff'
+            },
+            hover: {
+              bg: {
+                light: '#0353e9',
+                dark: '#0353e9'
+              },
+              text: {
+                light: '#ffffff',
+                dark: '#ffffff'
+              }
+            }
+          },
+          // color4 = Danger (Carbon Red)
+          neutralDark: {
+            bg: {
+              light: '#da1e28',   // Carbon Red 60
+              dark: '#da1e28'
+            },
+            text: {
+              light: '#ffffff',
+              dark: '#ffffff'
+            },
+            hover: {
+              bg: {
+                light: '#ba1b23',  // Carbon Red 70 hover
+                dark: '#ba1b23'
+              },
+              text: {
+                light: '#ffffff',
+                dark: '#ffffff'
+              }
+            }
+          },
+          // color5 = Ghost (Transparent with IBM Blue text)
+          neutralLight: {
+            bg: {
+              light: 'transparent',
+              dark: 'transparent'
+            },
+            text: {
+              light: '#0f62fe',   // IBM Blue text
+              dark: '#0f62fe'
+            },
+            hover: {
+              bg: {
+                light: '#e8e8e8',  // Carbon Grey 10 hover
+                dark: '#e8e8e8'
+              },
+              text: {
+                light: '#0f62fe',
+                dark: '#0f62fe'
+              }
+            }
+          }
+        },
+        
+        // Carbon Layer System
+        layers: {
+          background: '#ffffff',
+          layer01: '#f4f4f4',   // Carbon Grey 10
+          layer02: '#ffffff',   // Back to white
+          layer03: '#f4f4f4'    // Grey again
+        },
+        
+        // Text Hierarchy (Carbon's explicit system)
+        textColors: {
+          primary: '#161616',
+          secondary: '#525252',
+          placeholder: '#a8a8a8',
+          helper: '#6f6f6f',
+          error: '#da1e28',
+          onColor: '#ffffff'
+        },
+        
+        // Support Colors (For feedback)
+        support: {
+          error: '#da1e28',     // Carbon Red 60
+          success: '#24a148',   // Carbon Green 50
+          warning: '#f1c21b',   // Carbon Yellow 30
+          info: '#0043ce'       // Carbon Blue 70
+        },
+        
+        // Borders
+        borders: {
+          subtle: '#e0e0e0',    // Carbon Grey 20
+          strong: '#8d8d8d',    // Carbon Grey 50
+          interactive: '#0f62fe' // IBM Blue
+        }
+      },
+      
+      typography: {
+        headingFont: 'IBM Plex Sans, system-ui, -apple-system, sans-serif',
+        bodyFont: 'IBM Plex Sans, system-ui, -apple-system, sans-serif',
+        baseSize: '16px',
+        scale: 1.125,  // Carbon uses tighter scale
+        
+        fontFamily: 'IBM Plex Sans, system-ui, -apple-system, sans-serif',
+        
+        weights: {
+          light: 300,
+          regular: 400,
+          medium: 500,
+          semibold: 600,
+          bold: 700
+        },
+        
+        // Carbon Typography Scale
+        desktop: {
+          display: {
+            xl: { size: '76px', lineHeight: '82px', letterSpacing: '-0.64px', weight: 300 },
+            lg: { size: '60px', lineHeight: '66px', letterSpacing: '-0.64px', weight: 300 },
+            md: { size: '48px', lineHeight: '52px', letterSpacing: '0px', weight: 300 }
+          },
+          heading: {
+            xl: { size: '42px', lineHeight: '48px', letterSpacing: '0px', weight: 400 },
+            lg: { size: '36px', lineHeight: '42px', letterSpacing: '0px', weight: 400 },
+            md: { size: '28px', lineHeight: '34px', letterSpacing: '0px', weight: 400 },
+            sm: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 }
+          },
+          body: {
+            lg: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            md: { size: '14px', lineHeight: '20px', letterSpacing: '0.16px', weight: 400 },
+            sm: { size: '12px', lineHeight: '16px', letterSpacing: '0.32px', weight: 400 }
+          }
+        },
+        
+        mobile: {
+          display: {
+            lg: { size: '48px', lineHeight: '52px', letterSpacing: '0px', weight: 300 },
+            md: { size: '36px', lineHeight: '40px', letterSpacing: '0px', weight: 300 }
+          },
+          heading: {
+            lg: { size: '28px', lineHeight: '32px', letterSpacing: '0px', weight: 400 },
+            md: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          body: {
+            lg: { size: '16px', lineHeight: '22px', letterSpacing: '0px', weight: 400 },
+            md: { size: '14px', lineHeight: '18px', letterSpacing: '0.16px', weight: 400 }
+          }
+        }
+      },
+      
+      spacing: {
+        base: '1rem',  // 16px
+        scale: 1.5,
+        
+        // Carbon Spacing Scale (based on 8px grid)
+        sizes: {
+          xs: '2px',
+          sm: '4px',
+          md: '8px',
+          lg: '16px',
+          xl: '24px',
+          '2xl': '32px',
+          '3xl': '48px',
+          '4xl': '64px',
+          '5xl': '80px',
+          '6xl': '96px'
+        }
+      },
+      
+      components: {
+        button: {
+          borderRadius: '0px',  // Carbon uses sharp corners!
+          fontWeight: '400',
+          textTransform: 'none',
+          fontSize: '14px',
+          letterSpacing: '0.16px',
+          transition: 'all 70ms cubic-bezier(0, 0, 0.38, 0.9)',  // Carbon motion
+          // Button sizing from Carbon
+          sizes: {
+            small: { height: '32px', padding: '0 16px', fontSize: '12px' },
+            medium: { height: '48px', padding: '0 16px', fontSize: '14px' },
+            large: { height: '64px', padding: '0 16px', fontSize: '16px' }
+          }
+        },
+        card: {
+          borderRadius: '0px',   // Sharp corners (Carbon style)
+          boxShadow: 'none',
+          border: '1px solid #e0e0e0',
+          padding: '16px'
+        },
+        form: {
+          borderRadius: '0px',   // Sharp corners
+          border: '1px solid #8d8d8d',
+          focusColor: '#0f62fe'
+        }
+      },
+      
+      modificationRules: {
+        colors: {
+          canModifyPrimary: true
+        }
+      },
+      
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: false,  // Accent tied to primary
+          canModifyBackground: true,
+          canModifyText: false,
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: false,  // IBM Plex Sans locked
+          canModifyBodyFont: false,
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: false,  // Sharp corners are Carbon's signature!
+          canModifyButtonWeight: false,
+          canModifyCardRadius: false,
+          canModifyCardShadow: false,
+          canModifyFormRadius: false
+        }
+      },
+      
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
+      },
+      publicationCardVariants: []
     }
   ] as Theme[],
   

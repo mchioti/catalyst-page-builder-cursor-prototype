@@ -1676,6 +1676,7 @@ function SectionsContent({ showToast, usePageStore }: {
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : null
   const isWileyTheme = currentTheme?.id === 'wiley-figma-ds-v2' || currentTheme?.id === 'wiley-ds-mcp'
+  const isCarbonTheme = currentTheme?.id === 'ibm-carbon-ds'
 
   // Create a new section with the specified layout and default areas
   const createSection = (layout: ContentBlockLayout, name: string) => {

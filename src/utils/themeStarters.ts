@@ -163,6 +163,10 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
       // MCP: Same sections as DS V2 but with complete token system (88 core + 159 semantic colors)
       return createWileyDSV2StarterTemplate()
     
+    case 'ibm-carbon-ds':
+      // IBM Carbon: Enterprise design with same section structure, IBM styling
+      return createWileyDSV2StarterTemplate()  // Reuse structure, Carbon theme will apply its styling
+    
     case 'academic-classic':
     case 'academic-review':
     case 'digital-open-publishers':

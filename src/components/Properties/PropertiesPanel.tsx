@@ -1584,6 +1584,19 @@ export function PropertiesPanel({
                   )
                 }
                 
+                // IBM Carbon uses 5 buttons with clear semantic names
+                if (currentTheme?.id === 'ibm-carbon-ds') {
+                  return (
+                    <>
+                      <option value="color1">Primary (IBM Blue)</option>
+                      <option value="color2">Secondary (Grey)</option>
+                      <option value="color3">Tertiary (IBM Blue)</option>
+                      <option value="color4">Danger (Red)</option>
+                      <option value="color5">Ghost (Transparent)</option>
+                    </>
+                  )
+                }
+                
                 // Modern and other themes use Primary, Secondary, Accent (3 colors)
                 return (
                   <>
