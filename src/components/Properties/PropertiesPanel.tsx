@@ -340,38 +340,76 @@ export function PropertiesPanel({
               </select>
             </div>
             
-            {backgroundType === 'color' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    value={section.background?.color || '#ffffff'}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'color',
-                        color: e.target.value
-                      }
-                    })}
-                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                  />
-            <input
-              type="text"
-                    value={section.background?.color || '#ffffff'}
-                    onChange={(e) => updateSection({
-                      background: {
-                        ...section.background,
-                        type: 'color',
-                        color: e.target.value
-                      }
-                    })}
-                    placeholder="#ffffff"
-                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-mono"
-                  />
+            {backgroundType === 'color' && (() => {
+              const { currentWebsiteId, websites, themes } = usePageStore.getState()
+              const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+              const currentTheme = currentWebsite 
+                ? themes.find((t: any) => t.id === currentWebsite.themeId)
+                : null
+              
+              const isCarbonTheme = currentTheme?.id === 'ibm-carbon-ds'
+              
+              return (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                  {isCarbonTheme && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 mb-2">Carbon Layers:</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { label: 'BG', color: '#ffffff' },
+                          { label: 'Layer 01', color: '#f4f4f4' },
+                          { label: 'Layer 02', color: '#ffffff' },
+                          { label: 'Layer 03', color: '#f4f4f4' }
+                        ].map((layer) => (
+                          <button
+                            key={layer.label}
+                            onClick={() => updateSection({
+                              background: {
+                                ...section.background,
+                                type: 'color',
+                                color: layer.color
+                              }
+                            })}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            style={{ backgroundColor: layer.color }}
+                          >
+                            {layer.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={section.background?.color || '#ffffff'}
+                      onChange={(e) => updateSection({
+                        background: {
+                          ...section.background,
+                          type: 'color',
+                          color: e.target.value
+                        }
+                      })}
+                      className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={section.background?.color || '#ffffff'}
+                      onChange={(e) => updateSection({
+                        background: {
+                          ...section.background,
+                          type: 'color',
+                          color: e.target.value
+                        }
+                      })}
+                      placeholder="#ffffff"
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
             
             {backgroundType === 'image' && (
               <div className="space-y-3">
@@ -1002,6 +1040,42 @@ export function PropertiesPanel({
               <option value="right">Right</option>
             </select>
           </div>
+          
+          {(() => {
+            const { currentWebsiteId, websites, themes } = usePageStore.getState()
+            const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+            const currentTheme = currentWebsite 
+              ? themes.find((t: any) => t.id === currentWebsite.themeId)
+              : null
+            
+            if (currentTheme?.id === 'ibm-carbon-ds') {
+              return (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Typography Style
+                    <span className="text-xs text-gray-500 ml-1">(Carbon)</span>
+                  </label>
+                  <select
+                    value={widget.typographyStyle || ''}
+                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Default</option>
+                    <option value="body-01">Body 01 (14px/regular)</option>
+                    <option value="body-02">Body 02 (16px/regular)</option>
+                    <option value="body-compact-01">Body Compact 01 (14px/tight)</option>
+                    <option value="body-compact-02">Body Compact 02 (16px/tight)</option>
+                    <option value="label-01">Label 01 (12px)</option>
+                    <option value="label-02">Label 02 (14px)</option>
+                    <option value="helper-text-01">Helper Text 01 (12px italic)</option>
+                    <option value="helper-text-02">Helper Text 02 (14px italic)</option>
+                  </select>
+                </div>
+              )
+            }
+            return null
+          })()}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Inline Styles
@@ -1124,6 +1198,42 @@ export function PropertiesPanel({
           </div>
           </div>
           
+          {(() => {
+            const { currentWebsiteId, websites, themes } = usePageStore.getState()
+            const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+            const currentTheme = currentWebsite 
+              ? themes.find((t: any) => t.id === currentWebsite.themeId)
+              : null
+            
+            if (currentTheme?.id === 'ibm-carbon-ds') {
+              return (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Typography Style
+                    <span className="text-xs text-gray-500 ml-1">(Carbon)</span>
+                  </label>
+                  <select
+                    value={(widget as HeadingWidget).typographyStyle || ''}
+                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="">Default</option>
+                    <option value="heading-01">Heading 01 (14px/semi-bold)</option>
+                    <option value="heading-02">Heading 02 (16px/semi-bold)</option>
+                    <option value="heading-03">Heading 03 (20px/regular)</option>
+                    <option value="heading-04">Heading 04 (28px/regular)</option>
+                    <option value="heading-05">Heading 05 (32px/regular)</option>
+                    <option value="heading-06">Heading 06 (42px/light)</option>
+                    <option value="heading-07">Heading 07 (54px/light)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Overrides size settings when selected
+                  </p>
+                </div>
+              )
+            }
+            return null
+          })()}
           
           <div className="border-t pt-4">
             <IconSelector
@@ -1588,11 +1698,11 @@ export function PropertiesPanel({
                 if (currentTheme?.id === 'ibm-carbon-ds') {
                   return (
                     <>
-                      <option value="color1">Primary (IBM Blue)</option>
-                      <option value="color2">Secondary (Grey)</option>
-                      <option value="color3">Tertiary (IBM Blue)</option>
-                      <option value="color4">Danger (Red)</option>
-                      <option value="color5">Ghost (Transparent)</option>
+                      <option value="color1">Primary (IBM Blue solid)</option>
+                      <option value="color2">Secondary (Dark Grey solid)</option>
+                      <option value="color3">Tertiary (Transparent, no border)</option>
+                      <option value="color4">Danger (Red solid)</option>
+                      <option value="color5">Ghost (Transparent with border)</option>
                     </>
                   )
                 }

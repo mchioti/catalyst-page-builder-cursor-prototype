@@ -2702,18 +2702,19 @@ const usePageStore = create<PageState>((set, get) => ({
         text: '#161616',          // Carbon Black
         muted: '#525252',         // Carbon Grey 70
         
-        // IBM Carbon Semantic Colors
+        // IBM Carbon Semantic Colors (5 button styles)
+        // Official Carbon Design System button hierarchy
         semanticColors: {
-          // color1 = Primary (IBM Blue)
+          // color1 = PRIMARY (IBM Blue solid button)
           primary: {
-            light: '#0f62fe',     // IBM Blue
+            light: '#0f62fe',     // IBM Blue 60
             dark: '#0f62fe',      // Same in both contexts
             hover: {
               light: '#0353e9',   // IBM Blue 60 hover
               dark: '#0353e9'
             }
           },
-          // color2 = Secondary (Carbon Grey)
+          // color2 = SECONDARY (Dark grey solid button)
           secondary: {
             bg: {
               light: '#393939',   // Carbon Grey 80
@@ -2734,31 +2735,31 @@ const usePageStore = create<PageState>((set, get) => ({
               }
             }
           },
-          // color3 = Tertiary (IBM Blue - same as Primary for Carbon)
+          // color3 = TERTIARY (Transparent, no border, just IBM Blue text)
           tertiary: {
             bg: {
-              light: '#0f62fe',   // IBM Blue
-              dark: '#0f62fe'
+              light: 'transparent',   // No background
+              dark: 'transparent'
             },
             text: {
-              light: '#ffffff',
-              dark: '#ffffff'
+              light: '#0f62fe',   // IBM Blue text
+              dark: '#0f62fe'
             },
             hover: {
               bg: {
-                light: '#0353e9',
-                dark: '#0353e9'
+                light: '#e8e8e8',  // Carbon Grey 10 hover
+                dark: '#e8e8e8'
               },
               text: {
-                light: '#ffffff',
-                dark: '#ffffff'
+                light: '#0043ce',  // IBM Blue 70 (darker on hover)
+                dark: '#0043ce'
               }
             }
           },
-          // color4 = Danger (Carbon Red)
+          // color4 = DANGER (Red solid button)
           neutralDark: {
             bg: {
-              light: '#da1e28',   // Carbon Red 60
+              light: '#da1e28',   // Carbon Red 60 (Danger Primary)
               dark: '#da1e28'
             },
             text: {
@@ -2776,7 +2777,7 @@ const usePageStore = create<PageState>((set, get) => ({
               }
             }
           },
-          // color5 = Ghost (Transparent with IBM Blue text)
+          // color5 = GHOST (Transparent with IBM Blue border + text)
           neutralLight: {
             bg: {
               light: 'transparent',
@@ -2792,8 +2793,8 @@ const usePageStore = create<PageState>((set, get) => ({
                 dark: '#e8e8e8'
               },
               text: {
-                light: '#0f62fe',
-                dark: '#0f62fe'
+                light: '#0043ce',  // IBM Blue 70 (darker on hover)
+                dark: '#0043ce'
               }
             }
           }
@@ -3903,7 +3904,9 @@ const themePreviewImages = {
   'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
   'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
   'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
-  'wiley-figma-ds-v2': 'https://placehold.co/400x250/00D875/003B44?text=DS+V2+Multi-Brand' // Systematic extraction with 3-brand support
+  'wiley-figma-ds-v2': 'https://placehold.co/400x250/00D875/003B44?text=DS+V2+Multi-Brand', // Systematic extraction with 3-brand support
+  'wiley-ds-mcp': '/theme-previews/wiley-ds.png',                   // Wiley Design System - Complete MCP extraction
+  'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png'              // IBM Carbon hexagon logo showcase - light/dark variants
 }
 
 // NOTE: WebsiteCreationWizard component moved to src/components/Wizards/WebsiteCreation.tsx

@@ -274,11 +274,14 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'l
     ))
   }
   
+  // Get typography class for Carbon themes
+  const typographyClass = widget.typographyStyle ? `text-${widget.typographyStyle}` : '';
+  
   // Render HTML content if it contains HTML tags, otherwise render as plain text
   if (containsHTML(widget.text)) {
     return (
       <div 
-        className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}
+        className={`${alignClasses[widget.align || 'left']} ${textColorClasses} ${typographyClass}`.trim()}
         style={inlineStyles}
         dangerouslySetInnerHTML={{ __html: widget.text }}
       />
@@ -287,7 +290,7 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'l
   
   return (
     <div 
-      className={`${alignClasses[widget.align || 'left']} ${textColorClasses}`}
+      className={`${alignClasses[widget.align || 'left']} ${textColorClasses} ${typographyClass}`.trim()}
       style={inlineStyles}
     >
       {renderTextWithBreaks(widget.text)}
@@ -900,6 +903,8 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   
   const HeadingTag = `h${widget.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   
+  // Get typography class for Carbon themes
+  const typographyClass = widget.typographyStyle ? `heading-${widget.typographyStyle}` : ''
   
   const headingClasses = [
     getStyleClasses(),
@@ -907,7 +912,8 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
     widget.size === 'auto' 
       ? sizeClasses[getSemanticDefaultSize(widget.level)]
       : sizeClasses[widget.size || 'auto'],
-    colorClasses[widget.color || 'default']
+    colorClasses[widget.color || 'default'],
+    typographyClass
   ].filter(Boolean).join(' ')
   
   return (
@@ -1602,43 +1608,18 @@ const TabsWidgetRenderer: React.FC<{
     }
   }
   
-  // Get tab style classes
+  // Get tab style classes - NO TAILWIND, pure semantic classes
   const getTabNavClasses = () => {
-    const baseClasses = 'tabs-nav flex gap-1'
-    const styleClasses = widget.tabStyle === 'pills' ? 'tabs-pills' : widget.tabStyle === 'buttons' ? 'tabs-buttons' : ''
-    const borderClasses = widget.tabStyle === 'underline' || !widget.tabStyle ? 'border-b-2 border-gray-200' : ''
-    return `${baseClasses} ${styleClasses} ${borderClasses} ${getAlignmentClasses()}`
+    const baseClasses = 'tabs-nav'
+    const styleClasses = widget.tabStyle === 'pills' ? 'tabs-pills' : widget.tabStyle === 'buttons' ? 'tabs-buttons' : 'tabs-underline'
+    const alignmentClasses = widget.align === 'center' ? 'tabs-center' : widget.align === 'right' ? 'tabs-right' : 'tabs-left'
+    return `${baseClasses} ${styleClasses} ${alignmentClasses}`
   }
   
   const getTabButtonClasses = (isActive: boolean) => {
-    const baseClasses = 'px-4 py-2 font-medium text-sm transition-all cursor-pointer relative'
-    
-    switch (widget.tabStyle) {
-      case 'underline':
-        return `${baseClasses} ${
-          isActive 
-            ? 'text-gray-900 border-b-2 border-red-500 -mb-[2px]' 
-            : 'text-gray-500 hover:text-gray-700'
-        }`
-      case 'pills':
-        return `${baseClasses} rounded-full ${
-          isActive 
-            ? 'bg-blue-600 text-white' 
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`
-      case 'buttons':
-        return `${baseClasses} rounded-md border ${
-          isActive 
-            ? 'bg-blue-600 text-white border-blue-600' 
-            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
-        }`
-      default:
-        return `${baseClasses} ${
-          isActive 
-            ? 'text-gray-900 border-b-2 border-red-500 -mb-[2px]' 
-            : 'text-gray-500 hover:text-gray-700'
-        }`
-    }
+    const baseClasses = 'tab-button'
+    const activeClass = isActive ? 'active' : ''
+    return `${baseClasses} ${activeClass}`
   }
   
   return (
@@ -1662,7 +1643,7 @@ const TabsWidgetRenderer: React.FC<{
               console.log('🔘 Tab button clicked:', index, 'label:', tab.label)
               handleTabChange(index)
             }}
-            className={`tab-button ${activeIndex === index ? 'active' : ''} ${getTabButtonClasses(activeIndex === index)}`}
+            className={`tab-button ${activeIndex === index ? 'active' : ''}`}
             style={{ pointerEvents: 'auto', position: 'relative', zIndex: 31 }}
             type="button"
           >

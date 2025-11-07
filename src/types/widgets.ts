@@ -18,7 +18,13 @@ export type WidgetBase = {
   }
 }
 
-export type TextWidget = WidgetBase & { type: 'text'; text: string; align?: 'left'|'center'|'right'; inlineStyles?: string }
+export type TextWidget = WidgetBase & { 
+  type: 'text'; 
+  text: string; 
+  align?: 'left'|'center'|'right'; 
+  inlineStyles?: string;
+  typographyStyle?: 'body-01' | 'body-02' | 'body-compact-01' | 'body-compact-02' | 'label-01' | 'label-02' | 'helper-text-01' | 'helper-text-02';
+}
 export type ImageWidget = WidgetBase & { 
   type: 'image'; 
   src: string; 
@@ -49,6 +55,7 @@ export type HeadingWidget = WidgetBase & {
   color?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted';
   size?: 'small' | 'medium' | 'large' | 'xl' | 'auto';
   icon?: WidgetIcon;
+  typographyStyle?: 'heading-01' | 'heading-02' | 'heading-03' | 'heading-04' | 'heading-05' | 'heading-06' | 'heading-07';
 }
 
 // Publication Card configuration types

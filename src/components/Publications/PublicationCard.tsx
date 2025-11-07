@@ -210,7 +210,7 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
   const backgroundClasses = getBackgroundClasses();
 
   return (
-    <div className={`border rounded-lg p-6 hover:shadow-md transition-shadow ${alignmentClass} ${backgroundClasses}`}>
+    <div className={`publication-card ${alignmentClass} ${backgroundClasses}`}>
       {/* Header with type label and access status */}
       <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
         <div className="flex items-center gap-2">

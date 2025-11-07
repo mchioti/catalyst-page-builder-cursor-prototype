@@ -243,6 +243,114 @@ export const generateThemeCSS = (theme: any): string => {
 }
 
 /* ====================================
+   CARDS (Publication Cards & Section Cards)
+   ==================================== */
+
+.publication-card,
+.card {
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--theme-card-radius, 0.5rem);
+  transition: all 200ms ease;
+  background: inherit;
+}
+
+.publication-card:hover,
+.card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+/* ====================================
+   TABS
+   ==================================== */
+
+.tabs-nav {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tabs-nav.tabs-center {
+  justify-content: center;
+}
+
+.tabs-nav.tabs-right {
+  justify-content: flex-end;
+}
+
+.tabs-nav.tabs-left {
+  justify-content: flex-start;
+}
+
+.tab-button {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 200ms ease;
+  position: relative;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #374151;
+}
+
+.tab-button.active {
+  color: var(--theme-color-primary);
+  border-bottom-color: var(--theme-color-primary);
+  font-weight: 600;
+}
+
+/* Pills variant */
+.tabs-pills {
+  border-bottom: none;
+}
+
+.tabs-pills .tab-button {
+  border-radius: 9999px;
+  background: #f3f4f6;
+  margin-bottom: 0;
+}
+
+.tabs-pills .tab-button:hover {
+  background: #e5e7eb;
+}
+
+.tabs-pills .tab-button.active {
+  background: var(--theme-color-primary);
+  color: white;
+  border-bottom-color: transparent;
+}
+
+/* Buttons variant */
+.tabs-buttons {
+  border-bottom: none;
+}
+
+.tabs-buttons .tab-button {
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  margin-bottom: 0;
+}
+
+.tabs-buttons .tab-button:hover {
+  border-color: #9ca3af;
+}
+
+.tabs-buttons .tab-button.active {
+  background: var(--theme-color-primary);
+  color: white;
+  border-color: var(--theme-color-primary);
+}
+
+/* ====================================
    CARDS
    ==================================== */
 
@@ -416,7 +524,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 `
   }
   
-  // IBM Carbon: Specific sizing from Carbon DS
+  // IBM Carbon: Specific sizing from Carbon DS + Ghost/Tertiary button styles
   if (themeId === 'ibm-carbon-ds') {
     return `
 /* IBM Carbon DS Theme Overrides */
@@ -446,6 +554,229 @@ const generateThemeSpecificCSS = (theme: any): string => {
   height: 64px;
   font-size: 1rem;
   line-height: 64px;
+}
+
+/* Carbon Tertiary Button (color3) - Transparent, NO border */
+.btn-solid-color3 {
+  background: transparent !important;
+  color: var(--semantic-tertiary-text-light) !important;
+  border: none !important;
+}
+
+.btn-solid-color3:hover {
+  background: var(--semantic-tertiary-bg-light-hover) !important;
+  color: var(--semantic-tertiary-text-light-hover) !important;
+}
+
+/* Carbon Ghost Button (color5) - Transparent WITH border */
+.btn-solid-color5,
+.btn-outline-color5 {
+  background: transparent !important;
+  color: var(--semantic-neutrallight-text-light) !important;
+  border: 1px solid var(--semantic-neutrallight-text-light) !important;
+}
+
+.btn-solid-color5:hover,
+.btn-outline-color5:hover {
+  background: var(--semantic-neutrallight-bg-light-hover) !important;
+  color: var(--semantic-neutrallight-text-light-hover) !important;
+}
+
+/* Carbon Tabs - Underline style with IBM Blue indicator */
+.tabs-nav {
+  border-bottom: 1px solid #e0e0e0 !important; /* Carbon Grey 20 */
+}
+
+.tab-button {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  padding: 0 1rem !important;
+  height: 48px !important;
+  color: #161616 !important; /* Carbon Black */
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 70ms cubic-bezier(0, 0, 0.38, 0.9);
+}
+
+.tab-button:hover {
+  background: #e8e8e8 !important; /* Carbon Grey 10 */
+  color: #161616 !important;
+}
+
+.tab-button.active {
+  color: #161616 !important; /* Carbon Black */
+  font-weight: 600;
+  border-bottom-color: #0f62fe !important; /* IBM Blue */
+}
+
+/* Carbon Menu - Horizontal navigation */
+.menu-horizontal {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif !important;
+}
+
+.menu-horizontal a,
+.menu-horizontal button {
+  color: #161616 !important; /* Carbon Black */
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  padding: 0.75rem 1rem;
+  transition: all 70ms cubic-bezier(0, 0, 0.38, 0.9);
+  border-bottom: 2px solid transparent;
+}
+
+.menu-horizontal a:hover,
+.menu-horizontal button:hover {
+  background: #e8e8e8 !important; /* Carbon Grey 10 */
+}
+
+.menu-horizontal a.active,
+.menu-horizontal button.active {
+  font-weight: 600;
+  border-bottom-color: #0f62fe !important; /* IBM Blue */
+}
+
+/* Carbon Cards - Sharp corners, subtle border, no shadow */
+.publication-card,
+.card {
+  border: 1px solid #e0e0e0 !important; /* Carbon Grey 20 */
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 1rem !important;
+}
+
+.publication-card:hover,
+.card:hover {
+  border-color: #8d8d8d !important; /* Carbon Grey 50 */
+  box-shadow: none !important;
+}
+
+/* ====================================
+   CARBON TYPOGRAPHY STYLES
+   ==================================== */
+
+/* Body Text Styles */
+.text-body-01 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;     /* 14px */
+  font-weight: 400;
+  line-height: 1.42857;    /* 20px */
+  letter-spacing: 0.16px;
+}
+
+.text-body-02 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;         /* 16px */
+  font-weight: 400;
+  line-height: 1.5;        /* 24px */
+  letter-spacing: 0;
+}
+
+.text-body-compact-01 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;     /* 14px */
+  font-weight: 400;
+  line-height: 1.28572;    /* 18px */
+  letter-spacing: 0.16px;
+}
+
+.text-body-compact-02 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;         /* 16px */
+  font-weight: 400;
+  line-height: 1.375;      /* 22px */
+  letter-spacing: 0;
+}
+
+.text-label-01 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;      /* 12px */
+  font-weight: 400;
+  line-height: 1.33333;    /* 16px */
+  letter-spacing: 0.32px;
+}
+
+.text-label-02 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;     /* 14px */
+  font-weight: 400;
+  line-height: 1.28572;    /* 18px */
+  letter-spacing: 0.16px;
+}
+
+.text-helper-text-01 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;      /* 12px */
+  font-weight: 400;
+  line-height: 1.33333;    /* 16px */
+  letter-spacing: 0.32px;
+  font-style: italic;
+}
+
+.text-helper-text-02 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;     /* 14px */
+  font-weight: 400;
+  line-height: 1.28572;    /* 18px */
+  letter-spacing: 0.16px;
+  font-style: italic;
+}
+
+/* Heading Styles */
+.heading-heading-01 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;     /* 14px */
+  font-weight: 600;
+  line-height: 1.28572;    /* 18px */
+  letter-spacing: 0.16px;
+}
+
+.heading-heading-02 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;         /* 16px */
+  font-weight: 600;
+  line-height: 1.375;      /* 22px */
+  letter-spacing: 0;
+}
+
+.heading-heading-03 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.25rem;      /* 20px */
+  font-weight: 400;
+  line-height: 1.4;        /* 28px */
+  letter-spacing: 0;
+}
+
+.heading-heading-04 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.75rem;      /* 28px */
+  font-weight: 400;
+  line-height: 1.28572;    /* 36px */
+  letter-spacing: 0;
+}
+
+.heading-heading-05 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 2rem;         /* 32px */
+  font-weight: 400;
+  line-height: 1.25;       /* 40px */
+  letter-spacing: 0;
+}
+
+.heading-heading-06 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 2.625rem;     /* 42px */
+  font-weight: 300;
+  line-height: 1.199;      /* 50px */
+  letter-spacing: 0;
+}
+
+.heading-heading-07 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 3.375rem;     /* 54px */
+  font-weight: 300;
+  line-height: 1.19;       /* 64px */
+  letter-spacing: 0;
 }
 `
   }

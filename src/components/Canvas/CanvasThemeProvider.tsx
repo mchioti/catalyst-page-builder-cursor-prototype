@@ -249,7 +249,7 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
         console.log('🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [])
+  }, [currentTheme.id]) // Re-run when theme changes
 
   return (
     <div 
