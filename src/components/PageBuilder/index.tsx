@@ -81,7 +81,7 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes } = usePageStore()
   
   // Detect editing context
   const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
@@ -95,6 +95,11 @@ export function PageBuilder({
   }
   const journalCode = getJournalCode(mockLiveSiteRoute)
   const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
+  
+  // Get current theme name
+  const currentWebsite = websites.find(w => w.id === currentWebsiteId)
+  const currentTheme = themes.find(t => t.id === currentWebsite?.themeId)
+  const themeName = currentTheme?.name || 'No Theme'
 
 
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
@@ -949,7 +954,17 @@ export function PageBuilder({
         >
           <div className="border-b bg-white px-6 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
+              <div className="relative flex items-center">
+                <img 
+                  src="/catalyst-PB.png" 
+                  alt="Catalyst Page Builder" 
+                  className="h-16 w-16 object-contain"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Page Builder</h1>
+                  <p className="text-sm text-gray-500 mt-1">Theme: <span className="font-medium text-gray-700">{themeName}</span></p>
+                </div>
+              </div>
               <div className="flex items-center gap-3">
                 {/* Template Publishing Button */}
                 {isTemplateEdit && templateEditingContext && (

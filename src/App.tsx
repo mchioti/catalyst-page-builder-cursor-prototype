@@ -2972,6 +2972,210 @@ const usePageStore = create<PageState>((set, get) => ({
         footer: PREFAB_SECTIONS['footer-section'] as any
       },
       publicationCardVariants: []
+    },
+    {
+      id: 'ant-design',
+      name: 'Ant Design',
+      description: 'Ant Design System - Enterprise-class UI design language with a refined experience',
+      version: '5.0.0',
+      
+      colors: {
+        primary: '#1890ff',      // Daybreak Blue (Primary button)
+        secondary: '#ff4d4f',    // Dust Red (Danger button)
+        accent: '#d9d9d9',       // Neutral Grey (Default button border)
+        background: '#ffffff',
+        text: '#000000d9',       // 85% black (rgba(0,0,0,0.85))
+        muted: '#00000073',      // 45% black (rgba(0,0,0,0.45))
+        
+        palette: {
+          blue: {
+            1: '#e6f7ff',
+            2: '#bae7ff',
+            3: '#91d5ff',
+            4: '#69c0ff',
+            5: '#40a9ff',
+            6: '#1890ff',  // Primary
+            7: '#096dd9',
+            8: '#0050b3',
+            9: '#003a8c',
+            10: '#002766'
+          },
+          green: {
+            1: '#f6ffed',
+            2: '#d9f7be',
+            3: '#b7eb8f',
+            4: '#95de64',
+            5: '#73d13d',
+            6: '#52c41a',  // Success
+            7: '#389e0d',
+            8: '#237804',
+            9: '#135200',
+            10: '#092b00'
+          },
+          red: {
+            1: '#fff1f0',
+            2: '#ffccc7',
+            3: '#ffa39e',
+            4: '#ff7875',
+            5: '#ff4d4f',
+            6: '#f5222d',  // Error
+            7: '#cf1322',
+            8: '#a8071a',
+            9: '#820014',
+            10: '#5c0011'
+          },
+          gold: {
+            1: '#fffbe6',
+            2: '#fff1b8',
+            3: '#ffe58f',
+            4: '#ffd666',
+            5: '#ffc53d',
+            6: '#faad14',  // Warning
+            7: '#d48806',
+            8: '#ad6800',
+            9: '#874d00',
+            10: '#613400'
+          },
+          gray: {
+            1: '#ffffff',
+            2: '#fafafa',
+            3: '#f5f5f5',
+            4: '#f0f0f0',
+            5: '#d9d9d9',
+            6: '#bfbfbf',
+            7: '#8c8c8c',
+            8: '#595959',
+            9: '#434343',
+            10: '#262626',
+            11: '#1f1f1f',
+            12: '#141414',
+            13: '#000000'
+          }
+        },
+        
+        semantic: {
+          success: '#52c41a',
+          warning: '#faad14',
+          error: '#f5222d',
+          info: '#1890ff',
+          // Background colors
+          successBg: '#f6ffed',
+          warningBg: '#fffbe6',
+          errorBg: '#fff1f0',
+          infoBg: '#e6f7ff'
+        }
+      },
+      
+      typography: {
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+        headingFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+        bodyFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+        baseSize: '14px',
+        scale: 1.2,
+        
+        weights: {
+          light: 300,
+          regular: 400,
+          medium: 500,
+          semibold: 600,
+          bold: 700
+        },
+        
+        sizes: {
+          xs: '12px',
+          sm: '14px',
+          base: '14px',
+          lg: '16px',
+          xl: '20px',
+          '2xl': '24px',
+          '3xl': '30px',
+          '4xl': '38px',
+          '5xl': '46px',
+          '6xl': '56px'
+        }
+      },
+      
+      spacing: {
+        base: 8,
+        scale: [0, 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96],
+        unit: 'px',
+        
+        section: {
+          xs: '16px',
+          sm: '24px',
+          md: '32px',
+          lg: '48px',
+          xl: '64px',
+          '2xl': '96px'
+        }
+      },
+      
+      components: {
+        button: {
+          borderRadius: '2px',
+          fontWeight: '400',
+          textTransform: 'none',
+          fontSize: '14px',
+          transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
+          sizes: {
+            small: { height: '24px', padding: '0 7px', fontSize: '14px' },
+            medium: { height: '32px', padding: '4px 15px', fontSize: '14px' },
+            large: { height: '40px', padding: '6.4px 15px', fontSize: '16px' }
+          }
+        },
+        card: {
+          borderRadius: '2px',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+          border: '1px solid #f0f0f0',
+          padding: '24px'
+        },
+        form: {
+          borderRadius: '2px',
+          border: '1px solid #d9d9d9',
+          focusColor: '#40a9ff'
+        }
+      },
+      
+      modificationRules: {
+        colors: {
+          canModifyPrimary: true
+        }
+      },
+      
+      customizationRules: {
+        colors: {
+          canModifyPrimary: true,
+          canModifySecondary: true,
+          canModifyAccent: true,
+          canModifyBackground: true,
+          canModifyText: false,
+          canModifyMuted: true
+        },
+        typography: {
+          canModifyHeadingFont: false,
+          canModifyBodyFont: false,
+          canModifyBaseSize: true,
+          canModifyScale: true
+        },
+        spacing: {
+          canModifyBase: true,
+          canModifyScale: true
+        },
+        components: {
+          canModifyButtonRadius: true,
+          canModifyButtonWeight: false,
+          canModifyCardRadius: true,
+          canModifyCardShadow: true,
+          canModifyFormRadius: true
+        }
+      },
+      
+      globalSections: {
+        header: PREFAB_SECTIONS['header-section'] as any,
+        footer: PREFAB_SECTIONS['footer-section'] as any
+      },
+      publicationCardVariants: [],
+      templates: []
     }
   ] as Theme[],
   
@@ -3906,7 +4110,8 @@ const themePreviewImages = {
   'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
   'wiley-figma-ds-v2': 'https://placehold.co/400x250/00D875/003B44?text=DS+V2+Multi-Brand', // Systematic extraction with 3-brand support
   'wiley-ds-mcp': '/theme-previews/wiley-ds.png',                   // Wiley Design System - Complete MCP extraction
-  'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png'              // IBM Carbon hexagon logo showcase - light/dark variants
+  'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png',             // IBM Carbon hexagon logo showcase - light/dark variants
+  'ant-design': '/theme-previews/ant-ds.png'                        // Ant Design
 }
 
 // NOTE: WebsiteCreationWizard component moved to src/components/Wizards/WebsiteCreation.tsx

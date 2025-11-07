@@ -284,6 +284,10 @@ export function PropertiesPanel({
               {section.name}
             </span>
           </div>
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section ID</span>
+            <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{section.id}</p>
+          </div>
         </div>
         
         <div className="space-y-4">
@@ -1015,6 +1019,10 @@ export function PropertiesPanel({
             } Widget
           </span>
         </div>
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget ID</span>
+          <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{widget.id}</p>
+        </div>
       </div>
       
       {widget.type === 'text' && (
@@ -1703,6 +1711,17 @@ export function PropertiesPanel({
                       <option value="color3">Tertiary (Transparent, no border)</option>
                       <option value="color4">Danger (Red solid)</option>
                       <option value="color5">Ghost (Transparent with border)</option>
+                    </>
+                  )
+                }
+                
+                // Ant Design button types
+                if (currentTheme?.id === 'ant-design') {
+                  return (
+                    <>
+                      <option value="color1">Primary (Blue)</option>
+                      <option value="color2">Danger (Red)</option>
+                      <option value="color3">Default (Grey)</option>
                     </>
                   )
                 }

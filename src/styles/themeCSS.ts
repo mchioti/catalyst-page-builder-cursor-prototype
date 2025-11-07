@@ -781,6 +781,256 @@ const generateThemeSpecificCSS = (theme: any): string => {
 `
   }
   
+  // Ant Design Theme
+  if (themeId === 'ant-design') {
+    return `
+/* ====================================
+   ANT DESIGN SYSTEM
+   ==================================== */
+
+/* Ant Design Buttons */
+.btn-small {
+  height: 24px;
+  padding: 0 15px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+.btn-medium {
+  height: 32px;
+  padding: 4px 15px;
+  font-size: 14px;
+  border-radius: 16px;
+}
+
+.btn-large {
+  height: 40px;
+  padding: 6.4px 15px;
+  font-size: 16px;
+  border-radius: 20px;
+}
+
+/* Ant Design button base styles */
+.btn,
+.btn-solid-color1,
+.btn-solid-color2,
+.btn-solid-color3,
+.btn-outline-color1,
+.btn-outline-color2,
+.btn-outline-color3,
+.btn-link-color1,
+.btn-link-color2,
+.btn-link-color3 {
+  transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.5715;
+}
+
+/* PRIMARY BUTTON - Type="primary" (Blue solid) */
+.btn-solid-color1 {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: #ffffff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045), 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.btn-solid-color1:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* DANGER BUTTON - Type="primary" danger (Red solid) */
+.btn-solid-color2 {
+  background: #ff4d4f;
+  border: 1px solid #ff4d4f;
+  color: #ffffff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045), 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.btn-solid-color2:hover {
+  background: #ff7875;
+  border-color: #ff7875;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* DEFAULT BUTTON SOLID (Grey) - rarely used, but included for completeness */
+.btn-solid-color3 {
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016);
+  text-shadow: none;
+}
+
+.btn-solid-color3:hover {
+  background: #ffffff;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* DEFAULT BUTTON - Type="default" (Grey outline, white background) */
+.btn-outline-color1 {
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-shadow: none;
+}
+
+.btn-outline-color1:hover {
+  background: #ffffff;
+  border-color: #40a9ff;
+  color: #40a9ff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* DANGER OUTLINE - Type="default" danger (Red outline) */
+.btn-outline-color2 {
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  color: #ff4d4f;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-shadow: none;
+}
+
+.btn-outline-color2:hover {
+  background: #ffffff;
+  border-color: #ff7875;
+  color: #ff7875;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* DASHED BUTTON - Type="dashed" (Dashed grey border) */
+.btn-outline-color3 {
+  background: #ffffff;
+  border: 1px dashed #d9d9d9;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-shadow: none;
+}
+
+.btn-outline-color3:hover {
+  background: #ffffff;
+  border-color: #40a9ff;
+  border-style: dashed;
+  color: #40a9ff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.016), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* TEXT/LINK BUTTON - Type="text" or Type="link" (No background, no border) */
+.btn-link-color1 {
+  background: transparent;
+  border: none;
+  color: #1890ff;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.btn-link-color1:hover {
+  background: rgba(0, 0, 0, 0.018);
+  color: #40a9ff;
+}
+
+/* TEXT DANGER - Type="text" danger */
+.btn-link-color2 {
+  background: transparent;
+  border: none;
+  color: #ff4d4f;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.btn-link-color2:hover {
+  background: rgba(0, 0, 0, 0.018);
+  color: #ff7875;
+}
+
+/* TEXT MUTED - Type="text" (Grey text) */
+.btn-link-color3 {
+  background: transparent;
+  border: none;
+  color: rgba(0, 0, 0, 0.45);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.btn-link-color3:hover {
+  background: rgba(0, 0, 0, 0.018);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* Ant Design Cards */
+.publication-card,
+.card {
+  border-radius: 2px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  padding: 24px;
+  transition: box-shadow 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.publication-card:hover,
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+/* Ant Design Tabs */
+.tabs-nav {
+  border-bottom: 1px solid #f0f0f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+}
+
+.tab-button {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+  padding: 12px 0;
+  margin: 0 32px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.tab-button:hover {
+  color: #40a9ff;
+}
+
+.tab-button.active {
+  color: #1890ff;
+  border-bottom-color: #1890ff;
+}
+
+/* Ant Design Menu */
+.menu-horizontal {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+}
+
+.menu-horizontal a,
+.menu-horizontal button {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.menu-horizontal a:hover,
+.menu-horizontal button:hover {
+  color: #40a9ff;
+}
+
+.menu-horizontal a.active,
+.menu-horizontal button.active {
+  color: #1890ff;
+  border-bottom-color: #1890ff;
+}
+`
+  }
+  
   // Default: No overrides
   return '/* No theme-specific overrides */'
 }

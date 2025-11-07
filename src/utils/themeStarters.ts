@@ -371,6 +371,391 @@ export const createDefaultStarterTemplate = (): CanvasItem[] => {
 }
 
 /**
+ * Creates Ant Design starter homepage
+ * Showcases Ant Design's refined UI system with proper button styles
+ */
+export const createAntDesignStarterTemplate = (): CanvasItem[] => {
+  // 1. HERO SECTION - Daybreak Blue background
+  const heroSection: any = {
+    id: nanoid(),
+    name: 'Hero Section',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
+  }
+  heroSection.styling = {
+    paddingTop: '120px',
+    paddingBottom: '120px',
+    paddingLeft: '40px',
+    paddingRight: '40px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  heroSection.background = {
+    type: 'color',
+    color: '#1890ff',
+    opacity: 1
+  }
+  heroSection.contentMode = 'dark'
+  heroSection.fullWidth = true
+  heroSection.hideFromAudiences = []
+  heroSection.abTest = null
+  
+  heroSection.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: heroSection.id,
+      text: 'Ant Design System',
+      level: 1,
+      align: 'center',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'color: #ffffff; font-weight: 600; font-size: 56px; margin-bottom: 24px;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: heroSection.id,
+      text: 'An enterprise-class UI design language and React UI library with a set of high-quality React components for building rich, interactive user interfaces.',
+      align: 'center',
+      inlineStyles: 'font-size: 18px; line-height: 1.7; color: rgba(255,255,255,0.85); max-width: 800px; margin: 0 auto 40px auto;'
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: heroSection.id,
+      skin: 'minimal',
+      text: 'Get Started',
+      style: 'solid',
+      color: 'color2',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    }
+  ]
+  
+  // 2. BUTTON SHOWCASE SECTION
+  const buttonShowcase: any = {
+    id: nanoid(),
+    name: 'Button Showcase',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
+  }
+  buttonShowcase.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '40px',
+    paddingRight: '40px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  buttonShowcase.background = {
+    type: 'color',
+    color: '#ffffff',
+    opacity: 1
+  }
+  buttonShowcase.contentMode = 'light'
+  buttonShowcase.fullWidth = false
+  buttonShowcase.hideFromAudiences = []
+  buttonShowcase.abTest = null
+  
+  buttonShowcase.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: buttonShowcase.id,
+      text: 'Ant Design Button System',
+      level: 2,
+      align: 'center',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'font-size: 38px; margin-bottom: 16px; font-weight: 600;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: buttonShowcase.id,
+      text: 'Five button types: Primary, Danger, Default, Dashed, and Text',
+      align: 'center',
+      inlineStyles: 'font-size: 16px; color: rgba(0,0,0,0.45); margin-bottom: 48px;'
+    },
+    // PRIMARY - Solid blue
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Primary',
+      style: 'solid',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    // DANGER - Solid red
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Danger',
+      style: 'solid',
+      color: 'color2',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    // DEFAULT - Outline (grey border)
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Default',
+      style: 'outline',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    // DASHED - Dashed border
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Dashed',
+      style: 'outline',
+      color: 'color3',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    },
+    // TEXT - No background/border
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: buttonShowcase.id,
+      skin: 'minimal',
+      text: 'Text',
+      style: 'link',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    }
+  ]
+  
+  // 3. CARD GRID SECTION - Light grey background (Ant Design neutral)
+  const cardGridSection: any = {
+    id: nanoid(),
+    name: 'Features',
+    type: 'content-block',
+    layout: 'three-columns',
+    areas: [
+      { id: nanoid(), name: 'Column 1', widgets: [] },
+      { id: nanoid(), name: 'Column 2', widgets: [] },
+      { id: nanoid(), name: 'Column 3', widgets: [] }
+    ]
+  }
+  cardGridSection.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '40px',
+    paddingRight: '40px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  cardGridSection.background = {
+    type: 'color',
+    color: '#fafafa',
+    opacity: 1
+  }
+  cardGridSection.contentMode = 'light'
+  cardGridSection.fullWidth = true
+  cardGridSection.hideFromAudiences = []
+  cardGridSection.abTest = null
+  
+  // Card 1
+  cardGridSection.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: cardGridSection.id,
+      text: '🎨 Design Values',
+      level: 3,
+      align: 'left',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'font-size: 24px; margin-bottom: 12px; font-weight: 600;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: cardGridSection.id,
+      text: 'Natural, Certain, Meaningful, and Growing design values guide every component and interaction.',
+      align: 'left',
+      inlineStyles: 'font-size: 14px; line-height: 1.7; color: rgba(0,0,0,0.65); margin-bottom: 16px;'
+    }
+  ]
+  
+  // Card 2
+  cardGridSection.areas[1].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: cardGridSection.id,
+      text: '⚡ High Performance',
+      level: 3,
+      align: 'left',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'font-size: 24px; margin-bottom: 12px; font-weight: 600;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: cardGridSection.id,
+      text: 'Optimized for enterprise applications with tree-shaking, lazy loading, and minimal bundle size.',
+      align: 'left',
+      inlineStyles: 'font-size: 14px; line-height: 1.7; color: rgba(0,0,0,0.65); margin-bottom: 16px;'
+    }
+  ]
+  
+  // Card 3
+  cardGridSection.areas[2].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: cardGridSection.id,
+      text: '🌍 Global Reach',
+      level: 3,
+      align: 'left',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'font-size: 24px; margin-bottom: 12px; font-weight: 600;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: cardGridSection.id,
+      text: 'Internationalization support for dozens of languages with RTL layout and date/time formatting.',
+      align: 'left',
+      inlineStyles: 'font-size: 14px; line-height: 1.7; color: rgba(0,0,0,0.65); margin-bottom: 16px;'
+    }
+  ]
+  
+  // 4. ABOUT SECTION
+  const aboutSection: any = {
+    id: nanoid(),
+    name: 'About Ant Design',
+    type: 'content-block',
+    layout: 'one-column',
+    areas: [
+      { id: nanoid(), name: 'Content', widgets: [] }
+    ]
+  }
+  aboutSection.styling = {
+    paddingTop: '80px',
+    paddingBottom: '80px',
+    paddingLeft: '40px',
+    paddingRight: '40px',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'default',
+    maxWidth: '2xl'
+  }
+  aboutSection.background = {
+    type: 'color',
+    color: '#ffffff',
+    opacity: 1
+  }
+  aboutSection.contentMode = 'light'
+  aboutSection.fullWidth = false
+  aboutSection.hideFromAudiences = []
+  aboutSection.abTest = null
+  
+  aboutSection.areas[0].widgets = [
+    {
+      id: nanoid(),
+      type: 'heading',
+      sectionId: aboutSection.id,
+      text: 'Enterprise-Class UI',
+      level: 2,
+      align: 'center',
+      style: 'default',
+      color: 'default',
+      size: 'auto',
+      icon: { enabled: false, position: 'left', emoji: '' },
+      inlineStyles: 'font-size: 38px; margin-bottom: 24px; font-weight: 600;'
+    },
+    {
+      id: nanoid(),
+      type: 'text',
+      sectionId: aboutSection.id,
+      text: 'Ant Design provides a refined user experience with smooth transitions, subtle shadows, and a carefully crafted color system. Built for React, it delivers consistency and quality at scale.',
+      align: 'center',
+      inlineStyles: 'font-size: 16px; line-height: 1.7; color: rgba(0,0,0,0.65); max-width: 800px; margin: 0 auto 32px auto;'
+    },
+    {
+      id: nanoid(),
+      type: 'button',
+      sectionId: aboutSection.id,
+      skin: 'minimal',
+      text: 'View Components',
+      style: 'outline',
+      color: 'color1',
+      size: 'large',
+      href: '#',
+      target: '_self',
+      align: 'center',
+      icon: { enabled: false, position: 'left', emoji: '' }
+    }
+  ]
+  
+  return [
+    heroSection,
+    buttonShowcase,
+    cardGridSection,
+    aboutSection
+  ]
+}
+
+/**
  * Main factory function - Returns starter template based on theme ID
  * 
  * @param themeId - The ID of the selected theme
@@ -395,6 +780,10 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
     case 'ibm-carbon-ds':
       // IBM Carbon: Enterprise design with Carbon-specific styling
       return createCarbonDSStarterTemplate()
+    
+    case 'ant-design':
+      // Ant Design: Enterprise-class UI with refined experience
+      return createAntDesignStarterTemplate()
     
     case 'academic-classic':
     case 'academic-review':
