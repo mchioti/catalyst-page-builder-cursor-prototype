@@ -1099,13 +1099,12 @@ export const createWileyDSV2HeroPrefab = (): CanvasItem => {
   const heroSection = createBaseSection('two-columns', 'Hero Section')
   const typedSection = heroSection as WidgetSection
   
+  // NEW: Use semantic spacing tokens
+  typedSection.padding = 'semantic.3xl'  // 64px - Figma semantic token
+  typedSection.minHeight = '500px'       // Figma spec: L1 template VAR 2 (shorter hero)
+  
   // Styling: Shorter hero with background image (L1 template VAR 2)
   typedSection.styling = {
-    paddingTop: '80px',
-    paddingBottom: '80px',
-    paddingLeft: '80px',
-    paddingRight: '80px',
-    minHeight: '500px',  // Figma spec: L1 template VAR 2 (shorter hero)
     gap: 'large',
     variant: 'full-width',
     textColor: 'white'
@@ -1173,12 +1172,11 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
   const cardGridSection = createBaseSection('header-plus-grid', 'Card Grid')
   const typedSection = cardGridSection as WidgetSection
   
+  // NEW: Use semantic spacing tokens
+  typedSection.padding = 'semantic.3xl'  // 64px vertical, matches hero section
+  
   // Styling: Dark Heritage 900 background with generous padding
   typedSection.styling = {
-    paddingTop: '80px',
-    paddingBottom: '80px',
-    paddingLeft: '40px',
-    paddingRight: '40px',
     gap: 'large',
     variant: 'full-width',
     textColor: 'white'

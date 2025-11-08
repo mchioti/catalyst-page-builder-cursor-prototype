@@ -2416,25 +2416,125 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       spacing: {
-        base: '1rem',
-        scale: 1.5
+        /* ========================================================================
+           📏 SPACING & LAYOUT TOKENS (From Figma DS)
+           ========================================================================
+           
+           LAYER 1: BASE TOKENS (Foundation)
+           - Base-4 spacing scale: 0px, 4px, 8px, 12px, 16px, ..., 84px
+           - Single source of truth for all spacing values
+           
+           LAYER 2: SEMANTIC TOKENS
+           - Semantic spacing: none, xs, sm, md, lg, xl, 2xl, 3xl
+           - Corner radius: none, xs, sm, md, lg
+           
+           Applied to: Section padding, widget gaps, button/card border-radius
+        ======================================================================== */
+        
+        // BASE TOKENS (Foundation Layer) - Base-4 scale
+        base: {
+          0: '0px',      // base-0
+          1: '4px',      // base-1
+          2: '8px',      // base-2
+          3: '12px',     // base-3
+          4: '16px',     // base-4
+          5: '20px',     // base-5
+          6: '24px',     // base-6
+          7: '28px',     // base-7
+          8: '32px',     // base-8
+          9: '36px',     // base-9
+          10: '40px',    // base-10
+          11: '44px',    // base-11
+          12: '48px',    // base-12
+          13: '52px',    // base-13
+          14: '56px',    // base-14
+          15: '60px',    // base-15
+          16: '64px',    // base-16
+          17: '68px',    // base-17
+          18: '72px',    // base-18
+          19: '76px',    // base-19
+          20: '80px',    // base-20
+          21: '84px'     // base-21
+        },
+        
+        // SEMANTIC TOKENS (Layer 2) - Spacing
+        semantic: {
+          none: '0px',       // base-0
+          xs: '4px',         // base-1
+          sm: '8px',         // base-2
+          md: '16px',        // base-4
+          lg: '24px',        // base-6
+          xl: '32px',        // base-8
+          '2xl': '40px',     // base-10
+          '3xl': '64px'      // base-16
+        },
+        
+        // CORNER RADIUS TOKENS
+        radius: {
+          none: '0px',       // base-0
+          xs: '4px',         // base-1
+          sm: '8px',         // base-2
+          md: '16px',        // base-4
+          lg: '28px'         // base-7
+        },
+        
+        // GRID SYSTEM TOKENS (From Figma DS)
+        grid: {
+          // Container max-widths for different breakpoints
+          container: {
+            sm: '640px',      // Mobile/Small tablet
+            md: '768px',      // Tablet
+            lg: '1024px',     // Desktop small
+            xl: '1280px',     // Desktop large
+            '2xl': '1536px',  // Wide desktop
+            full: '100%'      // Full width
+          },
+          
+          // Column counts for responsive layouts
+          columns: {
+            mobile: 4,        // 4-column grid on mobile
+            tablet: 8,        // 8-column grid on tablet
+            desktop: 12       // 12-column grid on desktop
+          },
+          
+          // Gutter sizes (space between columns)
+          gutter: {
+            mobile: '16px',   // base-4
+            tablet: '24px',   // base-6
+            desktop: '32px'   // base-8
+          },
+          
+          // Breakpoints for media queries
+          breakpoints: {
+            sm: '640px',      // Mobile → Tablet
+            md: '768px',      // Tablet → Desktop Small
+            lg: '1024px',     // Desktop Small → Desktop Large
+            xl: '1280px',     // Desktop Large → Wide
+            '2xl': '1536px'   // Wide and above
+          }
+        }
       },
       
       components: {
         button: {
-          borderRadius: '6px',
+          borderRadius: 'radius.sm',  // 8px - Uses semantic token
           fontWeight: '500',
           textTransform: 'none',
           fontSize: '16px',
           letterSpacing: '1.6px',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          padding: {
+            small: 'semantic.sm',      // 8px
+            medium: 'semantic.md',     // 16px
+            large: 'semantic.lg'       // 24px
+          }
         },
         card: {
           // Content Card specs from Figma
-          borderRadius: '8px',
+          borderRadius: 'radius.sm',   // 8px - Uses semantic token
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: '24px',
+          padding: 'semantic.lg',      // 24px - Uses semantic token
           layout: 'vertical-left',
           spacing: 'small',
           variants: {

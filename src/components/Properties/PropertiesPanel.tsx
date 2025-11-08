@@ -548,6 +548,81 @@ export function PropertiesPanel({
             )}
           </div>
           
+          {/* Spacing & Layout Configuration */}
+          {(() => {
+            const { currentWebsiteId, websites, themes } = usePageStore.getState()
+            const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+            const currentTheme = currentWebsite 
+              ? themes.find((t: any) => t.id === currentWebsite.themeId)
+              : null
+            
+            const hasSpacingTokens = currentTheme?.id === 'wiley-figma-ds-v2' && currentTheme?.spacing?.semantic
+            
+            return (
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Spacing & Layout</h4>
+                
+                {/* Section Padding */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Section Padding</label>
+                  {hasSpacingTokens && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 mb-2">Quick presets (Wiley DS):</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { label: 'None', value: 'none' },
+                          { label: 'SM', value: 'sm' },
+                          { label: 'MD', value: 'md' },
+                          { label: 'LG', value: 'lg' },
+                          { label: 'XL', value: 'xl' },
+                          { label: '2XL', value: '2xl' },
+                          { label: '3XL', value: '3xl' }
+                        ].map((preset) => (
+                          <button
+                            key={preset.value}
+                            onClick={() => updateSection({
+                              padding: `semantic.${preset.value}`
+                            })}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    value={section.padding || ''}
+                    onChange={(e) => updateSection({ padding: e.target.value || undefined })}
+                    placeholder={hasSpacingTokens ? "semantic.lg or 24px" : "e.g., 24px or 1.5rem"}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {hasSpacingTokens 
+                      ? "Use presets above or custom values (e.g., semantic.lg, base.6, 24px)"
+                      : "Use CSS units (e.g., 24px, 1.5rem)"}
+                  </p>
+                </div>
+                
+                {/* Min Height */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Min Height</label>
+                  <input
+                    type="text"
+                    value={section.minHeight || ''}
+                    onChange={(e) => updateSection({ minHeight: e.target.value || undefined })}
+                    placeholder="e.g., 500px or 60vh"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Useful for hero sections or full-height banners
+                  </p>
+                </div>
+              </div>
+            )
+          })()}
+          
           {/* Section Behavior Configuration */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Content Behavior</h4>

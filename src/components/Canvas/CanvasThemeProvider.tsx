@@ -2,6 +2,33 @@ import { useEffect } from 'react'
 import { generateThemeCSS } from '../../styles/themeCSS'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
 
+// Helper function to resolve spacing token references (e.g., 'radius.sm' → '8px')
+function resolveSpacingToken(tokenRef: string | undefined, theme: any): string | undefined {
+  if (!tokenRef || !theme.spacing) return tokenRef
+  
+  // If it's already a direct value (e.g., '8px'), return as-is
+  if (tokenRef.match(/^\d+px$/)) return tokenRef
+  
+  // Parse token reference (e.g., 'radius.sm' → ['radius', 'sm'])
+  const parts = tokenRef.split('.')
+  if (parts.length !== 2) return tokenRef
+  
+  const [category, size] = parts
+  
+  // Resolve from theme.spacing
+  if (category === 'radius' && theme.spacing.radius) {
+    return theme.spacing.radius[size]
+  }
+  if (category === 'semantic' && theme.spacing.semantic) {
+    return theme.spacing.semantic[size]
+  }
+  if (category === 'base' && theme.spacing.base) {
+    return theme.spacing.base[size]
+  }
+  
+  return tokenRef
+}
+
 interface CanvasThemeProviderProps {
   children: React.ReactNode
   usePageStore: any // TODO: Type this properly when extracting store
@@ -71,9 +98,9 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
       '--theme-body-font': currentTheme.typography.bodyFont,
       '--theme-base-size': currentTheme.typography.baseSize,
       '--theme-scale': currentTheme.typography.scale,
-      // Component styling
-      '--theme-button-radius': currentTheme.components?.button?.borderRadius || '0.375rem',
-      '--theme-card-radius': currentTheme.components?.card?.borderRadius || '0.5rem',
+      // Component styling (resolve spacing token references)
+      '--theme-button-radius': resolveSpacingToken(currentTheme.components?.button?.borderRadius, currentTheme) || '0.375rem',
+      '--theme-card-radius': resolveSpacingToken(currentTheme.components?.card?.borderRadius, currentTheme) || '0.5rem',
       '--theme-id': currentTheme.id,
       // Backward compatibility with journal variables
       '--journal-primary': currentTheme.colors.primary,

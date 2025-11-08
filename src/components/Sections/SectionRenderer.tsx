@@ -13,6 +13,42 @@ import {
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 import { useBrandingStore } from '../../stores/brandingStore'
 
+// Helper function to resolve spacing token references (e.g., 'semantic.lg' → '24px')
+function resolveSpacingToken(tokenRef: string | undefined, usePageStore: any): string | undefined {
+  if (!tokenRef) return undefined
+  
+  // If it's already a direct value (e.g., '24px', '1.5rem'), return as-is
+  if (tokenRef.match(/^\d+(\.\d+)?(px|rem|em|vh|vw|%)$/)) return tokenRef
+  
+  // Parse token reference (e.g., 'semantic.lg' → ['semantic', 'lg'])
+  const parts = tokenRef.split('.')
+  if (parts.length !== 2) return tokenRef
+  
+  const [category, size] = parts
+  
+  // Get current theme from store
+  const { currentWebsiteId, websites, themes } = usePageStore.getState()
+  const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+  const currentTheme = currentWebsite 
+    ? themes.find((t: any) => t.id === currentWebsite.themeId)
+    : null
+  
+  if (!currentTheme?.spacing) return tokenRef
+  
+  // Resolve from theme.spacing
+  if (category === 'radius' && currentTheme.spacing.radius) {
+    return currentTheme.spacing.radius[size]
+  }
+  if (category === 'semantic' && currentTheme.spacing.semantic) {
+    return currentTheme.spacing.semantic[size]
+  }
+  if (category === 'base' && currentTheme.spacing.base) {
+    return currentTheme.spacing.base[size]
+  }
+  
+  return tokenRef
+}
+
 interface SectionRendererProps {
   section: WidgetSection
   onWidgetClick: (id: string, e: React.MouseEvent) => void
@@ -278,15 +314,26 @@ export function SectionRenderer({
     }
     
     // Auto behavior: constrain within breakpoint
-    // Use website-specific breakpoint from passed websiteId
+    // NEW: Check theme grid tokens first (for Wiley DS V2), then fall back to website branding
+    const { currentWebsiteId, websites, themes } = usePageStore.getState()
+    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+    const currentTheme = currentWebsite 
+      ? themes.find((t: any) => t.id === currentWebsite.themeId)
+      : null
+    
     const websiteBranding = getWebsiteBranding(websiteId)
-    const desktopBreakpoint = websiteBranding?.breakpoints?.desktop || '1280px'
+    
+    // Priority: Theme grid container > Website branding > Default
+    const desktopBreakpoint = currentTheme?.spacing?.grid?.container?.xl 
+      || websiteBranding?.breakpoints?.desktop 
+      || '1280px'
     
     console.log('🎯 SectionRenderer - Applying breakpoint:', {
       sectionId: section.id,
       behavior,
       websiteId,
       desktopBreakpoint,
+      fromThemeGrid: !!currentTheme?.spacing?.grid?.container?.xl,
       websiteBranding: websiteBranding ? 'found' : 'not found'
     })
     
@@ -366,6 +413,22 @@ export function SectionRenderer({
       case 'large': return 'gap-6'
       default: return 'gap-4' // default gap
     }
+  }
+  
+  // NEW: Resolve grid gutter from theme (for Wiley DS V2)
+  const getGridGutter = () => {
+    const { currentWebsiteId, websites, themes } = usePageStore.getState()
+    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+    const currentTheme = currentWebsite 
+      ? themes.find((t: any) => t.id === currentWebsite.themeId)
+      : null
+    
+    // If theme has grid tokens, use desktop gutter
+    if (currentTheme?.spacing?.grid?.gutter?.desktop) {
+      return currentTheme.spacing.grid.gutter.desktop
+    }
+    
+    return null // Fall back to Tailwind classes
   }
 
   // Generate background styles based on section background configuration
@@ -558,7 +621,15 @@ export function SectionRenderer({
         }`}
         style={{
           ...getSectionBackgroundStyles(section),
-          // Support both semantic values ('small', 'medium', 'large') and pixel values ('80px', '96px')
+          // NEW: Top-level padding with spacing token support (e.g., 'semantic.lg', 'base.6', '24px')
+          ...(section.padding && { 
+            padding: resolveSpacingToken(section.padding, usePageStore) || section.padding
+          }),
+          // NEW: Top-level minHeight with spacing token support
+          ...(section.minHeight && { 
+            minHeight: resolveSpacingToken(section.minHeight, usePageStore) || section.minHeight
+          }),
+          // LEGACY: Support both semantic values ('small', 'medium', 'large') and pixel values ('80px', '96px')
           ...(section.styling?.paddingTop && { 
             paddingTop: section.styling.paddingTop === 'large' ? '32px' 
               : section.styling.paddingTop === 'medium' ? '24px'
@@ -583,7 +654,7 @@ export function SectionRenderer({
               : section.styling.paddingRight === 'small' ? '16px'
               : section.styling.paddingRight
           }),
-          // Figma Hero Banner: min-height support
+          // LEGACY: Figma Hero Banner: min-height support
           ...(section.styling?.minHeight && { minHeight: section.styling.minHeight })
         }}
         tabIndex={-1}
@@ -679,8 +750,12 @@ export function SectionRenderer({
         style={contentWrapperConfig.styles}
       >
         <div 
-          className={`grid gap-2 ${getLayoutClasses(section.layout)}`}
-          style={sidebarHeight || {}}
+          className={`grid ${getLayoutClasses(section.layout)}`}
+          style={{
+            ...sidebarHeight,
+            // NEW: Use grid gutter from theme tokens (Wiley DS V2), fallback to Tailwind gap-4
+            gap: getGridGutter() || '1rem'
+          }}
         >
         {section.areas.map((area, areaIndex) => {
           // Make area droppable for library widgets

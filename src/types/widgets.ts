@@ -277,6 +277,10 @@ export type WidgetSection = {
   // Content mode (text color adaptation)
   contentMode?: 'light' | 'dark' // Light = dark text (light bg), Dark = white text (dark bg)
   
+  // Spacing tokens (NEW: Figma DS V2 - semantic spacing)
+  padding?: string // e.g., 'semantic.lg', 'base.6', '24px'
+  minHeight?: string // e.g., '500px', '60vh'
+  
       // Sidebar-specific properties (only when type === 'sidebar')
       sidebar?: {
         position: 'left' | 'right'
