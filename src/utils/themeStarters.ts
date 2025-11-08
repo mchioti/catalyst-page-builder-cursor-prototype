@@ -296,7 +296,7 @@ export const createWileyDSV2StarterTemplate = (): CanvasItem[] => {
       skin: 'minimal',
       text: 'ABOUT WILEY',
       align: 'center',
-      inlineStyles: 'font-size: 12px; font-weight: 600; letter-spacing: 2px; color: #5A5A5A; margin-bottom: 16px;'
+      inlineStyles: 'font-size: 12px; font-weight: 600; letter-spacing: 2px; opacity: 0.6; margin-bottom: 16px;'
     },
     {
       id: nanoid(),
@@ -318,7 +318,7 @@ export const createWileyDSV2StarterTemplate = (): CanvasItem[] => {
       skin: 'minimal',
       text: 'We transform knowledge into actionable intelligence – accelerating scientific breakthroughs, supporting learning, and driving innovation that redefines fields and improves lives. Through access to trusted research, data, and AI-powered platforms, we\'re your partner in a world driven by curiosity and continuous discovery.',
       align: 'center',
-      inlineStyles: 'font-size: 18px; line-height: 1.7; color: #313131; max-width: 900px; margin: 0 auto 32px auto;'
+      inlineStyles: 'font-size: 18px; line-height: 1.7; max-width: 900px; margin: 0 auto 32px auto;'
     },
     {
       id: nanoid(),
@@ -326,16 +326,12 @@ export const createWileyDSV2StarterTemplate = (): CanvasItem[] => {
       sectionId: aboutSection.id,
       skin: 'minimal',
       text: 'LEARN MORE →',
-      variant: 'primary',
+      style: 'solid',       // Use semantic style
+      color: 'color3',      // Tertiary = dark teal (adapts to brand)
       size: 'large',
       href: '#',
       target: '_self',
-      layout: {
-        background: '#1a4d4d',
-        textColor: '#ffffff',
-        borderRadius: '6px',
-        padding: '16px 32px'
-      },
+      align: 'center',
       icon: { enabled: false, position: 'left', emoji: '' }
     },
     {
@@ -770,11 +766,8 @@ export const createAntDesignStarterTemplate = (): CanvasItem[] => {
 export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
   switch (themeId) {
     case 'wiley-figma-ds-v2':
-      // DS V2: Figma-accurate prefab sections (Hero 800px, Card Grid, About, Shop Today)
-      return createWileyDSV2StarterTemplate()
-    
-    case 'wiley-ds-mcp':
-      // MCP: Same sections as DS V2 but with complete token system (88 core + 159 semantic colors)
+      // DS V2: Complete 3-layer architecture (Foundation → Semantic → Overrides)
+      // Comprehensive MCP extraction: 88 core colors, 159 semantic colors, 5-color button system
       return createWileyDSV2StarterTemplate()
     
     case 'ibm-carbon-ds':

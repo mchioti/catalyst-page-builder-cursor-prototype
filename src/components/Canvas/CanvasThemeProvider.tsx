@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { generateThemeCSS } from '../../styles/themeCSS'
+import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
 
 interface CanvasThemeProviderProps {
   children: React.ReactNode
@@ -7,21 +8,40 @@ interface CanvasThemeProviderProps {
 }
 
 export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProviderProps) {
-  const { themes, websites, currentWebsiteId } = usePageStore()
+  // Use selector to explicitly track brand mode changes
+  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
+  const themes = usePageStore((state: any) => state.themes)
+  const currentWebsite = usePageStore((state: any) => 
+    state.websites.find((w: any) => w.id === state.currentWebsiteId)
+  )
+  const brandMode: BrandMode = usePageStore((state: any) => {
+    const website = state.websites.find((w: any) => w.id === state.currentWebsiteId)
+    return website?.brandMode || 'wiley'
+  })
   
-  // Find the current website and its theme
-  const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
-  const currentTheme = currentWebsite 
+  console.log('🎨 CanvasThemeProvider RENDER:', {
+    websiteId: currentWebsiteId,
+    websiteName: currentWebsite?.name,
+    brandMode,
+    timestamp: new Date().toISOString()
+  })
+  
+  // Find the theme
+  const rawTheme = currentWebsite 
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : themes.find((t: any) => t.id === 'modernist-theme') // Fallback to modernist
+  
+  // Resolve token references based on brand mode
+  const currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
   
   console.log('🔍 CanvasThemeProvider Debug:', {
     currentWebsiteId,
     currentWebsite: currentWebsite?.name,
     themeId: currentWebsite?.themeId,
+    brandMode,
     currentTheme: currentTheme?.name,
     themesCount: themes.length,
-    websitesCount: websites.length
+    semanticColorsResolved: !!currentTheme?.colors?.semanticColors
   })
   
   if (!currentTheme) {
@@ -206,7 +226,7 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
 
   // Inject generated theme CSS into document head
   useEffect(() => {
-    console.log('🚀 useEffect RUNNING! Theme:', currentTheme?.id, 'Full theme:', currentTheme)
+    console.log('🚀 useEffect RUNNING! Theme:', currentTheme?.id, 'Brand Mode:', brandMode)
     
     const styleId = `theme-styles-${currentTheme.id}`
     
@@ -249,7 +269,7 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
         console.log('🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [currentTheme.id]) // Re-run when theme changes
+  }, [currentTheme.id, brandMode]) // Re-run when theme or brand mode changes
 
   return (
     <div 

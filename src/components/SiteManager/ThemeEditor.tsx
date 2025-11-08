@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
+import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
 
 // Color input component
 function ColorInput({ 
@@ -177,6 +178,7 @@ type Website = {
   id: string
   name: string
   themeId: string
+  brandMode?: 'wiley' | 'wt' | 'dummies' // For multi-brand themes (DS V2)
   themeOverrides?: {
     colors?: Partial<Theme['colors']>
     typography?: Partial<Theme['typography']>
@@ -300,7 +302,27 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     }
   }
   
-  const effectiveTheme = getEffectiveThemeValues()
+  const rawEffectiveTheme = getEffectiveThemeValues()
+  
+  // Resolve token references based on website's brand mode
+  const brandMode: BrandMode = currentWebsite?.brandMode || 'wiley'
+  const effectiveTheme = useMemo(() => {
+    if (!rawEffectiveTheme || !currentTheme) return null
+    
+    // Create a temporary theme object for resolution
+    const tempTheme = {
+      ...currentTheme,
+      colors: rawEffectiveTheme.colors
+    }
+    
+    // Resolve token references based on brand mode
+    const resolved = resolveThemeColors(tempTheme, brandMode)
+    
+    return {
+      ...rawEffectiveTheme,
+      colors: resolved.colors
+    }
+  }, [rawEffectiveTheme, currentTheme, brandMode, currentWebsite?.name, websiteId])
   
   const fontOptions = [
     'Inter, sans-serif',
@@ -395,18 +417,73 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <div>
                 <h4 className="text-base font-semibold text-gray-800 mb-2">Publisher Main branding</h4>
                 <p className="text-sm text-gray-600 mb-4">Affects menu, backgrounds, buttons</p>
-                <div className="space-y-4">
-                  <ColorInput
-                    label="Primary color"
-                    value={effectiveTheme.colors.primary}
-                    onChange={(value) => updateThemeColors({ primary: value })}
-                  />
-                  <ColorInput
-                    label="Secondary color"
-                    value={effectiveTheme.colors.secondary}
-                    onChange={(value) => updateThemeColors({ secondary: value })}
-                  />
-                </div>
+                
+                {/* Brand Mode Selector - only at website level and for DS V2 */}
+                {isWebsiteLevel && effectiveTheme.colors.foundation && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      🎨 Brand Mode
+                    </label>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Switch between Wiley, WT, and Dummies design systems. All colors will update automatically.
+                    </p>
+                    <div className="flex gap-2">
+                      {(['wiley', 'wt', 'dummies'] as const).map((mode) => {
+                        const currentBrandMode = currentWebsite?.brandMode || 'wiley'
+                        const isActive = currentBrandMode === mode
+                        const labels = {
+                          wiley: 'Wiley (Green)',
+                          wt: 'WT (Olive)',
+                          dummies: 'Dummies (Gold)'
+                        }
+                        return (
+                          <button
+                            key={mode}
+                            onClick={() => {
+                              if (websiteId) {
+                                updateWebsite(websiteId, { brandMode: mode })
+                              }
+                            }}
+                            className={`
+                              flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all
+                              ${isActive 
+                                ? 'bg-blue-600 text-white shadow-md' 
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                              }
+                            `}
+                          >
+                            {labels[mode]}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Legacy flat colors - hidden for DS V2 (uses semantic system instead) */}
+                {!effectiveTheme.colors.foundation && (
+                  <div className="space-y-4">
+                    <ColorInput
+                      label="Primary color"
+                      value={effectiveTheme.colors.primary}
+                      onChange={(value) => updateThemeColors({ primary: value })}
+                    />
+                    <ColorInput
+                      label="Secondary color"
+                      value={effectiveTheme.colors.secondary}
+                      onChange={(value) => updateThemeColors({ secondary: value })}
+                    />
+                  </div>
+                )}
+                
+                {/* DS V2: Show explanation for hidden legacy colors */}
+                {effectiveTheme.colors.foundation && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-xs text-blue-700">
+                      ℹ️ This theme uses a <strong>multi-brand foundation system</strong>. All colors are managed through the button variants below and automatically adapt when you switch brands.
+                    </p>
+                  </div>
+                )}
               </div>
               
               {/* Button Variants */}
@@ -416,7 +493,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 
                 {/* Primary Button */}
                 <div className="mb-5">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">Primary Button (Brand 1)</h5>
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Primary Button</h5>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <ColorInput
@@ -463,7 +540,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 
                 {/* Secondary Button */}
                 <div className="mb-5">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">Secondary Button (Brand 2)</h5>
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Secondary Button</h5>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <ColorInput
@@ -518,7 +595,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 
                 {/* Tertiary Button */}
                 <div>
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">Tertiary Button (Brand 3)</h5>
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Tertiary Button</h5>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <ColorInput

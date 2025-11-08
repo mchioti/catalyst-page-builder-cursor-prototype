@@ -34,16 +34,33 @@ export const generateThemeCSS = (theme: any): string => {
   white-space: nowrap;
   cursor: pointer;
   border: none;
-  transition: all 200ms ease;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   line-height: 1.5;
   
   /* Theme-specific styling */
   border-radius: var(--theme-button-radius);
+  
+  /* Visual depth */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .btn:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.btn:focus:not(:focus-visible) {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Button Sizes */
@@ -63,13 +80,33 @@ export const generateThemeCSS = (theme: any): string => {
 }
 
 /* Button Styles - SOLID */
-.btn-solid-color1 {
-  background: var(--theme-color-primary);
+/* 🎨 Context-aware: Use primary.dark for LIGHT backgrounds, primary.light for DARK backgrounds */
+.btn-solid-color1.on-light-bg {
+  background: var(--semantic-primary-dark, var(--theme-color-primary));
   color: white;
 }
 
-.btn-solid-color1:hover {
-  opacity: 0.9;
+.btn-solid-color1.on-light-bg:hover {
+  background: var(--semantic-primary-dark-hover, var(--theme-color-primary));
+}
+
+.btn-solid-color1.on-light-bg:active {
+  background: var(--semantic-primary-dark, var(--theme-color-primary));
+  filter: brightness(0.9);
+}
+
+.btn-solid-color1.on-dark-bg {
+  background: var(--semantic-primary-light, var(--theme-color-primary));
+  color: black;
+}
+
+.btn-solid-color1.on-dark-bg:hover {
+  background: var(--semantic-primary-light-hover, var(--theme-color-primary));
+}
+
+.btn-solid-color1.on-dark-bg:active {
+  background: var(--semantic-primary-light, var(--theme-color-primary));
+  filter: brightness(0.9);
 }
 
 .btn-solid-color2 {
@@ -113,15 +150,45 @@ export const generateThemeCSS = (theme: any): string => {
 }
 
 /* Button Styles - OUTLINE */
+/* 🎨 Context-aware: Adapt border/text color based on background */
 .btn-outline-color1 {
-  background: transparent;
-  color: var(--theme-color-primary);
-  border: 2px solid var(--theme-color-primary);
+  box-shadow: none !important; /* Outline buttons have no shadow by default */
 }
 
-.btn-outline-color1:hover {
-  background: var(--theme-color-primary);
+.btn-outline-color1.on-light-bg {
+  background: transparent;
+  color: var(--semantic-primary-dark, var(--theme-color-primary));
+  border: 2px solid var(--semantic-primary-dark, var(--theme-color-primary));
+}
+
+.btn-outline-color1.on-light-bg:hover {
+  background: var(--semantic-primary-dark, var(--theme-color-primary));
   color: white;
+  border-color: var(--semantic-primary-dark, var(--theme-color-primary));
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.btn-outline-color1.on-light-bg:active {
+  background: var(--semantic-primary-dark-hover, var(--theme-color-primary));
+  color: white;
+}
+
+.btn-outline-color1.on-dark-bg {
+  background: transparent;
+  color: var(--semantic-primary-light, var(--theme-color-primary));
+  border: 2px solid var(--semantic-primary-light, var(--theme-color-primary));
+}
+
+.btn-outline-color1.on-dark-bg:hover {
+  background: var(--semantic-primary-light, var(--theme-color-primary));
+  color: black;
+  border-color: var(--semantic-primary-light, var(--theme-color-primary));
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.btn-outline-color1.on-dark-bg:active {
+  background: var(--semantic-primary-light-hover, var(--theme-color-primary));
+  color: black;
 }
 
 .btn-outline-color2 {
@@ -169,16 +236,48 @@ export const generateThemeCSS = (theme: any): string => {
 }
 
 /* Button Styles - LINK */
+/* 🎨 Context-aware: Adapt text color based on background */
 .btn-link-color1 {
-  background: transparent;
-  color: var(--theme-color-primary);
-  padding: 0;
-  border: none;
+  box-shadow: none !important; /* Link buttons have no shadow */
+  padding: 0 !important;
 }
 
-.btn-link-color1:hover {
+.btn-link-color1.on-light-bg {
+  background: transparent;
+  color: var(--semantic-primary-dark, var(--theme-color-primary));
+  border: none;
   text-decoration: underline;
-  opacity: 0.75;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+
+.btn-link-color1.on-light-bg:hover {
+  color: var(--semantic-primary-dark-hover, var(--theme-color-primary));
+  text-decoration-color: var(--semantic-primary-dark-hover, var(--theme-color-primary));
+  transform: none;
+}
+
+.btn-link-color1.on-light-bg:active {
+  color: var(--semantic-primary-dark, var(--theme-color-primary));
+}
+
+.btn-link-color1.on-dark-bg {
+  background: transparent;
+  color: var(--semantic-primary-light, var(--theme-color-primary));
+  border: none;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+
+.btn-link-color1.on-dark-bg:hover {
+  color: var(--semantic-primary-light-hover, var(--theme-color-primary));
+  text-decoration-color: var(--semantic-primary-light-hover, var(--theme-color-primary));
+  transform: none;
+}
+
+.btn-link-color1.on-dark-bg:active {
+  color: var(--semantic-primary-light, var(--theme-color-primary));
 }
 
 .btn-link-color2 {
@@ -507,8 +606,8 @@ const generateThemeSpecificCSS = (theme: any): string => {
 `
   }
   
-  // Wiley DS V2 & MCP: Monospace, uppercase buttons
-  if (themeId === 'wiley-figma-ds-v2' || themeId === 'wiley-ds-mcp') {
+  // Wiley DS V2: Monospace, uppercase buttons (comprehensive foundation merged)
+  if (themeId === 'wiley-figma-ds-v2') {
     return `
 /* Wiley DS V2 Theme Overrides */
 .btn {

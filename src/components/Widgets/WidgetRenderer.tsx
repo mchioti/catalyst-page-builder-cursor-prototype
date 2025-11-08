@@ -171,10 +171,12 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
   
   // 🎨 NEW: Build semantic CSS classes (NO TAILWIND)
   // Classes are defined in themeCSS.ts and injected by CanvasThemeProvider
+  const contextClass = sectionContentMode === 'dark' ? 'on-dark-bg' : 'on-light-bg'
   const buttonClasses = [
     'btn',                                    // Base button class
     `btn-${style}-${color}`,                  // Style + color (e.g., btn-solid-color1)
-    `btn-${widget.size}`                      // Size (e.g., btn-medium)
+    `btn-${widget.size}`,                     // Size (e.g., btn-medium)
+    contextClass                              // Context-aware (e.g., on-light-bg, on-dark-bg)
   ].join(' ')
   
   const renderContent = () => (

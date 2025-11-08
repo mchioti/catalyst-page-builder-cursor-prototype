@@ -213,10 +213,11 @@ export function DraggableWidgetInSection({
         </div>
       )}
       
-      {/* Make widget content non-interactive in edit mode */}
+      {/* Make widget content non-interactive ONLY in edit mode */}
       {/* Exception: tabs widget needs pointer events for drop zones and tab navigation */}
+      {/* In live mode (preview/published), allow ALL interactions (hover, click, etc.) */}
       <div style={{ 
-        pointerEvents: widget.type === 'tabs' ? 'auto' : 'none', 
+        pointerEvents: isLiveMode ? 'auto' : (widget.type === 'tabs' ? 'auto' : 'none'),
         position: 'relative', 
         zIndex: 1 
       }}>

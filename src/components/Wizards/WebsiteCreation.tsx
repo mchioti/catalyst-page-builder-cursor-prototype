@@ -10,6 +10,7 @@ interface Website {
   name: string
   domain: string
   themeId: string
+  brandMode?: 'wiley' | 'wt' | 'dummies'
   status: string
   createdAt: Date
   updatedAt: Date
@@ -63,6 +64,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
   const [websiteData, setWebsiteData] = useState({
     name: '',
     themeId: '',
+    brandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // Default brand mode
     purpose: {
       contentTypes: [] as string[],
       hasSubjectOrganization: false,
@@ -93,6 +95,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       name: websiteData.name,
       domain: `${websiteData.name.toLowerCase().replace(/\s+/g, '-')}.wiley.com`, // Auto-generate from name
       themeId: websiteData.themeId,
+      brandMode: websiteData.brandMode, // Use selected brand mode
       status: 'staging',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -429,70 +432,132 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                   </div>
                   
                   {selectedTheme && (
-                    <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-gray-600">Primary Color:</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-4 h-4 rounded border" style={{backgroundColor: selectedTheme.colors.primary}}></div>
-                            <span className="text-gray-700">{selectedTheme.colors.primary}</span>
+                    <>
+                      {/* Brand Mode Selector - only for DS V2 theme */}
+                      {selectedTheme.id === 'wiley-figma-ds-v2' && (
+                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                          <label className="block text-sm font-semibold text-gray-800 mb-2">
+                            🎨 Brand Mode
+                          </label>
+                          <p className="text-xs text-gray-600 mb-3">
+                            Choose which design system to use. This affects all colors and can be changed later in website settings.
+                          </p>
+                          <div className="flex gap-2">
+                            {[
+                              { value: 'wiley' as const, label: 'Wiley (Green)', color: '#00d875' },
+                              { value: 'wt' as const, label: 'WT (Olive)', color: '#3c711a' },
+                              { value: 'dummies' as const, label: 'Dummies (Gold)', color: '#74520f' }
+                            ].map((brand) => {
+                              const isActive = websiteData.brandMode === brand.value
+                              return (
+                                <button
+                                  key={brand.value}
+                                  type="button"
+                                  onClick={() => setWebsiteData({...websiteData, brandMode: brand.value})}
+                                  className={`
+                                    flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all
+                                    ${isActive 
+                                      ? 'bg-blue-600 text-white shadow-md' 
+                                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center justify-center gap-2">
+                                    <div 
+                                      className="w-3 h-3 rounded-full border-2 border-white" 
+                                      style={{backgroundColor: brand.color}}
+                                    />
+                                    {brand.label}
+                                  </div>
+                                </button>
+                              )
+                            })}
                           </div>
                         </div>
-                        <div>
-                          <span className="font-medium text-gray-600">Typography:</span>
-                          <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
+                      )}
+                      
+                      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h5 className="font-medium text-gray-900 mb-3">Theme Defaults ({selectedTheme.name})</h5>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-600">Primary Color:</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="w-4 h-4 rounded border" style={{backgroundColor: (() => {
+                                // Show brand-specific color for DS V2
+                                if (selectedTheme.id === 'wiley-figma-ds-v2' && (selectedTheme as any).colors?.foundation?.primaryData?.[600]) {
+                                  const brandColors = (selectedTheme as any).colors.foundation.primaryData[600]
+                                  return brandColors[websiteData.brandMode] || selectedTheme.colors.primary
+                                }
+                                return selectedTheme.colors.primary
+                              })()}}></div>
+                              <span className="text-gray-700">{(() => {
+                                // Show brand-specific color for DS V2
+                                if (selectedTheme.id === 'wiley-figma-ds-v2' && (selectedTheme as any).colors?.foundation?.primaryData?.[600]) {
+                                  const brandColors = (selectedTheme as any).colors.foundation.primaryData[600]
+                                  return brandColors[websiteData.brandMode] || selectedTheme.colors.primary
+                                }
+                                return selectedTheme.colors.primary
+                              })()}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">Typography:</span>
+                            <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                   
-                  <div className="mb-6">
-                    <h5 className="font-medium text-gray-900 mb-3">Custom Branding (Optional)</h5>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Customize your brand colors and logo. Leave blank to use theme defaults.
-                    </p>
-                  
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
-                        <input
-                          type="url"
-                          value={websiteData.branding.logoUrl}
-                          onChange={(e) => setWebsiteData({
-                            ...websiteData,
-                            branding: {...websiteData.branding, logoUrl: e.target.value}
-                          })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="https://example.com/logo.svg"
-                        />
-                      </div>
-                      
-                      {selectedTheme?.modificationRules.colors.canModifyPrimary && (
+                  {/* Hide Custom Branding for DS V2 - uses multi-brand foundation system instead */}
+                  {selectedTheme && selectedTheme.id !== 'wiley-figma-ds-v2' && (
+                    <div className="mb-6">
+                      <h5 className="font-medium text-gray-900 mb-3">Custom Branding (Optional)</h5>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Customize your brand colors and logo. Leave blank to use theme defaults.
+                      </p>
+                    
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Custom Logo URL</label>
                           <input
-                            type="color"
-                            value={websiteData.branding.primaryColor || selectedTheme.colors.primary}
+                            type="url"
+                            value={websiteData.branding.logoUrl}
                             onChange={(e) => setWebsiteData({
                               ...websiteData,
-                              branding: {...websiteData.branding, primaryColor: e.target.value}
+                              branding: {...websiteData.branding, logoUrl: e.target.value}
                             })}
-                            className="w-full h-10 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            placeholder="https://example.com/logo.svg"
                           />
+                        </div>
+                        
+                        {selectedTheme?.modificationRules.colors.canModifyPrimary && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
+                            <input
+                              type="color"
+                              value={websiteData.branding.primaryColor || selectedTheme.colors.primary}
+                              onChange={(e) => setWebsiteData({
+                                ...websiteData,
+                                branding: {...websiteData.branding, primaryColor: e.target.value}
+                              })}
+                              className="w-full h-10 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {selectedTheme && !selectedTheme.modificationRules.colors.canModifyPrimary && (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-amber-700 text-sm">
+                            <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
+                            You can set a logo, but color modification will be limited after website creation.
+                          </p>
                         </div>
                       )}
                     </div>
-                    
-                    {selectedTheme && !selectedTheme.modificationRules.colors.canModifyPrimary && (
-                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-amber-700 text-sm">
-                          <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 
-                          You can set a logo, but color modification will be limited after website creation.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  )}
                   
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <h5 className="font-medium text-blue-900 mb-4">Website Summary</h5>

@@ -53,6 +53,7 @@ export type Website = {
   name: string
   domain: string
   themeId: string // References Theme.id (websites inherit from themes, not individual templates)
+  brandMode?: 'wiley' | 'wt' | 'dummies' // For multi-brand themes (DS V2)
   status: 'active' | 'staging' | 'maintenance'
   createdAt: Date
   updatedAt: Date

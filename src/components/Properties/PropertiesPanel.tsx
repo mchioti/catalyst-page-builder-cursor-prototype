@@ -1689,13 +1689,13 @@ export function PropertiesPanel({
                   ? themes.find((t: any) => t.id === currentWebsite.themeId)
                   : null
                 
-                // MCP and DS V2 use all 5 Figma button colors (matches Figma exactly)
-                if (currentTheme?.id === 'wiley-ds-mcp' || currentTheme?.id === 'wiley-figma-ds-v2') {
+                // DS V2 uses semantic color names (works across Wiley/WT/Dummies brands)
+                if (currentTheme?.id === 'wiley-figma-ds-v2') {
                   return (
                     <>
-                      <option value="color1">Brand 1</option>
-                      <option value="color2">Brand 2</option>
-                      <option value="color3">Brand 3</option>
+                      <option value="color1">Primary</option>
+                      <option value="color2">Secondary</option>
+                      <option value="color3">Tertiary</option>
                       <option value="color4">Neutral Dark</option>
                       <option value="color5">Neutral Light</option>
                     </>
