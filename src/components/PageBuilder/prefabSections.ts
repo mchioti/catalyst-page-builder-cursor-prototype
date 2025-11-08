@@ -160,7 +160,7 @@ export const createMainNavigationPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'primary' as const,
-    size: 'large' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '📚' }
   }
 
@@ -224,7 +224,7 @@ export const createHeroPrefab = (): CanvasItem => {
     align: 'center' as const,
     style: 'hero' as const,
     color: 'primary' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '🚀' }
   }
 
@@ -613,7 +613,7 @@ export const createWileyHeroPrefab = (): CanvasItem => {
     align: 'center' as const,
     style: 'hero' as const,
     color: 'primary' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -853,7 +853,7 @@ export const createWileyFigmaHeroPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'hero' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1135,7 +1135,7 @@ export const createWileyDSV2HeroPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'hero' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1203,7 +1203,7 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1241,7 +1241,7 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1279,7 +1279,7 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1359,7 +1359,7 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1385,7 +1385,7 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1424,7 +1424,7 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1463,7 +1463,7 @@ export const createWileyFigmaLogoGridPrefab = (): CanvasItem => {
     align: 'left' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   
@@ -1548,7 +1548,7 @@ export const createWileyFigmaFeaturedContentPrefab = (): CanvasItem => {
     align: 'center' as const,
     style: 'default' as const,
     color: 'default' as const,
-    size: 'xl' as const,
+    size: 'auto' as const,
     icon: { enabled: false, position: 'left' as const, emoji: '' }
   }
   

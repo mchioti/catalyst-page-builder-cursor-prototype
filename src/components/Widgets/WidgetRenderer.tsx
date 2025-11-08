@@ -276,8 +276,8 @@ const TextWidgetRenderer: React.FC<{ widget: TextWidget; sectionContentMode?: 'l
     ))
   }
   
-  // Get typography class for Carbon themes
-  const typographyClass = widget.typographyStyle ? `text-${widget.typographyStyle}` : '';
+  // Get typography class from theme (e.g., typo-body-md, typo-body-lg)
+  const typographyClass = widget.typographyStyle ? `typo-${widget.typographyStyle}` : '';
   
   // Render HTML content if it contains HTML tags, otherwise render as plain text
   if (containsHTML(widget.text)) {
@@ -905,17 +905,55 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   
   const HeadingTag = `h${widget.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   
-  // Get typography class for Carbon themes
-  const typographyClass = widget.typographyStyle ? `heading-${widget.typographyStyle}` : ''
+  // Check if typography CSS is available by testing if the class has actual font-size styles
+  // This is more reliable than checking theme ID
+  const hasTypographyStyles = (): boolean => {
+    if (typeof document === 'undefined') return false
+    
+    // Create a temporary element to test if typography classes are styled
+    const testEl = document.createElement('div')
+    testEl.className = 'typo-heading-h1'
+    testEl.style.cssText = 'position:absolute;visibility:hidden;'
+    document.body.appendChild(testEl)
+    
+    const computed = window.getComputedStyle(testEl)
+    const hasStyles = computed.fontSize !== '' && computed.fontSize !== '16px' // 16px is browser default
+    
+    document.body.removeChild(testEl)
+    return hasStyles
+  }
+  
+  const useTypography = hasTypographyStyles()
+  
+  // Get typography class or Tailwind class based on theme
+  const getSizeClass = () => {
+    if (useTypography) {
+      // Typography themes (Wiley DS V2, Carbon)
+      if (widget.size === 'auto') {
+        // Auto: Match typography to semantic level (H1 → typo-heading-h1, H2 → typo-heading-h2, etc.)
+        return `typo-heading-h${widget.level}`
+      } else {
+        // Manual override: Map size to typography style
+        const sizeToTypographyMap: Record<string, string> = {
+          'xl': 'typo-heading-h1',      // Extra Large → H1 style (80px/48px)
+          'large': 'typo-heading-h2',   // Large → H2 style (48px/32px)
+          'medium': 'typo-heading-h4',  // Medium → H4 style (24px/20px)
+          'small': 'typo-heading-h6'    // Small → H6 style (18px/16px)
+        }
+        return sizeToTypographyMap[widget.size] || 'typo-heading-h4'
+      }
+    } else {
+      // Legacy themes: Use Tailwind size classes
+      const effectiveSize = widget.size === 'auto' ? getSemanticDefaultSize(widget.level) : widget.size
+      return sizeClasses[effectiveSize]
+    }
+  }
   
   const headingClasses = [
     getStyleClasses(),
     alignClasses[widget.align || 'left'],
-    widget.size === 'auto' 
-      ? sizeClasses[getSemanticDefaultSize(widget.level)]
-      : sizeClasses[widget.size || 'auto'],
-    colorClasses[widget.color || 'default'],
-    typographyClass
+    getSizeClass(),
+    colorClasses[widget.color || 'default']
   ].filter(Boolean).join(' ')
   
   return (

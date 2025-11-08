@@ -13,6 +13,60 @@
  * Scopes CSS to only apply within a specific container
  * Simple line-by-line approach that prefixes selectors
  */
+// Generate typography CSS from theme.typography.styles
+const generateTypographyCSS = (theme: any): string => {
+  if (!theme.typography?.styles) return ''
+  
+  let css = `
+/* ====================================
+   TYPOGRAPHY STYLES
+   ==================================== */
+
+`
+  
+  const styles = theme.typography.styles
+  
+  Object.keys(styles).forEach(styleName => {
+    const style = styles[styleName]
+    if (!style) return
+    
+    const fontFamily = style.family === 'primary' 
+      ? (theme.typography.semantic?.primary || theme.typography.foundation?.sans || 'Inter, sans-serif')
+      : (theme.typography.semantic?.secondary || theme.typography.foundation?.mono || 'monospace')
+    
+    // Desktop styles (default)
+    if (style.desktop) {
+      css += `
+.typo-${styleName} {
+  font-family: ${fontFamily};
+  font-size: ${style.desktop.size};
+  line-height: ${style.desktop.lineHeight};
+  letter-spacing: ${style.desktop.letterSpacing || '0'};
+  font-weight: ${style.desktop.weight || 400};
+  ${style.desktop.transform ? `text-transform: ${style.desktop.transform};` : ''}
+}
+`
+    }
+    
+    // Mobile responsive styles
+    if (style.mobile) {
+      css += `
+@media (max-width: 768px) {
+  .typo-${styleName} {
+    font-size: ${style.mobile.size};
+    line-height: ${style.mobile.lineHeight};
+    letter-spacing: ${style.mobile.letterSpacing || '0'};
+    font-weight: ${style.mobile.weight || style.desktop?.weight || 400};
+    ${style.mobile.transform ? `text-transform: ${style.mobile.transform};` : ''}
+  }
+}
+`
+    }
+  })
+  
+  return css
+}
+
 export const scopeCSS = (css: string, scope: string): string => {
   const lines = css.split('\n')
   const result: string[] = []
@@ -407,6 +461,8 @@ const generateThemeCSSInternal = (theme: any): string => {
   text-align: right;
 }
 
+${generateTypographyCSS(theme)}
+
 /* ====================================
    CARDS (Publication Cards & Section Cards)
    ==================================== */
@@ -672,20 +728,32 @@ const generateThemeSpecificCSS = (theme: any): string => {
 `
   }
   
-  // Wiley DS V2: Monospace, uppercase buttons (comprehensive foundation merged)
+  // Wiley DS V2: Use button typography from theme (Inter, uppercase, specific letter-spacing)
   if (themeId === 'wiley-figma-ds-v2') {
     return `
 /* Wiley DS V2 Theme Overrides */
 .btn {
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 600;
+  font-family: var(--theme-body-font);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 1.6px;
 }
 
-.btn-small { font-size: 0.75rem; }
-.btn-medium { font-size: 0.875rem; }
-.btn-large { font-size: 1rem; }
+.btn-small { 
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 1.4px;
+}
+.btn-medium { 
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 1.6px;
+}
+.btn-large { 
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 1.6px;
+}
 `
   }
   

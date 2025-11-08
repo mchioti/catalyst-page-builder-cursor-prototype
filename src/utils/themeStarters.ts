@@ -69,7 +69,7 @@ export const createCarbonDSStarterTemplate = (): CanvasItem[] => {
       align: 'center',
       style: 'default',
       color: 'default',
-      size: 'xl',
+      size: 'auto',
       icon: { enabled: false, position: 'left', emoji: '' }
     },
     {
@@ -209,7 +209,7 @@ export const createCarbonDSStarterTemplate = (): CanvasItem[] => {
       align: 'center',
       style: 'default',
       color: 'default',
-      size: 'xl',
+      size: 'auto',
       icon: { enabled: false, position: 'left', emoji: '' }
     },
     {
@@ -308,7 +308,7 @@ export const createWileyDSV2StarterTemplate = (): CanvasItem[] => {
       align: 'center',
       style: 'default',
       color: 'default',
-      size: 'xl',
+      size: 'auto',
       icon: { enabled: false, position: 'left', emoji: '' }
     },
     {

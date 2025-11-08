@@ -2236,13 +2236,44 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       typography: {
+        /* ========================================================================
+           📝 3-LAYER TYPOGRAPHY ARCHITECTURE (From Figma DS)
+           ========================================================================
+           
+           LAYER 1: FOUNDATION FONTS
+           - Inter: Primary sans-serif (body, headings, UI, buttons)
+           - IBM Plex Mono: Secondary monospace (code, technical emphasis)
+           
+           LAYER 2: SEMANTIC MAPPING (Universal across all brands)
+           - font-primary → Inter (Wiley, WT, Dummies all use Inter)
+           - font-secondary → IBM Plex Mono (universal for code/emphasis)
+           
+           LAYER 3: TEXT STYLES (Responsive desktop + mobile)
+           - Headings: h1-h6 (h5-h6 = h4 base with allowSmaller)
+           - Body: xs, sm, md, lg, xl
+           - Components: button (sm, lg), menu
+        ======================================================================== */
+        
+        // Foundation fonts from Design System
+        foundation: {
+          sans: 'Inter, system-ui, -apple-system, sans-serif',
+          mono: 'IBM Plex Mono, Courier New, monospace'
+        },
+        
+        // Semantic mapping (same for all brands)
+        semantic: {
+          primary: 'Inter, system-ui, -apple-system, sans-serif',   // Body, headings, UI
+          secondary: 'IBM Plex Mono, Courier New, monospace'       // Code, emphasis
+        },
+        
+        // Legacy properties (for backward compatibility)
         headingFont: 'Inter, system-ui, -apple-system, sans-serif',
         bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
         baseSize: '16px',
         scale: 1.333,
         
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-        
+        // Font weights
         weights: {
           light: 300,
           regular: 400,
@@ -2251,20 +2282,131 @@ const usePageStore = create<PageState>((set, get) => ({
           bold: 700
         },
         
-        // Essential sizes (simplified from full extraction)
+        // Complete text styles from Figma (responsive: desktop + mobile)
+        styles: {
+          // HEADINGS (h1-h4 from Figma, h5-h6 inherit h4)
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 },
+            mobile: { size: '48px', lineHeight: '56px', letterSpacing: '-0.96px', weight: 700 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 },
+            mobile: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 600 },
+            mobile: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            baseOn: 'heading-h4',
+            allowSmaller: true, // Can be manually set smaller than h4
+            desktop: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 600 },
+            mobile: { size: '18px', lineHeight: '24px', letterSpacing: '-0.36px', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            baseOn: 'heading-h4',
+            allowSmaller: true, // Can be manually set smaller than h4
+            desktop: { size: '18px', lineHeight: '24px', letterSpacing: '-0.36px', weight: 600 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 600 }
+          },
+          
+          // BODY TEXT (xs-xl)
+          'body-xl': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 400 },
+            mobile: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 400 }
+          },
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px', weight: 400 },
+            mobile: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px', weight: 400 }
+          },
+          'body-xs': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px', weight: 400 },
+            mobile: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px', weight: 400 }
+          },
+          
+          // CODE/MONO (Uses IBM Plex Mono - secondary font)
+          'code-mono': {
+            family: 'secondary',
+            desktop: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 400 }
+          },
+          
+          // BUTTONS
+          'button-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' }
+          },
+          'button-sm': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' },
+            mobile: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' }
+          },
+          
+          // MENU (LOW PRIORITY - basic spec for now)
+          'menu-item': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 }
+          }
+        },
+        
+        // Legacy desktop/mobile structure (for backward compatibility)
         desktop: {
           body: {
+            xs: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px' },
             sm: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px' },
             md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px' },
-            lg: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' }
+            lg: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px' },
+            xl: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' }
           },
           heading: {
+            sm: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' },
             md: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px' },
             lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px' },
             xl: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px' }
           }
         },
+        mobile: {
+          body: {
+            xs: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px' },
+            sm: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px' },
+            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px' },
+            lg: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px' },
+            xl: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px' }
+          },
+          heading: {
+            sm: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px' },
+            md: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' },
+            lg: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px' },
+            xl: { size: '48px', lineHeight: '56px', letterSpacing: '-0.96px' }
+          }
+        },
         
+        // Component-specific typography
         components: {
           button: {
             sm: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500 },

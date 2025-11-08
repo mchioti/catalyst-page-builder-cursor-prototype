@@ -41,7 +41,21 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Fix for macOS crashes - disable crashpad and use non-headless mode
+        headless: false,
+        launchOptions: {
+          args: [
+            '--disable-dev-shm-usage',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-breakpad',  // Disable crash reporting
+            '--disable-crash-reporter',  // Disable crash reporter
+            '--disable-crashpad',  // Disable crashpad
+            '--no-crash-upload'  // Don't upload crashes
+          ]
+        }
+      },
     }
   ],
 

@@ -23,7 +23,9 @@ export type TextWidget = WidgetBase & {
   text: string; 
   align?: 'left'|'center'|'right'; 
   inlineStyles?: string;
-  typographyStyle?: 'body-01' | 'body-02' | 'body-compact-01' | 'body-compact-02' | 'label-01' | 'label-02' | 'helper-text-01' | 'helper-text-02';
+  // Typography style from theme (Wiley DS: body-xl, body-lg, body-md, body-sm, body-xs, code-mono)
+  // Carbon DS: body-01, body-02, etc. (backward compatibility)
+  typographyStyle?: 'body-xl' | 'body-lg' | 'body-md' | 'body-sm' | 'body-xs' | 'code-mono' | 'body-01' | 'body-02' | 'body-compact-01' | 'body-compact-02' | 'label-01' | 'label-02' | 'helper-text-01' | 'helper-text-02';
 }
 export type ImageWidget = WidgetBase & { 
   type: 'image'; 
@@ -55,7 +57,10 @@ export type HeadingWidget = WidgetBase & {
   color?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted';
   size?: 'small' | 'medium' | 'large' | 'xl' | 'auto';
   icon?: WidgetIcon;
-  typographyStyle?: 'heading-01' | 'heading-02' | 'heading-03' | 'heading-04' | 'heading-05' | 'heading-06' | 'heading-07';
+  // Typography style from theme (Wiley DS: heading-h1 to heading-h6)
+  // Carbon DS: heading-01 to heading-07 (backward compatibility)
+  // 'auto' uses the heading level (h1 → heading-h1, h2 → heading-h2, etc.)
+  typographyStyle?: 'auto' | 'heading-h1' | 'heading-h2' | 'heading-h3' | 'heading-h4' | 'heading-h5' | 'heading-h6' | 'body-xl' | 'body-lg' | 'body-md' | 'heading-01' | 'heading-02' | 'heading-03' | 'heading-04' | 'heading-05' | 'heading-06' | 'heading-07';
 }
 
 // Publication Card configuration types

@@ -1056,6 +1056,29 @@ export function PropertiesPanel({
               ? themes.find((t: any) => t.id === currentWebsite.themeId)
               : null
             
+            // Wiley DS V2: Show body text styles + code/mono
+            if (currentTheme?.id === 'wiley-figma-ds-v2') {
+              return (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Typography Style</label>
+                  <select
+                    value={widget.typographyStyle || ''}
+                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Default</option>
+                    <option value="body-xl">Body XL</option>
+                    <option value="body-lg">Body Large</option>
+                    <option value="body-md">Body Medium</option>
+                    <option value="body-sm">Body Small</option>
+                    <option value="body-xs">Body XSmall</option>
+                    <option value="code-mono">Code/Mono (IBM Plex)</option>
+                  </select>
+                </div>
+              )
+            }
+            
+            // IBM Carbon: Show Carbon body styles
             if (currentTheme?.id === 'ibm-carbon-ds') {
               return (
                 <div>
@@ -1181,7 +1204,7 @@ export function PropertiesPanel({
             </div>
             
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Size Override</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
             <select
               value={(widget as HeadingWidget).size || 'auto'}
               onChange={(e) => updateWidget({ size: e.target.value as HeadingWidget['size'] })}
@@ -1200,48 +1223,8 @@ export function PropertiesPanel({
               <option value="large">Large</option>
               <option value="xl">Extra Large</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Auto uses semantic defaults: H1=XL, H2=Large, H3=Medium, H4-H6=Small
-            </p>
           </div>
           </div>
-          
-          {(() => {
-            const { currentWebsiteId, websites, themes } = usePageStore.getState()
-            const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
-            const currentTheme = currentWebsite 
-              ? themes.find((t: any) => t.id === currentWebsite.themeId)
-              : null
-            
-            if (currentTheme?.id === 'ibm-carbon-ds') {
-              return (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Typography Style
-                    <span className="text-xs text-gray-500 ml-1">(Carbon)</span>
-                  </label>
-                  <select
-                    value={(widget as HeadingWidget).typographyStyle || ''}
-                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="">Default</option>
-                    <option value="heading-01">Heading 01 (14px/semi-bold)</option>
-                    <option value="heading-02">Heading 02 (16px/semi-bold)</option>
-                    <option value="heading-03">Heading 03 (20px/regular)</option>
-                    <option value="heading-04">Heading 04 (28px/regular)</option>
-                    <option value="heading-05">Heading 05 (32px/regular)</option>
-                    <option value="heading-06">Heading 06 (42px/light)</option>
-                    <option value="heading-07">Heading 07 (54px/light)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Overrides size settings when selected
-                  </p>
-                </div>
-              )
-            }
-            return null
-          })()}
           
           <div className="border-t pt-4">
             <IconSelector

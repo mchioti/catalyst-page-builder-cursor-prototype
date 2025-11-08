@@ -315,7 +315,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Colors Section */}
+        {/* LEFT COLUMN: Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Colors</h3>
@@ -901,6 +901,70 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
             </div>
           )}
         </div>
+        
+        {/* RIGHT COLUMN: Typography Preview Section (Wiley DS V2 only) */}
+        {currentTheme.id === 'wiley-figma-ds-v2' && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Typography</h3>
+            </div>
+            
+            <div 
+              className="theme-preview p-6 border border-gray-200 rounded-lg bg-white space-y-6"
+              style={{
+                '--theme-heading-font': effectiveTheme.typography.headingFont,
+                '--theme-body-font': effectiveTheme.typography.bodyFont,
+                color: effectiveTheme.colors.text,
+                fontFamily: effectiveTheme.typography.bodyFont
+              } as React.CSSProperties}
+            >
+              {/* Headings */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Headings</h4>
+                <div className="space-y-2">
+                  <div className="typo-heading-h1" style={{ margin: 0 }}>H1 - Hero Heading</div>
+                  <div className="typo-heading-h2" style={{ margin: 0 }}>H2 - Display Heading</div>
+                  <div className="typo-heading-h3" style={{ margin: 0 }}>H3 - Section Heading</div>
+                  <div className="typo-heading-h4" style={{ margin: 0 }}>H4 - Subsection Heading</div>
+                  <div className="typo-heading-h5" style={{ margin: 0 }}>H5 - Minor Heading</div>
+                  <div className="typo-heading-h6" style={{ margin: 0 }}>H6 - Small Heading</div>
+                </div>
+              </div>
+              
+              {/* Body Text */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Body Text</h4>
+                <div className="space-y-2">
+                  <div className="typo-body-xl">Body XL - Large emphasis text</div>
+                  <div className="typo-body-lg">Body Large - Above standard</div>
+                  <div className="typo-body-md">Body Medium - Standard paragraph</div>
+                  <div className="typo-body-sm">Body Small - Captions</div>
+                  <div className="typo-body-xs">Body XSmall - Fine detail</div>
+                  <div className="typo-code-mono">Code/Mono - Technical content (IBM Plex Mono)</div>
+                </div>
+              </div>
+              
+              {/* Button Typography */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Buttons</h4>
+                <div className="flex gap-3">
+                  <button className="btn btn-solid-color1 btn-large on-light-bg">LARGE</button>
+                  <button className="btn btn-solid-color1 btn-medium on-light-bg">MEDIUM</button>
+                  <button className="btn btn-solid-color1 btn-small on-light-bg">SMALL</button>
+                </div>
+              </div>
+              
+              {/* Font Family Info */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div><strong>Primary:</strong> {effectiveTheme.typography.semantic?.primary || 'Inter'}</div>
+                  <div><strong>Secondary:</strong> {effectiveTheme.typography.semantic?.secondary || 'IBM Plex Mono'}</div>
+                  <div className="text-gray-500 mt-2">✓ Responsive (desktop/mobile breakpoints)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
