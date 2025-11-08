@@ -1062,8 +1062,6 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
         return 'Modern Theme'
       case 'classicist-theme':
         return 'Classic Theme'
-      case 'curator-theme':
-        return 'Curator Theme'
       case 'wiley-figma-ds-v2':
         return 'Wiley Figma DS V2'
       default:

@@ -781,7 +781,6 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
     case 'academic-classic':
     case 'academic-review':
     case 'digital-open-publishers':
-    case 'lumina-press':
       return createDefaultStarterTemplate()
     
     default:

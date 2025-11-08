@@ -1863,117 +1863,6 @@ const usePageStore = create<PageState>((set, get) => ({
     },
     
     {
-      id: 'curator-theme',
-      name: 'Curator',
-      description: 'Visually rich, image-forward theme perfect for publishers of art books, magazines, and image-heavy journals. Prioritizes large hero images, masonry grids, and elegant typography that complements visuals.',
-      version: '1.0.0',
-      publishingType: 'visual' as const,
-      author: 'Catalyst Design Team',
-      createdAt: new Date('2024-12-22'),
-      updatedAt: new Date('2024-12-22'),
-      
-      // Visual-focused template package
-      templates: [
-        {
-          id: 'gallery-home',
-          name: 'Gallery Home',
-          description: 'Visual homepage with large hero images and masonry content grid',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.0.0',
-          author: 'Catalyst Design Team',
-          createdAt: new Date('2024-12-22'),
-          updatedAt: new Date('2024-12-22'),
-          tags: ['gallery', 'visual', 'hero', 'masonry'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1600px',
-            spacing: 'generous'
-          },
-          allowedModifications: ['hero.*', 'gallery.*', 'colors.*'],
-          lockedElements: ['structure.masonry'],
-          defaultModificationScope: 'Publication (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        primary: '#18181b',    // Rich charcoal for sophistication
-        secondary: '#f8fafc',  // Pure light gray for contrast
-        accent: '#ef4444',     // Bold red for visual punctuation
-        background: '#ffffff', // Pure white to showcase imagery
-        text: '#27272a',       // Dark zinc for readability
-        muted: '#71717a'       // Medium zinc for captions and metadata
-      },
-      typography: {
-        headingFont: 'Playfair Display, serif',   // Elegant display serif
-        bodyFont: 'Source Sans Pro, sans-serif',  // Clean sans-serif for body
-        baseSize: '18px',                         // Larger for visual emphasis
-        scale: 1.414                              // √2 ratio for visual harmony
-      },
-      spacing: {
-        base: '1.25rem',
-        scale: 1.618                              // Golden ratio for visual appeal
-      },
-      components: {
-        button: {
-          borderRadius: '2px',
-          fontWeight: '400',
-          transition: 'all 0.3s ease'
-        },
-        card: {
-          borderRadius: '0px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          border: 'none'
-        },
-        form: {
-          borderRadius: '0px',
-          border: '1px solid #d4d4d8',
-          focusColor: '#ef4444'
-        }
-      },
-      
-      // Curator theme: Balanced customization for artistic flexibility
-      customizationRules: {
-        colors: {
-          canModifyPrimary: true, // Allow primary color changes for artistic expression
-          canModifySecondary: true,
-          canModifyAccent: true,
-          canModifyBackground: true, // Background customization for visual impact
-          canModifyText: false, // Text color locked for readability over images
-          canModifyMuted: true
-        },
-        typography: {
-          canModifyHeadingFont: true, // Allow font changes for artistic expression
-          canModifyBodyFont: false, // Body font locked to maintain readability
-          canModifyBaseSize: true,
-          canModifyScale: true // Allow scale changes for visual hierarchy
-        },
-        spacing: {
-          canModifyBase: true, // Allow spacing changes for artistic layouts
-          canModifyScale: true
-        },
-        components: {
-          canModifyButtonRadius: false, // Sharp edges maintained for modern aesthetic
-          canModifyButtonWeight: true, // Allow weight changes for emphasis
-          canModifyCardRadius: false, // Sharp cards maintained for gallery feel
-          canModifyCardShadow: true, // Allow shadow customization for depth
-          canModifyFormRadius: false // Sharp forms for consistency
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
       id: 'wiley-figma-ds-v2',
       name: 'Wiley Design System V2',
       description: 'Complete Figma design system with 3-layer token architecture (Foundation → Semantic → Overrides). Comprehensive MCP extraction: 88 core colors, 159 semantic colors, multi-brand support (Wiley/WT/Dummies), 5-color button system, and polished prefab sections.',
@@ -4055,7 +3944,6 @@ function SiteManagerWebsites() {
 const themePreviewImages = {
   'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
   'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
-  'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
   'wiley-figma-ds-v2': '/theme-previews/wiley-ds.png',              // Wiley Design System V2 - Complete foundation + semantic + overrides
   'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png',             // IBM Carbon hexagon logo showcase - light/dark variants
   'ant-design': '/theme-previews/ant-ds.png'                        // Ant Design
@@ -4495,32 +4383,6 @@ function DesignConsole() {
             <SiteManagerTemplates themeId="classicist-theme" usePageStore={usePageStore} />
           )}
             
-          {siteManagerView === 'curator-theme-theme-settings' && (
-                <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
-                    </div>
-              <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
-                    </div>
-          )}
-          {siteManagerView === 'curator-theme-publication-cards' && (
-                    <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Predefined publication card designs with visually rich, image-forward styling and elegant typography</p>
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Curator theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                    </div>
-                    </div>
-              <ThemePublicationCards themeId="curator-theme" />
-                  </div>
-          )}
-          {siteManagerView === 'curator-theme-templates' && (
-            <SiteManagerTemplates themeId="curator-theme" usePageStore={usePageStore} />
-          )}
-
           {siteManagerView === 'wiley-main-settings' && (
                       <div>
               <div className="mb-6 border-b pb-4">
@@ -4668,7 +4530,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme settings not explicitly handled */}
           {siteManagerView.endsWith('-theme-settings') && 
-           !['modernist-theme-theme-settings', 'classicist-theme-theme-settings', 'curator-theme-theme-settings'].includes(siteManagerView) && (
+           !['modernist-theme-theme-settings', 'classicist-theme-theme-settings'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-theme-settings', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4686,7 +4548,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme publication cards not explicitly handled */}
           {siteManagerView.endsWith('-publication-cards') && siteManagerView.includes('-theme-') &&
-           !['modernist-theme-publication-cards', 'classicist-theme-publication-cards', 'curator-theme-publication-cards'].includes(siteManagerView) && (
+           !['modernist-theme-publication-cards', 'classicist-theme-publication-cards'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-publication-cards', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4708,7 +4570,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme templates not explicitly handled */}
           {siteManagerView.endsWith('-templates') && !siteManagerView.includes('-custom-templates') &&
-           !['modernist-theme-templates', 'classicist-theme-templates', 'curator-theme-templates'].includes(siteManagerView) && (
+           !['modernist-theme-templates', 'classicist-theme-templates'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-templates', '')
               const theme = themes.find(t => t.id === themeId)
@@ -5287,112 +5149,6 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
             authorDisplay: 'formal',
             spacing: '18px',
             borderRadius: '8px'
-          }
-        }
-      ]
-    },
-    'curator-theme': {
-      name: 'Curator Theme',
-      description: 'Visually rich, editorial-style publication cards with image-forward design and sophisticated layouts',
-      usageContexts: ['Visual Discovery', 'Editorial Features', 'Magazine Layouts', 'Image-Rich Collections'],
-      cards: [
-        {
-          id: 'curator-article-compact',
-          name: 'Article Card (Compact)',
-          type: 'Article',
-          description: 'Visual-first design for discovery and browsing',
-          context: 'Visual Search, Editorial Grids',
-          features: ['Image thumbnails', 'Editorial typography', 'Visual hierarchy', 'Aesthetic focus'],
-          style: {
-            layout: 'compact',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '600',
-            titleSize: '16px',
-            metaColor: '#6b7280',
-            metaFont: 'Source Sans Pro, sans-serif',
-            metaSize: '13px',
-            accentColor: '#ef4444',
-            statusColors: {
-              fullAccess: '#10b981',
-              freeAccess: '#f59e0b',
-              subscription: '#6b7280'
-            },
-            spacing: '18px',
-            borderRadius: '12px',
-            imageStyle: 'thumbnail'
-          }
-        },
-        {
-          id: 'curator-article-detailed',
-          name: 'Article Card (Detailed)',
-          type: 'Article',
-          description: 'Editorial-style detailed presentation',
-          context: 'Editorial Features, Visual Articles',
-          features: ['Hero images', 'Magazine layout', 'Editorial buttons', 'Rich presentation'],
-          style: {
-            layout: 'detailed',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '22px',
-            metaColor: '#6b7280',
-            metaFont: 'Source Sans Pro, sans-serif',
-            metaSize: '14px',
-            accentColor: '#ef4444',
-            buttonStyle: 'editorial',
-            spacing: '24px',
-            borderRadius: '16px',
-            imageStyle: 'hero'
-          }
-        },
-        {
-          id: 'curator-issue-banner',
-          name: 'Issue Card (Banner)',
-          type: 'Issue',
-          description: 'Magazine-style issue presentation',
-          context: 'Editorial Issues, Visual Collections',
-          features: ['Cover prominence', 'Magazine layout', 'Visual impact', 'Editorial branding'],
-          style: {
-            layout: 'banner',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '26px',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            imageStyle: 'magazine-cover',
-            spacing: '28px',
-            borderRadius: '16px'
-          }
-        },
-        {
-          id: 'curator-book-featured',
-          name: 'Book Card (Featured)',
-          type: 'Book',
-          description: 'Visual book presentation with editorial flair',
-          context: 'Book Features, Visual Collections',
-          features: ['Cover art focus', 'Editorial typography', 'Visual metadata', 'Aesthetic presentation'],
-          style: {
-            layout: 'featured',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '24px',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            imageStyle: 'cover-editorial',
-            authorDisplay: 'visual',
-            spacing: '24px',
-            borderRadius: '16px'
           }
         }
       ]
