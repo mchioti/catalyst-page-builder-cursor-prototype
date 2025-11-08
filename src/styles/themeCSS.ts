@@ -9,7 +9,73 @@
  * - Rendered websites use this generated CSS ✅
  */
 
-export const generateThemeCSS = (theme: any): string => {
+/**
+ * Scopes CSS to only apply within a specific container
+ * Simple line-by-line approach that prefixes selectors
+ */
+export const scopeCSS = (css: string, scope: string): string => {
+  const lines = css.split('\n')
+  const result: string[] = []
+  let inAtRule = false
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+    
+    // Track @media, @keyframes, etc.
+    if (trimmed.startsWith('@')) {
+      inAtRule = true
+      result.push(line)
+      continue
+    }
+    
+    // Check if we're exiting an @-rule
+    if (inAtRule && trimmed === '}') {
+      // Count braces to see if we're closing the @-rule
+      const openBraces = result.filter(l => l.includes('{')).length
+      const closeBraces = result.filter(l => l.trim() === '}').length + 1
+      if (openBraces === closeBraces) {
+        inAtRule = false
+      }
+    }
+    
+    // If line has a selector (contains { and doesn't start with special chars)
+    if (trimmed.includes('{') && !trimmed.startsWith('/*') && !trimmed.startsWith('*') && !trimmed.startsWith('@')) {
+      const openBraceIndex = trimmed.indexOf('{')
+      const selector = trimmed.substring(0, openBraceIndex).trim()
+      const rest = trimmed.substring(openBraceIndex)
+      
+      // Skip :root, *, or already scoped selectors
+      if (selector.startsWith(':root') || selector.startsWith('*') || selector.includes(scope)) {
+        result.push(line)
+        continue
+      }
+      
+      // Handle multiple selectors separated by commas
+      const scopedSelector = selector
+        .split(',')
+        .map(s => `${scope} ${s.trim()}`)
+        .join(', ')
+      
+      // Preserve original indentation
+      const indent = line.substring(0, line.indexOf(trimmed))
+      result.push(`${indent}${scopedSelector} ${rest}`)
+      continue
+    }
+    
+    // For all other lines, keep as-is
+    result.push(line)
+  }
+  
+  return result.join('\n')
+}
+
+export const generateThemeCSS = (theme: any, scoped: boolean = false): string => {
+  const css = generateThemeCSSInternal(theme)
+  return scoped ? scopeCSS(css, '.theme-preview') : css
+}
+
+const generateThemeCSSInternal = (theme: any): string => {
   return `
 /* ====================================
    THEME: ${theme.name}

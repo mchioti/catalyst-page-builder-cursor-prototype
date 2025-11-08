@@ -1,17 +1,22 @@
-import React, { useState, useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
+import { WidgetRenderer } from '../Widgets/WidgetRenderer'
+import type { ButtonWidget } from '../../types/widgets'
+import { nanoid } from 'nanoid'
 
 // Color input component
 function ColorInput({ 
   label, 
   value, 
   onChange, 
-  description
+  description,
+  disabled = false
 }: { 
   label: string
   value: string
   onChange: (value: string) => void
   description?: string
+  disabled?: boolean
 }) {
   return (
     <div>
@@ -23,13 +28,15 @@ function ColorInput({
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+          disabled={disabled}
+          className={`w-12 h-10 border border-gray-300 rounded ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-28 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={disabled}
+          className={`w-28 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : 'focus:ring-2 focus:ring-blue-500'}`}
         />
       </div>
       {description && (
@@ -171,6 +178,8 @@ type UsePageStore = {
   websites: Website[]
   updateTheme: (id: string, theme: Partial<Theme>) => void
   updateWebsite: (id: string, updates: Partial<Website>) => void
+  previewBrandMode: 'wiley' | 'wt' | 'dummies'
+  setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => void
 }
 
 // Additional type for website
@@ -195,25 +204,32 @@ interface ThemeEditorProps {
 }
 
 export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorProps) {
-  const { themes, updateTheme, websites, updateWebsite } = usePageStore()
+  // ✅ Use explicit selectors to subscribe to state changes
+  const store = usePageStore()
+  const themes = (usePageStore as any)((state: any) => state.themes)
+  const websites = (usePageStore as any)((state: any) => state.websites)
+  const updateTheme = store.updateTheme
+  const updateWebsite = store.updateWebsite
+  
   const selectedTheme = themeId || 'modernist-theme'
   
-  const currentTheme = themes.find(t => t.id === selectedTheme)
-  const currentWebsite = websiteId ? websites.find(w => w.id === websiteId) : null
+  const currentTheme = (themes as any[]).find((t: any) => t.id === selectedTheme)
+  const currentWebsite = websiteId ? (websites as any[]).find((w: any) => w.id === websiteId) : null
   
-  // State for pending changes and scope selection (only for theme-level editing)
-  const [pendingChanges, setPendingChanges] = useState<{
-    colors?: Partial<Theme['colors']>
-    typography?: Partial<Theme['typography']>
-    spacing?: Partial<Theme['spacing']>
-    components?: Partial<Theme['components']>
-  }>({})
-  const [changeScope, setChangeScope] = useState<'website' | 'theme'>('theme')
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  // Use store's previewBrandMode for theme preview (shared with CanvasThemeProvider)
+  const { previewBrandMode, setPreviewBrandMode } = usePageStore()
   
   // Determine if this is website-level (automatic) or theme-level (needs scope selection)
   const isWebsiteLevel = Boolean(websiteId)
   const isThemeLevel = !websiteId
+  
+  // Sync previewBrandMode with website's brand when viewing Website Settings
+  useEffect(() => {
+    if (isWebsiteLevel && currentWebsite?.brandMode && currentWebsite.brandMode !== previewBrandMode) {
+      console.log('🔄 Syncing previewBrandMode to website brand:', currentWebsite.brandMode)
+      setPreviewBrandMode(currentWebsite.brandMode)
+    }
+  }, [isWebsiteLevel, currentWebsite?.brandMode, previewBrandMode, setPreviewBrandMode])
   
   const updateThemeColors = (colors: Partial<Theme['colors']>) => {
     if (!currentTheme) return
@@ -227,67 +243,14 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
         }
       })
     } else if (isThemeLevel) {
-      // Theme-level: Store as pending changes for batch save
-      setPendingChanges(prev => ({
-        ...prev,
-        colors: { ...prev.colors, ...colors }
-      }))
-      setHasUnsavedChanges(true)
-    }
-  }
-  
-  const updateThemeTypography = (typography: Partial<Theme['typography']>) => {
-    if (!currentTheme) return
-    
-    if (isWebsiteLevel && websiteId && currentWebsite) {
-      // Website-level: Apply changes immediately to website overrides
-      updateWebsite(websiteId, {
-        themeOverrides: {
-          ...currentWebsite.themeOverrides,
-          typography: { ...currentWebsite.themeOverrides?.typography, ...typography }
-        }
-      })
-    } else if (isThemeLevel) {
-      // Theme-level: Store as pending changes for batch save
-      setPendingChanges(prev => ({
-        ...prev,
-        typography: { ...prev.typography, ...typography }
-      }))
-      setHasUnsavedChanges(true)
-    }
-  }
-  
-  const saveChanges = () => {
-    if (!currentTheme) return
-    
-    if (changeScope === 'theme') {
-      // Apply changes to the global theme (affects all websites)
+      // Theme-level: Apply changes immediately to the global theme
       updateTheme(selectedTheme, {
-        ...(pendingChanges.colors && { colors: { ...currentTheme.colors, ...pendingChanges.colors } }),
-        ...(pendingChanges.typography && { typography: { ...currentTheme.typography, ...pendingChanges.typography } }),
-        ...(pendingChanges.spacing && { spacing: { ...currentTheme.spacing, ...pendingChanges.spacing } }),
-        ...(pendingChanges.components && { components: { ...currentTheme.components, ...pendingChanges.components } })
-      })
-    } else if (websiteId && currentWebsite) {
-      // Apply changes only to this website
-      updateWebsite(websiteId, {
-        themeOverrides: {
-          ...currentWebsite.themeOverrides,
-          ...pendingChanges
-        }
+        colors: { ...currentTheme.colors, ...colors }
       })
     }
-    
-    setPendingChanges({})
-    setHasUnsavedChanges(false)
   }
   
-  const cancelChanges = () => {
-    setPendingChanges({})
-    setHasUnsavedChanges(false)
-  }
-  
-  // Get effective theme values (base theme + website overrides + pending changes)
+  // Get effective theme values (base theme + website overrides)
   const getEffectiveThemeValues = () => {
     if (!currentTheme) return null
     
@@ -295,17 +258,32 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     const websiteOverrides = currentWebsite?.themeOverrides || {}
     
     return {
-      colors: { ...baseTheme.colors, ...websiteOverrides.colors, ...pendingChanges.colors },
-      typography: { ...baseTheme.typography, ...websiteOverrides.typography, ...pendingChanges.typography },
-      spacing: { ...baseTheme.spacing, ...websiteOverrides.spacing, ...pendingChanges.spacing },
-      components: { ...baseTheme.components, ...websiteOverrides.components, ...pendingChanges.components }
+      colors: { ...baseTheme.colors, ...websiteOverrides.colors },
+      typography: { ...baseTheme.typography, ...websiteOverrides.typography },
+      spacing: { ...baseTheme.spacing, ...websiteOverrides.spacing },
+      components: { ...baseTheme.components, ...websiteOverrides.components }
     }
   }
   
   const rawEffectiveTheme = getEffectiveThemeValues()
   
-  // Resolve token references based on website's brand mode
-  const brandMode: BrandMode = currentWebsite?.brandMode || 'wiley'
+  // Resolve token references based on website's brand mode (or preview mode at theme level)
+  const brandMode: BrandMode = isWebsiteLevel 
+    ? (currentWebsite?.brandMode || 'wiley')
+    : previewBrandMode
+  
+  console.log('🎨 ThemeEditor Render:', {
+    websiteId,
+    websiteName: currentWebsite?.name,
+    themeId: currentTheme?.id,
+    isWebsiteLevel,
+    isThemeLevel,
+    brandMode,
+    previewBrandMode,
+    currentWebsiteBrandMode: currentWebsite?.brandMode,
+    hasSemanticColors: !!rawEffectiveTheme?.colors?.semanticColors
+  })
+  
   const effectiveTheme = useMemo(() => {
     if (!rawEffectiveTheme || !currentTheme) return null
     
@@ -318,91 +296,24 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     // Resolve token references based on brand mode
     const resolved = resolveThemeColors(tempTheme, brandMode)
     
+    console.log('✅ Colors Resolved for brand:', brandMode, {
+      primary: resolved.colors.semanticColors?.primary,
+      primaryLight: resolved.colors.semanticColors?.primary?.light,
+      primaryDark: resolved.colors.semanticColors?.primary?.dark
+    })
+    
     return {
       ...rawEffectiveTheme,
       colors: resolved.colors
     }
-  }, [rawEffectiveTheme, currentTheme, brandMode, currentWebsite?.name, websiteId])
-  
-  const fontOptions = [
-    'Inter, sans-serif',
-    'Crimson Text, serif',
-    'Playfair Display, serif',
-    'Source Sans Pro, sans-serif',
-    'Georgia, serif',
-    'Times New Roman, serif',
-    'Arial, sans-serif',
-    'Helvetica, sans-serif',
-    'Roboto, sans-serif',
-    'Open Sans, sans-serif',
-    'Lato, sans-serif',
-    'Poppins, sans-serif',
-    'Montserrat, sans-serif'
-  ]
-  
-  const fontSizeOptions = ['14px', '16px', '18px', '20px', '22px']
+  }, [rawEffectiveTheme, currentTheme, brandMode, previewBrandMode, currentWebsite?.brandMode, websiteId])
   
   if (!currentTheme || !effectiveTheme) {
     return <div>Theme not found</div>
   }
-  
-  const websiteCount = websites.filter(w => w.themeId === selectedTheme).length
 
   return (
     <div className="space-y-8">
-      {/* Scope Selector and Save Controls - Only for theme-level editing */}
-      {isThemeLevel && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">Theme Modification Scope</h3>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="theme"
-                    checked={changeScope === 'theme'}
-                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
-                    className="text-blue-600"
-                  />
-                  <span>Modify the global theme</span>
-                  <span className="text-xs text-red-600">({websiteCount} websites will be affected)</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="website"
-                    checked={changeScope === 'website'}
-                    onChange={(e) => setChangeScope(e.target.value as 'website' | 'theme')}
-                    className="text-blue-600"
-                  />
-                  <span>Create website-specific version</span>
-                  <span className="text-xs text-gray-500">(requires selecting a specific website)</span>
-                </label>
-              </div>
-            </div>
-            
-            {hasUnsavedChanges && (
-              <div className="flex gap-2">
-                <button
-                  onClick={cancelChanges}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveChanges}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-                >
-                  Apply Changes
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Colors Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -418,19 +329,36 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 <h4 className="text-base font-semibold text-gray-800 mb-2">Publisher Main branding</h4>
                 <p className="text-sm text-gray-600 mb-4">Affects menu, backgrounds, buttons</p>
                 
-                {/* Brand Mode Selector - only at website level and for DS V2 */}
+                {/* At WEBSITE level: Show locked brand info */}
                 {isWebsiteLevel && effectiveTheme.colors.foundation && (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      🎨 Brand Mode
+                  <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-300 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      🔒 Brand (Locked)
                     </label>
                     <p className="text-xs text-gray-600 mb-3">
-                      Switch between Wiley, WT, and Dummies design systems. All colors will update automatically.
+                      This website uses the <strong>{brandMode === 'wiley' ? 'Wiley (Green)' : brandMode === 'wt' ? 'WT (Olive)' : 'Dummies (Gold)'}</strong> brand. 
+                      Brand is set during website creation and cannot be changed.
+                    </p>
+                    <div className="inline-flex px-4 py-2 bg-white border-2 border-blue-500 rounded-md">
+                      <span className="text-sm font-medium text-gray-800">
+                        {brandMode === 'wiley' ? 'Wiley (Green)' : brandMode === 'wt' ? 'WT (Olive)' : 'Dummies (Gold)'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Brand Mode Selector - ONLY at theme level for preview */}
+                {isThemeLevel && effectiveTheme.colors.foundation && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      🎨 Brand Mode (Preview)
+                    </label>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Preview how the theme looks across different brand systems. Actual brand is set per-website during creation.
                     </p>
                     <div className="flex gap-2">
                       {(['wiley', 'wt', 'dummies'] as const).map((mode) => {
-                        const currentBrandMode = currentWebsite?.brandMode || 'wiley'
-                        const isActive = currentBrandMode === mode
+                        const isActive = brandMode === mode
                         const labels = {
                           wiley: 'Wiley (Green)',
                           wt: 'WT (Olive)',
@@ -440,9 +368,8 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           <button
                             key={mode}
                             onClick={() => {
-                              if (websiteId) {
-                                updateWebsite(websiteId, { brandMode: mode })
-                              }
+                              console.log('👁️ Previewing brand:', mode)
+                              setPreviewBrandMode(mode)
                             }}
                             className={`
                               flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all
@@ -491,6 +418,17 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 <h4 className="text-base font-semibold text-gray-800 mb-2">Button</h4>
                 <p className="text-sm text-gray-600 mb-5">Affects Style of the Button Link widget</p>
                 
+                {/* TODO: Future Enhancement - only show at WEBSITE level (brand is locked) */}
+                {isWebsiteLevel && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-xs text-yellow-800">
+                      <strong>🚧 TODO:</strong> Replace hex inputs with Foundation Token Picker dropdown. 
+                      Users should select from DS foundation colors (e.g., "Primary Data 600", "Primary Heritage 400") 
+                      to maintain design system integrity and get automatic shade/neutral pairings.
+                    </p>
+                  </div>
+                )}
+                
                 {/* Primary Button */}
                 <div className="mb-5">
                   <h5 className="text-sm font-medium text-gray-700 mb-3">Primary Button</h5>
@@ -513,6 +451,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used on dark backgrounds"
+                        disabled={true}
                       />
                     </div>
                     <div>
@@ -533,6 +472,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used on light backgrounds"
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -564,6 +504,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used in dark backgrounds"
+                        disabled={true}
                       />
                     </div>
                     <div>
@@ -588,6 +529,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used on Light Backgrounds"
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -619,6 +561,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used in dark backgrounds"
+                        disabled={true}
                       />
                     </div>
                     <div>
@@ -643,6 +586,77 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           } as any)
                         }}
                         description="Used on Light Backgrounds"
+                        disabled={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Preview - Integrated within button configuration */}
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Preview</h5>
+                  <div 
+                    className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
+                    style={{
+                      '--theme-color-primary': effectiveTheme.colors.primary,
+                      '--theme-color-secondary': effectiveTheme.colors.secondary,
+                      '--theme-color-accent': effectiveTheme.colors.accent,
+                      '--theme-color-text': effectiveTheme.colors.text,
+                      '--theme-color-background': effectiveTheme.colors.background,
+                      '--theme-heading-font': effectiveTheme.typography.headingFont,
+                      '--theme-body-font': effectiveTheme.typography.bodyFont,
+                      color: effectiveTheme.colors.text,
+                      fontFamily: effectiveTheme.typography.bodyFont,
+                      fontSize: effectiveTheme.typography.baseSize
+                    } as React.CSSProperties}
+                  >
+                    <h2 style={{ 
+                      fontFamily: effectiveTheme.typography.headingFont, 
+                      fontSize: '24px',
+                      marginBottom: '0.75rem',
+                      fontWeight: 600
+                    }}>
+                      Sample Heading
+                    </h2>
+                    <p style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                      This is a sample paragraph to show how content will look with your selected colors and typography.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Primary Button',
+                          style: 'solid',
+                          color: 'color1',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
+                      />
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Secondary Button',
+                          style: 'solid',
+                          color: 'color2',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
+                      />
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Outline Button',
+                          style: 'outline',
+                          color: 'color1',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
                       />
                     </div>
                   </div>
@@ -776,6 +790,76 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                     </div>
                   </div>
                 )}
+                
+                {/* Preview - Integrated within button configuration */}
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">Preview</h5>
+                  <div 
+                    className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
+                    style={{
+                      '--theme-color-primary': effectiveTheme.colors.primary,
+                      '--theme-color-secondary': effectiveTheme.colors.secondary,
+                      '--theme-color-accent': effectiveTheme.colors.accent,
+                      '--theme-color-text': effectiveTheme.colors.text,
+                      '--theme-color-background': effectiveTheme.colors.background,
+                      '--theme-heading-font': effectiveTheme.typography.headingFont,
+                      '--theme-body-font': effectiveTheme.typography.bodyFont,
+                      color: effectiveTheme.colors.text,
+                      fontFamily: effectiveTheme.typography.bodyFont,
+                      fontSize: effectiveTheme.typography.baseSize
+                    } as React.CSSProperties}
+                  >
+                    <h2 style={{ 
+                      fontFamily: effectiveTheme.typography.headingFont, 
+                      fontSize: '24px',
+                      marginBottom: '0.75rem',
+                      fontWeight: 600
+                    }}>
+                      Sample Heading
+                    </h2>
+                    <p style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                      This is a sample paragraph to show how content will look with your selected colors and typography.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Primary Button',
+                          style: 'solid',
+                          color: 'color1',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
+                      />
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Secondary Button',
+                          style: 'solid',
+                          color: 'color2',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
+                      />
+                      <WidgetRenderer
+                        widget={{
+                          id: nanoid(),
+                          type: 'button',
+                          text: 'Outline Button',
+                          style: 'outline',
+                          color: 'color1',
+                          size: 'medium'
+                        } as ButtonWidget}
+                        sectionContentMode="light"
+                        isLiveMode={true}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Additional Colors */}
@@ -817,151 +901,9 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
             </div>
           )}
         </div>
-
-        {/* Typography Section */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Typography</h3>
-          <div className="space-y-4">
-            {currentTheme.customizationRules.typography.canModifyHeadingFont && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
-                <select
-                  value={effectiveTheme.typography.headingFont}
-                  onChange={(e) => updateThemeTypography({ headingFont: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {fontOptions.map(font => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
-                      {font.split(',')[0]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
-            {currentTheme.customizationRules.typography.canModifyBodyFont && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
-                <select
-                  value={effectiveTheme.typography.bodyFont}
-                  onChange={(e) => updateThemeTypography({ bodyFont: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {fontOptions.map(font => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
-                      {font.split(',')[0]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
-            {currentTheme.customizationRules.typography.canModifyBaseSize && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Base Font Size</label>
-                <select
-                  value={effectiveTheme.typography.baseSize}
-                  onChange={(e) => updateThemeTypography({ baseSize: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {fontSizeOptions.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
-            {currentTheme.customizationRules.typography.canModifyScale && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scale Ratio</label>
-                <input
-                  type="range"
-                  min="1.0"
-                  max="1.5"
-                  step="0.1"
-                  value={effectiveTheme.typography.scale}
-                  onChange={(e) => updateThemeTypography({ scale: parseFloat(e.target.value) })}
-                  className="w-full"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  Current: {effectiveTheme.typography.scale.toFixed(1)}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Preview Section */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
-        <div 
-          className="p-6 border border-gray-200 rounded"
-          style={{
-            '--theme-color-primary': effectiveTheme.colors.primary,
-            '--theme-color-secondary': effectiveTheme.colors.secondary,
-            '--theme-color-accent': effectiveTheme.colors.accent,
-            '--theme-color-text': effectiveTheme.colors.text,
-            '--theme-color-background': effectiveTheme.colors.background,
-            '--theme-color-muted': effectiveTheme.colors.muted,
-            '--theme-heading-font': effectiveTheme.typography.headingFont,
-            '--theme-body-font': effectiveTheme.typography.bodyFont,
-            '--theme-base-size': effectiveTheme.typography.baseSize,
-            backgroundColor: effectiveTheme.colors.background,
-            color: effectiveTheme.colors.text,
-            fontFamily: effectiveTheme.typography.bodyFont,
-            fontSize: effectiveTheme.typography.baseSize
-          } as React.CSSProperties}
-        >
-          <h1 style={{ 
-            fontFamily: effectiveTheme.typography.headingFont, 
-            fontSize: `calc(${effectiveTheme.typography.baseSize} * ${Math.pow(effectiveTheme.typography.scale, 3)})`,
-            marginBottom: '1rem',
-            color: effectiveTheme.colors.text
-          }}>
-            Sample Heading 1
-          </h1>
-          <h2 style={{ 
-            fontFamily: effectiveTheme.typography.headingFont, 
-            fontSize: `calc(${effectiveTheme.typography.baseSize} * ${Math.pow(effectiveTheme.typography.scale, 2)})`,
-            marginBottom: '0.75rem',
-            color: effectiveTheme.colors.text
-          }}>
-            Sample Heading 2
-          </h2>
-          <p style={{ marginBottom: '1rem' }}>
-            This is a sample paragraph to show how the body text will look with your selected typography and colors.
-          </p>
-          <button 
-            style={{ 
-              backgroundColor: effectiveTheme.colors.primary, 
-              color: 'white', 
-              padding: '8px 16px', 
-              borderRadius: '6px', 
-              border: 'none',
-              fontFamily: effectiveTheme.typography.bodyFont,
-              marginRight: '0.5rem'
-            }}
-          >
-            Primary Button
-          </button>
-          <button 
-            style={{ 
-              backgroundColor: effectiveTheme.colors.accent, 
-              color: 'white', 
-              padding: '8px 16px', 
-              borderRadius: '6px', 
-              border: 'none',
-              fontFamily: effectiveTheme.typography.bodyFont
-            }}
-          >
-            Accent Button
-          </button>
-          <p style={{ marginTop: '1rem', color: effectiveTheme.colors.muted, fontSize: '0.875em' }}>
-            This is muted text using the selected muted color.
-          </p>
-        </div>
       </div>
     </div>
   )
 }
+
+export default ThemeEditor

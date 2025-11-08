@@ -5,24 +5,32 @@ import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
 interface CanvasThemeProviderProps {
   children: React.ReactNode
   usePageStore: any // TODO: Type this properly when extracting store
+  scopeCSS?: boolean // If true, CSS will be scoped to .theme-preview only (for Design Console). Also uses previewBrandMode from store.
 }
 
-export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProviderProps) {
+export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }: CanvasThemeProviderProps) {
   // Use selector to explicitly track brand mode changes
   const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
   const themes = usePageStore((state: any) => state.themes)
   const currentWebsite = usePageStore((state: any) => 
     state.websites.find((w: any) => w.id === state.currentWebsiteId)
   )
-  const brandMode: BrandMode = usePageStore((state: any) => {
+  const storeBrandMode: BrandMode = usePageStore((state: any) => {
     const website = state.websites.find((w: any) => w.id === state.currentWebsiteId)
     return website?.brandMode || 'wiley'
   })
   
+  // In Design Console (scopeCSS=true), always use preview brand mode
+  // ThemeEditor will sync previewBrandMode with website's brand when viewing Website Settings
+  const previewBrandMode: BrandMode = usePageStore((state: any) => state.previewBrandMode)
+  const brandMode: BrandMode = scopeCSS ? previewBrandMode : storeBrandMode
+  
   console.log('🎨 CanvasThemeProvider RENDER:', {
     websiteId: currentWebsiteId,
     websiteName: currentWebsite?.name,
+    scopeCSS,
     brandMode,
+    source: scopeCSS ? 'previewBrandMode (Design Console)' : 'storeBrandMode (Page Builder/Live)',
     timestamp: new Date().toISOString()
   })
   
@@ -226,17 +234,23 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
 
   // Inject generated theme CSS into document head
   useEffect(() => {
-    console.log('🚀 useEffect RUNNING! Theme:', currentTheme?.id, 'Brand Mode:', brandMode)
+    console.log('🚀 useEffect RUNNING! Dependencies:', {
+      themeId: currentTheme?.id,
+      brandMode,
+      scopeCSS,
+      websiteId: currentWebsiteId
+    })
     
-    const styleId = `theme-styles-${currentTheme.id}`
+    const styleId = `theme-styles-${currentTheme.id}-${scopeCSS ? 'scoped' : 'global'}`
     
-    console.log('🧹 Removing old style:', styleId)
-    // Remove old theme styles if they exist
-    const oldStyle = document.getElementById(styleId)
-    if (oldStyle) {
-      oldStyle.remove()
-      console.log('✅ Old style removed')
-    }
+    console.log('🧹 Removing ALL old theme styles')
+    // Remove ALL old theme styles (not just this theme)
+    const allThemeStyles = document.querySelectorAll('[id^="theme-styles-"]')
+    allThemeStyles.forEach(el => {
+      console.log('  Removing:', el.id)
+      el.remove()
+    })
+    console.log('✅ All old styles removed')
     
     console.log('🎨 Generating CSS for theme:', currentTheme.name)
     // Generate and inject new theme CSS
@@ -244,8 +258,19 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
     styleEl.id = styleId
     
     try {
-      styleEl.textContent = generateThemeCSS(currentTheme)
-      console.log('✅ CSS Generated, length:', styleEl.textContent.length, 'characters')
+      styleEl.textContent = generateThemeCSS(currentTheme, scopeCSS)
+      console.log('✅ CSS Generated, length:', styleEl.textContent.length, 'characters', scopeCSS ? '(SCOPED to .theme-preview)' : '(GLOBAL)')
+      
+      // Debug: Show first 500 chars of generated CSS
+      if (scopeCSS) {
+        console.log('📝 First 500 chars of SCOPED CSS:', styleEl.textContent.substring(0, 500))
+        // Check if .btn class exists
+        if (styleEl.textContent.includes('.theme-preview .btn')) {
+          console.log('✅ Scoped .btn classes found!')
+        } else {
+          console.error('❌ NO scoped .btn classes found in generated CSS!')
+        }
+      }
     } catch (error) {
       console.error('❌ CSS Generation failed:', error)
       return
@@ -269,7 +294,7 @@ export function CanvasThemeProvider({ children, usePageStore }: CanvasThemeProvi
         console.log('🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [currentTheme.id, brandMode]) // Re-run when theme or brand mode changes
+  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId]) // Re-run when theme, brand mode, scoping, or website changes
 
   return (
     <div 

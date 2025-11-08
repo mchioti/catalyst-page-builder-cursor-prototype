@@ -1221,12 +1221,14 @@ const usePageStore = create<PageState>((set, get) => ({
   templateEditingContext: null, // Track template editing context for propagation
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   mockLiveSiteRoute: '/', // Default to homepage
+  previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // For theme preview in Design Console
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
   setTemplateEditingContext: (context) => set({ templateEditingContext: context }),
   setCurrentWebsiteId: (websiteId) => set({ currentWebsiteId: websiteId }),
   setMockLiveSiteRoute: (route) => set({ mockLiveSiteRoute: route }),
+  setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => set({ previewBrandMode: mode }),
   
   // Notifications & Issues
   notifications: [],
@@ -5530,7 +5532,12 @@ export default function App() {
     return (
       <>
         <DynamicBrandingCSS websiteId={currentWebsiteId} />
-        <DesignConsole />
+        <CanvasThemeProvider 
+          usePageStore={usePageStore} 
+          scopeCSS={true}
+        >
+          <DesignConsole />
+        </CanvasThemeProvider>
         <NotificationContainer />
       </>
     )
