@@ -97,8 +97,8 @@ export function PageBuilder({
   const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
   
   // Get current theme name
-  const currentWebsite = websites.find(w => w.id === currentWebsiteId)
-  const currentTheme = themes.find(t => t.id === currentWebsite?.themeId)
+  const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+  const currentTheme = themes.find((t: any) => t.id === currentWebsite?.themeId)
   const themeName = currentTheme?.name || 'No Theme'
 
 
@@ -952,7 +952,7 @@ export function PageBuilder({
             scrollPaddingTop: 0
           }}
         >
-          <div className="border-b bg-white px-6 py-4">
+            <div className="border-b bg-white px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="relative flex items-center">
                 <img 
@@ -1095,8 +1095,8 @@ export function PageBuilder({
               </div>
             )}
             
-            <CanvasThemeProvider usePageStore={usePageStore}>
-              <div className="bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm">
+            <CanvasThemeProvider usePageStore={usePageStore} scopeCSS={true}>
+              <div className="theme-preview bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm">
               {canvasItems.length === 0 ? (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center text-gray-500">

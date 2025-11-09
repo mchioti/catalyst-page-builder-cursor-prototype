@@ -32,7 +32,7 @@ function resolveSpacingToken(tokenRef: string | undefined, theme: any): string |
 interface CanvasThemeProviderProps {
   children: React.ReactNode
   usePageStore: any // TODO: Type this properly when extracting store
-  scopeCSS?: boolean // If true, CSS will be scoped to .theme-preview only (for Design Console). Also uses previewBrandMode from store.
+  scopeCSS?: boolean // If true, CSS will be scoped to .theme-preview only (for Design Console). Also uses previewBrandMode and previewThemeId from store.
 }
 
 export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }: CanvasThemeProviderProps) {
@@ -40,31 +40,34 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
   const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
   const themes = usePageStore((state: any) => state.themes)
   const currentWebsite = usePageStore((state: any) => 
-    state.websites.find((w: any) => w.id === state.currentWebsiteId)
+    state.websites?.find((w: any) => w.id === state.currentWebsiteId)
   )
   const storeBrandMode: BrandMode = usePageStore((state: any) => {
-    const website = state.websites.find((w: any) => w.id === state.currentWebsiteId)
+    const website = state.websites?.find((w: any) => w.id === state.currentWebsiteId)
     return website?.brandMode || 'wiley'
   })
   
-  // In Design Console (scopeCSS=true), always use preview brand mode
-  // ThemeEditor will sync previewBrandMode with website's brand when viewing Website Settings
+  // In Design Console (scopeCSS=true), always use preview brand mode and preview theme ID
+  // ThemeEditor will sync these with the current theme/website being viewed
   const previewBrandMode: BrandMode = usePageStore((state: any) => state.previewBrandMode)
+  const previewThemeId: string = usePageStore((state: any) => state.previewThemeId)
   const brandMode: BrandMode = scopeCSS ? previewBrandMode : storeBrandMode
   
   console.log('🎨 CanvasThemeProvider RENDER:', {
     websiteId: currentWebsiteId,
     websiteName: currentWebsite?.name,
     scopeCSS,
+    previewThemeId,
     brandMode,
     source: scopeCSS ? 'previewBrandMode (Design Console)' : 'storeBrandMode (Page Builder/Live)',
     timestamp: new Date().toISOString()
   })
   
   // Find the theme
-  const rawTheme = currentWebsite 
-    ? themes.find((t: any) => t.id === currentWebsite.themeId)
-    : themes.find((t: any) => t.id === 'modernist-theme') // Fallback to modernist
+  // Priority: If Design Console (scopeCSS=true), use previewThemeId from store
+  //           Otherwise, use currentWebsite.themeId > fallback
+  const themeIdToUse = scopeCSS ? previewThemeId : (currentWebsite?.themeId || 'classic-ux3-theme')
+  const rawTheme = themes.find((t: any) => t.id === themeIdToUse) || themes.find((t: any) => t.id === 'classic-ux3-theme')
   
   // Resolve token references based on brand mode
   const currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
@@ -154,6 +157,39 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     if (currentTheme.colors.semantic) {
       Object.entries(currentTheme.colors.semantic).forEach(([key, value]) => {
         vars[`--wiley-semantic-${key}`] = value
+      })
+    }
+
+    // 🎨 Add Foundation Color System (for themes with foundation.colors like Classic UX3)
+    if (currentTheme.foundation?.colors) {
+      Object.entries(currentTheme.foundation.colors).forEach(([colorName, shades]: [string, any]) => {
+        if (typeof shades === 'object') {
+          Object.entries(shades).forEach(([shade, value]) => {
+            vars[`--foundation-${colorName}-${shade}`] = value
+          })
+        }
+      })
+    }
+
+    // 🎨 Add IBM Carbon Structured Colors (borders, textColors, layers, support)
+    if (currentTheme.colors.borders) {
+      Object.entries(currentTheme.colors.borders).forEach(([key, value]) => {
+        vars[`--carbon-border-${key}`] = value
+      })
+    }
+    if (currentTheme.colors.textColors) {
+      Object.entries(currentTheme.colors.textColors).forEach(([key, value]) => {
+        vars[`--carbon-text-${key}`] = value
+      })
+    }
+    if (currentTheme.colors.layers) {
+      Object.entries(currentTheme.colors.layers).forEach(([key, value]) => {
+        vars[`--carbon-layer-${key}`] = value
+      })
+    }
+    if (currentTheme.colors.support) {
+      Object.entries(currentTheme.colors.support).forEach(([key, value]) => {
+        vars[`--carbon-support-${key}`] = value
       })
     }
 
@@ -321,7 +357,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
         console.log('🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId]) // Re-run when theme, brand mode, scoping, or website changes
+  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId, previewThemeId]) // Re-run when theme, brand mode, scoping, website, or preview theme changes
 
   return (
     <div 

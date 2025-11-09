@@ -104,6 +104,7 @@ export type PageState = {
   currentWebsiteId: string
   mockLiveSiteRoute: MockLiveSiteRoute
   previewBrandMode: 'wiley' | 'wt' | 'dummies' // For theme preview in Design Console
+  previewThemeId: string // For theme preview in Design Console
   setCurrentView: (view: AppView) => void
   setSiteManagerView: (view: DesignConsoleView) => void
   setEditingContext: (context: EditingContext) => void
@@ -111,6 +112,7 @@ export type PageState = {
   setCurrentWebsiteId: (websiteId: string) => void
   setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void
   setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => void
+  setPreviewThemeId: (themeId: string) => void
   
   // Notifications & Issues
   notifications: Notification[]

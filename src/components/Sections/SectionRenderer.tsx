@@ -28,7 +28,7 @@ function resolveSpacingToken(tokenRef: string | undefined, usePageStore: any): s
   
   // Get current theme from store
   const { currentWebsiteId, websites, themes } = usePageStore.getState()
-  const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+  const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
   const currentTheme = currentWebsite 
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : null
@@ -316,7 +316,7 @@ export function SectionRenderer({
     // Auto behavior: constrain within breakpoint
     // NEW: Check theme grid tokens first (for Wiley DS V2), then fall back to website branding
     const { currentWebsiteId, websites, themes } = usePageStore.getState()
-    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+    const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
     const currentTheme = currentWebsite 
       ? themes.find((t: any) => t.id === currentWebsite.themeId)
       : null
@@ -418,7 +418,7 @@ export function SectionRenderer({
   // NEW: Resolve grid gutter from theme (for Wiley DS V2)
   const getGridGutter = () => {
     const { currentWebsiteId, websites, themes } = usePageStore.getState()
-    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+    const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
     const currentTheme = currentWebsite 
       ? themes.find((t: any) => t.id === currentWebsite.themeId)
       : null

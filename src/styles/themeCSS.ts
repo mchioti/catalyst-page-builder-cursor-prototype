@@ -141,6 +141,15 @@ const generateThemeCSSInternal = (theme: any): string => {
   box-sizing: border-box;
 }
 
+/* Global Typography - Apply theme fonts */
+body, p, div, span, li, td, th, label, input, textarea, select {
+  font-family: var(--theme-body-font, system-ui, -apple-system, sans-serif);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--theme-heading-font, system-ui, -apple-system, sans-serif);
+}
+
 /* ====================================
    BUTTONS
    ==================================== */
@@ -673,57 +682,274 @@ ${generateThemeSpecificCSS(theme)}
 /**
  * Generate theme-specific CSS overrides
  * This is where we handle special cases like:
- * - Modern theme: White background, blue text buttons
+ * - Classic UX3 theme: White background, blue text buttons (legacy AXP 2.0 style)
  * - Wiley DS V2: Monospace, uppercase buttons
  * - IBM Carbon: Sharp corners, specific sizing
  */
 const generateThemeSpecificCSS = (theme: any): string => {
   const themeId = theme.id
   
-  // Modern/Modernist Theme: WHITE background with BLUE text (not blue background!)
-  if (themeId === 'modernist-theme' || themeId === 'modern-theme') {
+  // Classic UX3 Theme: Token-based styling with semantic colors
+  if (themeId === 'classic-ux3-theme') {
     return `
-/* Modern Theme Overrides - White/Blue Button Style */
-.btn-solid-color1 {
-  background: white !important;
-  color: var(--theme-color-primary) !important;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+/* Classic UX3 Theme - Token-Based Button Styling */
+/* Uses theme-defined colors: Primary (Teal), Secondary (Blue), Accent (Purple) */
+/* Border radius: 2px (from Figma component specs) */
+
+/* Use theme-defined border radius (2px for Classic UX3) */
+.btn,
+.btn-solid-color1,
+.btn-solid-color2,
+.btn-solid-color3,
+.btn-outline-color1,
+.btn-outline-color2,
+.btn-outline-color3 {
+  border-radius: var(--theme-button-radius, 4px);
+  font-family: var(--theme-body-font, 'Lato, sans-serif');
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-solid-color1:hover {
-  background: rgba(59, 130, 246, 0.05) !important;
-  color: var(--theme-color-primary) !important;
+/* Button Sizes (Figma specs) */
+.btn-large,
+.btn.btn-large {
+  padding: 12px 22px;
+  height: 44px;
 }
 
-.btn-solid-color2 {
-  background: transparent !important;
-  color: white !important;
-  border: 1px solid white;
+.btn-medium,
+.btn.btn-medium {
+  padding: 8px 16px;
+  height: 38px;
 }
 
-.btn-solid-color2:hover {
-  background: white !important;
-  color: var(--theme-color-primary) !important;
+.btn-small,
+.btn.btn-small {
+  padding: 8px 10px;
+  height: 36px;
 }
 
-.btn-outline-color1 {
-  background: transparent !important;
-  color: var(--theme-color-primary) !important;
-  border: 2px solid var(--theme-color-primary);
+/* PRIMARY BUTTONS (Color1) - Solid Teal (Figma: Surface-action-primary) */
+/* Uses foundation colors from theme, overrides context-aware base CSS */
+.btn-solid-color1,
+.btn-solid-color1.on-light-bg,
+.btn-solid-color1.on-dark-bg {
+  background: var(--foundation-teal-700, #267273);
+  color: white;
+  border: none;
 }
 
-.btn-outline-color1:hover {
-  background: var(--theme-color-primary) !important;
-  color: white !important;
+.btn-solid-color1:hover,
+.btn-solid-color1.on-light-bg:hover,
+.btn-solid-color1.on-dark-bg:hover {
+  background: var(--foundation-teal-800, #1a4c4d); /* Darker teal on hover */
 }
 
-.btn-link-color1 {
-  color: var(--theme-color-primary) !important;
+.btn-solid-color1:disabled,
+.btn-solid-color1.on-light-bg:disabled,
+.btn-solid-color1.on-dark-bg:disabled {
+  background: var(--foundation-gray-300, #d1d5db);
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.btn-link-color1:hover {
-  color: rgba(59, 130, 246, 0.8) !important;
+/* SECONDARY BUTTONS (Color2) - Black/Dark (Figma: Secondary contained) */
+.btn-solid-color2,
+.btn-solid-color2.on-light-bg,
+.btn-solid-color2.on-dark-bg {
+  background: var(--foundation-gray-900, #111827);
+  color: white;
+  border: none;
+}
+
+.btn-solid-color2:hover,
+.btn-solid-color2.on-light-bg:hover,
+.btn-solid-color2.on-dark-bg:hover {
+  background: var(--foundation-gray-950, #030712); /* Darker black on hover */
+}
+
+.btn-solid-color2:disabled,
+.btn-solid-color2.on-light-bg:disabled,
+.btn-solid-color2.on-dark-bg:disabled {
+  background: var(--foundation-gray-300, #d1d5db);
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* NEUTRAL/DEFAULT BUTTONS (Color3) - Medium Grey */
+.btn-solid-color3,
+.btn-solid-color3.on-light-bg,
+.btn-solid-color3.on-dark-bg {
+  background: var(--foundation-gray-500, #6b7280);
+  color: white;
+  border: none;
+}
+
+.btn-solid-color3:hover,
+.btn-solid-color3.on-light-bg:hover,
+.btn-solid-color3.on-dark-bg:hover {
+  background: var(--foundation-gray-600, #4b5563); /* Darker grey on hover */
+}
+
+.btn-solid-color3:disabled,
+.btn-solid-color3.on-light-bg:disabled,
+.btn-solid-color3.on-dark-bg:disabled {
+  background: var(--foundation-gray-300, #d1d5db);
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* OUTLINE BUTTONS - Transparent with colored borders (Figma: Outlined variants) */
+.btn-outline-color1,
+.btn-outline-color1.on-light-bg,
+.btn-outline-color1.on-dark-bg {
+  background: transparent;
+  color: var(--foundation-teal-700, #267273);
+  border: 2px solid var(--foundation-teal-700, #267273);
+}
+
+.btn-outline-color1:hover,
+.btn-outline-color1.on-light-bg:hover,
+.btn-outline-color1.on-dark-bg:hover {
+  background: transparent; /* No fill on hover */
+  color: var(--foundation-teal-800, #1a4c4d); /* Darker text on hover */
+  border-color: var(--foundation-teal-800, #1a4c4d);
+}
+
+.btn-outline-color1:disabled,
+.btn-outline-color1.on-light-bg:disabled,
+.btn-outline-color1.on-dark-bg:disabled {
+  background: transparent;
+  color: var(--foundation-gray-400, #9ca3af);
+  border-color: var(--foundation-gray-300, #d1d5db);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-outline-color2,
+.btn-outline-color2.on-light-bg,
+.btn-outline-color2.on-dark-bg {
+  background: transparent;
+  color: var(--foundation-gray-900, #111827);
+  border: 2px solid var(--foundation-gray-900, #111827);
+}
+
+.btn-outline-color2:hover,
+.btn-outline-color2.on-light-bg:hover,
+.btn-outline-color2.on-dark-bg:hover {
+  background: transparent; /* No fill on hover */
+  color: var(--foundation-gray-950, #030712); /* Darker on hover */
+  border-color: var(--foundation-gray-950, #030712);
+}
+
+.btn-outline-color2:disabled,
+.btn-outline-color2.on-light-bg:disabled,
+.btn-outline-color2.on-dark-bg:disabled {
+  background: transparent;
+  color: var(--foundation-gray-400, #9ca3af);
+  border-color: var(--foundation-gray-300, #d1d5db);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-outline-color3,
+.btn-outline-color3.on-light-bg,
+.btn-outline-color3.on-dark-bg {
+  background: transparent;
+  color: var(--foundation-gray-500, #6b7280);
+  border: 2px solid var(--foundation-gray-500, #6b7280);
+}
+
+.btn-outline-color3:hover,
+.btn-outline-color3.on-light-bg:hover,
+.btn-outline-color3.on-dark-bg:hover {
+  background: transparent; /* No fill on hover */
+  color: var(--foundation-gray-600, #4b5563); /* Darker on hover */
+  border-color: var(--foundation-gray-600, #4b5563);
+}
+
+.btn-outline-color3:disabled,
+.btn-outline-color3.on-light-bg:disabled,
+.btn-outline-color3.on-dark-bg:disabled {
+  background: transparent;
+  color: var(--foundation-gray-400, #9ca3af);
+  border-color: var(--foundation-gray-300, #d1d5db);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* TEXT/LINK BUTTONS - Text only, no background or border (Figma: Text variants) */
+.btn-link-color1,
+.btn-link-color1.on-light-bg,
+.btn-link-color1.on-dark-bg {
+  color: var(--foundation-teal-700, #267273);
+  background: transparent;
+  border: none;
+}
+
+.btn-link-color1:hover,
+.btn-link-color1.on-light-bg:hover,
+.btn-link-color1.on-dark-bg:hover {
+  color: var(--foundation-teal-800, #1a4c4d); /* Darker on hover */
+  text-decoration: underline;
+}
+
+.btn-link-color1:disabled,
+.btn-link-color1.on-light-bg:disabled,
+.btn-link-color1.on-dark-bg:disabled {
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-link-color2,
+.btn-link-color2.on-light-bg,
+.btn-link-color2.on-dark-bg {
+  color: var(--foundation-gray-900, #111827);
+  background: transparent;
+  border: none;
+}
+
+.btn-link-color2:hover,
+.btn-link-color2.on-light-bg:hover,
+.btn-link-color2.on-dark-bg:hover {
+  color: var(--foundation-gray-950, #030712); /* Darker on hover */
+  text-decoration: underline;
+}
+
+.btn-link-color2:disabled,
+.btn-link-color2.on-light-bg:disabled,
+.btn-link-color2.on-dark-bg:disabled {
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-link-color3,
+.btn-link-color3.on-light-bg,
+.btn-link-color3.on-dark-bg {
+  color: var(--foundation-gray-500, #6b7280);
+  background: transparent;
+  border: none;
+}
+
+.btn-link-color3:hover,
+.btn-link-color3.on-light-bg:hover,
+.btn-link-color3.on-dark-bg:hover {
+  color: var(--foundation-gray-600, #4b5563); /* Darker on hover */
+  text-decoration: underline;
+}
+
+.btn-link-color3:disabled,
+.btn-link-color3.on-light-bg:disabled,
+.btn-link-color3.on-dark-bg:disabled {
+  color: var(--foundation-gray-400, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 `
   }
@@ -791,66 +1017,66 @@ const generateThemeSpecificCSS = (theme: any): string => {
 
 /* Carbon Tertiary Button (color3) - Transparent, NO border */
 .btn-solid-color3 {
-  background: transparent !important;
-  color: var(--semantic-tertiary-text-light) !important;
-  border: none !important;
+  background: transparent;
+  color: var(--semantic-tertiary-text-light);
+  border: none;
 }
 
 .btn-solid-color3:hover {
-  background: var(--semantic-tertiary-bg-light-hover) !important;
-  color: var(--semantic-tertiary-text-light-hover) !important;
+  background: var(--semantic-tertiary-bg-light-hover);
+  color: var(--semantic-tertiary-text-light-hover);
 }
 
 /* Carbon Ghost Button (color5) - Transparent WITH border */
 .btn-solid-color5,
 .btn-outline-color5 {
-  background: transparent !important;
-  color: var(--semantic-neutrallight-text-light) !important;
-  border: 1px solid var(--semantic-neutrallight-text-light) !important;
+  background: transparent;
+  color: var(--semantic-neutrallight-text-light);
+  border: 1px solid var(--semantic-neutrallight-text-light);
 }
 
 .btn-solid-color5:hover,
 .btn-outline-color5:hover {
-  background: var(--semantic-neutrallight-bg-light-hover) !important;
-  color: var(--semantic-neutrallight-text-light-hover) !important;
+  background: var(--semantic-neutrallight-bg-light-hover);
+  color: var(--semantic-neutrallight-text-light-hover);
 }
 
 /* Carbon Tabs - Underline style with IBM Blue indicator */
 .tabs-nav {
-  border-bottom: 1px solid #e0e0e0 !important; /* Carbon Grey 20 */
+  border-bottom: 1px solid var(--carbon-border-subtle, #e0e0e0);
 }
 
 .tab-button {
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif !important;
+  font-family: var(--theme-body-font, 'IBM Plex Sans, system-ui, -apple-system, sans-serif');
   font-weight: 400;
   letter-spacing: 0.16px;
-  padding: 0 1rem !important;
-  height: 48px !important;
-  color: #161616 !important; /* Carbon Black */
+  padding: 0 1rem;
+  height: 48px;
+  color: var(--carbon-text-primary, #161616);
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: all 70ms cubic-bezier(0, 0, 0.38, 0.9);
 }
 
 .tab-button:hover {
-  background: #e8e8e8 !important; /* Carbon Grey 10 */
-  color: #161616 !important;
+  background: var(--carbon-layer-layer01, #e8e8e8);
+  color: var(--carbon-text-primary, #161616);
 }
 
 .tab-button.active {
-  color: #161616 !important; /* Carbon Black */
+  color: var(--carbon-text-primary, #161616);
   font-weight: 600;
-  border-bottom-color: #0f62fe !important; /* IBM Blue */
+  border-bottom-color: var(--theme-color-primary, #0f62fe);
 }
 
 /* Carbon Menu - Horizontal navigation */
 .menu-horizontal {
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif !important;
+  font-family: var(--theme-body-font, 'IBM Plex Sans, system-ui, -apple-system, sans-serif');
 }
 
 .menu-horizontal a,
 .menu-horizontal button {
-  color: #161616 !important; /* Carbon Black */
+  color: var(--carbon-text-primary, #161616);
   font-weight: 400;
   letter-spacing: 0.16px;
   padding: 0.75rem 1rem;
@@ -860,28 +1086,28 @@ const generateThemeSpecificCSS = (theme: any): string => {
 
 .menu-horizontal a:hover,
 .menu-horizontal button:hover {
-  background: #e8e8e8 !important; /* Carbon Grey 10 */
+  background: var(--carbon-layer-layer01, #e8e8e8);
 }
 
 .menu-horizontal a.active,
 .menu-horizontal button.active {
   font-weight: 600;
-  border-bottom-color: #0f62fe !important; /* IBM Blue */
+  border-bottom-color: var(--theme-color-primary, #0f62fe);
 }
 
 /* Carbon Cards - Sharp corners, subtle border, no shadow */
 .publication-card,
 .card {
-  border: 1px solid #e0e0e0 !important; /* Carbon Grey 20 */
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 1rem !important;
+  border: 1px solid var(--carbon-border-subtle, #e0e0e0);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 1rem;
 }
 
 .publication-card:hover,
 .card:hover {
-  border-color: #8d8d8d !important; /* Carbon Grey 50 */
-  box-shadow: none !important;
+  border-color: var(--carbon-border-strong, #8d8d8d);
+  box-shadow: none;
 }
 
 /* ====================================

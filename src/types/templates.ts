@@ -140,8 +140,8 @@ export type Theme = {
     form: Record<string, any>
   }
   
-  // Theme-specific customization rules (what can/cannot be modified)
-  customizationRules: {
+  // Theme-specific modification rules (config-level changes only, NOT code customization)
+  modificationRules: {
     colors: {
       canModifyPrimary: boolean
       canModifySecondary: boolean

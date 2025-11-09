@@ -36,7 +36,7 @@ interface Theme {
   typography: {
     headingFont: string
   }
-  modificationRules: {
+  modificationRules?: {
     colors: {
       canModifyPrimary: boolean
     }
@@ -532,7 +532,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                           />
                         </div>
                         
-                        {selectedTheme?.modificationRules.colors.canModifyPrimary && (
+                        {selectedTheme?.modificationRules?.colors?.canModifyPrimary && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Custom Primary Color</label>
                             <input
@@ -548,7 +548,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                         )}
                       </div>
                       
-                      {selectedTheme && !selectedTheme.modificationRules.colors.canModifyPrimary && (
+                      {selectedTheme && !selectedTheme.modificationRules?.colors?.canModifyPrimary && (
                         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                           <p className="text-amber-700 text-sm">
                             <strong>Note:</strong> The "{selectedTheme.name}" theme has locked colors to maintain design integrity. 

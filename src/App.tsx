@@ -1222,6 +1222,7 @@ const usePageStore = create<PageState>((set, get) => ({
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   mockLiveSiteRoute: '/', // Default to homepage
   previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // For theme preview in Design Console
+  previewThemeId: 'classic-ux3-theme', // For theme preview in Design Console
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
@@ -1229,6 +1230,7 @@ const usePageStore = create<PageState>((set, get) => ({
   setCurrentWebsiteId: (websiteId) => set({ currentWebsiteId: websiteId }),
   setMockLiveSiteRoute: (route) => set({ mockLiveSiteRoute: route }),
   setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => set({ previewBrandMode: mode }),
+  setPreviewThemeId: (themeId: string) => set({ previewThemeId: themeId }),
   
   // Notifications & Issues
   notifications: [],
@@ -1422,7 +1424,7 @@ const usePageStore = create<PageState>((set, get) => ({
       id: 'wiley-main',
       name: 'Wiley Online Library',
       domain: 'https://onlinelibrary.wiley.com/',
-      themeId: 'modernist-theme',
+      themeId: 'classic-ux3-theme',
       brandMode: 'wiley' as const,  // Brand mode for multi-brand themes
       status: 'active' as const,
       createdAt: new Date('2024-06-01'),
@@ -1463,43 +1465,10 @@ const usePageStore = create<PageState>((set, get) => ({
       lastThemeSync: new Date('2024-08-01')
     },
     {
-      id: 'research-hub',
-      name: 'Wiley Research Hub',
-      domain: 'research.wiley.com',
-      themeId: 'classicist-theme',
-      brandMode: 'wiley' as const,
-      status: 'active' as const,
-      createdAt: new Date('2024-07-10'),
-      updatedAt: new Date('2024-09-20'),
-      modifications: [
-        {
-          path: 'layout.sidebar',
-          originalValue: 'left',
-          modifiedValue: 'right',
-          modifiedAt: 'website',
-          modifiedBy: 'editor',
-          timestamp: new Date('2024-07-20'),
-          reason: 'Better UX for research content'
-        }
-      ],
-      customSections: [],
-      branding: {
-        primaryColor: '#7c3aed',
-        logoUrl: '/research-logo.svg'
-      },
-      purpose: {
-        contentTypes: ['journals'],
-        hasSubjectOrganization: false,
-        publishingTypes: ['research']
-      },
-      deviationScore: 8,
-      lastThemeSync: new Date('2024-09-01')
-    },
-    {
       id: 'journal-of-science',
       name: 'Journal of Advanced Science',
       domain: 'advancedscience.wiley.com',
-      themeId: 'modernist-theme',
+      themeId: 'classic-ux3-theme',
       brandMode: 'wiley' as const,
       status: 'active' as const,
       createdAt: new Date('2024-08-15'),
@@ -1543,14 +1512,14 @@ const usePageStore = create<PageState>((set, get) => ({
   
   themes: [
     {
-      id: 'modernist-theme',
-      name: 'Modern',
-      description: 'Clean, minimalist, digital-first design with sans-serif fonts, generous white space, and vibrant accents. Perfect for modern open-access journals and tech-focused publishers.',
+      id: 'classic-ux3-theme',
+      name: 'Classic UX3',
+      description: 'Classic academic publishing theme from AXP 2.0, now upgraded with a proper design system. Features Volkhov and Lato typography, teal brand colors, and traditional scholarly aesthetics. Perfect for established publishers and academic institutions.',
       version: '3.0.0',
       publishingType: 'journals' as const,
-      author: 'Catalyst Design Team',
+      author: 'Atypon Design Team',
       createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-12-22'),
+      updatedAt: new Date('2025-01-09'),
       
       // Complete template package for academic publishing
       templates: [
@@ -1631,27 +1600,176 @@ const usePageStore = create<PageState>((set, get) => ({
         }
       ],
       
+      // Layer 1: Foundation Colors (Core Palette from Figma)
+      foundation: {
+        colors: {
+          teal: {
+            50: '#f0fafa', 100: '#d9f2f2', 200: '#b3e5e6', 300: '#8cd8d9',
+            400: '#66cbcd', 500: '#40bec0', 600: '#339899', 700: '#267273',
+            800: '#1a4c4d', 900: '#0f3d3e'
+          },
+          purple: {
+            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+            800: '#5b21b6', 900: '#4c1d95'
+          },
+          red: {
+            50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+            400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+            800: '#991b1b', 900: '#7f1d1d'
+          },
+          green: {
+            50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+            400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+            800: '#166534', 900: '#14532d'
+          },
+          yellow: {
+            50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047',
+            400: '#facc15', 500: '#eab308', 600: '#ca8a04', 700: '#a16207',
+            800: '#854d0e', 900: '#713f12'
+          },
+          blue: {
+            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+            800: '#1e40af', 900: '#1e3a8a'
+          },
+          gray: {
+            50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db',
+            400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151',
+            800: '#1f2937', 900: '#111827', 950: '#030712'
+          }
+        },
+        typography: {
+          families: {
+            primary: 'Volkhov, serif',
+            secondary: 'Lato, sans-serif'
+          },
+          weights: { light: 300, regular: 400, bold: 700 },
+          sizes: {
+            h1: { desktop: '48px', mobile: '36px', lineHeight: '1.2' },
+            h2: { desktop: '40px', mobile: '32px', lineHeight: '1.25' },
+            h3: { desktop: '32px', mobile: '28px', lineHeight: '1.3' },
+            h4: { desktop: '28px', mobile: '24px', lineHeight: '1.35' },
+            h5: { desktop: '24px', mobile: '20px', lineHeight: '1.4' },
+            h6: { desktop: '20px', mobile: '18px', lineHeight: '1.4' },
+            bodyXl: { size: '20px', lineHeight: '32px' },
+            bodyLg: { size: '18px', lineHeight: '28px' },
+            bodyMd: { size: '16px', lineHeight: '24px' },
+            bodySm: { size: '14px', lineHeight: '20px' },
+            bodyXs: { size: '12px', lineHeight: '16px' }
+          }
+        },
+        spacing: {
+          base: { 0: '0', 1: '8px', 2: '16px', 3: '24px', 4: '32px', 5: '40px', 6: '48px', 7: '56px', 8: '64px', 9: '72px', 10: '80px' },
+          semantic: { none: '0', xs: '8px', sm: '16px', md: '24px', lg: '32px', xl: '48px', '2xl': '64px', '3xl': '80px' }
+        }
+      },
+      
+      // Layer 2: Semantic Colors (Theme-level mapping)
+      semanticColors: {
+        interactive: {
+          primary: { default: '#339899', hover: '#267273', active: '#1a4c4d' },
+          secondary: { default: '#2563eb', hover: '#1d4ed8', active: '#1e40af' },
+          accent: { default: '#8b5cf6', hover: '#7c3aed', active: '#6d28d9' }
+        },
+        surface: {
+          background: '#ffffff',
+          card: '#ffffff',
+          border: '#e5e7eb',
+          divider: '#f3f4f6'
+        },
+        content: {
+          primary: '#111827',
+          secondary: '#4b5563',
+          muted: '#6b7280',
+          inverse: '#ffffff',
+          link: '#339899',
+          linkHover: '#267273'
+        },
+        feedback: {
+          success: '#16a34a',
+          warning: '#ca8a04',
+          error: '#dc2626',
+          info: '#2563eb'
+        }
+      },
+      
+      // Legacy flat colors (for backward compatibility)
       colors: {
-        primary: '#2563eb',    // Modern vibrant blue
-        secondary: '#64748b',  // Clean slate gray
-        accent: '#06b6d4',     // Bright cyan accent
-        background: '#ffffff', // Pure white for maximum contrast
-        text: '#0f172a',       // Deep slate for readability
-        muted: '#94a3b8'       // Light slate for secondary text
+        primary: '#339899',    // Teal 600 (new brand color from Figma)
+        secondary: '#2563eb',  // Blue 600 (legacy)
+        accent: '#8b5cf6',     // Purple 500
+        background: '#ffffff',
+        text: '#111827',       // Gray 900
+        muted: '#6b7280'       // Gray 500
       },
       typography: {
-        headingFont: 'Inter, sans-serif',           // Modern geometric sans-serif
-        bodyFont: 'Inter, sans-serif',             // Consistent modern typography
-        baseSize: '17px',                          // Slightly larger for digital reading
-        scale: 1.333                               // Perfect fourth for clean hierarchy
+        headingFont: 'Volkhov, serif',    // Classic serif for headings
+        bodyFont: 'Lato, sans-serif',     // Clean sans-serif for body
+        baseSize: '16px',
+        scale: 1.25,                       // Major third scale
+        
+        // Typography styles for semantic CSS classes
+        styles: {
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '48px', lineHeight: '1.2', letterSpacing: '0', weight: 700 },
+            mobile: { size: '36px', lineHeight: '1.2', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '40px', lineHeight: '1.25', letterSpacing: '0', weight: 700 },
+            mobile: { size: '32px', lineHeight: '1.25', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '32px', lineHeight: '1.3', letterSpacing: '0', weight: 700 },
+            mobile: { size: '28px', lineHeight: '1.3', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '28px', lineHeight: '1.35', letterSpacing: '0', weight: 700 },
+            mobile: { size: '24px', lineHeight: '1.35', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 700 },
+            mobile: { size: '20px', lineHeight: '1.4', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '1.4', letterSpacing: '0', weight: 700 },
+            mobile: { size: '18px', lineHeight: '1.4', letterSpacing: '0', weight: 700 }
+          },
+          'body-lg': {
+            family: 'secondary',
+            desktop: { size: '20px', lineHeight: '32px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '18px', lineHeight: '28px', letterSpacing: '0', weight: 400 }
+          },
+          'body-md': {
+            family: 'secondary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '0', weight: 400 }
+          },
+          'body-sm': {
+            family: 'secondary',
+            desktop: { size: '14px', lineHeight: '20px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '14px', lineHeight: '20px', letterSpacing: '0', weight: 400 }
+          }
+        },
+        
+        semantic: {
+          primary: 'Volkhov, serif',
+          secondary: 'Lato, sans-serif'
+        }
       },
       spacing: {
-        base: '1rem',
-        scale: 1.5
+        base: '8px',
+        scale: 1
       },
       components: {
         button: {
-          borderRadius: '4px',
+          borderRadius: '2px',  // Figma spec: 2px for Classic UX3
           fontWeight: '500',
           transition: 'all 0.2s'
         },
@@ -1667,8 +1785,8 @@ const usePageStore = create<PageState>((set, get) => ({
         }
       },
       
-      // Modern theme: Maximum flexibility for digital-first design
-      customizationRules: {
+      // Classic UX3: Maximum flexibility for digital-first design (config-level modifications only)
+      modificationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -1688,170 +1806,11 @@ const usePageStore = create<PageState>((set, get) => ({
           canModifyScale: true
         },
         components: {
-          canModifyButtonRadius: true, // Modern allows border radius changes
+          canModifyButtonRadius: true, // Classic UX3 allows border radius changes
           canModifyButtonWeight: true,
           canModifyCardRadius: true,
           canModifyCardShadow: true,
           canModifyFormRadius: true
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
-      id: 'classicist-theme',
-      name: 'Classic',
-      description: 'Traditional, scholarly theme inspired by classic academic journals. Features serif fonts, formal color palette, and dense, text-forward layout. Perfect for established university presses and historical societies.',
-      version: '2.1.0',
-      publishingType: 'academic' as const,
-      author: 'Catalyst Design Team',
-      createdAt: new Date('2024-02-01'),
-      updatedAt: new Date('2024-09-10'),
-      
-      // Corporate template package
-      templates: [
-        {
-          id: 'global-home',
-          name: 'Global Home',
-          description: 'Main homepage template with hero section, featured content, and navigation',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.5.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-09-10'),
-          tags: ['homepage', 'global', 'hero', 'featured'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1200px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['branding.*', 'sections.hero.*'],
-          lockedElements: ['navigation.structure'],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        },
-        {
-          id: 'about-us',
-          name: 'About Us',
-          description: 'About page template with company information, team, and mission statement',
-          category: 'supporting' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.1.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-03-05'),
-          updatedAt: new Date('2024-06-20'),
-          tags: ['about', 'company', 'team', 'mission'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1000px',
-            spacing: 'spacious'
-          },
-          allowedModifications: ['content.*'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        },
-        {
-          id: 'contact-us',
-          name: 'Contact Us',
-          description: 'Contact page template with contact forms, office locations, and contact information',
-          category: 'supporting' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.3.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-02-20'),
-          updatedAt: new Date('2024-07-10'),
-          tags: ['contact', 'forms', 'locations', 'information'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '800px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['contact.*'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        primary: '#7c2d12',    // Deep brown for scholarly gravitas
-        secondary: '#f7f3f0',  // Warm off-white parchment
-        accent: '#b45309',     // Burnt orange for highlights
-        background: '#fefcfb', // Subtle warm white
-        text: '#1c1917',       // Rich dark brown for text
-        muted: '#78716c'       // Warm gray for secondary text
-      },
-      typography: {
-        headingFont: 'Crimson Text, serif',       // Classic scholarly serif
-        bodyFont: 'Crimson Text, serif',         // Consistent serif typography
-        baseSize: '16px',                        // Traditional reading size
-        scale: 1.25                              // Classic ratio for hierarchy
-      },
-      spacing: {
-        base: '1rem',
-        scale: 1.25
-      },
-      components: {
-        button: {
-          borderRadius: '6px',
-          fontWeight: '600'
-        },
-        card: {
-          borderRadius: '12px',
-          border: 'none',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        },
-        form: {
-          borderRadius: '6px',
-          border: '2px solid #e2e8f0'
-        }
-      },
-      
-      // Classic theme: Restrictive customization to maintain scholarly tradition
-      customizationRules: {
-        colors: {
-          canModifyPrimary: false, // Primary color locked to maintain scholarly identity
-          canModifySecondary: true,
-          canModifyAccent: true, // Allow accent color changes for some flexibility
-          canModifyBackground: false, // Background locked to maintain readability
-          canModifyText: false, // Text color locked for accessibility
-          canModifyMuted: false // Muted text locked for consistency
-        },
-        typography: {
-          canModifyHeadingFont: false, // Serif fonts are locked for tradition
-          canModifyBodyFont: false, // Body font locked to maintain scholarly appearance
-          canModifyBaseSize: true, // Allow size adjustments for accessibility
-          canModifyScale: false // Scale locked to maintain hierarchy
-        },
-        spacing: {
-          canModifyBase: false, // Base spacing locked for consistency
-          canModifyScale: false // Scale locked for traditional layout
-        },
-        components: {
-          canModifyButtonRadius: false, // No rounded buttons - maintains formal look
-          canModifyButtonWeight: false, // Font weight locked for consistency
-          canModifyCardRadius: false, // Card styling locked for uniformity
-          canModifyCardShadow: false, // Shadow locked to prevent over-styling
-          canModifyFormRadius: false // Form styling locked for professionalism
         }
       },
       
@@ -2452,13 +2411,6 @@ const usePageStore = create<PageState>((set, get) => ({
       modificationRules: {
         colors: {
           canModifyPrimary: true,
-          canSelectJournalTheme: true  // NEW: Allow selecting from 3 brand modes
-        }
-      },
-      
-      customizationRules: {
-        colors: {
-          canModifyPrimary: true,
           canModifySecondary: true,
           canModifyAccent: true,
           canModifyBackground: true,
@@ -2720,6 +2672,63 @@ const usePageStore = create<PageState>((set, get) => ({
             lg: { size: '16px', lineHeight: '22px', letterSpacing: '0px', weight: 400 },
             md: { size: '14px', lineHeight: '18px', letterSpacing: '0.16px', weight: 400 }
           }
+        },
+        
+        // Mapped styles for CSS generation (compatible with generateTypographyCSS)
+        styles: {
+          // Headings (H1-H6)
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '42px', lineHeight: '48px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '28px', lineHeight: '32px', letterSpacing: '0px', weight: 400 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '36px', lineHeight: '42px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '28px', lineHeight: '32px', letterSpacing: '0px', weight: 400 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '28px', lineHeight: '34px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          // Body text
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '22px', letterSpacing: '0px', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '20px', letterSpacing: '0.16px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '18px', letterSpacing: '0.16px', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '16px', letterSpacing: '0.32px', weight: 400 },
+            mobile: { size: '12px', lineHeight: '16px', letterSpacing: '0.32px', weight: 400 }
+          }
+        },
+        
+        // Semantic font mapping for CSS generation
+        semantic: {
+          primary: 'IBM Plex Sans, system-ui, -apple-system, sans-serif',
+          secondary: 'IBM Plex Mono, monospace'
         }
       },
       
@@ -2771,12 +2780,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       modificationRules: {
-        colors: {
-          canModifyPrimary: true
-        }
-      },
-      
-      customizationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -2929,6 +2932,59 @@ const usePageStore = create<PageState>((set, get) => ({
           '4xl': '38px',
           '5xl': '46px',
           '6xl': '56px'
+        },
+        
+        // Typography styles for semantic CSS classes
+        styles: {
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '38px', lineHeight: '1.23', letterSpacing: '0', weight: 600 },
+            mobile: { size: '30px', lineHeight: '1.35', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '30px', lineHeight: '1.35', letterSpacing: '0', weight: 600 },
+            mobile: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 600 },
+            mobile: { size: '20px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '18px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '16px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '14px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 },
+            mobile: { size: '16px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 },
+            mobile: { size: '14px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '1.66', letterSpacing: '0', weight: 400 },
+            mobile: { size: '12px', lineHeight: '1.66', letterSpacing: '0', weight: 400 }
+          }
+        },
+        
+        semantic: {
+          primary: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif"
         }
       },
       
@@ -2974,12 +3030,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       modificationRules: {
-        colors: {
-          canModifyPrimary: true
-        }
-      },
-      
-      customizationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -3942,8 +3992,7 @@ function SiteManagerWebsites() {
 
 // Theme preview images for Create Website dialog - Designed by Gemini! 🎨✨
 const themePreviewImages = {
-  'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
-  'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
+  'classic-ux3-theme': '/theme-previews/classic-ux3-ds.png',        // Classic UX3 - Academic publishing theme with Volkhov + Lato
   'wiley-figma-ds-v2': '/theme-previews/wiley-ds.png',              // Wiley Design System V2 - Complete foundation + semantic + overrides
   'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png',             // IBM Carbon hexagon logo showcase - light/dark variants
   'ant-design': '/theme-previews/ant-ds.png'                        // Ant Design
@@ -4356,32 +4405,6 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-templates' && (
             <SiteManagerTemplates themeId="modernist-theme" usePageStore={usePageStore} />
           )}
-          
-          {siteManagerView === 'classicist-theme-theme-settings' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
-                            </div>
-              <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
-                    </div>
-                  )}
-          {siteManagerView === 'classicist-theme-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Predefined publication card designs with traditional, scholarly styling and formal typography</p>
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Classic theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                </div>
-              </div>
-              <ThemePublicationCards themeId="classicist-theme" />
-              </div>
-            )}
-          {siteManagerView === 'classicist-theme-templates' && (
-            <SiteManagerTemplates themeId="classicist-theme" usePageStore={usePageStore} />
-          )}
             
           {siteManagerView === 'wiley-main-settings' && (
                       <div>
@@ -4426,51 +4449,6 @@ function DesignConsole() {
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
                       </div>
             </div>
-          )}
-
-          {siteManagerView === 'research-hub-settings' && (
-                      <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
-                      </div>
-              <WebsiteSettings websiteId="research-hub" />
-              </div>
-            )}
-          {siteManagerView === 'research-hub-branding' && (
-            <WebsiteBrandingConfiguration websiteId="research-hub" usePageStore={usePageStore} />
-          )}
-          {siteManagerView === 'research-hub-templates' && (
-            <WebsiteTemplates
-              websiteId="research-hub"
-              websiteName="Wiley Research Hub"
-              enabledContentTypes={['journals']}
-              hasSubjectOrganization={false}
-              allTemplates={ALL_TEMPLATES}
-              usePageStore={usePageStore}
-              consoleMode={consoleMode}
-            />
-          )}
-          {siteManagerView === 'research-hub-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design publication cards optimized for research journals with simple organization</p>
-          </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
-          {siteManagerView === 'research-hub-custom-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Custom Templates</h2>
-                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-            </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-          </div>
-        </div>
           )}
 
           {siteManagerView === 'journal-of-science-settings' && (
@@ -4530,7 +4508,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme settings not explicitly handled */}
           {siteManagerView.endsWith('-theme-settings') && 
-           !['modernist-theme-theme-settings', 'classicist-theme-theme-settings'].includes(siteManagerView) && (
+           !['modernist-theme-theme-settings'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-theme-settings', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4548,7 +4526,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme publication cards not explicitly handled */}
           {siteManagerView.endsWith('-publication-cards') && siteManagerView.includes('-theme-') &&
-           !['modernist-theme-publication-cards', 'classicist-theme-publication-cards'].includes(siteManagerView) && (
+           !['modernist-theme-publication-cards'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-publication-cards', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4570,7 +4548,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme templates not explicitly handled */}
           {siteManagerView.endsWith('-templates') && !siteManagerView.includes('-custom-templates') &&
-           !['modernist-theme-templates', 'classicist-theme-templates'].includes(siteManagerView) && (
+           !['modernist-theme-templates'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-templates', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4582,7 +4560,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website settings not explicitly handled */}
           {siteManagerView.endsWith('-settings') && !siteManagerView.endsWith('-theme-settings') &&
-           !['wiley-main-settings', 'research-hub-settings', 'journal-of-science-settings'].includes(siteManagerView) && (
+           !['wiley-main-settings', 'journal-of-science-settings'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-settings', '')
               const website = websites.find(w => w.id === websiteId)
@@ -4632,7 +4610,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website publication cards not explicitly handled */}
           {siteManagerView.endsWith('-publication-cards') && !siteManagerView.includes('-theme-') &&
-           !['wiley-main-publication-cards', 'research-hub-publication-cards', 'journal-of-science-publication-cards'].includes(siteManagerView) && (
+           !['wiley-main-publication-cards', 'journal-of-science-publication-cards'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-publication-cards', '')
               const website = websites.find(w => w.id === websiteId)
@@ -4650,7 +4628,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website custom templates not explicitly handled */}
           {siteManagerView.endsWith('-custom-templates') &&
-           !['wiley-main-custom-templates', 'research-hub-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
+           !['wiley-main-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-custom-templates', '')
               const website = websites.find(w => w.id === websiteId)
@@ -5049,110 +5027,6 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
         }
       ]
     },
-    'classicist-theme': {
-      name: 'Classic Theme',
-      description: 'Traditional, scholarly publication cards with serif typography, formal styling, and academic conventions',
-      usageContexts: ['Academic Search', 'Scholarly Listings', 'Institutional Displays', 'Reference Pages'],
-      cards: [
-        {
-          id: 'classic-article-compact',
-          name: 'Article Card (Compact)',
-          type: 'Article',
-          description: 'Traditional academic style for search and listings',
-          context: 'Academic Search, Reference Lists',
-          features: ['Formal typography', 'Citation format', 'Academic status', 'Publication venues'],
-          style: {
-            layout: 'compact',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '600',
-            titleSize: '16px',
-            metaColor: '#6b7280',
-            metaFont: 'Georgia, serif',
-            metaSize: '14px',
-            accentColor: '#7c3aed',
-            statusColors: {
-              fullAccess: '#059669',
-              freeAccess: '#d97706',
-              subscription: '#6b7280'
-            },
-            spacing: '14px',
-            borderRadius: '6px'
-          }
-        },
-        {
-          id: 'classic-article-detailed',
-          name: 'Article Card (Detailed)',
-          type: 'Article',
-          description: 'Formal academic presentation with complete metadata',
-          context: 'Academic Journals, Scholarly Archives',
-          features: ['Complete citations', 'Abstract access', 'Reference formatting', 'Academic buttons'],
-          style: {
-            layout: 'detailed',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '18px',
-            metaColor: '#6b7280',
-            metaFont: 'Georgia, serif',
-            metaSize: '14px',
-            accentColor: '#7c3aed',
-            buttonStyle: 'traditional',
-            spacing: '18px',
-            borderRadius: '8px'
-          }
-        },
-        {
-          id: 'classic-issue-banner',
-          name: 'Issue Card (Banner)',
-          type: 'Issue',
-          description: 'Formal journal issue presentation',
-          context: 'Academic Journals, Issue Archives',
-          features: ['Traditional layout', 'Academic formatting', 'ISSN prominence', 'Scholarly branding'],
-          style: {
-            layout: 'banner',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '22px',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            imageStyle: 'traditional',
-            spacing: '20px',
-            borderRadius: '8px'
-          }
-        },
-        {
-          id: 'classic-book-featured',
-          name: 'Book Card (Featured)',
-          type: 'Book',
-          description: 'Scholarly book presentation with academic conventions',
-          context: 'Academic Books, University Press',
-          features: ['Scholarly typography', 'Academic metadata', 'ISBN prominence', 'Citation ready'],
-          style: {
-            layout: 'featured',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '20px',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            imageStyle: 'cover-traditional',
-            authorDisplay: 'formal',
-            spacing: '18px',
-            borderRadius: '8px'
-          }
-        }
-      ]
-    }
   }
 
   const themeData = themePublicationCards[themeId as keyof typeof themePublicationCards]
@@ -5562,15 +5436,13 @@ export default function App() {
   return (
     <>
       <DynamicBrandingCSS websiteId={currentWebsiteId} />
-      <CanvasThemeProvider usePageStore={usePageStore}>
-        <PageBuilder 
-          usePageStore={usePageStore}
-          buildWidget={buildWidget}
-          TemplateCanvas={TemplateCanvas}
-          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-          isSection={isSection}
-        />
-      </CanvasThemeProvider>
+      <PageBuilder 
+        usePageStore={usePageStore}
+        buildWidget={buildWidget}
+        TemplateCanvas={TemplateCanvas}
+        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+        isSection={isSection}
+      />
       <NotificationContainer />
       <IssuesSidebar />
     </>

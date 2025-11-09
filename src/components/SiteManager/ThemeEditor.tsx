@@ -134,8 +134,8 @@ type Theme = {
     form: Record<string, any>
   }
   
-  // Theme-specific customization rules (what can/cannot be modified)
-  customizationRules: {
+  // Theme-specific modification rules (config-level changes only, NOT code customization)
+  modificationRules: {
     colors: {
       canModifyPrimary: boolean
       canModifySecondary: boolean
@@ -210,8 +210,17 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
   const websites = (usePageStore as any)((state: any) => state.websites)
   const updateTheme = store.updateTheme
   const updateWebsite = store.updateWebsite
+  const setPreviewThemeId = (store as any).setPreviewThemeId
   
-  const selectedTheme = themeId || 'modernist-theme'
+  const selectedTheme = themeId || 'classic-ux3-theme'
+  
+  // Update preview theme ID when themeId changes (for Design Console preview)
+  useEffect(() => {
+    if (setPreviewThemeId && selectedTheme) {
+      setPreviewThemeId(selectedTheme)
+      console.log('🎨 ThemeEditor: Set preview theme ID to', selectedTheme)
+    }
+  }, [selectedTheme, setPreviewThemeId])
   
   const currentTheme = (themes as any[]).find((t: any) => t.id === selectedTheme)
   const currentWebsite = websiteId ? (websites as any[]).find((w: any) => w.id === websiteId) : null
@@ -598,13 +607,6 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                   <div 
                     className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
                     style={{
-                      '--theme-color-primary': effectiveTheme.colors.primary,
-                      '--theme-color-secondary': effectiveTheme.colors.secondary,
-                      '--theme-color-accent': effectiveTheme.colors.accent,
-                      '--theme-color-text': effectiveTheme.colors.text,
-                      '--theme-color-background': effectiveTheme.colors.background,
-                      '--theme-heading-font': effectiveTheme.typography.headingFont,
-                      '--theme-body-font': effectiveTheme.typography.bodyFont,
                       color: effectiveTheme.colors.text,
                       fontFamily: effectiveTheme.typography.bodyFont,
                       fontSize: effectiveTheme.typography.baseSize
@@ -671,7 +673,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 <h4 className="text-base font-semibold text-gray-800 mb-2">Publisher Main branding</h4>
                 <p className="text-sm text-gray-600 mb-4">Affects menu, backgrounds, buttons</p>
                 <div className="space-y-4">
-                  {currentTheme.customizationRules.colors.canModifyPrimary && (
+                  {currentTheme.modificationRules.colors.canModifyPrimary && (
                     <ColorInput
                       label="Primary color"
                       value={effectiveTheme.colors.primary}
@@ -679,7 +681,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                     />
                   )}
                   
-                  {currentTheme.customizationRules.colors.canModifySecondary && (
+                  {currentTheme.modificationRules.colors.canModifySecondary && (
                     <ColorInput
                       label="Secondary color"
                       value={effectiveTheme.colors.secondary}
@@ -687,7 +689,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                     />
                   )}
                   
-                  {currentTheme.customizationRules.colors.canModifyAccent && (
+                  {currentTheme.modificationRules.colors.canModifyAccent && (
                     <ColorInput
                       label="Accent color"
                       value={effectiveTheme.colors.accent}
@@ -797,13 +799,6 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                   <div 
                     className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
                     style={{
-                      '--theme-color-primary': effectiveTheme.colors.primary,
-                      '--theme-color-secondary': effectiveTheme.colors.secondary,
-                      '--theme-color-accent': effectiveTheme.colors.accent,
-                      '--theme-color-text': effectiveTheme.colors.text,
-                      '--theme-color-background': effectiveTheme.colors.background,
-                      '--theme-heading-font': effectiveTheme.typography.headingFont,
-                      '--theme-body-font': effectiveTheme.typography.bodyFont,
                       color: effectiveTheme.colors.text,
                       fontFamily: effectiveTheme.typography.bodyFont,
                       fontSize: effectiveTheme.typography.baseSize
@@ -863,13 +858,13 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               </div>
               
               {/* Additional Colors */}
-              {(currentTheme.customizationRules.colors.canModifyText || 
-                currentTheme.customizationRules.colors.canModifyBackground || 
-                currentTheme.customizationRules.colors.canModifyMuted) && (
+              {(currentTheme.modificationRules.colors.canModifyText || 
+                currentTheme.modificationRules.colors.canModifyBackground || 
+                currentTheme.modificationRules.colors.canModifyMuted) && (
                 <div className="pt-6 border-t border-gray-200">
                   <h4 className="text-base font-semibold text-gray-800 mb-2">Additional Colors</h4>
                   <div className="space-y-4">
-                    {currentTheme.customizationRules.colors.canModifyBackground && (
+                    {currentTheme.modificationRules.colors.canModifyBackground && (
                       <ColorInput
                         label="Background Color"
                         value={effectiveTheme.colors.background}
@@ -878,7 +873,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                       />
                     )}
                     
-                    {currentTheme.customizationRules.colors.canModifyText && (
+                    {currentTheme.modificationRules.colors.canModifyText && (
                       <ColorInput
                         label="Text Color"
                         value={effectiveTheme.colors.text}
@@ -887,7 +882,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                       />
                     )}
                     
-                    {currentTheme.customizationRules.colors.canModifyMuted && (
+                    {currentTheme.modificationRules.colors.canModifyMuted && (
                       <ColorInput
                         label="Muted Color"
                         value={effectiveTheme.colors.muted}
@@ -902,8 +897,8 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
           )}
         </div>
         
-        {/* RIGHT COLUMN: Typography Preview Section (Wiley DS V2 only) */}
-        {currentTheme.id === 'wiley-figma-ds-v2' && (
+        {/* RIGHT COLUMN: Typography Preview Section (All themes with typography.styles) */}
+        {currentTheme.typography?.styles && (
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Typography</h3>
@@ -922,12 +917,26 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Headings</h4>
                 <div className="space-y-2">
-                  <div className="typo-heading-h1" style={{ margin: 0 }}>H1 - Hero Heading</div>
-                  <div className="typo-heading-h2" style={{ margin: 0 }}>H2 - Display Heading</div>
-                  <div className="typo-heading-h3" style={{ margin: 0 }}>H3 - Section Heading</div>
-                  <div className="typo-heading-h4" style={{ margin: 0 }}>H4 - Subsection Heading</div>
-                  <div className="typo-heading-h5" style={{ margin: 0 }}>H5 - Minor Heading</div>
-                  <div className="typo-heading-h6" style={{ margin: 0 }}>H6 - Small Heading</div>
+                  {['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((level, idx) => {
+                    const style = currentTheme.typography.styles[`heading-${level}`]
+                    if (!style) return null
+                    const fontFamily = style.family === 'primary' 
+                      ? (currentTheme.typography.semantic?.primary || effectiveTheme.typography.headingFont)
+                      : (currentTheme.typography.semantic?.secondary || effectiveTheme.typography.bodyFont)
+                    const labels = ['Hero Heading', 'Display Heading', 'Section Heading', 'Subsection Heading', 'Minor Heading', 'Small Heading']
+                    return (
+                      <div key={level} style={{
+                        margin: 0,
+                        fontFamily,
+                        fontSize: style.desktop.size,
+                        lineHeight: style.desktop.lineHeight,
+                        fontWeight: style.desktop.weight,
+                        letterSpacing: style.desktop.letterSpacing || '0'
+                      }}>
+                        H{idx + 1} - {labels[idx]}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
               
@@ -935,12 +944,32 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Body Text</h4>
                 <div className="space-y-2">
-                  <div className="typo-body-xl">Body XL - Large emphasis text</div>
-                  <div className="typo-body-lg">Body Large - Above standard</div>
-                  <div className="typo-body-md">Body Medium - Standard paragraph</div>
-                  <div className="typo-body-sm">Body Small - Captions</div>
-                  <div className="typo-body-xs">Body XSmall - Fine detail</div>
-                  <div className="typo-code-mono">Code/Mono - Technical content (IBM Plex Mono)</div>
+                  {[
+                    { key: 'body-xl', label: 'Body XL - Large emphasis text' },
+                    { key: 'body-lg', label: 'Body Large - Above standard' },
+                    { key: 'body-md', label: 'Body Medium - Standard paragraph' },
+                    { key: 'body-sm', label: 'Body Small - Captions' },
+                    { key: 'body-xs', label: 'Body XSmall - Fine detail' },
+                    { key: 'code-mono', label: 'Code/Mono - Technical content (IBM Plex Mono)' }
+                  ].map(({ key, label }) => {
+                    const style = currentTheme.typography.styles[key]
+                    if (!style) return null
+                    const fontFamily = style.family === 'primary' 
+                      ? (currentTheme.typography.semantic?.primary || effectiveTheme.typography.headingFont)
+                      : (currentTheme.typography.semantic?.secondary || effectiveTheme.typography.bodyFont)
+                    return (
+                      <div key={key} style={{
+                        fontFamily,
+                        fontSize: style.desktop.size,
+                        lineHeight: style.desktop.lineHeight,
+                        fontWeight: style.desktop.weight,
+                        letterSpacing: style.desktop.letterSpacing || '0',
+                        textTransform: style.desktop.transform || 'none'
+                      }}>
+                        {label}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
               
@@ -948,9 +977,39 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Buttons</h4>
                 <div className="flex gap-3">
-                  <button className="btn btn-solid-color1 btn-large on-light-bg">LARGE</button>
-                  <button className="btn btn-solid-color1 btn-medium on-light-bg">MEDIUM</button>
-                  <button className="btn btn-solid-color1 btn-small on-light-bg">SMALL</button>
+                  {['large', 'medium', 'small'].map((size) => {
+                    const buttonRadius = currentTheme.components?.button?.borderRadius || '4px'
+                    const buttonFont = effectiveTheme.typography.bodyFont
+                    const primaryColor = effectiveTheme.colors.primary
+                    
+                    // Size-specific styles
+                    const sizeStyles = size === 'large' 
+                      ? { padding: '12px 24px', fontSize: '16px', height: '48px' }
+                      : size === 'medium'
+                      ? { padding: '10px 20px', fontSize: '14px', height: '40px' }
+                      : { padding: '8px 16px', fontSize: '12px', height: '32px' }
+                    
+                    return (
+                      <button 
+                        key={size}
+                        style={{
+                          ...sizeStyles,
+                          fontFamily: buttonFont,
+                          fontWeight: currentTheme.components?.button?.fontWeight || '500',
+                          backgroundColor: primaryColor,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: buttonRadius,
+                          cursor: 'pointer',
+                          textTransform: currentTheme.components?.button?.textTransform || 'none',
+                          letterSpacing: currentTheme.components?.button?.letterSpacing || '0',
+                          transition: 'all 150ms ease'
+                        }}
+                      >
+                        {size.toUpperCase()}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
               
