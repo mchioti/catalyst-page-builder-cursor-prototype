@@ -1,6 +1,12 @@
 import { useEffect } from 'react'
 import { generateThemeCSS } from '../../styles/themeCSS'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
+import { 
+  mapWileyDSV2ToFoundation, 
+  mapClassicUX3ToFoundation,
+  mapCarbonToFoundation,
+  mapAntDesignToFoundation
+} from '../../foundation'
 
 // Helper function to resolve spacing token references (e.g., 'radius.sm' → '8px')
 function resolveSpacingToken(tokenRef: string | undefined, theme: any): string | undefined {
@@ -38,6 +44,7 @@ interface CanvasThemeProviderProps {
 export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }: CanvasThemeProviderProps) {
   // Use selector to explicitly track brand mode changes
   const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
+  const currentView = usePageStore((state: any) => state.currentView)
   const themes = usePageStore((state: any) => state.themes)
   const currentWebsite = usePageStore((state: any) => 
     state.websites?.find((w: any) => w.id === state.currentWebsiteId)
@@ -47,26 +54,30 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     return website?.brandMode || 'wiley'
   })
   
-  // In Design Console (scopeCSS=true), always use preview brand mode and preview theme ID
-  // ThemeEditor will sync these with the current theme/website being viewed
+  // Preview mode is ONLY for Design Console, not for Page Builder editor
+  const isDesignConsolePreview = currentView === 'design-console'
   const previewBrandMode: BrandMode = usePageStore((state: any) => state.previewBrandMode)
   const previewThemeId: string = usePageStore((state: any) => state.previewThemeId)
-  const brandMode: BrandMode = scopeCSS ? previewBrandMode : storeBrandMode
+  
+  // Use preview IDs ONLY in Design Console, otherwise use current website's IDs
+  const brandMode: BrandMode = isDesignConsolePreview ? previewBrandMode : storeBrandMode
+  const themeIdToUse = isDesignConsolePreview 
+    ? previewThemeId 
+    : (currentWebsite?.themeId || 'classic-ux3-theme')
   
   console.log('🎨 CanvasThemeProvider RENDER:', {
+    currentView,
     websiteId: currentWebsiteId,
     websiteName: currentWebsite?.name,
     scopeCSS,
-    previewThemeId,
+    isDesignConsolePreview,
+    themeIdToUse,
     brandMode,
-    source: scopeCSS ? 'previewBrandMode (Design Console)' : 'storeBrandMode (Page Builder/Live)',
+    source: isDesignConsolePreview ? 'previewBrandMode (Design Console)' : 'storeBrandMode (Page Builder/Live)',
     timestamp: new Date().toISOString()
   })
   
   // Find the theme
-  // Priority: If Design Console (scopeCSS=true), use previewThemeId from store
-  //           Otherwise, use currentWebsite.themeId > fallback
-  const themeIdToUse = scopeCSS ? previewThemeId : (currentWebsite?.themeId || 'classic-ux3-theme')
   const rawTheme = themes.find((t: any) => t.id === themeIdToUse) || themes.find((t: any) => t.id === 'classic-ux3-theme')
   
   // Resolve token references based on brand mode
@@ -191,6 +202,37 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
       Object.entries(currentTheme.colors.support).forEach(([key, value]) => {
         vars[`--carbon-support-${key}`] = value
       })
+    }
+
+    // 🚀 ATYPON DESIGN FOUNDATION - Token Injection
+    // Map theme-specific structures to universal Foundation tokens
+    try {
+      let foundationTokens = null
+      
+      // Map each theme to Foundation tokens
+      if (currentTheme.id === 'wiley-figma-ds-v2') {
+        foundationTokens = mapWileyDSV2ToFoundation(currentTheme, brandMode)
+      } else if (currentTheme.id === 'classic-ux3-theme') {
+        foundationTokens = mapClassicUX3ToFoundation(currentTheme)
+      } else if (currentTheme.id === 'ibm-carbon-ds') {
+        foundationTokens = mapCarbonToFoundation(currentTheme)
+      } else if (currentTheme.id === 'ant-design') {
+        foundationTokens = mapAntDesignToFoundation(currentTheme)
+      }
+      
+      // Inject Foundation CSS variables if adapter exists for this theme
+      if (foundationTokens) {
+        Object.entries(foundationTokens).forEach(([key, value]) => {
+          const cssVarName = `--foundation-${key.replace(/\./g, '-')}`
+          vars[cssVarName] = value
+        })
+        
+        console.log('🚀 Foundation tokens injected for', currentTheme.name, ':', Object.keys(foundationTokens).length, 'tokens')
+      } else {
+        console.warn('⚠️ No Foundation adapter for theme:', currentTheme.name, '(id:', currentTheme.id, ')')
+      }
+    } catch (error) {
+      console.error('❌ Foundation token mapping failed for', currentTheme.name, ':', error)
     }
 
     // 🎨 Add Semantic Color System (Light/Dark pairs for accessibility)
@@ -357,7 +399,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
         console.log('🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId, previewThemeId]) // Re-run when theme, brand mode, scoping, website, or preview theme changes
+  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId, previewThemeId, currentView]) // Re-run when theme, brand mode, scoping, website, preview theme, or view changes
 
   return (
     <div 

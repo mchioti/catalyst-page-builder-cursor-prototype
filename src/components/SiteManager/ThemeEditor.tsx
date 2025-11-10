@@ -1,8 +1,6 @@
 import React, { useMemo, useEffect } from 'react'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
-import { WidgetRenderer } from '../Widgets/WidgetRenderer'
-import type { ButtonWidget } from '../../types/widgets'
-import { nanoid } from 'nanoid'
+import { Button } from '../../foundation'
 
 // Color input component
 function ColorInput({ 
@@ -601,65 +599,106 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                   </div>
                 </div>
                 
-                {/* Preview - Integrated within button configuration */}
+                {/* Preview - Show buttons on both light and dark backgrounds */}
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <h5 className="text-sm font-medium text-gray-700 mb-3">Preview</h5>
-                  <div 
-                    className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
-                    style={{
-                      color: effectiveTheme.colors.text,
-                      fontFamily: effectiveTheme.typography.bodyFont,
-                      fontSize: effectiveTheme.typography.baseSize
-                    } as React.CSSProperties}
-                  >
-                    <h2 style={{ 
-                      fontFamily: effectiveTheme.typography.headingFont, 
-                      fontSize: '24px',
-                      marginBottom: '0.75rem',
-                      fontWeight: 600
-                    }}>
-                      Sample Heading
-                    </h2>
-                    <p style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                      This is a sample paragraph to show how content will look with your selected colors and typography.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Primary Button',
-                          style: 'solid',
-                          color: 'color1',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Secondary Button',
-                          style: 'solid',
-                          color: 'color2',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Outline Button',
-                          style: 'outline',
-                          color: 'color1',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
+                  <div className="space-y-4">
+                    {/* Light Background Preview */}
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">On Light Background</div>
+                      <div 
+                        className="foundation-context-light theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
+                        style={{
+                          color: effectiveTheme.colors.text,
+                          fontFamily: effectiveTheme.typography.bodyFont,
+                          fontSize: effectiveTheme.typography.baseSize
+                        } as React.CSSProperties}
+                      >
+                        <h2 style={{ 
+                          fontFamily: effectiveTheme.typography.headingFont, 
+                          fontSize: '20px',
+                          marginBottom: '0.5rem',
+                          fontWeight: 600
+                        }}>
+                          Sample Heading
+                        </h2>
+                        <p style={{ marginBottom: '1rem', lineHeight: 1.6, fontSize: '14px' }}>
+                          This is a sample paragraph to show how content looks with your selected colors.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <Button 
+                            variant="solid" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Primary Button
+                          </Button>
+                          <Button 
+                            variant="solid" 
+                            color="secondary" 
+                            size="medium"
+                          >
+                            Secondary Button
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Outline Button
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dark Background Preview */}
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">On Dark Background</div>
+                      <div 
+                        className="foundation-context-dark theme-preview p-6 border border-gray-700 rounded-lg"
+                        style={{
+                          backgroundColor: effectiveTheme.colors.text || '#1a1a1a',
+                          color: effectiveTheme.colors.background || '#ffffff',
+                          fontFamily: effectiveTheme.typography.bodyFont,
+                          fontSize: effectiveTheme.typography.baseSize
+                        } as React.CSSProperties}
+                      >
+                        <h2 style={{ 
+                          fontFamily: effectiveTheme.typography.headingFont, 
+                          fontSize: '20px',
+                          marginBottom: '0.5rem',
+                          fontWeight: 600,
+                          color: effectiveTheme.colors.background || '#ffffff'
+                        }}>
+                          Sample Heading
+                        </h2>
+                        <p style={{ marginBottom: '1rem', lineHeight: 1.6, fontSize: '14px' }}>
+                          This is a sample paragraph to show how content looks on dark backgrounds.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <Button 
+                            variant="solid" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Primary Button
+                          </Button>
+                          <Button 
+                            variant="solid" 
+                            color="secondary" 
+                            size="medium"
+                          >
+                            Secondary Button
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Outline Button
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -793,65 +832,106 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                   </div>
                 )}
                 
-                {/* Preview - Integrated within button configuration */}
+                {/* Preview - Show buttons on both light and dark backgrounds */}
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <h5 className="text-sm font-medium text-gray-700 mb-3">Preview</h5>
-                  <div 
-                    className="theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
-                    style={{
-                      color: effectiveTheme.colors.text,
-                      fontFamily: effectiveTheme.typography.bodyFont,
-                      fontSize: effectiveTheme.typography.baseSize
-                    } as React.CSSProperties}
-                  >
-                    <h2 style={{ 
-                      fontFamily: effectiveTheme.typography.headingFont, 
-                      fontSize: '24px',
-                      marginBottom: '0.75rem',
-                      fontWeight: 600
-                    }}>
-                      Sample Heading
-                    </h2>
-                    <p style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                      This is a sample paragraph to show how content will look with your selected colors and typography.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Primary Button',
-                          style: 'solid',
-                          color: 'color1',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Secondary Button',
-                          style: 'solid',
-                          color: 'color2',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
-                      <WidgetRenderer
-                        widget={{
-                          id: nanoid(),
-                          type: 'button',
-                          text: 'Outline Button',
-                          style: 'outline',
-                          color: 'color1',
-                          size: 'medium'
-                        } as ButtonWidget}
-                        sectionContentMode="light"
-                        isLiveMode={true}
-                      />
+                  <div className="space-y-4">
+                    {/* Light Background Preview */}
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">On Light Background</div>
+                      <div 
+                        className="foundation-context-light theme-preview p-6 border border-gray-200 rounded-lg bg-gray-50"
+                        style={{
+                          color: effectiveTheme.colors.text,
+                          fontFamily: effectiveTheme.typography.bodyFont,
+                          fontSize: effectiveTheme.typography.baseSize
+                        } as React.CSSProperties}
+                      >
+                        <h2 style={{ 
+                          fontFamily: effectiveTheme.typography.headingFont, 
+                          fontSize: '20px',
+                          marginBottom: '0.5rem',
+                          fontWeight: 600
+                        }}>
+                          Sample Heading
+                        </h2>
+                        <p style={{ marginBottom: '1rem', lineHeight: 1.6, fontSize: '14px' }}>
+                          This is a sample paragraph to show how content looks with your selected colors.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <Button 
+                            variant="solid" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Primary Button
+                          </Button>
+                          <Button 
+                            variant="solid" 
+                            color="secondary" 
+                            size="medium"
+                          >
+                            Secondary Button
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Outline Button
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dark Background Preview */}
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">On Dark Background</div>
+                      <div 
+                        className="foundation-context-dark theme-preview p-6 border border-gray-700 rounded-lg"
+                        style={{
+                          backgroundColor: effectiveTheme.colors.text || '#1a1a1a',
+                          color: effectiveTheme.colors.background || '#ffffff',
+                          fontFamily: effectiveTheme.typography.bodyFont,
+                          fontSize: effectiveTheme.typography.baseSize
+                        } as React.CSSProperties}
+                      >
+                        <h2 style={{ 
+                          fontFamily: effectiveTheme.typography.headingFont, 
+                          fontSize: '20px',
+                          marginBottom: '0.5rem',
+                          fontWeight: 600,
+                          color: effectiveTheme.colors.background || '#ffffff'
+                        }}>
+                          Sample Heading
+                        </h2>
+                        <p style={{ marginBottom: '1rem', lineHeight: 1.6, fontSize: '14px' }}>
+                          This is a sample paragraph to show how content looks on dark backgrounds.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <Button 
+                            variant="solid" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Primary Button
+                          </Button>
+                          <Button 
+                            variant="solid" 
+                            color="secondary" 
+                            size="medium"
+                          >
+                            Secondary Button
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            color="primary" 
+                            size="medium"
+                          >
+                            Outline Button
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -977,39 +1057,28 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Buttons</h4>
                 <div className="flex gap-3">
-                  {['large', 'medium', 'small'].map((size) => {
-                    const buttonRadius = currentTheme.components?.button?.borderRadius || '4px'
-                    const buttonFont = effectiveTheme.typography.bodyFont
-                    const primaryColor = effectiveTheme.colors.primary
-                    
-                    // Size-specific styles
-                    const sizeStyles = size === 'large' 
-                      ? { padding: '12px 24px', fontSize: '16px', height: '48px' }
-                      : size === 'medium'
-                      ? { padding: '10px 20px', fontSize: '14px', height: '40px' }
-                      : { padding: '8px 16px', fontSize: '12px', height: '32px' }
-                    
-                    return (
-                      <button 
-                        key={size}
-                        style={{
-                          ...sizeStyles,
-                          fontFamily: buttonFont,
-                          fontWeight: currentTheme.components?.button?.fontWeight || '500',
-                          backgroundColor: primaryColor,
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: buttonRadius,
-                          cursor: 'pointer',
-                          textTransform: currentTheme.components?.button?.textTransform || 'none',
-                          letterSpacing: currentTheme.components?.button?.letterSpacing || '0',
-                          transition: 'all 150ms ease'
-                        }}
-                      >
-                        {size.toUpperCase()}
-                      </button>
-                    )
-                  })}
+                  {/* Use Foundation Buttons - text-transform handled by theme tokens */}
+                  <Button 
+                    variant="solid" 
+                    color="primary" 
+                    size="large"
+                  >
+                    Large
+                  </Button>
+                  <Button 
+                    variant="solid" 
+                    color="primary" 
+                    size="medium"
+                  >
+                    Medium
+                  </Button>
+                  <Button 
+                    variant="solid" 
+                    color="primary" 
+                    size="small"
+                  >
+                    Small
+                  </Button>
                 </div>
               </div>
               

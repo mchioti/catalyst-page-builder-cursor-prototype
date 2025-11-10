@@ -1,0 +1,523 @@
+/**
+ * Atypon Design Foundation - Button Styles
+ * 
+ * All visual properties are driven by CSS custom properties (--foundation-*)
+ * defined by the active Design System theme.
+ * 
+ * NO HARDCODED VALUES - Everything must reference tokens.
+ */
+
+/* ========================================================================== */
+/* BASE BUTTON STYLES                                                         */
+/* ========================================================================== */
+
+.foundation-button {
+  /* Reset browser defaults */
+  appearance: none;
+  border: none;
+  background: none;
+  margin: 0;
+  cursor: pointer;
+  text-decoration: none;
+  
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--foundation-spacing-2);
+  
+  /* Typography - from tokens */
+  font-family: var(--foundation-button-font-family);
+  font-weight: var(--foundation-button-font-weight);
+  letter-spacing: var(--foundation-button-letter-spacing);
+  text-transform: var(--foundation-button-text-transform);
+  white-space: nowrap;
+  
+  /* Interaction */
+  user-select: none;
+  transition: 
+    background-color var(--foundation-motion-duration-normal) var(--foundation-motion-easing-standard),
+    color var(--foundation-motion-duration-normal) var(--foundation-motion-easing-standard),
+    border-color var(--foundation-motion-duration-normal) var(--foundation-motion-easing-standard),
+    box-shadow var(--foundation-motion-duration-normal) var(--foundation-motion-easing-standard),
+    transform var(--foundation-motion-duration-fast) var(--foundation-motion-easing-standard);
+  
+  /* Accessibility - Focus ring */
+  outline: none;
+  box-shadow: var(--foundation-button-shadow-rest);
+}
+
+.foundation-button:focus-visible {
+  box-shadow: var(--foundation-button-shadow-focus);
+}
+
+/* Full width */
+.foundation-button--full-width {
+  width: 100%;
+}
+
+/* ========================================================================== */
+/* SIZE VARIANTS                                                              */
+/* ========================================================================== */
+
+.foundation-button--small {
+  padding: var(--foundation-button-padding-small);
+  height: var(--foundation-button-height-small);
+  font-size: var(--foundation-button-font-size-small);
+  border-radius: var(--foundation-button-radius-small);
+}
+
+.foundation-button--medium {
+  padding: var(--foundation-button-padding-medium);
+  height: var(--foundation-button-height-medium);
+  font-size: var(--foundation-button-font-size-medium);
+  border-radius: var(--foundation-button-radius-medium);
+}
+
+.foundation-button--large {
+  padding: var(--foundation-button-padding-large);
+  height: var(--foundation-button-height-large);
+  font-size: var(--foundation-button-font-size-large);
+  border-radius: var(--foundation-button-radius-large);
+}
+
+/* ========================================================================== */
+/* STYLE VARIANTS - SOLID                                                     */
+/* ========================================================================== */
+
+/* Primary Solid - Default (Light Background Context) */
+.foundation-button--solid.foundation-button--primary {
+  background-color: var(--foundation-action-primary);
+  color: var(--foundation-action-primary-text);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+/* Primary Solid - Dark Background Context (use semantic colors if available) */
+.foundation-context-dark .foundation-button--solid.foundation-button--primary {
+  background-color: var(--semantic-primary-light, var(--foundation-action-primary));
+  color: var(--foundation-action-primary-text);
+}
+
+.foundation-button--solid.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary-hover);
+  box-shadow: var(--foundation-button-shadow-hover);
+}
+
+/* Primary Solid Hover - Dark Background Context */
+.foundation-context-dark .foundation-button--solid.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--semantic-primary-light-hover, var(--foundation-action-primary-hover));
+  box-shadow: var(--foundation-button-shadow-hover);
+}
+
+.foundation-button--solid.foundation-button--primary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary-active);
+  box-shadow: var(--foundation-button-shadow-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--solid.foundation-button--primary:disabled,
+.foundation-button--solid.foundation-button--primary.foundation-button--disabled {
+  background-color: var(--foundation-action-primary-disabled);
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Secondary Solid - Default (Light Background Context) */
+.foundation-button--solid.foundation-button--secondary {
+  background-color: var(--foundation-action-secondary);
+  color: var(--foundation-action-secondary-text);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+/* Secondary Solid - Dark Background Context (use semantic colors if available) */
+.foundation-context-dark .foundation-button--solid.foundation-button--secondary {
+  background-color: var(--semantic-secondary-bg-light, var(--foundation-action-secondary));
+  color: var(--semantic-secondary-text-light, var(--foundation-action-secondary-text));
+}
+
+.foundation-button--solid.foundation-button--secondary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary-hover);
+  box-shadow: var(--foundation-button-shadow-hover);
+}
+
+/* Secondary Solid Hover - Dark Background Context */
+.foundation-context-dark .foundation-button--solid.foundation-button--secondary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--semantic-secondary-bg-light-hover, var(--foundation-action-secondary-hover));
+  box-shadow: var(--foundation-button-shadow-hover);
+}
+
+.foundation-button--solid.foundation-button--secondary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary-active);
+  box-shadow: var(--foundation-button-shadow-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--solid.foundation-button--secondary:disabled,
+.foundation-button--solid.foundation-button--secondary.foundation-button--disabled {
+  background-color: var(--foundation-action-secondary-disabled);
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Tertiary Solid */
+.foundation-button--solid.foundation-button--tertiary {
+  background-color: var(--foundation-action-tertiary);
+  color: var(--foundation-action-tertiary-text);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+.foundation-button--solid.foundation-button--tertiary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary-hover);
+  box-shadow: var(--foundation-button-shadow-hover);
+}
+
+.foundation-button--solid.foundation-button--tertiary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary-active);
+  box-shadow: var(--foundation-button-shadow-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--solid.foundation-button--tertiary:disabled,
+.foundation-button--solid.foundation-button--tertiary.foundation-button--disabled {
+  background-color: var(--foundation-action-tertiary-disabled);
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ========================================================================== */
+/* STYLE VARIANTS - OUTLINE                                                   */
+/* ========================================================================== */
+
+/* Primary Outline - Default (Light Background Context) */
+.foundation-button--outline.foundation-button--primary {
+  background-color: transparent;
+  color: var(--foundation-action-primary);
+  border: var(--foundation-button-border-width) solid var(--foundation-action-primary);
+}
+
+/* Primary Outline - Dark Background Context */
+.foundation-context-dark .foundation-button--outline.foundation-button--primary {
+  color: var(--semantic-primary-light, var(--foundation-action-primary));
+  border-color: var(--semantic-primary-light, var(--foundation-action-primary));
+}
+
+.foundation-button--outline.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary);
+  color: var(--foundation-action-primary-text);
+  border-color: var(--foundation-action-primary);
+}
+
+/* Primary Outline Hover - Dark Background Context */
+.foundation-context-dark .foundation-button--outline.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--semantic-primary-light, var(--foundation-action-primary));
+  color: var(--foundation-action-primary-text);
+  border-color: var(--semantic-primary-light, var(--foundation-action-primary));
+}
+
+.foundation-button--outline.foundation-button--primary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary-active);
+  color: var(--foundation-action-primary-text);
+  border-color: var(--foundation-action-primary-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--outline.foundation-button--primary:disabled,
+.foundation-button--outline.foundation-button--primary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  border-color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Secondary Outline */
+.foundation-button--outline.foundation-button--secondary {
+  background-color: transparent;
+  color: var(--foundation-action-secondary);
+  border: var(--foundation-button-border-width) solid var(--foundation-action-secondary);
+}
+
+.foundation-button--outline.foundation-button--secondary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary);
+  color: var(--foundation-action-secondary-text);
+  border-color: var(--foundation-action-secondary);
+}
+
+.foundation-button--outline.foundation-button--secondary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary-active);
+  color: var(--foundation-action-secondary-text);
+  border-color: var(--foundation-action-secondary-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--outline.foundation-button--secondary:disabled,
+.foundation-button--outline.foundation-button--secondary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  border-color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Tertiary Outline */
+.foundation-button--outline.foundation-button--tertiary {
+  background-color: transparent;
+  color: var(--foundation-action-tertiary);
+  border: var(--foundation-button-border-width) solid var(--foundation-action-tertiary);
+}
+
+.foundation-button--outline.foundation-button--tertiary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary);
+  color: var(--foundation-action-tertiary-text);
+  border-color: var(--foundation-action-tertiary);
+}
+
+.foundation-button--outline.foundation-button--tertiary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary-active);
+  color: var(--foundation-action-tertiary-text);
+  border-color: var(--foundation-action-tertiary-active);
+  transform: translateY(1px);
+}
+
+.foundation-button--outline.foundation-button--tertiary:disabled,
+.foundation-button--outline.foundation-button--tertiary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  border-color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* ========================================================================== */
+/* STYLE VARIANTS - GHOST                                                     */
+/* ========================================================================== */
+
+/* Primary Ghost */
+.foundation-button--ghost.foundation-button--primary {
+  background-color: transparent;
+  color: var(--foundation-action-primary);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+.foundation-button--ghost.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary);
+  color: var(--foundation-action-primary-text);
+}
+
+.foundation-button--ghost.foundation-button--primary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-primary-active);
+  color: var(--foundation-action-primary-text);
+  transform: translateY(1px);
+}
+
+.foundation-button--ghost.foundation-button--primary:disabled,
+.foundation-button--ghost.foundation-button--primary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Secondary Ghost */
+.foundation-button--ghost.foundation-button--secondary {
+  background-color: transparent;
+  color: var(--foundation-action-secondary);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+.foundation-button--ghost.foundation-button--secondary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary);
+  color: var(--foundation-action-secondary-text);
+}
+
+.foundation-button--ghost.foundation-button--secondary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-secondary-active);
+  color: var(--foundation-action-secondary-text);
+  transform: translateY(1px);
+}
+
+.foundation-button--ghost.foundation-button--secondary:disabled,
+.foundation-button--ghost.foundation-button--secondary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Tertiary Ghost */
+.foundation-button--ghost.foundation-button--tertiary {
+  background-color: transparent;
+  color: var(--foundation-action-tertiary);
+  border: var(--foundation-button-border-width) solid transparent;
+}
+
+.foundation-button--ghost.foundation-button--tertiary:hover:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary);
+  color: var(--foundation-action-tertiary-text);
+}
+
+.foundation-button--ghost.foundation-button--tertiary:active:not(:disabled):not(.foundation-button--disabled) {
+  background-color: var(--foundation-action-tertiary-active);
+  color: var(--foundation-action-tertiary-text);
+  transform: translateY(1px);
+}
+
+.foundation-button--ghost.foundation-button--tertiary:disabled,
+.foundation-button--ghost.foundation-button--tertiary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* ========================================================================== */
+/* STYLE VARIANTS - LINK                                                      */
+/* ========================================================================== */
+
+/* Primary Link */
+.foundation-button--link.foundation-button--primary {
+  background-color: transparent;
+  color: var(--foundation-action-primary);
+  border: none;
+  padding: 0;
+  height: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foundation-button--link.foundation-button--primary:hover:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-primary-hover);
+  text-decoration-thickness: 2px;
+}
+
+.foundation-button--link.foundation-button--primary:active:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-primary-active);
+}
+
+.foundation-button--link.foundation-button--primary:disabled,
+.foundation-button--link.foundation-button--primary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Secondary Link */
+.foundation-button--link.foundation-button--secondary {
+  background-color: transparent;
+  color: var(--foundation-action-secondary);
+  border: none;
+  padding: 0;
+  height: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foundation-button--link.foundation-button--secondary:hover:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-secondary-hover);
+  text-decoration-thickness: 2px;
+}
+
+.foundation-button--link.foundation-button--secondary:active:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-secondary-active);
+}
+
+.foundation-button--link.foundation-button--secondary:disabled,
+.foundation-button--link.foundation-button--secondary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* Tertiary Link */
+.foundation-button--link.foundation-button--tertiary {
+  background-color: transparent;
+  color: var(--foundation-action-tertiary);
+  border: none;
+  padding: 0;
+  height: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foundation-button--link.foundation-button--tertiary:hover:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-tertiary-hover);
+  text-decoration-thickness: 2px;
+}
+
+.foundation-button--link.foundation-button--tertiary:active:not(:disabled):not(.foundation-button--disabled) {
+  color: var(--foundation-action-tertiary-active);
+}
+
+.foundation-button--link.foundation-button--tertiary:disabled,
+.foundation-button--link.foundation-button--tertiary.foundation-button--disabled {
+  color: var(--foundation-content-disabled);
+  cursor: not-allowed;
+}
+
+/* ========================================================================== */
+/* LOADING STATE                                                              */
+/* ========================================================================== */
+
+.foundation-button--loading {
+  cursor: wait;
+  position: relative;
+}
+
+.foundation-button--loading .foundation-button__text,
+.foundation-button--loading .foundation-button__icon {
+  opacity: 0.4;
+}
+
+.foundation-button__spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1em;
+  height: 1em;
+}
+
+.foundation-button__spinner-svg {
+  width: 100%;
+  height: 100%;
+  animation: foundation-button-spin 0.6s linear infinite;
+}
+
+@keyframes foundation-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================================================== */
+/* ICON SPACING                                                               */
+/* ========================================================================== */
+
+.foundation-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foundation-button__icon--left {
+  margin-right: calc(var(--foundation-spacing-1) * -1);
+}
+
+.foundation-button__icon--right {
+  margin-left: calc(var(--foundation-spacing-1) * -1);
+}
+
+/* ========================================================================== */
+/* ACCESSIBILITY                                                              */
+/* ========================================================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .foundation-button {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .foundation-button {
+    transition: none;
+  }
+  
+  .foundation-button__spinner-svg {
+    animation-duration: 1.5s;
+  }
+}
+
