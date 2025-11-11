@@ -1691,81 +1691,13 @@ function SectionsContent({ showToast, usePageStore }: {
     ? themes.find((t: any) => t.id === currentWebsite.themeId)
     : null
   const isWileyTheme = currentTheme?.id === 'wiley-figma-ds-v2'
-  const isCarbonTheme = currentTheme?.id === 'ibm-carbon-ds'
-
-  // Create a new section with the specified layout and default areas
-  const createSection = (layout: ContentBlockLayout, name: string) => {
-    const newSection: CanvasItem = {
-      id: nanoid(),
-      name: name,
-      type: 'content-block',
-      layout: layout,
-      areas: createAreasForLayout(layout)
-    }
-    return newSection
-  }
-
-  // Create areas based on layout type
-  const createAreasForLayout = (layout: ContentBlockLayout) => {
-    switch (layout) {
-      case 'one-column':
-        return [{ id: nanoid(), name: 'Content', widgets: [] }]
-      
-      case 'two-columns':
-        return [
-          { id: nanoid(), name: 'Left Column', widgets: [] },
-          { id: nanoid(), name: 'Right Column', widgets: [] }
-        ]
-      
-      case 'three-columns':
-        return [
-          { id: nanoid(), name: 'Left Column', widgets: [] },
-          { id: nanoid(), name: 'Center Column', widgets: [] },
-          { id: nanoid(), name: 'Right Column', widgets: [] }
-        ]
-      
-      case 'hero-with-buttons':
-        return [
-          { id: nanoid(), name: 'Hero Content', widgets: [] },
-          { id: nanoid(), name: 'Button Row', widgets: [] }
-        ]
-      
-      case 'header-plus-grid':
-        return [
-          { id: nanoid(), name: 'Header', widgets: [] },
-          { id: nanoid(), name: 'Left Card', widgets: [] },
-          { id: nanoid(), name: 'Center Card', widgets: [] },
-          { id: nanoid(), name: 'Right Card', widgets: [] }
-        ]
-      
-      default:
-        return [{ id: nanoid(), name: 'Content', widgets: [] }]
-    }
-  }
-
-  // Add a section to the canvas
-  const addSectionToCanvas = (layout: ContentBlockLayout, name: string) => {
-    const newSection = createSection(layout, name)
-    replaceCanvasItems([...canvasItems, newSection])
-    showToast(`${name} section added successfully!`, 'success')
-  }
 
   // Prefab sections are now handled by the modular prefabSections.ts
 
   const addPrefabSection = (type: string) => {
     let section: CanvasItem
     
-    // Check if adding a sidebar and one already exists
-    if (type === 'sidebar') {
-      const existingSidebar = canvasItems.find((item: CanvasItem) => 
-        isSection(item) && item.type === 'sidebar'
-      )
-      if (existingSidebar) {
-        showToast('Only one sidebar is allowed per page', 'error')
-        return
-      }
-      section = PREFAB_SECTIONS.sidebar()
-    } else if (type === 'hero') {
+    if (type === 'hero') {
       section = PREFAB_SECTIONS.hero()
     } else if (type === 'features') {
       section = PREFAB_SECTIONS.featuredResearch()
