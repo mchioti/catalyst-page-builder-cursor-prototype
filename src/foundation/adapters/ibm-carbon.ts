@@ -83,6 +83,69 @@ export function mapCarbonToFoundation(theme: any): FoundationTokens {
     'line-height-normal': '1.5',
     'line-height-relaxed': '1.75',
     
+    // Heading Typography (H1-H6) - IBM Carbon with Light Weights for Large Headings
+    'heading-h1-font-size-desktop': '54px',
+    'heading-h1-font-size-mobile': '42px',
+    'heading-h1-font-weight': '300',
+    'heading-h1-line-height': '1.25',
+    'heading-h1-letter-spacing': '0',
+    
+    'heading-h2-font-size-desktop': '42px',
+    'heading-h2-font-size-mobile': '32px',
+    'heading-h2-font-weight': '300',
+    'heading-h2-line-height': '1.25',
+    'heading-h2-letter-spacing': '0',
+    
+    'heading-h3-font-size-desktop': '32px',
+    'heading-h3-font-size-mobile': '28px',
+    'heading-h3-font-weight': '400',
+    'heading-h3-line-height': '1.25',
+    'heading-h3-letter-spacing': '0',
+    
+    'heading-h4-font-size-desktop': '28px',
+    'heading-h4-font-size-mobile': '24px',
+    'heading-h4-font-weight': '400',
+    'heading-h4-line-height': '1.29',
+    'heading-h4-letter-spacing': '0',
+    
+    'heading-h5-font-size-desktop': '20px',
+    'heading-h5-font-size-mobile': '18px',
+    'heading-h5-font-weight': '400',
+    'heading-h5-line-height': '1.4',
+    'heading-h5-letter-spacing': '0',
+    
+    'heading-h6-font-size-desktop': '16px',
+    'heading-h6-font-size-mobile': '16px',
+    'heading-h6-font-weight': '600',
+    'heading-h6-line-height': '1.43',
+    'heading-h6-letter-spacing': '0.16px',
+    
+    // Body Text Typography (XL-XS) - IBM Carbon Precise Sizing
+    'text-xl-font-size-desktop': '20px',
+    'text-xl-font-size-mobile': '18px',
+    'text-xl-line-height': '1.43',
+    'text-xl-letter-spacing': '0',
+    
+    'text-lg-font-size-desktop': '18px',
+    'text-lg-font-size-mobile': '16px',
+    'text-lg-line-height': '1.43',
+    'text-lg-letter-spacing': '0',
+    
+    'text-md-font-size-desktop': '16px',
+    'text-md-font-size-mobile': '14px',
+    'text-md-line-height': '1.5',
+    'text-md-letter-spacing': '0.16px',
+    
+    'text-sm-font-size-desktop': '14px',
+    'text-sm-font-size-mobile': '14px',
+    'text-sm-line-height': '1.43',
+    'text-sm-letter-spacing': '0.16px',
+    
+    'text-xs-font-size-desktop': '12px',
+    'text-xs-font-size-mobile': '12px',
+    'text-xs-line-height': '1.34',
+    'text-xs-letter-spacing': '0.32px',
+    
     // Spacing (8px grid)
     'spacing-0': '0',
     'spacing-1': '4px',

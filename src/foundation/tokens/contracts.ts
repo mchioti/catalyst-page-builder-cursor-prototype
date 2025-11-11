@@ -95,6 +95,90 @@ export interface TypographyTokens {
   'line-height-relaxed': string         // 1.75
 }
 
+/**
+ * Heading Typography Tokens
+ * Defines responsive sizes, weights, and spacing for H1-H6 headings
+ */
+export interface HeadingTokens {
+  // H1 - Page Title
+  'heading-h1-font-size-desktop': string
+  'heading-h1-font-size-mobile': string
+  'heading-h1-font-weight': string
+  'heading-h1-line-height': string
+  'heading-h1-letter-spacing': string
+  
+  // H2 - Section Title
+  'heading-h2-font-size-desktop': string
+  'heading-h2-font-size-mobile': string
+  'heading-h2-font-weight': string
+  'heading-h2-line-height': string
+  'heading-h2-letter-spacing': string
+  
+  // H3 - Subsection Title
+  'heading-h3-font-size-desktop': string
+  'heading-h3-font-size-mobile': string
+  'heading-h3-font-weight': string
+  'heading-h3-line-height': string
+  'heading-h3-letter-spacing': string
+  
+  // H4 - Group Title
+  'heading-h4-font-size-desktop': string
+  'heading-h4-font-size-mobile': string
+  'heading-h4-font-weight': string
+  'heading-h4-line-height': string
+  'heading-h4-letter-spacing': string
+  
+  // H5 - List Title
+  'heading-h5-font-size-desktop': string
+  'heading-h5-font-size-mobile': string
+  'heading-h5-font-weight': string
+  'heading-h5-line-height': string
+  'heading-h5-letter-spacing': string
+  
+  // H6 - Smallest Heading
+  'heading-h6-font-size-desktop': string
+  'heading-h6-font-size-mobile': string
+  'heading-h6-font-weight': string
+  'heading-h6-line-height': string
+  'heading-h6-letter-spacing': string
+}
+
+/**
+ * Body Text Typography Tokens
+ * Defines responsive sizes and spacing for body text (XL to XS)
+ */
+export interface TextTokens {
+  // XL - Hero/Intro Text
+  'text-xl-font-size-desktop': string
+  'text-xl-font-size-mobile': string
+  'text-xl-line-height': string
+  'text-xl-letter-spacing': string
+  
+  // LG - Emphasized Body Text
+  'text-lg-font-size-desktop': string
+  'text-lg-font-size-mobile': string
+  'text-lg-line-height': string
+  'text-lg-letter-spacing': string
+  
+  // MD - Standard Body Text (Default)
+  'text-md-font-size-desktop': string
+  'text-md-font-size-mobile': string
+  'text-md-line-height': string
+  'text-md-letter-spacing': string
+  
+  // SM - Secondary Body Text
+  'text-sm-font-size-desktop': string
+  'text-sm-font-size-mobile': string
+  'text-sm-line-height': string
+  'text-sm-letter-spacing': string
+  
+  // XS - Caption/Fine Print
+  'text-xs-font-size-desktop': string
+  'text-xs-font-size-mobile': string
+  'text-xs-line-height': string
+  'text-xs-letter-spacing': string
+}
+
 // ============================================================================
 // SPACING TOKENS
 // ============================================================================
@@ -185,6 +269,8 @@ export interface FoundationTokens extends
   ContentColorTokens,
   FeedbackColorTokens,
   TypographyTokens,
+  HeadingTokens,
+  TextTokens,
   SpacingTokens,
   ButtonTokens,
   MotionTokens {}

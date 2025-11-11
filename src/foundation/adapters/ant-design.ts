@@ -78,6 +78,69 @@ export function mapAntDesignToFoundation(theme: any): FoundationTokens {
     'line-height-normal': '1.5715',
     'line-height-relaxed': '1.75',
     
+    // Heading Typography (H1-H6) - Ant Design Compact Sizing with Tighter Line Heights
+    'heading-h1-font-size-desktop': '38px',
+    'heading-h1-font-size-mobile': '32px',
+    'heading-h1-font-weight': '600',
+    'heading-h1-line-height': '1.23',
+    'heading-h1-letter-spacing': '0',
+    
+    'heading-h2-font-size-desktop': '30px',
+    'heading-h2-font-size-mobile': '26px',
+    'heading-h2-font-weight': '600',
+    'heading-h2-line-height': '1.35',
+    'heading-h2-letter-spacing': '0',
+    
+    'heading-h3-font-size-desktop': '24px',
+    'heading-h3-font-size-mobile': '22px',
+    'heading-h3-font-weight': '600',
+    'heading-h3-line-height': '1.35',
+    'heading-h3-letter-spacing': '0',
+    
+    'heading-h4-font-size-desktop': '20px',
+    'heading-h4-font-size-mobile': '18px',
+    'heading-h4-font-weight': '600',
+    'heading-h4-line-height': '1.4',
+    'heading-h4-letter-spacing': '0',
+    
+    'heading-h5-font-size-desktop': '16px',
+    'heading-h5-font-size-mobile': '16px',
+    'heading-h5-font-weight': '600',
+    'heading-h5-line-height': '1.5',
+    'heading-h5-letter-spacing': '0',
+    
+    'heading-h6-font-size-desktop': '14px',
+    'heading-h6-font-size-mobile': '14px',
+    'heading-h6-font-weight': '600',
+    'heading-h6-line-height': '1.5',
+    'heading-h6-letter-spacing': '0',
+    
+    // Body Text Typography (XL-XS) - Ant Design with 14px Base
+    'text-xl-font-size-desktop': '20px',
+    'text-xl-font-size-mobile': '18px',
+    'text-xl-line-height': '1.5715',
+    'text-xl-letter-spacing': '0',
+    
+    'text-lg-font-size-desktop': '16px',
+    'text-lg-font-size-mobile': '16px',
+    'text-lg-line-height': '1.5715',
+    'text-lg-letter-spacing': '0',
+    
+    'text-md-font-size-desktop': '14px',
+    'text-md-font-size-mobile': '14px',
+    'text-md-line-height': '1.5715',
+    'text-md-letter-spacing': '0',
+    
+    'text-sm-font-size-desktop': '12px',
+    'text-sm-font-size-mobile': '12px',
+    'text-sm-line-height': '1.5715',
+    'text-sm-letter-spacing': '0',
+    
+    'text-xs-font-size-desktop': '12px',
+    'text-xs-font-size-mobile': '12px',
+    'text-xs-line-height': '1.5',
+    'text-xs-letter-spacing': '0',
+    
     // Spacing (8px grid)
     'spacing-0': '0',
     'spacing-1': '4px',

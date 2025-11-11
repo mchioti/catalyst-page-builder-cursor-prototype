@@ -229,6 +229,69 @@ export function mapWileyDSV2ToFoundation(
     'line-height-normal': '1.5',
     'line-height-relaxed': '1.75',
     
+    // Heading Typography (H1-H6) - From theme.typography.styles
+    'heading-h1-font-size-desktop': theme.typography?.styles?.h1?.fontSize || '48px',
+    'heading-h1-font-size-mobile': theme.typography?.styles?.h1?.fontSizeMobile || '36px',
+    'heading-h1-font-weight': String(theme.typography?.styles?.h1?.fontWeight || '700'),
+    'heading-h1-line-height': String(theme.typography?.styles?.h1?.lineHeight || '1.2'),
+    'heading-h1-letter-spacing': theme.typography?.styles?.h1?.letterSpacing || '0',
+    
+    'heading-h2-font-size-desktop': theme.typography?.styles?.h2?.fontSize || '36px',
+    'heading-h2-font-size-mobile': theme.typography?.styles?.h2?.fontSizeMobile || '28px',
+    'heading-h2-font-weight': String(theme.typography?.styles?.h2?.fontWeight || '700'),
+    'heading-h2-line-height': String(theme.typography?.styles?.h2?.lineHeight || '1.3'),
+    'heading-h2-letter-spacing': theme.typography?.styles?.h2?.letterSpacing || '0',
+    
+    'heading-h3-font-size-desktop': theme.typography?.styles?.h3?.fontSize || '28px',
+    'heading-h3-font-size-mobile': theme.typography?.styles?.h3?.fontSizeMobile || '24px',
+    'heading-h3-font-weight': String(theme.typography?.styles?.h3?.fontWeight || '600'),
+    'heading-h3-line-height': String(theme.typography?.styles?.h3?.lineHeight || '1.4'),
+    'heading-h3-letter-spacing': theme.typography?.styles?.h3?.letterSpacing || '0',
+    
+    'heading-h4-font-size-desktop': theme.typography?.styles?.h4?.fontSize || '24px',
+    'heading-h4-font-size-mobile': theme.typography?.styles?.h4?.fontSizeMobile || '20px',
+    'heading-h4-font-weight': String(theme.typography?.styles?.h4?.fontWeight || '600'),
+    'heading-h4-line-height': String(theme.typography?.styles?.h4?.lineHeight || '1.4'),
+    'heading-h4-letter-spacing': theme.typography?.styles?.h4?.letterSpacing || '0',
+    
+    'heading-h5-font-size-desktop': theme.typography?.styles?.h5?.fontSize || '20px',
+    'heading-h5-font-size-mobile': theme.typography?.styles?.h5?.fontSizeMobile || '18px',
+    'heading-h5-font-weight': String(theme.typography?.styles?.h5?.fontWeight || '600'),
+    'heading-h5-line-height': String(theme.typography?.styles?.h5?.lineHeight || '1.5'),
+    'heading-h5-letter-spacing': theme.typography?.styles?.h5?.letterSpacing || '0',
+    
+    'heading-h6-font-size-desktop': theme.typography?.styles?.h6?.fontSize || '16px',
+    'heading-h6-font-size-mobile': theme.typography?.styles?.h6?.fontSizeMobile || '16px',
+    'heading-h6-font-weight': String(theme.typography?.styles?.h6?.fontWeight || '600'),
+    'heading-h6-line-height': String(theme.typography?.styles?.h6?.lineHeight || '1.5'),
+    'heading-h6-letter-spacing': theme.typography?.styles?.h6?.letterSpacing || '0',
+    
+    // Body Text Typography (XL-XS) - From theme.typography.styles
+    'text-xl-font-size-desktop': theme.typography?.styles?.bodyXL?.fontSize || '24px',
+    'text-xl-font-size-mobile': theme.typography?.styles?.bodyXL?.fontSizeMobile || '20px',
+    'text-xl-line-height': String(theme.typography?.styles?.bodyXL?.lineHeight || '1.5'),
+    'text-xl-letter-spacing': theme.typography?.styles?.bodyXL?.letterSpacing || '0',
+    
+    'text-lg-font-size-desktop': theme.typography?.styles?.bodyLG?.fontSize || '20px',
+    'text-lg-font-size-mobile': theme.typography?.styles?.bodyLG?.fontSizeMobile || '18px',
+    'text-lg-line-height': String(theme.typography?.styles?.bodyLG?.lineHeight || '1.5'),
+    'text-lg-letter-spacing': theme.typography?.styles?.bodyLG?.letterSpacing || '0',
+    
+    'text-md-font-size-desktop': theme.typography?.styles?.body?.fontSize || fontSizeBase,
+    'text-md-font-size-mobile': theme.typography?.styles?.body?.fontSizeMobile || fontSizeBase,
+    'text-md-line-height': String(theme.typography?.styles?.body?.lineHeight || '1.5'),
+    'text-md-letter-spacing': theme.typography?.styles?.body?.letterSpacing || '0',
+    
+    'text-sm-font-size-desktop': theme.typography?.styles?.bodySM?.fontSize || '14px',
+    'text-sm-font-size-mobile': theme.typography?.styles?.bodySM?.fontSizeMobile || '14px',
+    'text-sm-line-height': String(theme.typography?.styles?.bodySM?.lineHeight || '1.5'),
+    'text-sm-letter-spacing': theme.typography?.styles?.bodySM?.letterSpacing || '0',
+    
+    'text-xs-font-size-desktop': theme.typography?.styles?.bodyXS?.fontSize || '12px',
+    'text-xs-font-size-mobile': theme.typography?.styles?.bodyXS?.fontSizeMobile || '12px',
+    'text-xs-line-height': String(theme.typography?.styles?.bodyXS?.lineHeight || '1.4'),
+    'text-xs-letter-spacing': theme.typography?.styles?.bodyXS?.letterSpacing || '0',
+    
     // Spacing
     'spacing-0': spacing0,
     'spacing-1': spacing1,

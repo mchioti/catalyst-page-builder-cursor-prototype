@@ -1,0 +1,355 @@
+/**
+ * Foundation Typography Styles
+ * 
+ * Token-driven typography system with responsive scaling.
+ * All sizing, spacing, and styling comes from Foundation tokens.
+ * 
+ * Architecture:
+ * - Base styles define structure and behavior
+ * - Token variables provide theme-specific visual properties
+ * - Responsive breakpoints adjust for mobile/desktop
+ * - Color variants adapt to context (light/dark backgrounds)
+ */
+
+/* ============================================================================
+   BASE HEADING STYLES
+   ============================================================================ */
+
+.foundation-heading {
+  margin: 0;
+  padding: 0;
+  font-family: var(--foundation-font-family-heading);
+  color: var(--foundation-content-primary);
+  font-weight: var(--foundation-font-weight-bold);
+}
+
+/* ============================================================================
+   HEADING SIZE VARIANTS (Responsive)
+   ============================================================================ */
+
+/* H1 / XL - Hero/Display Heading */
+.foundation-heading--size-xl {
+  font-size: var(--foundation-heading-h1-font-size-mobile);
+  font-weight: var(--foundation-heading-h1-font-weight);
+  line-height: var(--foundation-heading-h1-line-height);
+  letter-spacing: var(--foundation-heading-h1-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-xl {
+    font-size: var(--foundation-heading-h1-font-size-desktop);
+  }
+}
+
+/* H2 / LG - Page Title */
+.foundation-heading--size-lg {
+  font-size: var(--foundation-heading-h2-font-size-mobile);
+  font-weight: var(--foundation-heading-h2-font-weight);
+  line-height: var(--foundation-heading-h2-line-height);
+  letter-spacing: var(--foundation-heading-h2-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-lg {
+    font-size: var(--foundation-heading-h2-font-size-desktop);
+  }
+}
+
+/* H3 / MD - Section Heading */
+.foundation-heading--size-md {
+  font-size: var(--foundation-heading-h3-font-size-mobile);
+  font-weight: var(--foundation-heading-h3-font-weight);
+  line-height: var(--foundation-heading-h3-line-height);
+  letter-spacing: var(--foundation-heading-h3-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-md {
+    font-size: var(--foundation-heading-h3-font-size-desktop);
+  }
+}
+
+/* H4 / SM - Subsection Heading */
+.foundation-heading--size-sm {
+  font-size: var(--foundation-heading-h4-font-size-mobile);
+  font-weight: var(--foundation-heading-h4-font-weight);
+  line-height: var(--foundation-heading-h4-line-height);
+  letter-spacing: var(--foundation-heading-h4-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-sm {
+    font-size: var(--foundation-heading-h4-font-size-desktop);
+  }
+}
+
+/* H5 / XS - Minor Heading */
+.foundation-heading--size-xs {
+  font-size: var(--foundation-heading-h5-font-size-mobile);
+  font-weight: var(--foundation-heading-h5-font-weight);
+  line-height: var(--foundation-heading-h5-line-height);
+  letter-spacing: var(--foundation-heading-h5-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-xs {
+    font-size: var(--foundation-heading-h5-font-size-desktop);
+  }
+}
+
+/* H6 / XXS - Small Heading */
+.foundation-heading--size-xxs {
+  font-size: var(--foundation-heading-h6-font-size-mobile);
+  font-weight: var(--foundation-heading-h6-font-weight);
+  line-height: var(--foundation-heading-h6-line-height);
+  letter-spacing: var(--foundation-heading-h6-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-heading--size-xxs {
+    font-size: var(--foundation-heading-h6-font-size-desktop);
+  }
+}
+
+/* ============================================================================
+   HEADING COLOR VARIANTS
+   ============================================================================ */
+
+.foundation-heading--color-default {
+  color: var(--foundation-content-primary);
+}
+
+.foundation-heading--color-primary {
+  color: var(--foundation-action-primary);
+}
+
+.foundation-heading--color-secondary {
+  color: var(--foundation-content-secondary);
+}
+
+.foundation-heading--color-muted {
+  color: var(--foundation-content-tertiary);
+}
+
+.foundation-heading--color-inverse {
+  color: var(--foundation-content-inverse);
+}
+
+/* ============================================================================
+   HEADING WEIGHT MODIFIERS
+   ============================================================================ */
+
+.foundation-heading--weight-regular {
+  font-weight: var(--foundation-font-weight-regular) !important;
+}
+
+.foundation-heading--weight-medium {
+  font-weight: var(--foundation-font-weight-medium) !important;
+}
+
+.foundation-heading--weight-semibold {
+  font-weight: var(--foundation-font-weight-semibold) !important;
+}
+
+.foundation-heading--weight-bold {
+  font-weight: var(--foundation-font-weight-bold) !important;
+}
+
+/* ============================================================================
+   HEADING ALIGNMENT
+   ============================================================================ */
+
+.foundation-heading--align-left {
+  text-align: left;
+}
+
+.foundation-heading--align-center {
+  text-align: center;
+}
+
+.foundation-heading--align-right {
+  text-align: right;
+}
+
+/* ============================================================================
+   BASE TEXT STYLES
+   ============================================================================ */
+
+.foundation-text {
+  margin: 0;
+  padding: 0;
+  font-family: var(--foundation-font-family-primary);
+  color: var(--foundation-content-primary);
+  font-weight: var(--foundation-font-weight-regular);
+}
+
+/* ============================================================================
+   TEXT SIZE VARIANTS (Responsive)
+   ============================================================================ */
+
+/* XL - Large emphasis text */
+.foundation-text--size-xl {
+  font-size: var(--foundation-text-xl-font-size-mobile);
+  line-height: var(--foundation-text-xl-line-height);
+  letter-spacing: var(--foundation-text-xl-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-text--size-xl {
+    font-size: var(--foundation-text-xl-font-size-desktop);
+  }
+}
+
+/* LG - Above standard */
+.foundation-text--size-lg {
+  font-size: var(--foundation-text-lg-font-size-mobile);
+  line-height: var(--foundation-text-lg-line-height);
+  letter-spacing: var(--foundation-text-lg-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-text--size-lg {
+    font-size: var(--foundation-text-lg-font-size-desktop);
+  }
+}
+
+/* MD - Standard paragraph */
+.foundation-text--size-md {
+  font-size: var(--foundation-text-md-font-size-mobile);
+  line-height: var(--foundation-text-md-line-height);
+  letter-spacing: var(--foundation-text-md-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-text--size-md {
+    font-size: var(--foundation-text-md-font-size-desktop);
+  }
+}
+
+/* SM - Captions */
+.foundation-text--size-sm {
+  font-size: var(--foundation-text-sm-font-size-mobile);
+  line-height: var(--foundation-text-sm-line-height);
+  letter-spacing: var(--foundation-text-sm-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-text--size-sm {
+    font-size: var(--foundation-text-sm-font-size-desktop);
+  }
+}
+
+/* XS - Fine detail */
+.foundation-text--size-xs {
+  font-size: var(--foundation-text-xs-font-size-mobile);
+  line-height: var(--foundation-text-xs-line-height);
+  letter-spacing: var(--foundation-text-xs-letter-spacing);
+}
+
+@media (min-width: 768px) {
+  .foundation-text--size-xs {
+    font-size: var(--foundation-text-xs-font-size-desktop);
+  }
+}
+
+/* ============================================================================
+   TEXT COLOR VARIANTS
+   ============================================================================ */
+
+.foundation-text--color-default {
+  color: var(--foundation-content-primary);
+}
+
+.foundation-text--color-primary {
+  color: var(--foundation-action-primary);
+}
+
+.foundation-text--color-secondary {
+  color: var(--foundation-content-secondary);
+}
+
+.foundation-text--color-muted {
+  color: var(--foundation-content-tertiary);
+}
+
+.foundation-text--color-inverse {
+  color: var(--foundation-content-inverse);
+}
+
+/* ============================================================================
+   TEXT WEIGHT MODIFIERS
+   ============================================================================ */
+
+.foundation-text--weight-regular {
+  font-weight: var(--foundation-font-weight-regular);
+}
+
+.foundation-text--weight-medium {
+  font-weight: var(--foundation-font-weight-medium);
+}
+
+.foundation-text--weight-semibold {
+  font-weight: var(--foundation-font-weight-semibold);
+}
+
+.foundation-text--weight-bold {
+  font-weight: var(--foundation-font-weight-bold);
+}
+
+/* ============================================================================
+   TEXT ALIGNMENT
+   ============================================================================ */
+
+.foundation-text--align-left {
+  text-align: left;
+}
+
+.foundation-text--align-center {
+  text-align: center;
+}
+
+.foundation-text--align-right {
+  text-align: right;
+}
+
+.foundation-text--align-justify {
+  text-align: justify;
+}
+
+/* ============================================================================
+   CONTEXT-AWARE COLORS (Light/Dark Backgrounds)
+   ============================================================================ */
+
+/* Light background context */
+.foundation-context-light .foundation-heading--color-primary {
+  color: var(--semantic-primary-light, var(--foundation-action-primary));
+}
+
+.foundation-context-light .foundation-text--color-primary {
+  color: var(--semantic-primary-light, var(--foundation-action-primary));
+}
+
+/* Dark background context */
+.foundation-context-dark .foundation-heading--color-primary {
+  color: var(--semantic-primary-dark, var(--foundation-action-primary));
+}
+
+.foundation-context-dark .foundation-text--color-primary {
+  color: var(--semantic-primary-dark, var(--foundation-action-primary));
+}
+
+/* Inverse context always uses inverse colors */
+.foundation-context-dark .foundation-heading--color-inverse,
+.foundation-context-dark .foundation-text--color-inverse {
+  color: var(--foundation-content-inverse);
+}
+
+.foundation-context-light .foundation-heading--color-default,
+.foundation-context-light .foundation-text--color-default {
+  color: var(--foundation-content-primary);
+}
+
+.foundation-context-dark .foundation-heading--color-default,
+.foundation-context-dark .foundation-text--color-default {
+  color: var(--foundation-content-inverse);
+}

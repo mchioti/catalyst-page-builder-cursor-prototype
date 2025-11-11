@@ -21,6 +21,25 @@ export type {
   ButtonAsLinkProps
 } from './components/Button'
 
+export { Heading } from './components/Heading'
+export type {
+  HeadingProps,
+  HeadingLevel,
+  HeadingSize,
+  HeadingColor,
+  HeadingWeight,
+  HeadingAlign
+} from './components/Heading'
+
+export { Text } from './components/Text'
+export type {
+  TextProps,
+  TextSize,
+  TextColor,
+  TextWeight,
+  TextAlign
+} from './components/Text'
+
 // ============================================================================
 // TOKEN CONTRACTS
 // ============================================================================
@@ -32,6 +51,8 @@ export type {
   ContentColorTokens,
   FeedbackColorTokens,
   TypographyTokens,
+  HeadingTokens,
+  TextTokens,
   SpacingTokens,
   ButtonTokens,
   MotionTokens,
