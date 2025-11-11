@@ -527,50 +527,6 @@ export const createJournalBannerPrefab = (): CanvasItem => {
   return bannerSection
 }
 
-export const createSidebarPrefab = (): CanvasItem => {
-  const sidebarSection: WidgetSection = {
-    id: nanoid(),
-    name: 'sidebar',
-    type: 'sidebar',
-    layout: 'one-column',
-    areas: [
-      {
-        id: nanoid(),
-        name: 'Sidebar Content',
-        widgets: []
-      }
-    ],
-    
-        // Default sidebar configuration
-        sidebar: {
-          position: 'right',
-          span: 2, // Span 2 sections by default
-          width: '25%', // 25% of page width
-          sticky: false, // Scroll with content by default
-          mobileBehavior: 'below', // Show below sections on mobile
-          gap: 'medium' // Medium gap between sidebar and sections
-        },
-    
-    // Default styling
-    styling: {
-      paddingTop: 'medium',
-      paddingBottom: 'medium',
-      paddingLeft: 'medium',
-      paddingRight: 'medium',
-      gap: 'medium'
-    },
-    
-    // Light background by default
-    background: {
-      type: 'color',
-      color: '#f8fafc',
-      opacity: 1
-    }
-  }
-
-  return sidebarSection
-}
-
 /**
  * Creates a Wiley-themed Hero Section with black background
  * Matches the dark sections with large hero text from Wiley screenshots
@@ -1601,7 +1557,6 @@ export const PREFAB_SECTIONS = {
   hero: createHeroPrefab,
   featuredResearch: createFeaturesPrefab,
   journalBanner: createJournalBannerPrefab,
-  sidebar: createSidebarPrefab,
   wileyHero: createWileyHeroPrefab,
   wileyThreeColumn: createWileyThreeColumnPrefab,
   wileyContentImage: createWileyContentImagePrefab,
