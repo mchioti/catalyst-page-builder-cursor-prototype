@@ -2363,6 +2363,144 @@ const usePageStore = create<PageState>((set, get) => ({
         }
       },
       
+      // TYPOGRAPHY SYSTEM - Brand-specific fonts and letter spacing
+      typography: {
+        // Default (fallback)
+        headingFont: 'Inter, sans-serif',
+        bodyFont: '"Open Sans", sans-serif',
+        baseSize: '16px',
+        scale: 1.25,
+        
+        // BRAND-SPECIFIC TYPOGRAPHY (from Figma DS)
+        // Each brand has distinct personality through font choices
+        wiley: {
+          headingFont: 'Inter, sans-serif',               // Modern sans-serif
+          bodyFont: '"Open Sans", sans-serif',            // Clean, readable
+          buttonFont: '"IBM Plex Mono", monospace',       // Technical feel
+          letterSpacing: {
+            heading: '-0.02em',     // Tight, modern (negative spacing)
+            body: '-2',             // Condensed body text
+            button: '1'             // Wide button text (10% in Figma)
+          },
+          weights: {
+            light: '300',
+            regular: '400',
+            semibold: '600',
+            bold: '700'
+          }
+        },
+        wt: {
+          headingFont: '"Noto Serif", serif',             // Classic serif (WT's signature)
+          bodyFont: '"Open Sans", sans-serif',            // Same body as Wiley
+          buttonFont: '"IBM Plex Mono", monospace',       // Same button as Wiley
+          letterSpacing: {
+            heading: '0',           // Normal spacing for serif
+            body: '0',              // Normal body spacing
+            button: '0'             // Normal button spacing
+          },
+          weights: {
+            // WT uses CONDENSED weights (distinct personality)
+            light: 'ExtraCondensed Light',
+            regular: 'ExtraCondensed',
+            medium: 'ExtraCondensed Medium',
+            bold: 'ExtraCondensed Bold'
+          }
+        },
+        dummies: {
+          headingFont: '"Open Sans", sans-serif',         // Friendly sans (all Open Sans)
+          bodyFont: '"Open Sans", sans-serif',            // Same font for consistency
+          buttonFont: '"IBM Plex Mono", monospace',       // Same button as Wiley
+          letterSpacing: {
+            heading: '0',           // Normal spacing
+            body: '0',              // Normal body spacing
+            button: '0'             // Normal button spacing
+          },
+          weights: {
+            light: '300',
+            regular: '400',
+            semibold: '600',
+            bold: '700'
+          }
+        },
+        
+        // Typography styles for semantic CSS classes
+        // These use 'primary' font family which resolves to brand-specific heading font
+        styles: {
+          h1: {
+            fontSize: '48px',
+            fontSizeMobile: '36px',
+            fontWeight: 700,
+            lineHeight: 1.2,
+            letterSpacing: '0'  // Will be overridden by brand letterSpacing
+          },
+          h2: {
+            fontSize: '36px',
+            fontSizeMobile: '28px',
+            fontWeight: 700,
+            lineHeight: 1.3,
+            letterSpacing: '0'
+          },
+          h3: {
+            fontSize: '28px',
+            fontSizeMobile: '24px',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          },
+          h4: {
+            fontSize: '24px',
+            fontSizeMobile: '20px',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          },
+          h5: {
+            fontSize: '20px',
+            fontSizeMobile: '18px',
+            fontWeight: 600,
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          h6: {
+            fontSize: '16px',
+            fontSizeMobile: '16px',
+            fontWeight: 600,
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyXL: {
+            fontSize: '24px',
+            fontSizeMobile: '20px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyLG: {
+            fontSize: '20px',
+            fontSizeMobile: '18px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          body: {
+            fontSize: '16px',
+            fontSizeMobile: '16px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodySM: {
+            fontSize: '14px',
+            fontSizeMobile: '14px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyXS: {
+            fontSize: '12px',
+            fontSizeMobile: '12px',
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          }
+        }
+      },
+      
       components: {
         button: {
           borderRadius: 'radius.sm',  // 8px - Uses semantic token

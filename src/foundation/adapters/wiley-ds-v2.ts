@@ -83,17 +83,24 @@ export function mapWileyDSV2ToFoundation(
   const feedbackInfo = theme.coreColors?.foundation?.primaryData?.[600] || '#3B82F6'
   
   // ========================================================================
-  // TYPOGRAPHY
+  // TYPOGRAPHY - Brand-specific fonts and letter spacing
   // ========================================================================
   
-  const fontPrimary = theme.typography?.foundation?.primary || 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  const fontSecondary = theme.typography?.foundation?.secondary || '"IBM Plex Mono", "Courier New", monospace'
-  const fontHeading = theme.typography?.foundation?.primary || fontPrimary
+  // Get brand-specific typography settings
+  const brandTypography = theme.typography?.[brandMode] || theme.typography?.wiley || {}
+  
+  // Font families per brand (Wiley=Inter, WT=Noto Serif, Dummies=Open Sans)
+  const fontHeading = brandTypography.headingFont || theme.typography?.headingFont || 'Inter, sans-serif'
+  const fontPrimary = brandTypography.bodyFont || theme.typography?.bodyFont || '"Open Sans", sans-serif'
+  const fontSecondary = brandTypography.buttonFont || '"IBM Plex Mono", monospace'
+  
+  // Letter spacing per brand (Wiley has tight spacing, WT/Dummies normal)
+  const brandLetterSpacing = brandTypography.letterSpacing || { heading: '0', body: '0', button: '0' }
   
   // Font sizes from typography styles
   const typographyStyles = theme.typography?.styles || {}
-  const bodyMd = typographyStyles['body-md'] || {}
-  const fontSizeBase = bodyMd.desktop?.fontSize || '16px'
+  const bodyMd = typographyStyles?.body || {}
+  const fontSizeBase = bodyMd.fontSize || '16px'
   
   // ========================================================================
   // SPACING (from theme.spacing.base)
@@ -128,8 +135,9 @@ export function mapWileyDSV2ToFoundation(
   // Button typography
   const buttonFontFamily = buttonLg.desktop?.fontFamily === 'secondary' ? fontSecondary : fontPrimary
   const buttonFontWeight = buttonLg.desktop?.fontWeight || '500'
-  const buttonLetterSpacing = buttonLg.desktop?.letterSpacing || '0'
-  const buttonTextTransform = buttonLg.desktop?.textTransform || 'uppercase'
+  // Button letter spacing and transform from brand typography
+  const buttonLetterSpacing = brandLetterSpacing.button || '0'
+  const buttonTextTransform = brandMode === 'wiley' ? 'uppercase' : 'none'  // Only Wiley uses uppercase
   
   // Button sizes
   const buttonFontSizeLarge = buttonLg.desktop?.fontSize || '16px'
@@ -229,68 +237,68 @@ export function mapWileyDSV2ToFoundation(
     'line-height-normal': '1.5',
     'line-height-relaxed': '1.75',
     
-    // Heading Typography (H1-H6) - From theme.typography.styles
+    // Heading Typography (H1-H6) - From theme.typography.styles + brand letter spacing
     'heading-h1-font-size-desktop': theme.typography?.styles?.h1?.fontSize || '48px',
     'heading-h1-font-size-mobile': theme.typography?.styles?.h1?.fontSizeMobile || '36px',
     'heading-h1-font-weight': String(theme.typography?.styles?.h1?.fontWeight || '700'),
     'heading-h1-line-height': String(theme.typography?.styles?.h1?.lineHeight || '1.2'),
-    'heading-h1-letter-spacing': theme.typography?.styles?.h1?.letterSpacing || '0',
+    'heading-h1-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
     'heading-h2-font-size-desktop': theme.typography?.styles?.h2?.fontSize || '36px',
     'heading-h2-font-size-mobile': theme.typography?.styles?.h2?.fontSizeMobile || '28px',
     'heading-h2-font-weight': String(theme.typography?.styles?.h2?.fontWeight || '700'),
     'heading-h2-line-height': String(theme.typography?.styles?.h2?.lineHeight || '1.3'),
-    'heading-h2-letter-spacing': theme.typography?.styles?.h2?.letterSpacing || '0',
+    'heading-h2-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
     'heading-h3-font-size-desktop': theme.typography?.styles?.h3?.fontSize || '28px',
     'heading-h3-font-size-mobile': theme.typography?.styles?.h3?.fontSizeMobile || '24px',
     'heading-h3-font-weight': String(theme.typography?.styles?.h3?.fontWeight || '600'),
     'heading-h3-line-height': String(theme.typography?.styles?.h3?.lineHeight || '1.4'),
-    'heading-h3-letter-spacing': theme.typography?.styles?.h3?.letterSpacing || '0',
+    'heading-h3-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
     'heading-h4-font-size-desktop': theme.typography?.styles?.h4?.fontSize || '24px',
     'heading-h4-font-size-mobile': theme.typography?.styles?.h4?.fontSizeMobile || '20px',
     'heading-h4-font-weight': String(theme.typography?.styles?.h4?.fontWeight || '600'),
     'heading-h4-line-height': String(theme.typography?.styles?.h4?.lineHeight || '1.4'),
-    'heading-h4-letter-spacing': theme.typography?.styles?.h4?.letterSpacing || '0',
+    'heading-h4-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
     'heading-h5-font-size-desktop': theme.typography?.styles?.h5?.fontSize || '20px',
     'heading-h5-font-size-mobile': theme.typography?.styles?.h5?.fontSizeMobile || '18px',
     'heading-h5-font-weight': String(theme.typography?.styles?.h5?.fontWeight || '600'),
     'heading-h5-line-height': String(theme.typography?.styles?.h5?.lineHeight || '1.5'),
-    'heading-h5-letter-spacing': theme.typography?.styles?.h5?.letterSpacing || '0',
+    'heading-h5-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
     'heading-h6-font-size-desktop': theme.typography?.styles?.h6?.fontSize || '16px',
     'heading-h6-font-size-mobile': theme.typography?.styles?.h6?.fontSizeMobile || '16px',
     'heading-h6-font-weight': String(theme.typography?.styles?.h6?.fontWeight || '600'),
     'heading-h6-line-height': String(theme.typography?.styles?.h6?.lineHeight || '1.5'),
-    'heading-h6-letter-spacing': theme.typography?.styles?.h6?.letterSpacing || '0',
+    'heading-h6-letter-spacing': brandLetterSpacing.heading || '0',  // Brand-specific
     
-    // Body Text Typography (XL-XS) - From theme.typography.styles
+    // Body Text Typography (XL-XS) - From theme.typography.styles + brand letter spacing
     'text-xl-font-size-desktop': theme.typography?.styles?.bodyXL?.fontSize || '24px',
     'text-xl-font-size-mobile': theme.typography?.styles?.bodyXL?.fontSizeMobile || '20px',
     'text-xl-line-height': String(theme.typography?.styles?.bodyXL?.lineHeight || '1.5'),
-    'text-xl-letter-spacing': theme.typography?.styles?.bodyXL?.letterSpacing || '0',
+    'text-xl-letter-spacing': brandLetterSpacing.body || '0',  // Brand-specific
     
     'text-lg-font-size-desktop': theme.typography?.styles?.bodyLG?.fontSize || '20px',
     'text-lg-font-size-mobile': theme.typography?.styles?.bodyLG?.fontSizeMobile || '18px',
     'text-lg-line-height': String(theme.typography?.styles?.bodyLG?.lineHeight || '1.5'),
-    'text-lg-letter-spacing': theme.typography?.styles?.bodyLG?.letterSpacing || '0',
+    'text-lg-letter-spacing': brandLetterSpacing.body || '0',  // Brand-specific
     
     'text-md-font-size-desktop': theme.typography?.styles?.body?.fontSize || fontSizeBase,
     'text-md-font-size-mobile': theme.typography?.styles?.body?.fontSizeMobile || fontSizeBase,
     'text-md-line-height': String(theme.typography?.styles?.body?.lineHeight || '1.5'),
-    'text-md-letter-spacing': theme.typography?.styles?.body?.letterSpacing || '0',
+    'text-md-letter-spacing': brandLetterSpacing.body || '0',  // Brand-specific
     
     'text-sm-font-size-desktop': theme.typography?.styles?.bodySM?.fontSize || '14px',
     'text-sm-font-size-mobile': theme.typography?.styles?.bodySM?.fontSizeMobile || '14px',
     'text-sm-line-height': String(theme.typography?.styles?.bodySM?.lineHeight || '1.5'),
-    'text-sm-letter-spacing': theme.typography?.styles?.bodySM?.letterSpacing || '0',
+    'text-sm-letter-spacing': brandLetterSpacing.body || '0',  // Brand-specific
     
     'text-xs-font-size-desktop': theme.typography?.styles?.bodyXS?.fontSize || '12px',
     'text-xs-font-size-mobile': theme.typography?.styles?.bodyXS?.fontSizeMobile || '12px',
     'text-xs-line-height': String(theme.typography?.styles?.bodyXS?.lineHeight || '1.4'),
-    'text-xs-letter-spacing': theme.typography?.styles?.bodyXS?.letterSpacing || '0',
+    'text-xs-letter-spacing': brandLetterSpacing.body || '0',  // Brand-specific
     
     // Spacing
     'spacing-0': spacing0,
