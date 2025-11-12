@@ -1513,7 +1513,7 @@ const usePageStore = create<PageState>((set, get) => ({
   themes: [
     {
       id: 'classic-ux3-theme',
-      name: 'Classic UX3',
+      name: 'Classic',
       description: 'Classic academic publishing theme from AXP 2.0, now upgraded with a proper design system. Features Volkhov and Lato typography, teal brand colors, and traditional scholarly aesthetics. Perfect for established publishers and academic institutions.',
       version: '3.0.0',
       publishingType: 'journals' as const,
@@ -1823,7 +1823,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     {
       id: 'wiley-figma-ds-v2',
-      name: 'Wiley Design System V2',
+      name: 'Wiley',
       description: 'Complete Figma design system with 3-layer token architecture (Foundation → Semantic → Overrides). Comprehensive MCP extraction: 88 core colors, 159 semantic colors, multi-brand support (Wiley/WT/Dummies), 5-color button system, and polished prefab sections.',
       version: '2.1.0',
       publishingType: 'journals' as const,
@@ -2584,7 +2584,7 @@ const usePageStore = create<PageState>((set, get) => ({
     
     {
       id: 'ibm-carbon-ds',
-      name: 'IBM Carbon DS',
+      name: 'IBM (carbon)',
       description: 'IBM Carbon Design System v11 - Enterprise design with structured layers and comprehensive button system',
       version: '11.0.0',
       publishingType: 'journals' as const,
