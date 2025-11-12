@@ -998,20 +998,37 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Headings</h4>
                 <div className="space-y-2">
                   {['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((level, idx) => {
-                    const style = currentTheme.typography.styles[`heading-${level}`]
+                    // Try both key formats: 'h1' (Wiley DS V2) and 'heading-h1' (Classic UX3)
+                    const style = currentTheme.typography.styles?.[level] || 
+                                 currentTheme.typography.styles?.[`heading-${level}`]
                     if (!style) return null
-                    const fontFamily = style.family === 'primary' 
-                      ? (currentTheme.typography.semantic?.primary || effectiveTheme.typography.headingFont)
-                      : (currentTheme.typography.semantic?.secondary || effectiveTheme.typography.bodyFont)
+                    
+                    // Get brand-specific font family
+                    const brandTypography = currentTheme.typography?.[previewBrandMode]
+                    const fontFamily = brandTypography?.headingFont || 
+                                      currentTheme.typography?.semantic?.primary || 
+                                      currentTheme.typography?.headingFont || 
+                                      'Inter, sans-serif'
+                    
+                    // Get brand-specific letter spacing (or fall back to style's letterSpacing)
+                    const brandLetterSpacing = brandTypography?.letterSpacing?.heading || 
+                                               style.letterSpacing || 
+                                               style.desktop?.letterSpacing || '0'
+                    
+                    // Handle both data structures: fontSize (Wiley DS V2) vs desktop.size (Classic UX3)
+                    const fontSize = style.fontSize || style.desktop?.size || '16px'
+                    const lineHeight = style.lineHeight || style.desktop?.lineHeight || '1.5'
+                    const fontWeight = style.fontWeight || style.desktop?.weight || 400
+                    
                     const labels = ['Hero Heading', 'Display Heading', 'Section Heading', 'Subsection Heading', 'Minor Heading', 'Small Heading']
                     return (
                       <div key={level} style={{
                         margin: 0,
                         fontFamily,
-                        fontSize: style.desktop.size,
-                        lineHeight: style.desktop.lineHeight,
-                        fontWeight: style.desktop.weight,
-                        letterSpacing: style.desktop.letterSpacing || '0'
+                        fontSize,
+                        lineHeight,
+                        fontWeight,
+                        letterSpacing: brandLetterSpacing
                       }}>
                         H{idx + 1} - {labels[idx]}
                       </div>
@@ -1025,26 +1042,40 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Body Text</h4>
                 <div className="space-y-2">
                   {[
-                    { key: 'body-xl', label: 'Body XL - Large emphasis text' },
-                    { key: 'body-lg', label: 'Body Large - Above standard' },
-                    { key: 'body-md', label: 'Body Medium - Standard paragraph' },
-                    { key: 'body-sm', label: 'Body Small - Captions' },
-                    { key: 'body-xs', label: 'Body XSmall - Fine detail' },
-                    { key: 'code-mono', label: 'Code/Mono - Technical content (IBM Plex Mono)' }
-                  ].map(({ key, label }) => {
-                    const style = currentTheme.typography.styles[key]
+                    { keys: ['bodyXL', 'body-xl'], label: 'Body XL - Large emphasis text' },
+                    { keys: ['bodyLG', 'body-lg'], label: 'Body Large - Above standard' },
+                    { keys: ['body', 'body-md'], label: 'Body Medium - Standard paragraph' },
+                    { keys: ['bodySM', 'body-sm'], label: 'Body Small - Captions' },
+                    { keys: ['bodyXS', 'body-xs'], label: 'Body XSmall - Fine detail' }
+                  ].map(({ keys, label }) => {
+                    // Try both key formats
+                    const style = keys.map(k => currentTheme.typography.styles?.[k]).find(s => s)
                     if (!style) return null
-                    const fontFamily = style.family === 'primary' 
-                      ? (currentTheme.typography.semantic?.primary || effectiveTheme.typography.headingFont)
-                      : (currentTheme.typography.semantic?.secondary || effectiveTheme.typography.bodyFont)
+                    
+                    // Get brand-specific font family
+                    const brandTypography = currentTheme.typography?.[previewBrandMode]
+                    const fontFamily = brandTypography?.bodyFont || 
+                                      currentTheme.typography?.semantic?.secondary || 
+                                      currentTheme.typography?.bodyFont || 
+                                      '"Open Sans", sans-serif'
+                    
+                    // Get brand-specific letter spacing
+                    const brandLetterSpacing = brandTypography?.letterSpacing?.body || 
+                                               style.letterSpacing || 
+                                               style.desktop?.letterSpacing || '0'
+                    
+                    // Handle both data structures
+                    const fontSize = style.fontSize || style.desktop?.size || '16px'
+                    const lineHeight = style.lineHeight || style.desktop?.lineHeight || '1.5'
+                    const fontWeight = style.fontWeight || style.desktop?.weight || 400
+                    
                     return (
-                      <div key={key} style={{
+                      <div key={keys[0]} style={{
                         fontFamily,
-                        fontSize: style.desktop.size,
-                        lineHeight: style.desktop.lineHeight,
-                        fontWeight: style.desktop.weight,
-                        letterSpacing: style.desktop.letterSpacing || '0',
-                        textTransform: style.desktop.transform || 'none'
+                        fontSize,
+                        lineHeight,
+                        fontWeight,
+                        letterSpacing: brandLetterSpacing
                       }}>
                         {label}
                       </div>
@@ -1085,8 +1116,18 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               {/* Font Family Info */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="text-xs text-gray-600 space-y-1">
-                  <div><strong>Primary:</strong> {effectiveTheme.typography.semantic?.primary || 'Inter'}</div>
-                  <div><strong>Secondary:</strong> {effectiveTheme.typography.semantic?.secondary || 'IBM Plex Mono'}</div>
+                  <div><strong>Primary:</strong> {
+                    currentTheme.typography?.[previewBrandMode]?.headingFont || 
+                    currentTheme.typography?.semantic?.primary || 
+                    currentTheme.typography?.headingFont || 
+                    'Inter'
+                  }</div>
+                  <div><strong>Secondary:</strong> {
+                    currentTheme.typography?.[previewBrandMode]?.bodyFont || 
+                    currentTheme.typography?.semantic?.secondary || 
+                    currentTheme.typography?.bodyFont || 
+                    'IBM Plex Mono'
+                  }</div>
                   <div className="text-gray-500 mt-2">✓ Responsive (desktop/mobile breakpoints)</div>
                 </div>
               </div>

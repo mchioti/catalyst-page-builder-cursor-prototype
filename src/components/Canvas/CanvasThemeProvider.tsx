@@ -100,6 +100,11 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
 
   // Build extended CSS variables from Figma token structure
   const buildExtendedVars = () => {
+    // Get brand-specific typography if available (Wiley DS V2 multi-brand support)
+    const brandTypography = currentTheme.typography?.[brandMode] || {}
+    const headingFont = brandTypography.headingFont || currentTheme.typography.headingFont
+    const bodyFont = brandTypography.bodyFont || currentTheme.typography.bodyFont
+    
     const vars: any = {
       // Core theme variables
       '--theme-color-primary': currentTheme.colors.primary,
@@ -108,8 +113,8 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
       '--theme-color-text': currentTheme.colors.text,
       '--theme-color-background': currentTheme.colors.background,
       '--theme-color-muted': currentTheme.colors.muted,
-      '--theme-heading-font': currentTheme.typography.headingFont,
-      '--theme-body-font': currentTheme.typography.bodyFont,
+      '--theme-heading-font': headingFont,  // Brand-specific (Wiley=Inter, WT=Noto Serif, Dummies=Open Sans)
+      '--theme-body-font': bodyFont,        // Brand-specific
       '--theme-base-size': currentTheme.typography.baseSize,
       '--theme-scale': currentTheme.typography.scale,
       // Component styling (resolve spacing token references)

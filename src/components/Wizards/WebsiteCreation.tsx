@@ -502,7 +502,15 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
                           </div>
                           <div>
                             <span className="font-medium text-gray-600">Typography:</span>
-                            <span className="text-gray-700 ml-2">{selectedTheme.typography.headingFont}</span>
+                            <span className="text-gray-700 ml-2">{(() => {
+                              // Show brand-specific typography for Wiley DS V2
+                              if (selectedTheme.id === 'wiley-figma-ds-v2' && (selectedTheme as any).typography?.[websiteData.brandMode]) {
+                                const brandTypography = (selectedTheme as any).typography[websiteData.brandMode]
+                                return `${brandTypography.headingFont}, ${brandTypography.bodyFont}`
+                              }
+                              // Fallback to default for other themes
+                              return selectedTheme.typography.headingFont
+                            })()}</span>
                           </div>
                         </div>
                       </div>
