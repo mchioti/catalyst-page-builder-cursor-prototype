@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { nanoid } from 'nanoid'
+import { createDebugLogger } from '../../utils/logger'
+
+// 🐛 DEBUG FLAG - Set to true to enable detailed properties panel logs
+const DEBUG_PROPERTIES_PANEL = false
+const debugLog = createDebugLogger(DEBUG_PROPERTIES_PANEL)
+
 import { 
   type Widget, 
   type WidgetSection, 
@@ -157,7 +163,7 @@ export function PropertiesPanel({
           const foundInTab = tab.widgets.find((w: any) => w.id === selectedWidget)
           if (foundInTab) {
             selectedItem = foundInTab
-            console.log('✅ Found widget in standalone tabs widget:', foundInTab.type, foundInTab.id)
+            debugLog('log', '✅ Found widget in standalone tabs widget:', foundInTab.type, foundInTab.id)
             break
           }
         }
@@ -168,14 +174,14 @@ export function PropertiesPanel({
   
   // Log if we found the item
   if (selectedItem && !isSection(selectedItem)) {
-    console.log('✅ Properties Panel - Widget found:', { 
-      id: selectedItem.id,
+    debugLog('log', '✅ Properties Panel - Widget found:', { 
+      id: selectedItem.id, 
       type: (selectedItem as any).type 
     })
   }
   
   if (!selectedItem) {
-    console.log('🔍 Properties Panel - Selected item not found:', { 
+    debugLog('log', '🔍 Properties Panel - Selected item not found:', { 
       selectedWidget, 
       canvasItemIds: canvasItems.map((item: CanvasItem) => item.id),
       sectionWidgetIds: canvasItems.flatMap((item: CanvasItem) => 
@@ -2146,7 +2152,7 @@ export function PropertiesPanel({
                           }
                         })
                       } catch (error) {
-                        console.error('Error generating content:', error)
+                        debugLog('error', 'Error generating content:', error)
                       }
                     }
                   }}
@@ -2359,7 +2365,7 @@ export function PropertiesPanel({
                           }
                         })
                       } catch (error) {
-                        console.error('Error generating content:', error)
+                        debugLog('error', 'Error generating content:', error)
                       }
                     }
                   }}

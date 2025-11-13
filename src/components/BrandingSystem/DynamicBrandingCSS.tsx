@@ -1,5 +1,10 @@
 import React, { useEffect } from 'react';
 import { useBrandingStore } from '../../stores/brandingStore';
+import { createDebugLogger } from '../../utils/logger';
+
+// 🐛 DEBUG FLAG - Set to true to enable detailed branding CSS logs
+const DEBUG_BRANDING_CSS = false;
+const debugLog = createDebugLogger(DEBUG_BRANDING_CSS);
 
 /**
  * Dynamic Branding CSS Component
@@ -13,17 +18,17 @@ export const DynamicBrandingCSS: React.FC<{ websiteId: string }> = ({ websiteId 
   const websiteBranding = branding.websites[websiteId];
 
   useEffect(() => {
-    console.log('🎨 DynamicBrandingCSS effect triggered:', { websiteId, websiteBranding: !!websiteBranding });
+    debugLog('log', '🎨 DynamicBrandingCSS effect triggered:', { websiteId, websiteBranding: !!websiteBranding });
     
     // Initialize website branding if it doesn't exist
     if (!websiteBranding) {
-      console.log('🏗️ Initializing branding for website:', websiteId);
+      debugLog('log', '🏗️ Initializing branding for website:', websiteId);
       initializeWebsiteBranding(websiteId);
       return;
     }
 
-    console.log('🎨 Updating dynamic branding CSS for website:', websiteId);
-    console.log('📋 Current journals:', websiteBranding.journals.map(j => ({ slug: j.slug, primary: j.colors.primary })));
+    debugLog('log', '🎨 Updating dynamic branding CSS for website:', websiteId);
+    debugLog('log', '📋 Current journals:', websiteBranding.journals.map(j => ({ slug: j.slug, primary: j.colors.primary })));
     if (!websiteBranding) return;
 
     // Remove existing dynamic branding styles
@@ -74,8 +79,8 @@ export const DynamicBrandingCSS: React.FC<{ websiteId: string }> = ({ websiteId 
     styleElement.textContent = cssRules.join('\n');
     document.head.appendChild(styleElement);
 
-    console.log('🎨 Dynamic branding CSS injected for website:', websiteId);
-    console.log('📝 Generated CSS:', cssRules.join('\n'));
+    debugLog('log', '🎨 Dynamic branding CSS injected for website:', websiteId);
+    debugLog('log', '📝 Generated CSS:', cssRules.join('\n'));
   }, [websiteId, websiteBranding, initializeWebsiteBranding]);
 
   return null; // This component doesn't render anything

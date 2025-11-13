@@ -1,12 +1,17 @@
 import { useEffect } from 'react'
 import { generateThemeCSS } from '../../styles/themeCSS'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
+import { createDebugLogger } from '../../utils/logger'
 import { 
   mapWileyDSV2ToFoundation, 
   mapClassicUX3ToFoundation,
   mapCarbonToFoundation,
   mapAntDesignToFoundation
 } from '../../foundation'
+
+// 🐛 DEBUG FLAG - Set to true to enable detailed theme provider logs
+const DEBUG_THEME_PROVIDER = false
+const debugLog = createDebugLogger(DEBUG_THEME_PROVIDER)
 
 // Helper function to resolve spacing token references (e.g., 'radius.sm' → '8px')
 function resolveSpacingToken(tokenRef: string | undefined, theme: any): string | undefined {
@@ -65,7 +70,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     ? previewThemeId 
     : (currentWebsite?.themeId || 'classic-ux3-theme')
   
-  console.log('🎨 CanvasThemeProvider RENDER:', {
+  debugLog('log', '🎨 CanvasThemeProvider RENDER:', {
     currentView,
     websiteId: currentWebsiteId,
     websiteName: currentWebsite?.name,
@@ -83,7 +88,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
   // Resolve token references based on brand mode
   const currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
   
-  console.log('🔍 CanvasThemeProvider Debug:', {
+  debugLog('log', '🔍 CanvasThemeProvider Debug:', {
     currentWebsiteId,
     currentWebsite: currentWebsite?.name,
     themeId: currentWebsite?.themeId,
@@ -94,7 +99,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
   })
   
   if (!currentTheme) {
-    console.error('❌ No theme found! Provider rendering without CSS injection.')
+    debugLog('error', '❌ No theme found! Provider rendering without CSS injection.')
     return <>{children}</>
   }
 
@@ -232,12 +237,12 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
           vars[cssVarName] = value
         })
         
-        console.log('🚀 Foundation tokens injected for', currentTheme.name, ':', Object.keys(foundationTokens).length, 'tokens')
+        debugLog('log', '🚀 Foundation tokens injected for', currentTheme.name, ':', Object.keys(foundationTokens).length, 'tokens')
       } else {
-        console.warn('⚠️ No Foundation adapter for theme:', currentTheme.name, '(id:', currentTheme.id, ')')
+        debugLog('warn', '⚠️ No Foundation adapter for theme:', currentTheme.name, '(id:', currentTheme.id, ')')
       }
     } catch (error) {
-      console.error('❌ Foundation token mapping failed for', currentTheme.name, ':', error)
+      debugLog('error', '❌ Foundation token mapping failed for', currentTheme.name, ':', error)
     }
 
     // 🎨 Add Semantic Color System (Light/Dark pairs for accessibility)
@@ -344,52 +349,47 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
 
   // Inject generated theme CSS into document head
   useEffect(() => {
-    console.log('🚀 useEffect RUNNING! Dependencies:', {
-      themeId: currentTheme?.id,
-      brandMode,
-      scopeCSS,
-      websiteId: currentWebsiteId
-    })
+    debugLog('log', '🚀 useEffect RUNNING! Dependencies:', { themeId: currentTheme?.id, brandMode, scopeCSS, websiteId: currentWebsiteId })
     
     const styleId = `theme-styles-${currentTheme.id}-${scopeCSS ? 'scoped' : 'global'}`
     
-    console.log('🧹 Removing ALL old theme styles')
+    debugLog('log', '🧹 Removing ALL old theme styles')
     // Remove ALL old theme styles (not just this theme)
     const allThemeStyles = document.querySelectorAll('[id^="theme-styles-"]')
     allThemeStyles.forEach(el => {
-      console.log('  Removing:', el.id)
+      debugLog('log', '  Removing:', el.id)
       el.remove()
     })
-    console.log('✅ All old styles removed')
+    debugLog('log', '✅ All old styles removed')
     
-    console.log('🎨 Generating CSS for theme:', currentTheme.name)
+    debugLog('log', '🎨 Generating CSS for theme:', currentTheme.name)
     // Generate and inject new theme CSS
     const styleEl = document.createElement('style')
     styleEl.id = styleId
     
     try {
       styleEl.textContent = generateThemeCSS(currentTheme, scopeCSS)
-      console.log('✅ CSS Generated, length:', styleEl.textContent.length, 'characters', scopeCSS ? '(SCOPED to .theme-preview)' : '(GLOBAL)')
+      debugLog('log', '✅ CSS Generated, length:', styleEl.textContent.length, 'characters', scopeCSS ? '(SCOPED to .theme-preview)' : '(GLOBAL)')
       
       // Debug: Show first 500 chars of generated CSS
       if (scopeCSS) {
-        console.log('📝 First 500 chars of SCOPED CSS:', styleEl.textContent.substring(0, 500))
+        debugLog('log', '📝 First 500 chars of SCOPED CSS:', styleEl.textContent.substring(0, 500))
         // Check if .btn class exists
         if (styleEl.textContent.includes('.theme-preview .btn')) {
-          console.log('✅ Scoped .btn classes found!')
+          debugLog('log', '✅ Scoped .btn classes found!')
         } else {
-          console.error('❌ NO scoped .btn classes found in generated CSS!')
+          debugLog('error', '❌ NO scoped .btn classes found in generated CSS!')
         }
       }
     } catch (error) {
-      console.error('❌ CSS Generation failed:', error)
+      debugLog('error', '❌ CSS Generation failed:', error)
       return
     }
     
     document.head.appendChild(styleEl)
-    console.log('✅ Style element appended to head with id:', styleId)
+    debugLog('log', '✅ Style element appended to head with id:', styleId)
     
-    console.log('🎨 Theme CSS Injected:', {
+    debugLog('log', '🎨 Theme CSS Injected:', {
       themeId: currentTheme.id,
       themeName: currentTheme.name,
       buttonRadius: currentTheme.components?.button?.borderRadius,
@@ -401,7 +401,7 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
       const el = document.getElementById(styleId)
       if (el) {
         el.remove()
-        console.log('🧹 Cleanup: Removed theme styles:', styleId)
+        debugLog('log', '🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
   }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId, previewThemeId, currentView]) // Re-run when theme, brand mode, scoping, website, preview theme, or view changes
