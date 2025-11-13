@@ -162,4 +162,133 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('nav').filter({ hasText: 'About' })).toBeVisible()
     await expect(page.locator('nav').filter({ hasText: 'Contact' })).toBeVisible()
   })
+
+  // =============================================================================
+  // DRAG & DROP CRITICAL TESTS - Prevent regressions from theme/layout changes
+  // =============================================================================
+
+  test('Can add widget from library by clicking (auto-creates section) @smoke', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+    
+    // Wait for homepage template to fully load
+    await page.waitForSelector('[data-section-id]', { state: 'attached', timeout: 10000 })
+    await page.waitForTimeout(500)
+    
+    // Close any toast notifications that might block clicks
+    const toast = page.locator('[role="status"]').first()
+    if (await toast.isVisible()) {
+      await toast.click() // Click to dismiss
+      await page.waitForTimeout(200)
+    }
+    
+    // Count sections before adding widget (homepage auto-loads with ~6 sections)
+    const canvasArea = page.locator('main').first()
+    const sectionsBeforeCount = await canvasArea.locator('[data-section-id]').count()
+    
+    // Ensure Text widget is visible and clickable
+    const textWidget = page.getByTestId('library-widget-text')
+    await textWidget.scrollIntoViewIfNeeded()
+    await textWidget.click({ force: true })
+    
+    // Wait for the widget to be added
+    await page.waitForTimeout(1000)
+    
+    // Should have created a new section with the widget inside
+    const sectionsAfterCount = await canvasArea.locator('[data-section-id]').count()
+    expect(sectionsAfterCount).toBe(sectionsBeforeCount + 1)
+    
+    // Widget should be visible in canvas (check the LAST section we just added)
+    const lastSection = page.locator('[data-section-id]').last()
+    await expect(lastSection.locator('text=Enter your text content')).toBeVisible({ timeout: 5000 })
+  })
+
+  test('Can reorder widgets within same section @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Wait for homepage to load
+    await page.waitForTimeout(1000)
+    const sectionsBeforeCount = await page.locator('[data-section-id]').count()
+    
+    // Add first widget (Text)
+    await page.getByTestId('library-widget-text').click()
+    await page.waitForTimeout(800)
+    
+    // Add second widget (Heading) - should go in same section
+    await page.getByTestId('library-widget-heading').click()
+    await page.waitForTimeout(800)
+    
+    // Get the LAST section (the one we just created with our widgets)
+    const section = page.locator('[data-section-id]').last()
+    
+    // Verify both widgets are present in our new section
+    await expect(section.locator('text=Enter your text content')).toBeVisible()
+    await expect(section.locator('text=Your Heading Text')).toBeVisible()
+    
+    // Get initial positions
+    const textWidget = section.locator('text=Enter your text content').first()
+    const headingWidget = section.locator('text=Your Heading Text').first()
+    
+    const textBox = await textWidget.boundingBox()
+    const headingBox = await headingWidget.boundingBox()
+    
+    // Initially, text should be above heading (smaller Y coordinate)
+    expect(textBox.y).toBeLessThan(headingBox.y)
+    
+    // Drag heading widget to top (above text)
+    await headingWidget.hover()
+    await page.mouse.down()
+    await textWidget.hover()
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+    
+    // Get new positions
+    const textBoxAfter = await textWidget.boundingBox()
+    const headingBoxAfter = await headingWidget.boundingBox()
+    
+    // After drag, heading should be above text
+    expect(headingBoxAfter.y).toBeLessThan(textBoxAfter.y)
+  })
+
+  test('Can move widget between different sections @smoke', async ({ page }) => {
+    await page.goto('/')
+    
+    // Wait for homepage to load
+    await page.waitForTimeout(1000)
+    const initialSectionsCount = await page.locator('[data-section-id]').count()
+    
+    // Add first section with Text widget
+    await page.getByTestId('library-widget-text').click()
+    await page.waitForTimeout(800)
+    
+    // Add second section with Heading widget
+    await page.getByTestId('library-widget-heading').click()
+    await page.waitForTimeout(800)
+    
+    // Get the sections - we should have initial + 2 new ones
+    const sections = page.locator('[data-section-id]')
+    const totalSections = await sections.count()
+    expect(totalSections).toBe(initialSectionsCount + 2)
+    
+    // Get our TWO newly created sections (second-to-last and last)
+    const section1 = sections.nth(totalSections - 2) // Second-to-last (Text widget)
+    const section2 = sections.nth(totalSections - 1) // Last (Heading widget)
+    
+    // Verify initial state: Text in section 1, Heading in section 2
+    await expect(section1.locator('text=Enter your text content')).toBeVisible()
+    await expect(section2.locator('text=Your Heading Text')).toBeVisible()
+    
+    // Drag Heading widget from section 2 to section 1
+    const headingWidget = section2.locator('text=Your Heading Text').first()
+    const targetArea = section1.locator('[data-droppable-area]').first()
+    
+    await headingWidget.hover()
+    await page.mouse.down()
+    await targetArea.hover()
+    await page.mouse.up()
+    await page.waitForTimeout(500)
+    
+    // After drag, section 1 should have both widgets
+    await expect(section1.locator('text=Enter your text content')).toBeVisible()
+    await expect(section1.locator('text=Your Heading Text')).toBeVisible()
+  })
 })

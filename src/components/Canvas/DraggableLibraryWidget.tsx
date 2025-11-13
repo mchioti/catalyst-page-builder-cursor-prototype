@@ -101,6 +101,7 @@ export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buil
       style={style}
       onClick={handleClick}
       onPointerDown={handlePointerDown}
+      data-testid={`library-widget-${item.type}`}
       {...attributes}
       {...listeners}
       className={`block w-full text-left rounded transition-colors cursor-grab active:cursor-grabbing ${

@@ -43,8 +43,8 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Fix for macOS crashes - disable crashpad and use non-headless mode
-        headless: false,
+        // Use headless mode for better stability
+        headless: true,
         launchOptions: {
           args: [
             '--disable-dev-shm-usage',

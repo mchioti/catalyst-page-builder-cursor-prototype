@@ -131,6 +131,8 @@ export function DraggableWidgetInSection({
   return (
     <div 
       ref={setNodeRef}
+      data-testid={`canvas-widget-${widget.id}`}
+      data-widget-type={widget.type}
       style={widgetDrag.transform ? {
         transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
       } : undefined}
@@ -819,6 +821,8 @@ export function SectionRenderer({
           <div 
             ref={setDropRef}
             key={area.id}
+            data-testid={`section-area-${area.id}`}
+            data-droppable-area={area.id}
             style={cardStyle}
             className={`relative ${
               isLiveMode

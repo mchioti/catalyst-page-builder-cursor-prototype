@@ -1,3 +1,81 @@
+/**
+ * ============================================================================
+ * DRAG & DROP ARCHITECTURE DOCUMENTATION
+ * ============================================================================
+ * 
+ * CRITICAL: This file implements the core drag-and-drop functionality using
+ * @dnd-kit/core. Changes to DOM structure, CSS layout, or hook usage can
+ * break DnD. Always run smoke tests after modifications.
+ * 
+ * ROOT CAUSE OF PAST REGRESSIONS:
+ * --------------------------------
+ * 1. DOM Structure Changes: Adding grid gaps, nested divs, or spacing tokens
+ *    can confuse dnd-kit's collision detection. Always test DnD after theme/
+ *    layout changes.
+ * 
+ * 2. SortableContext Misuse: Using SortableContext with useDraggable (instead
+ *    of useSortable) prevents cross-area and cross-section moves. We DON'T
+ *    use SortableContext in SectionRenderer for this reason.
+ * 
+ * 3. Missing Drop Targets: Widgets must be both draggable AND droppable to
+ *    enable precise positioning. See DraggableWidgetInSection in 
+ *    SectionRenderer.tsx.
+ * 
+ * HOW IT WORKS:
+ * -------------
+ * 1. **Library Widgets** (DraggableLibraryWidget.tsx):
+ *    - Type: 'library-widget'
+ *    - Click: Auto-creates one-column section with widget inside
+ *    - Drag: Uses customCollisionDetection to find target section/area
+ * 
+ * 2. **Canvas Widgets** (SectionRenderer.tsx > DraggableWidgetInSection):
+ *    - Type: 'section-widget'
+ *    - Uses useDraggable for drag capability
+ *    - Uses useDroppable to become a drop target (enables precise positioning)
+ *    - Can move within same area, across areas, or across sections
+ * 
+ * 3. **Section Areas** (SectionRenderer.tsx):
+ *    - Type: 'section-area'
+ *    - Droppable zones for widgets
+ *    - Multiple areas in multi-column layouts
+ * 
+ * 4. **Collision Detection** (customCollisionDetection below):
+ *    - Priority order:
+ *      a. tab-panel (for tabs widget)
+ *      b. widget-target (for precise positioning)
+ *      c. section-area (for area drops)
+ *      d. closestCenter (fallback)
+ *    - This order is CRITICAL - changing it breaks precise positioning
+ * 
+ * 5. **handleDragEnd** (main logic):
+ *    - Detects drop type (library→canvas, widget→widget, widget→area)
+ *    - Auto-creates sections for library widgets
+ *    - Finds precise insertion point for widget→widget drops
+ *    - Moves widgets between areas/sections for widget→area drops
+ * 
+ * TEST COVERAGE:
+ * --------------
+ * - Smoke tests: tests/smoke.test.js (3 critical tests)
+ * - Comprehensive: tests/drag-and-drop.test.js (13 scenarios)
+ * - Always run: npm run test:smoke before committing
+ * 
+ * DATA ATTRIBUTES FOR TESTING:
+ * ----------------------------
+ * - Library widgets: data-testid="library-widget-{type}"
+ * - Section areas: data-testid="section-area-{id}", data-droppable-area="{id}"
+ * - Canvas widgets: data-testid="canvas-widget-{id}", data-widget-type="{type}"
+ * - Sections: data-section-id="{id}"
+ * 
+ * KNOWN ISSUES TO AVOID:
+ * ----------------------
+ * - Don't wrap area.widgets.map() in SortableContext - breaks cross-area moves
+ * - Don't add extra DOM nesting in SectionRenderer - confuses collision detection
+ * - Don't modify customCollisionDetection priority without testing all scenarios
+ * - Always make widgets both draggable AND droppable for precise positioning
+ * 
+ * ============================================================================
+ */
+
 import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { PREFAB_SECTIONS } from './prefabSections'
