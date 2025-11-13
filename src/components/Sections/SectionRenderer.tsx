@@ -96,7 +96,7 @@ export function DraggableWidgetInSection({
   journalContext?: string
   sectionContentMode?: 'light' | 'dark'
 }) {
-  // Each widget gets its own draggable hook - no hooks rule violation
+  // Use draggable to allow movement between areas and sections
   const widgetDrag = useDraggable({
     id: `widget-${widget.id}`,
     data: {
@@ -107,18 +107,35 @@ export function DraggableWidgetInSection({
     }
   })
   
+  // Also make widget droppable so we can detect drops ON specific widgets
+  const widgetDrop = useDroppable({
+    id: `widget-drop-${widget.id}`,
+    data: {
+      type: 'widget-target',
+      widgetId: widget.id,
+      sectionId: sectionId,
+      areaId: areaId
+    }
+  })
+  
   // Get selected widget from store to show persistent selection
   const selectedWidget = usePageStore?.getState?.()?.selectedWidget || null
   const isSelected = selectedWidget === widget.id
   
+  // Combine refs for both draggable and droppable
+  const setNodeRef = (node: HTMLElement | null) => {
+    widgetDrag.setNodeRef(node)
+    widgetDrop.setNodeRef(node)
+  }
+  
   return (
     <div 
-      ref={widgetDrag.setNodeRef}
+      ref={setNodeRef}
       style={widgetDrag.transform ? {
         transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
       } : undefined}
-      className={`${!isLiveMode ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
-        !isLiveMode && isSelected ? 'ring-2 ring-blue-500' : ''
+      className={`${!isLiveMode && !widgetDrag.isDragging ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
+        !isLiveMode && isSelected && !widgetDrag.isDragging ? 'ring-2 ring-blue-500' : ''
       } group relative ${
         widgetDrag.isDragging ? 'opacity-50' : ''
       }`}
@@ -182,7 +199,7 @@ export function DraggableWidgetInSection({
               {...widgetDrag.attributes}
               {...widgetDrag.listeners}
               className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
-              title="Drag to move widget between sections"
+              title="Drag to reorder or move widget"
             >
               <GripVertical className="w-3 h-3" />
             </div>

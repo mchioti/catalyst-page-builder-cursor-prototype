@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { PREFAB_SECTIONS } from './prefabSections'
 import { createHomepageTemplate, shouldAutoLoadHomepage } from './homepageTemplate'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
   useSensors,
@@ -115,7 +120,7 @@ export function PageBuilder({
   
   // Homepage template auto-loading
   useEffect(() => {
-    console.log('🔍 Auto-loading check:', {
+    debugLog('log', '🔍 Auto-loading check:', {
       editingContext,
       mockLiveSiteRoute,
       canvasItemsLength: canvasItems.length,
@@ -123,7 +128,7 @@ export function PageBuilder({
     })
     
     if (shouldAutoLoadHomepage(editingContext, mockLiveSiteRoute, canvasItems)) {
-      console.log('🏠 Auto-loading homepage template...')
+      debugLog('log', '🏠 Auto-loading homepage template...')
       const homepageTemplate = createHomepageTemplate()
       replaceCanvasItems(homepageTemplate)
       showToast('Homepage template loaded! Edit sections to match your vision.', 'success')
@@ -134,20 +139,20 @@ export function PageBuilder({
   useEffect(() => {
     // Save canvas changes to route-specific storage when editing individual issues
     if (isIndividualIssueEdit && canvasItems.length > 0) {
-      console.log('💾 Saving individual issue changes to route:', mockLiveSiteRoute)
-      console.log('📦 Canvas items being saved:', canvasItems.length, 'items')
+      debugLog('log','💾 Saving individual issue changes to route:', mockLiveSiteRoute)
+      debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
       setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
       
       // Track modification for divergence management
       if (journalCode && trackModification) {
-        console.log('📊 Tracking template modification for:', journalName, '(', journalCode, ')')
-        console.log('📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
+        debugLog('log','📊 Tracking template modification for:', journalName, '(', journalCode, ')')
+        debugLog('log','📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
         trackModification(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
       } else {
-        console.warn('⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackModification })
+        debugLog('warn','⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackModification })
       }
     } else {
-      console.log('⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
+      debugLog('log','⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
     }
   }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackModification])
   
@@ -155,7 +160,7 @@ export function PageBuilder({
   useEffect(() => {
     // Save canvas changes to global template storage when editing global templates
     if (isGlobalTemplateEdit && canvasItems.length > 0) {
-      console.log('🌍 Saving global template changes:', canvasItems.length, 'items')
+      debugLog('log','🌍 Saving global template changes:', canvasItems.length, 'items')
       setGlobalTemplateCanvas(canvasItems)
     }
   }, [canvasItems, isGlobalTemplateEdit, setGlobalTemplateCanvas])
@@ -164,14 +169,14 @@ export function PageBuilder({
   useEffect(() => {
     // Save canvas changes to journal template storage when editing journal templates
     if (isJournalTemplateEdit && templateEditingContext?.journalCode && canvasItems.length > 0) {
-      console.log('📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
+      debugLog('log','📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
       setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
       
       // Track journal template modification for divergence management
       if (trackModification) {
         const route = `journal/${templateEditingContext.journalCode}`
-        console.log('📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
-        console.log('📊 Route:', route, 'Template ID: table-of-contents')
+        debugLog('log','📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
+        debugLog('log','📊 Route:', route, 'Template ID: table-of-contents')
         trackModification(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
       }
     }
@@ -212,7 +217,7 @@ export function PageBuilder({
   
   // Template sections handler
   const handleTemplateSectionsLoad = (sections: WidgetSection[]) => {
-    console.log('🏗️ Loading template sections:', sections)
+    debugLog('log','🏗️ Loading template sections:', sections)
     replaceCanvasItems(sections)
     // Removed notification toast - banner shows template status instead
   }
@@ -237,6 +242,8 @@ export function PageBuilder({
   
   // Custom collision detection that prioritizes tab-panel first, then section-area drop zones
   const customCollisionDetection = (args: any) => {
+    const activeType = args.active?.data?.current?.type
+    
     // FIRST: Try to find tab-panel collisions (most specific, highest priority)
     const tabPanelCollisions = rectIntersection({
       ...args,
@@ -246,11 +253,41 @@ export function PageBuilder({
     })
     
     if (tabPanelCollisions.length > 0) {
-      console.log('🎯 Tab panel collision detected!', tabPanelCollisions)
+      debugLog('log','🎯 Tab panel collision detected!', tabPanelCollisions)
       return tabPanelCollisions
     }
     
-    // SECOND: Try to find section-area collisions
+    // SECOND: For section-widgets, PRIORITIZE widget-target collisions (for precise positioning)
+    if (activeType === 'section-widget') {
+      const widgetTargetCollisions = rectIntersection({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((container: any) => 
+          container.data?.current?.type === 'widget-target'
+        )
+      })
+      
+      if (widgetTargetCollisions.length > 0) {
+        // Dropping ON a specific widget - insert before it
+        return widgetTargetCollisions
+      }
+    }
+    
+    // THIRD: For library widgets and section-widgets, try section-area collisions
+    if (activeType === 'library-widget' || activeType === 'section-widget') {
+      const sectionAreaCollisions = rectIntersection({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((container: any) => 
+          container.data?.current?.type === 'section-area'
+        )
+      })
+      
+      if (sectionAreaCollisions.length > 0) {
+        // Collision detected for widget drop
+        return sectionAreaCollisions
+      }
+    }
+    
+    // FOURTH: Try to find section-area collisions for other items
     const sectionAreaCollisions = rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter((container: any) => 
@@ -270,7 +307,7 @@ export function PageBuilder({
     const draggedItem = event.active.data?.current?.item
     const isSidebar = draggedItem && isSection(draggedItem) && draggedItem.type === 'sidebar'
     
-    console.log('🚀 Drag Start:', {
+    debugLog('log','🚀 Drag Start:', {
       activeId: event.active.id,
       activeType: event.active.data?.current?.type,
       activeData: event.active.data?.current,
@@ -280,12 +317,12 @@ export function PageBuilder({
     })
     
     if (isSidebar) {
-      console.log('🎯 SIDEBAR DRAG DETECTED! Setting up special highlighting...')
+      debugLog('log','🎯 SIDEBAR DRAG DETECTED! Setting up special highlighting...')
     }
     
     // Log all available drop zones for debugging
     const dropZones = document.querySelectorAll('[data-droppable="true"]')
-    console.log('📍 Available drop zones:', Array.from(dropZones).map(zone => ({
+    debugLog('log','📍 Available drop zones:', Array.from(dropZones).map(zone => ({
       id: zone.getAttribute('data-droppable-id') || zone.id,
       classes: zone.className,
       rect: zone.getBoundingClientRect()
@@ -299,7 +336,7 @@ export function PageBuilder({
       
       // Special logging for tab panels
       if (event.over.data?.current?.type === 'tab-panel') {
-        console.log('🎯 DRAGGING OVER TAB PANEL!', {
+        debugLog('log','🎯 DRAGGING OVER TAB PANEL!', {
           tabId: event.over.data.current.tabId,
           widgetId: event.over.data.current.widgetId,
           activeType: event.active.data?.current?.type
@@ -307,7 +344,7 @@ export function PageBuilder({
       }
       
       // DEBUG: Log what we're detecting
-      console.log('🔍 Drag Over Debug:', {
+      debugLog('log','🔍 Drag Over Debug:', {
         activeId: event.active.id,
         activeType: event.active.data?.current?.type,
         activeItem: activeItem,
@@ -322,7 +359,7 @@ export function PageBuilder({
           const sectionId = event.over.data?.current?.sectionId
           if (activeDropZone !== sectionId) {
             setActiveDropZone(sectionId)
-            console.log('🎯 Sidebar drop zone detected (converted to section-level):', {
+            debugLog('log','🎯 Sidebar drop zone detected (converted to section-level):', {
               activeId: event.active.id,
               dropZone: sectionId,
               originalAreaId: event.over.id
@@ -332,7 +369,7 @@ export function PageBuilder({
           const dropZoneId = event.over.id as string
           if (activeDropZone !== dropZoneId) {
             setActiveDropZone(dropZoneId)
-            console.log('🎯 Sidebar drop zone detected (section-level):', {
+            debugLog('log','🎯 Sidebar drop zone detected (section-level):', {
               activeId: event.active.id,
               dropZone: dropZoneId,
               sectionId: event.over.id
@@ -350,7 +387,7 @@ export function PageBuilder({
           const dropZoneId = event.over.id as string
           if (activeDropZone !== dropZoneId) {
             setActiveDropZone(dropZoneId)
-            console.log('🎯 Drop zone detected:', {
+            debugLog('log','🎯 Drop zone detected:', {
               activeId: event.active.id,
               activeType: event.active.data?.current?.type,
               dropZone: dropZoneId,
@@ -379,7 +416,7 @@ export function PageBuilder({
     // Clear drop zone highlighting
     setActiveDropZone(null)
     
-    console.log('🎯 Drag End Event:', {
+    debugLog('log','🎯 Drag End Event:', {
       activeId: active.id,
       activeType: active.data?.current?.type,
       overId: over?.id,
@@ -392,80 +429,115 @@ export function PageBuilder({
     })
 
     if (!over) {
-      console.log('❌ No drop target found')
+      debugLog('log','❌ No drop target found')
       return
     }
     
     // Log tab panel detection
     if (over?.data?.current?.type === 'tab-panel') {
-      console.log('✨ TAB PANEL DETECTED!', {
+      debugLog('log','✨ TAB PANEL DETECTED!', {
         tabId: over.data.current.tabId,
         widgetId: over.data.current.widgetId,
         activeType: active.data?.current?.type
       })
     }
 
-    // Handle library widget drop into section area
-    if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'section-area') {
-      console.log('✅ Library widget dropped into section area!', {
+    // Handle library widget drop - AUTO-CREATE SECTION with the widget
+    if (active.data?.current?.type === 'library-widget') {
+      debugLog('log','📦 Library widget detected!', {
         libraryItem: active.data.current.item,
-        sectionId: over.data.current.sectionId,
-        areaId: over.data.current.areaId,
+        overType: over.data?.current?.type,
         overId: over.id
       })
+      
       const libraryItem = active.data.current.item
-      const sectionId = over.data.current.sectionId
-      const areaId = over.data.current.areaId
-      
-      // Create new widget from library item
-      const newWidget = buildWidget(libraryItem)
-      newWidget.sectionId = sectionId
-      
-      console.log('🔧 Created HTML widget:', newWidget.type, newWidget.id, 'for section:', sectionId, 'area:', areaId)
-      
-      // Add widget to the specific section area
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      // Type narrow to section item, which should have .areas
-      const targetSection = canvasItems.find((item: CanvasItem) => isSection(item) && item.id === sectionId)
-      const targetArea = (targetSection && 'areas' in targetSection)
-        ? targetSection.areas.find((area: any) => area.id === areaId)
-        : undefined
-
-      console.log('🎯 Target area before:', targetArea?.widgets?.length || 0, 'widgets')
-
-      const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
-        if (isSection(canvasItem) && canvasItem.id === sectionId) {
-          return {
-            ...canvasItem,
-            areas: (canvasItem as WidgetSection).areas.map((area: any) => 
-              area.id === areaId 
-                ? { ...area, widgets: [...area.widgets, newWidget] }
-                : area
-            )
-          }
-        }
-        return canvasItem
-      })
-
-      // Type guard: ensure found section actually has areas before accessing
-      const updatedSection = updatedCanvasItems.find(
-        (item: CanvasItem) => item.id === sectionId && 'areas' in item && Array.isArray((item as any).areas)
-      ) as { areas: { id: string; widgets: any[] }[] } | undefined;
       
-      const updatedArea = updatedSection?.areas.find(
-        (area: { id: string }) => area.id === areaId
-      );
-      console.log(
-        '✅ Target area after:',
-        updatedArea?.widgets?.length ?? 0,
-        'widgets'
-      );
-
-      replaceCanvasItems(updatedCanvasItems);
-      return;
+      // Case 1: Dropped into existing section area (old behavior for backwards compatibility)
+      if (over.data?.current?.type === 'section-area') {
+        debugLog('log','✅ Library widget dropped into existing section area!')
+        const sectionId = over.data.current.sectionId
+        const areaId = over.data.current.areaId
+        
+        // Create new widget from library item
+        const newWidget = buildWidget(libraryItem)
+        newWidget.sectionId = sectionId
+        
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+          if (isSection(canvasItem) && canvasItem.id === sectionId) {
+            return {
+              ...canvasItem,
+              areas: (canvasItem as WidgetSection).areas.map((area: any) => 
+                area.id === areaId 
+                  ? { ...area, widgets: [...area.widgets, newWidget] }
+                  : area
+              )
+            }
+          }
+          return canvasItem
+        })
+        
+        replaceCanvasItems(updatedCanvasItems)
+        return
+      }
+      
+      // Case 2: Dropped on canvas or section - AUTO-CREATE one-column section
+      debugLog('log','🎯 Auto-creating one-column section for library widget!')
+      
+      // Create new widget
+      const newWidget = buildWidget(libraryItem)
+      
+      // Create new one-column section with the widget
+      const newSectionId = nanoid()
+      const newAreaId = nanoid()
+      newWidget.sectionId = newSectionId
+      
+      const newSection: WidgetSection = {
+        id: newSectionId,
+        type: 'content-block',
+        name: `Section with ${libraryItem.label || newWidget.type}`,
+        layout: 'one-column',
+        areas: [
+          {
+            id: newAreaId,
+            name: 'Content',
+            widgets: [newWidget]
+          }
+        ],
+        styling: {
+          paddingTop: 'medium',
+          paddingBottom: 'medium',
+          paddingLeft: 'medium',
+          paddingRight: 'medium',
+          gap: 'medium'
+        }
+      }
+      
+      // Find insertion position based on where it was dropped
+      let insertIndex = canvasItems.length // Default: add to end
+      
+      if (over?.id) {
+        // If dropped over a section, insert after it
+        const overSectionIndex = canvasItems.findIndex((item: CanvasItem) => item.id === over.id)
+        if (overSectionIndex !== -1) {
+          insertIndex = overSectionIndex + 1
+          debugLog('log','📍 Inserting section after existing section at index:', insertIndex)
+        }
+      }
+      
+      const newCanvasItems = [...canvasItems]
+      newCanvasItems.splice(insertIndex, 0, newSection)
+      
+      debugLog('log','✅ Created new section with widget:', {
+        sectionId: newSectionId,
+        widgetType: newWidget.type,
+        widgetId: newWidget.id,
+        insertIndex
+      })
+      
+      replaceCanvasItems(newCanvasItems)
+      return
     }
-    
-    // NOTE: Library widgets should ONLY be dropped into sections, never directly onto canvas
     
     // Handle standalone widget drop into section area (the missing scenario!)
     if ((active.data?.current?.type === 'canvas-widget' || 
@@ -473,7 +545,7 @@ export function PageBuilder({
          !active.data?.current?.type || 
          active.data?.current?.type === 'sortable') && 
         over.data?.current?.type === 'section-area') {
-      console.log('✅ Standalone widget dropped into section area!')
+      debugLog('log','✅ Standalone widget dropped into section area!')
       
       // Get widget from drag data if available, otherwise find by ID
       let widget: Widget
@@ -486,7 +558,7 @@ export function PageBuilder({
         const { canvasItems } = usePageStore.getState()
         const foundWidget = canvasItems.find((item: CanvasItem) => item.id === widgetId && !isSection(item))
         if (!foundWidget) {
-          console.log('❌ Standalone widget not found')
+          debugLog('log','❌ Standalone widget not found')
           return
         }
         widget = foundWidget as Widget
@@ -518,7 +590,7 @@ export function PageBuilder({
     
     // Handle library widget drop into tab panel
     if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'tab-panel') {
-      console.log('✅ Library widget dropped into tab panel!', {
+      debugLog('log','✅ Library widget dropped into tab panel!', {
         libraryItem: active.data.current.item,
         tabId: over.data.current.tabId,
         widgetId: over.data.current.widgetId
@@ -531,7 +603,7 @@ export function PageBuilder({
       // Create new widget from library item
       const newWidget = buildWidget(libraryItem)
       
-      console.log('🔧 Created widget:', newWidget.type, newWidget.id, 'for tab:', tabId)
+      debugLog('log','🔧 Created widget:', newWidget.type, newWidget.id, 'for tab:', tabId)
       
       // Add widget to the specific tab panel
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
@@ -542,8 +614,8 @@ export function PageBuilder({
           const tabsWidget = canvasItem as any // TabsWidget
           // Find which tab index we're dropping into
           const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
-          console.log('🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget')
-          console.log('📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
+          debugLog('log','🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget')
+          debugLog('log','📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
             id: t.id,
             label: t.label,
             widgetCount: t.widgets.length
@@ -553,7 +625,7 @@ export function PageBuilder({
               ? { ...tab, widgets: [...tab.widgets, newWidget] }
               : tab
           )
-          console.log('📦 Tabs after update:', updatedTabs.map((t: any) => ({
+          debugLog('log','📦 Tabs after update:', updatedTabs.map((t: any) => ({
             id: t.id,
             label: t.label,
             widgetCount: t.widgets.length
@@ -576,8 +648,8 @@ export function PageBuilder({
                   const tabsWidget = widget as any // TabsWidget
                   // Find which tab index we're dropping into
                   const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
-                  console.log('🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget (in section)')
-                  console.log('📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
+                  debugLog('log','🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget (in section)')
+                  debugLog('log','📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
                     id: t.id,
                     label: t.label,
                     widgetCount: t.widgets.length
@@ -587,7 +659,7 @@ export function PageBuilder({
                       ? { ...tab, widgets: [...tab.widgets, newWidget] }
                       : tab
                   )
-                  console.log('📦 Tabs after update:', updatedTabs.map((t: any) => ({
+                  debugLog('log','📦 Tabs after update:', updatedTabs.map((t: any) => ({
                     id: t.id,
                     label: t.label,
                     widgetCount: t.widgets.length
@@ -608,32 +680,121 @@ export function PageBuilder({
       })
       
       replaceCanvasItems(updatedCanvasItems)
-      console.log('✅ Widget added to tab panel!')
+      debugLog('log','✅ Widget added to tab panel!')
       return
     }
     
     // Handle section widget movement - PRIORITY: section-widget drags should never go to canvas reordering
     if (active.data?.current?.type === 'section-widget') {
-      console.log('🚀 Section widget detected, checking drop location...', { 
+      debugLog('log','🚀 Section widget detected, checking drop location...', { 
         overId: over?.id, 
         overType: over?.data?.current?.type,
         overData: over?.data?.current 
       })
       
-      // Case 1: Dropped on specific section area (preferred)
-      if (over?.data?.current?.type === 'section-area') {
-        console.log('✅ Moving widget to specific section area!')
+      // Case 1: Dropped on specific section area OR on a widget
+      if (over?.data?.current?.type === 'section-area' || over?.data?.current?.type === 'widget-target') {
         const draggedWidget = active.data.current.widget
         const fromAreaId = active.data.current.fromAreaId
         const toAreaId = over.data.current.areaId
         
-        // Don't do anything if dropping in the same area
+        // Handle reordering within the same area - detect drop position
         if (fromAreaId === toAreaId) {
-          console.log('⚠️ Same area, no action needed')
+          const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+          
+          // Find the target section and area to get current widget positions
+          const targetSection = canvasItems.find((item: CanvasItem) => isSection(item) && 
+            (item as WidgetSection).areas.some(a => a.id === fromAreaId)
+          ) as WidgetSection
+          
+          const targetArea = targetSection?.areas.find(a => a.id === fromAreaId)
+          
+          if (targetArea) {
+            const widgets = [...targetArea.widgets]
+            const oldIndex = widgets.findIndex((w: Widget) => w.id === draggedWidget.id)
+            
+            debugLog('log','📊 Widget positions BEFORE reorder:', {
+              widgets: widgets.map((w, idx) => ({ index: idx, id: w.id, type: w.type })),
+              draggingIndex: oldIndex,
+              draggingWidget: draggedWidget.type,
+              overId: over.id,
+              overType: over.data?.current?.type
+            })
+            
+            // Remove widget from current position
+            const [movedWidget] = widgets.splice(oldIndex, 1)
+            
+            // Determine new position based on what we're dropping on
+            let newIndex = widgets.length // Default: end
+            
+            // Check if we're dropping ON another widget (not just in the area)
+            if (over.data?.current?.type === 'widget-target') {
+              const targetWidgetId = over.data.current.widgetId
+              // Find the index of the target widget (after removing the dragged widget)
+              newIndex = widgets.findIndex((w: Widget) => w.id === targetWidgetId)
+              if (newIndex !== -1) {
+                debugLog('log','🎯 Dropping ON widget:', targetWidgetId, 'inserting at index:', newIndex)
+              } else {
+                newIndex = widgets.length
+              }
+            }
+            
+            // Insert at new position
+            widgets.splice(newIndex, 0, movedWidget)
+            
+            debugLog('log','📊 Widget positions AFTER reorder:', {
+              widgets: widgets.map((w, idx) => ({ index: idx, id: w.id, type: w.type })),
+              oldIndex,
+              newIndex: newIndex === widgets.length - 1 ? newIndex : newIndex, // Adjust for display
+              moved: `${draggedWidget.type} moved from ${oldIndex} to ${newIndex}`
+            })
+            
+            // Apply the changes
+            const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+              if (isSection(canvasItem)) {
+                return {
+                  ...canvasItem,
+                  areas: (canvasItem as WidgetSection).areas.map((area: any) => {
+                    if (area.id === fromAreaId) {
+                      return { ...area, widgets }
+                    }
+                    return area
+                  })
+                }
+              }
+              return canvasItem
+            })
+            replaceCanvasItems(updatedCanvasItems)
+          }
           return
         }
         
+        // Cross-section or cross-area move
+        debugLog('log','✅ Moving widget to different section area!', {
+          draggedWidget: draggedWidget.id,
+          widgetType: draggedWidget.type,
+          fromAreaId,
+          toAreaId,
+          targetSectionId: over.data.current.sectionId
+        })
+        
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+        
+        // Verify the target section exists
+        const targetSection = canvasItems.find((item: CanvasItem) => 
+          isSection(item) && item.id === over.data.current.sectionId
+        )
+        
+        if (!targetSection) {
+          debugLog('error','❌ Target section not found!', {
+            expectedSectionId: over.data.current.sectionId,
+            availableSections: canvasItems.filter(isSection).map((s: any) => s.id)
+          })
+          return
+        }
+        
+        debugLog('log','✅ Target section verified:', targetSection.id)
+        
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
           if (isSection(canvasItem)) {
             return {
@@ -641,11 +802,13 @@ export function PageBuilder({
               areas: (canvasItem as WidgetSection).areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
+                  debugLog('log','🗑️ Removing from source area:', fromAreaId, 'in section:', canvasItem.id)
                   return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
                 }
                 // Add to target area with updated sectionId
                 if (area.id === toAreaId) {
                   const updatedWidget = { ...draggedWidget, sectionId: over.data.current!.sectionId }
+                  debugLog('log','➕ Adding to target area:', toAreaId, 'in section:', over.data.current.sectionId)
                   return { ...area, widgets: [...area.widgets, updatedWidget] }
                 }
                 return area
@@ -655,19 +818,21 @@ export function PageBuilder({
           return canvasItem
         }).filter((item: CanvasItem | undefined): item is CanvasItem => item !== undefined)
         replaceCanvasItems(updatedCanvasItems)
-        console.log('✅ Widget moved between sections!')
+        debugLog('log','✅ Widget moved between areas!')
         return
       }
       // Case 2: Dropped on section itself (find first available area)
-      if (over?.id && typeof over.id === 'string' && over.id.endsWith('-section')) {
-        console.log('✅ Moving widget to section (first available area)!', { targetSectionId: over.id })
+      if (over?.data?.current?.type === 'section' || 
+          (over?.id && typeof over.id === 'string' && canvasItems.some((item: CanvasItem) => item.id === over.id && isSection(item)))) {
+        const targetSectionId = over.id as string
+        debugLog('log','✅ Moving widget to section (first available area)!', { targetSectionId })
         const draggedWidget = active.data.current.widget
         const fromSectionId = active.data.current.fromSectionId
         const fromAreaId = active.data.current.fromAreaId
-        const targetSectionId = over.id
         
-        console.log('🎯 Cross-section move details:', {
+        debugLog('log','🎯 Cross-section move details:', {
           widgetId: draggedWidget.id,
+          widgetType: draggedWidget.type,
           fromSectionId,
           fromAreaId,
           targetSectionId,
@@ -676,7 +841,7 @@ export function PageBuilder({
         
         // If dropping in the same section, don't do anything
         if (fromSectionId === targetSectionId) {
-          console.log('⚠️ Same section, no action needed')
+          debugLog('log','⚠️ Same section, no action needed')
           return
         }
         
@@ -685,12 +850,16 @@ export function PageBuilder({
         // Find the target section and its first area
         const targetSection = canvasItems.find((item: CanvasItem) => item.id === targetSectionId && isSection(item)) as WidgetSection
         if (!targetSection || !targetSection.areas.length) {
-          console.log('❌ Target section not found or has no areas')
+          debugLog('log','❌ Target section not found or has no areas', { 
+            targetSectionId, 
+            foundSection: !!targetSection,
+            hasAreas: targetSection?.areas?.length 
+          })
           return
         }
         
         const firstAreaId = targetSection.areas[0].id
-        console.log('🎯 Target section found, first area:', firstAreaId)
+        debugLog('log','🎯 Target section found, first area:', firstAreaId)
         
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
           if (isSection(canvasItem)) {
@@ -699,11 +868,13 @@ export function PageBuilder({
               areas: (canvasItem as WidgetSection).areas.map((area: any) => {
                 // Remove from source area
                 if (area.id === fromAreaId) {
+                  debugLog('log','🗑️ Removing widget from area:', area.id)
                   return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
                 }
                 // Add to target area (first area of target section)
                 if (area.id === firstAreaId) {
                   const updatedWidget = { ...draggedWidget, sectionId: targetSectionId }
+                  debugLog('log','➕ Adding widget to area:', area.id)
                   return { ...area, widgets: [...area.widgets, updatedWidget] }
                 }
                 return area
@@ -713,12 +884,15 @@ export function PageBuilder({
           return canvasItem
         })
         replaceCanvasItems(updatedCanvasItems)
-        console.log('✅ Widget moved to section first area!')
+        debugLog('log','✅ Widget moved to section first area!')
         return
       }
       
       // Case 3: Section widget dropped somewhere invalid - just return without doing anything
-      console.log('⚠️ Section widget dropped in invalid location, ignoring')
+      debugLog('log','⚠️ Section widget dropped in invalid location, ignoring', {
+        overId: over?.id,
+        overType: over?.data?.current?.type
+      })
       return
     }
 
@@ -731,7 +905,7 @@ export function PageBuilder({
         ? over.id 
         : over.data?.current?.sectionId
         
-      console.log('✅ Sidebar dropped for reordering!', {
+      debugLog('log','✅ Sidebar dropped for reordering!', {
         sidebarId: draggedItem.id,
         targetSectionId: targetSectionId,
         dropType: over.data?.current?.type
@@ -759,7 +933,7 @@ export function PageBuilder({
           }
         }
         
-        console.log('🔄 Sidebar repositioned successfully', {
+        debugLog('log','🔄 Sidebar repositioned successfully', {
           sidebarId: movedSidebar.id,
           newPosition: targetIndex,
           spannedSections: spannedSectionIds,
@@ -770,7 +944,7 @@ export function PageBuilder({
         
         // Force a re-render to recalculate heights
         setTimeout(() => {
-          console.log('📐 Recalculating sidebar heights after repositioning')
+          debugLog('log','📐 Recalculating sidebar heights after repositioning')
         }, 100)
         
         return
@@ -784,7 +958,7 @@ export function PageBuilder({
         active.data?.current?.type === 'standalone-widget' ||
         (active.data?.current?.type !== 'library-widget' && 
          active.data?.current?.type !== 'section-widget')) && !isDraggingSidebar) {
-      console.log('🔄 Attempting canvas item reordering for canvas items')
+      debugLog('log','🔄 Attempting canvas item reordering for canvas items')
       
       // For standalone-widget type, use the original sortable ID for comparison
       const activeItemId = active.data?.current?.type === 'standalone-widget' 
@@ -795,7 +969,7 @@ export function PageBuilder({
       let targetId = over.id
       if (over.data?.current?.type === 'section-area' && over.data?.current?.sectionId) {
         targetId = over.data.current.sectionId
-        console.log('🎯 Section dragged over section area, using section ID:', targetId)
+        debugLog('log','🎯 Section dragged over section area, using section ID:', targetId)
       }
       
       if (activeItemId !== targetId) {
@@ -803,20 +977,20 @@ export function PageBuilder({
         const oldIndex = canvasItems.findIndex((item: CanvasItem) => item.id === activeItemId)
         const newIndex = canvasItems.findIndex((item: CanvasItem) => item.id === targetId)
         
-        console.log('📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, targetId, originalOverId: over.id })
+        debugLog('log','📋 Canvas reorder:', { oldIndex, newIndex, activeItemId, targetId, originalOverId: over.id })
         
         if (oldIndex !== -1 && newIndex !== -1) {
-          console.log('✅ Canvas item reordered!')
+          debugLog('log','✅ Canvas item reordered!')
           moveItem(oldIndex, newIndex)
         } else {
-          console.log('❌ Canvas item reorder failed - items not found')
+          debugLog('log','❌ Canvas item reorder failed - items not found')
         }
       }
     }
     
     
     // Debug: Catch unhandled drag cases
-    console.log('⚠️ Unhandled drag case:', {
+    debugLog('log','⚠️ Unhandled drag case:', {
       activeId: active.id,
       activeType: active.data?.current?.type,
       overId: over?.id,
@@ -848,7 +1022,7 @@ export function PageBuilder({
     e.preventDefault()
     e.stopPropagation()
     
-    console.log('🖱️ Widget clicked for properties:', { widgetId })
+    debugLog('log','🖱️ Widget clicked for properties:', { widgetId })
     
     // Find the widget to check its sectionId - use same logic as Properties Panel
     let widget: Widget | undefined = canvasItems.find((item: CanvasItem) => item.id === widgetId && !isSection(item)) as Widget
@@ -870,13 +1044,13 @@ export function PageBuilder({
     }
     
     if (widget) {
-      console.log('📋 Widget found for properties:', { 
+      debugLog('log','📋 Widget found for properties:', { 
         id: widget.id, 
         type: widget.type,
         sectionId: widget.sectionId || 'standalone'
       })
     } else {
-      console.log('❌ Widget not found for properties:', { widgetId })
+      debugLog('log','❌ Widget not found for properties:', { widgetId })
     }
     
     // Only close section toolbar if widget is not part of the currently active section
@@ -1284,7 +1458,7 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
       showToast(`Section "${sectionName.trim()}" saved with ${totalWidgets} widget${totalWidgets !== 1 ? 's' : ''}!`, 'success')
     
     } catch (error) {
-      console.error('❌ ERROR in saveCurrentAsSection:', error)
+      debugLog('error','❌ ERROR in saveCurrentAsSection:', error)
       showToast('Error saving section: ' + (error instanceof Error ? error.message : String(error)), 'error')
     }
   }
@@ -1378,7 +1552,7 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
                     <button
                       onClick={() => {
                         const itemsToLoad = section.canvasItems || section.items || []
-                        console.log('🔍 Loading saved section:', {
+                        debugLog('log','🔍 Loading saved section:', {
                           sectionName: section.name,
                           itemsToLoad,
                           currentCanvasItems: canvasItems,

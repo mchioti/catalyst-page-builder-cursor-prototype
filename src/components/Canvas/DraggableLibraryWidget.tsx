@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { Code } from 'lucide-react'
+import { nanoid } from 'nanoid'
 import type { LibraryItem as SpecItem } from '../../library'
+import type { WidgetSection } from '../../types/widgets'
 
 // We need to import usePageStore and buildWidget - for now we'll declare them as passed props
 interface DraggableLibraryWidgetProps {
@@ -12,7 +14,7 @@ interface DraggableLibraryWidgetProps {
 }
 
 export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buildWidget }: DraggableLibraryWidgetProps) {
-  const { addWidget } = usePageStore()
+  const { replaceCanvasItems, canvasItems } = usePageStore()
   const [dragStarted, setDragStarted] = useState(false)
   
   const {
@@ -41,12 +43,51 @@ export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buil
       return
     }
     
-    // Show message encouraging drag to section instead of direct add
-    console.log('💡 Widget clicked - please drag into a section instead of clicking')
-    // TODO: Show a toast notification or visual feedback
-    // For now, we'll still add to canvas for backwards compatibility
+    console.log('🎯 Widget clicked - auto-creating section with widget!', {
+      widgetLabel: item.label,
+      widgetType: item.type
+    })
+    
+    // Create new widget
     const newWidget = buildWidget(item)
-    addWidget(newWidget)
+    
+    // Create new one-column section with the widget
+    const newSectionId = nanoid()
+    const newAreaId = nanoid()
+    newWidget.sectionId = newSectionId
+    
+    const newSection: WidgetSection = {
+      id: newSectionId,
+      type: 'content-block',
+      name: `Section with ${item.label || newWidget.type}`,
+      layout: 'one-column',
+      areas: [
+        {
+          id: newAreaId,
+          name: 'Content',
+          widgets: [newWidget]
+        }
+      ],
+      styling: {
+        paddingTop: 'medium',
+        paddingBottom: 'medium',
+        paddingLeft: 'medium',
+        paddingRight: 'medium',
+        gap: 'medium'
+      }
+    }
+    
+    // Add section to end of canvas
+    const newCanvasItems = [...canvasItems, newSection]
+    
+    console.log('✅ Created new section with widget via click:', {
+      sectionId: newSectionId,
+      widgetType: newWidget.type,
+      widgetId: newWidget.id,
+      totalSections: newCanvasItems.length
+    })
+    
+    replaceCanvasItems(newCanvasItems)
   }
 
   const handlePointerDown = () => {
