@@ -4153,11 +4153,6 @@ function DesignConsole() {
     ? websites.filter(w => w.id === 'journal-of-science') // Single website example
     : websites // Show all websites for multi-website publisher
 
-  // Get only themes that are currently used by displayed websites
-  const usedThemes = themes.filter(theme => 
-    displayedWebsites.some(website => website.themeId === theme.id)
-  )
-
   const toggleTheme = (themeId: string) => {
     const newExpanded = new Set(expandedThemes)
     if (newExpanded.has(themeId)) {
@@ -4249,11 +4244,11 @@ function DesignConsole() {
 
             <div className="mt-6 mb-3">
               <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Themes
+                Designs
             </div>
             </div>
             <div className="space-y-1">
-              {usedThemes.map((theme) => (
+              {themes.map((theme) => (
                 <div key={theme.id}>
                   <button
                     onClick={() => toggleTheme(theme.id)}
@@ -4279,7 +4274,7 @@ function DesignConsole() {
                         }`}
                       >
                         <Settings className="w-4 h-4" />
-                        Theme Settings
+                        Design Settings
                       </button>
                       
                       <button
@@ -4303,7 +4298,7 @@ function DesignConsole() {
                         }`}
                       >
                         <FileText className="w-4 h-4" />
-                        Theme Templates
+                        Design Templates
                       </button>
                         </div>
                   )}
@@ -4437,7 +4432,7 @@ function DesignConsole() {
                         <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Design System Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {usedThemes.map((theme) => (
+                {themes.map((theme) => (
                   <div key={theme.id} className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{theme.name}</h3>
                     <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
@@ -4446,7 +4441,7 @@ function DesignConsole() {
                         onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Theme Settings →
+                        Design Settings →
                       </button>
                       <button 
                         onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
@@ -4458,7 +4453,7 @@ function DesignConsole() {
                         onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Theme Templates →
+                        Design Templates →
                       </button>
                         </div>
                   </div>
@@ -4521,7 +4516,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-theme-settings' && (
                   <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Settings</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Design - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
                       </div>
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
@@ -4530,11 +4525,11 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-publication-cards' && (
                       <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Design - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Predefined publication card designs with clean, minimalist styling and vibrant accents</p>
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern design. Websites using this design can customize these cards in their individual Publication Cards settings.</p>
                       </div>
                       </div>
               <ThemePublicationCards themeId="modernist-theme" />
