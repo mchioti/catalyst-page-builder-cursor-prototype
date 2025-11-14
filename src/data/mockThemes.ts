@@ -1,4 +1,5 @@
 import type { Theme, TemplateCategory, TemplateStatus } from '../types'
+import { PREFAB_SECTIONS } from '../constants/prefabSections'
 
 export const mockThemes: Theme[] = [
     {
