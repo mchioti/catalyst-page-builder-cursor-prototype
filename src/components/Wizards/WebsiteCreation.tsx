@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
-import { X, Palette } from 'lucide-react'
+import { Palette } from 'lucide-react'
 import { getStarterTemplateForTheme } from '../../utils/themeStarters'
 import { useBrandingStore } from '../../stores/brandingStore'
+import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
+import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
 
 // TODO: Add proper type imports when extracting store
 interface Website {
@@ -18,6 +20,7 @@ interface Website {
   customSections: any[]
   branding: any
   purpose: any
+  selectedTemplates?: string[]
   deviationScore: number
   lastThemeSync: Date
 }
@@ -44,7 +47,8 @@ interface Theme {
 }
 
 interface WebsiteCreationWizardProps {
-  onClose: () => void
+  onComplete: (website: Website) => void
+  onCancel: () => void
   usePageStore: any // TODO: Type this properly when extracting store
   themePreviewImages: Record<string, string>
 }
@@ -57,19 +61,20 @@ interface PageStore {
   setCurrentView: (view: string) => void
 }
 
-export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImages }: WebsiteCreationWizardProps) {
+export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, themePreviewImages }: WebsiteCreationWizardProps) {
   const { addWebsite, themes: availableThemes, setCurrentWebsiteId, replaceCanvasItems, setCurrentView } = usePageStore() as PageStore
   const { initializeWebsiteBranding, updateWebsiteBranding } = useBrandingStore()
   const [step, setStep] = useState(1)
   const [websiteData, setWebsiteData] = useState({
     name: '',
-    themeId: '',
+    themeId: availableThemes.length > 0 ? availableThemes[0].id : '', // Auto-select first theme
     brandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // Default brand mode
     purpose: {
       contentTypes: [] as string[],
-      hasSubjectOrganization: false,
+      hasSubjectOrganization: undefined as boolean | undefined,
       publishingTypes: [] as string[]
     },
+    selectedTemplates: [] as string[], // Track which templates user wants
     branding: {
       primaryColor: '',
       secondaryColor: '',
@@ -78,9 +83,50 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
     },
     modifications: [] as Array<{path: string, value: string, reason: string}>
   })
+  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set())
   
-  const totalSteps = 3
+  const totalSteps = 4
   const selectedTheme = availableThemes.find((t: Theme) => t.id === websiteData.themeId)
+  
+  // Get relevant templates based on purpose (for initializing selection)
+  const getRelevantTemplates = () => {
+    return ALL_TEMPLATES.filter((template: any) => {
+      // Filter out Subject Browse template if subject organization is not enabled
+      if (template.id === 'subject-browse-taxonomy' && !websiteData.purpose.hasSubjectOrganization) {
+        return false
+      }
+      
+      // Always include 'general' templates
+      if (!template.contentType || template.contentType === 'general') {
+        return true
+      }
+      
+      // Include templates matching selected content types
+      return websiteData.purpose.contentTypes.includes(template.contentType)
+    })
+  }
+  
+  // Initialize selected templates when entering step 2 (all selected by default)
+  useEffect(() => {
+    if (step === 2) {
+      const relevantTemplates = getRelevantTemplates()
+      const templateIds = relevantTemplates.map((t: any) => t.id)
+      setSelectedTemplates(new Set(templateIds))
+    }
+  }, [step, websiteData.purpose.contentTypes, websiteData.purpose.hasSubjectOrganization])
+  
+  // Toggle template selection
+  const toggleTemplateSelection = (templateId: string) => {
+    setSelectedTemplates(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId)
+      } else {
+        newSet.add(templateId)
+      }
+      return newSet
+    })
+  }
   
   const handleCreate = () => {
     const themeBranding = selectedTheme ? {
@@ -117,6 +163,8 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
       },
       // Store the purpose configuration for future use
       purpose: websiteData.purpose,
+      // Store selected templates
+      selectedTemplates: Array.from(selectedTemplates),
       deviationScore: calculateInitialDeviation(websiteData.modifications, selectedTheme),
       lastThemeSync: new Date()
     }
@@ -146,7 +194,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
     // Navigate to page builder
     setCurrentView('page-builder')
     
-    onClose()
+    onComplete(newWebsite)
   }
   
   const getDefaultValueForPath = (path: string) => {
@@ -172,49 +220,194 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
   const prevStep = () => setStep(Math.max(step - 1, 1))
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">Create New Website</h3>
-              <p className="text-gray-600 mt-1">Step {step} of {totalSteps}</p>
+              <p className="text-gray-600">Step {step} of {totalSteps}</p>
             </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
           </div>
           
           <div className="mb-8">
-            <div className="flex items-center">
+            <div className="flex items-center justify-between max-w-2xl mx-auto">
               {Array.from({ length: totalSteps }, (_, i) => (
-                <div key={i} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {i + 1}
+                <div key={i} className="flex flex-col items-center flex-1">
+                  <div className="flex items-center w-full">
+                    {i > 0 && (
+                      <div className={`h-1 flex-1 ${
+                        i < step ? 'bg-blue-600' : 'bg-gray-200'
+                      }`} />
+                    )}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium mx-2 ${
+                      i + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {i + 1}
+                    </div>
+                    {i < totalSteps - 1 && (
+                      <div className={`h-1 flex-1 ${
+                        i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
+                      }`} />
+                    )}
                   </div>
-                  {i < totalSteps - 1 && (
-                    <div className={`h-1 w-16 mx-2 ${
-                      i + 1 < step ? 'bg-blue-600' : 'bg-gray-200'
-                    }`} />
-                  )}
+                  <div className={`text-xs mt-2 font-medium ${
+                    i + 1 === step ? 'text-blue-600' : 'text-gray-600'
+                  }`}>
+                    {i === 0 && 'Purpose'}
+                    {i === 1 && 'Templates'}
+                    {i === 2 && 'Design'}
+                    {i === 3 && 'Branding'}
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="flex mt-2">
-              <div className="text-xs text-gray-600 w-8 text-center">Theme</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Purpose</div>
-              <div className="text-xs text-gray-600 w-24 text-center">Details</div>
-            </div>
           </div>
           
-          <div className="min-h-[400px]">
+          <div className={step === 2 ? '' : 'min-h-[400px]'}>
+            {/* STEP 1: PURPOSE */}
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Choose Publishing Theme</h4>
-                  <p className="text-gray-600 mb-6">Select a complete theme package for your publishing platform</p>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">What are you publishing?</h4>
+                  <p className="text-gray-600 mb-6">Select all content types your website will publish</p>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { id: 'journals', label: 'Academic Journals', description: 'Peer-reviewed research articles, journals, and academic publications' },
+                      { id: 'conferences', label: 'Conference Proceedings', description: 'Conference papers, abstracts, and presentation materials' },
+                      { id: 'books', label: 'Book Series', description: 'eBooks, textbooks, monographs, and book series' },
+                      { id: 'non-peer-reviewed', label: 'Non-Peer Reviewed Content', description: 'News, blogs, opinion pieces, and other editorial content' }
+                    ].map((contentType) => (
+                      <label key={contentType.id} className={`flex items-start gap-4 p-5 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all ${
+                        websiteData.purpose.contentTypes.includes(contentType.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={websiteData.purpose.contentTypes.includes(contentType.id)}
+                          onChange={(e) => {
+                            const newContentTypes = e.target.checked
+                              ? [...websiteData.purpose.contentTypes, contentType.id]
+                              : websiteData.purpose.contentTypes.filter(type => type !== contentType.id)
+                            setWebsiteData({
+                              ...websiteData, 
+                              purpose: {...websiteData.purpose, contentTypes: newContentTypes}
+                            })
+                          }}
+                          className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900 text-lg">{contentType.label}</div>
+                          <div className="text-sm text-gray-600 mt-1">{contentType.description}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {websiteData.purpose.contentTypes.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-gray-200">
+                      <label className="block text-base font-medium text-gray-900 mb-4">
+                        Will your site organize content by subject area?
+                      </label>
+                      <p className="text-sm text-gray-600 mb-4">
+                        This enables taxonomy features like subject browsing, categorization, and filtering.
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <label className={`flex items-start gap-4 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer ${
+                          websiteData.purpose.hasSubjectOrganization === true
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="subjectOrganization"
+                            checked={websiteData.purpose.hasSubjectOrganization === true}
+                            onChange={() => setWebsiteData({
+                              ...websiteData, 
+                              purpose: {...websiteData.purpose, hasSubjectOrganization: true}
+                            })}
+                            className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
+                            <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
+                          </div>
+                        </label>
+                        
+                        <label className={`flex items-start gap-4 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer ${
+                          websiteData.purpose.hasSubjectOrganization === false
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="subjectOrganization"
+                            checked={websiteData.purpose.hasSubjectOrganization === false}
+                            onChange={() => setWebsiteData({
+                              ...websiteData, 
+                              purpose: {...websiteData.purpose, hasSubjectOrganization: false}
+                            })}
+                            className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">No</div>
+                            <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* STEP 2: PAGE TEMPLATES */}
+            {step === 2 && selectedTheme && (
+              <div>
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Review & Select Page Templates</h4>
+                  <p className="text-gray-600">
+                    Showing templates for: {' '}
+                    {websiteData.purpose.contentTypes.map((type, idx) => {
+                      const labels: Record<string, string> = {
+                        'journals': 'Academic Journals',
+                        'conferences': 'Conference Proceedings',
+                        'books': 'Book Series',
+                        'non-peer-reviewed': 'Non-Peer Reviewed Content'
+                      }
+                      return (
+                        <span key={type}>
+                          {idx > 0 && (idx === websiteData.purpose.contentTypes.length - 1 ? ' and ' : ', ')}
+                          <strong>{labels[type]}</strong>
+                        </span>
+                      )
+                    })}
+                    {' • '}All templates will be available in your website
+                  </p>
+                </div>
+                
+                <WebsiteTemplates
+                  websiteId="wizard-preview"
+                  websiteName="New Website"
+                  enabledContentTypes={websiteData.purpose.contentTypes as any}
+                  hasSubjectOrganization={websiteData.purpose.hasSubjectOrganization || false}
+                  allTemplates={ALL_TEMPLATES}
+                  usePageStore={usePageStore}
+                  consoleMode="single"
+                  selectionMode={true}
+                  selectedTemplates={selectedTemplates}
+                  onToggleTemplateSelection={toggleTemplateSelection}
+                />
+              </div>
+            )}
+            
+            {/* STEP 3: DESIGN/THEME */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">How should your pages look?</h4>
+                  <p className="text-gray-600 mb-6">Choose a design system for your website</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
                     {availableThemes.map((theme: Theme) => (
@@ -285,136 +478,13 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
               </div>
             )}
             
-            {step === 2 && (
+            {/* STEP 4: BRANDING */}
+            {step === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Define the Website's Purpose</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Customize your brand colors</h4>
                   <p className="text-gray-600 mb-6">
-                    Help us configure your website by telling us about the content you'll be publishing and how you want to organize it.
-                  </p>
-                  
-                  <div className="mb-8">
-                    <label className="block text-base font-medium text-gray-900 mb-4">
-                      What type of content will you be publishing?
-                    </label>
-                    <p className="text-sm text-gray-600 mb-4">Select all that apply. This will enable the appropriate templates and features.</p>
-                    
-                    <div className="space-y-3">
-                      {[
-                        { id: 'journals', label: 'Journals', description: 'Academic journals, research articles, and peer-reviewed content' },
-                        { id: 'books', label: 'Books', description: 'eBooks, textbooks, monographs, and book series' },
-                        { id: 'conferences', label: 'Conference Proceedings', description: 'Conference papers, abstracts, and presentation materials' }
-                      ].map((contentType) => (
-                        <label key={contentType.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={websiteData.purpose.contentTypes.includes(contentType.id)}
-                            onChange={(e) => {
-                              const newContentTypes = e.target.checked
-                                ? [...websiteData.purpose.contentTypes, contentType.id]
-                                : websiteData.purpose.contentTypes.filter(type => type !== contentType.id)
-                              setWebsiteData({
-                                ...websiteData, 
-                                purpose: {...websiteData.purpose, contentTypes: newContentTypes}
-                              })
-                            }}
-                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{contentType.label}</div>
-                            <div className="text-sm text-gray-600">{contentType.description}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-8">
-                    <label className="block text-base font-medium text-gray-900 mb-4">
-                      Will your site organize content by subject area?
-                    </label>
-                    <p className="text-sm text-gray-600 mb-4">
-                      This enables taxonomy features like subject browsing, categorization, and filtering.
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="subjectOrganization"
-                          checked={websiteData.purpose.hasSubjectOrganization === true}
-                          onChange={() => setWebsiteData({
-                            ...websiteData, 
-                            purpose: {...websiteData.purpose, hasSubjectOrganization: true}
-                          })}
-                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">Yes (Enable Taxonomy Features)</div>
-                          <div className="text-sm text-gray-600">Enable subject browsing, categories, and content filtering by topic</div>
-                        </div>
-                      </label>
-                      
-                      <label className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="subjectOrganization"
-                          checked={websiteData.purpose.hasSubjectOrganization === false}
-                          onChange={() => setWebsiteData({
-                            ...websiteData, 
-                            purpose: {...websiteData.purpose, hasSubjectOrganization: false}
-                          })}
-                          className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">No</div>
-                          <div className="text-sm text-gray-600">Keep content organization simple without subject-based categorization</div>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {selectedTheme && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Palette className="w-5 h-5 text-blue-600" />
-                        <h5 className="font-medium text-blue-900">Selected Theme: {selectedTheme.name}</h5>
-                      </div>
-                      <p className="text-sm text-blue-700 mb-3">{selectedTheme.description}</p>
-                      
-                      {websiteData.purpose.contentTypes.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-blue-200">
-                          <div className="text-sm text-blue-800 font-medium mb-2">
-                            Recommended features for your content types:
-                          </div>
-                          <div className="text-sm text-blue-700 space-y-1">
-                            {websiteData.purpose.contentTypes.includes('journals') && (
-                              <div>• Article templates, peer-review workflows, citation management</div>
-                            )}
-                            {websiteData.purpose.contentTypes.includes('books') && (
-                              <div>• Chapter navigation, table of contents, book series organization</div>
-                            )}
-                            {websiteData.purpose.contentTypes.includes('conferences') && (
-                              <div>• Proceedings organization, presentation materials, abstract browsing</div>
-                            )}
-                            {websiteData.purpose.hasSubjectOrganization && (
-                              <div>• Subject taxonomy, advanced filtering, topic-based navigation</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Website Details & Launch</h4>
-                  <p className="text-gray-600 mb-6">
-                    Complete your website setup with naming and optional branding modifications.
+                    Name your website and customize brand colors
                   </p>
                   
                   <div className="mb-6">
@@ -621,7 +691,7 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
             </div>
             <div className="flex gap-2">
               <button
-                onClick={onClose}
+                onClick={onCancel}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               >
                 Cancel
@@ -629,7 +699,13 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
               {step < totalSteps ? (
                 <button
                   onClick={nextStep}
-                  disabled={(step === 1 && !websiteData.themeId) || (step === 2 && websiteData.purpose.contentTypes.length === 0)}
+                  disabled={
+                    (step === 1 && (
+                      websiteData.purpose.contentTypes.length === 0 || 
+                      websiteData.purpose.hasSubjectOrganization === undefined
+                    )) ||
+                    (step === 3 && !websiteData.themeId)
+                  }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
@@ -646,7 +722,6 @@ export function WebsiteCreationWizard({ onClose, usePageStore, themePreviewImage
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }

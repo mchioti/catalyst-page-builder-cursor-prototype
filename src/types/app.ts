@@ -33,6 +33,8 @@ export type DesignConsoleView =
   | 'journal-of-science-custom-templates'
   // System views
   | 'websites' 
+  | 'create-website'
+  | 'designs'
   | 'settings'
 
 export type EditingContext = 'template' | 'page' | 'website'

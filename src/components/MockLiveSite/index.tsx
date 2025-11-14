@@ -1337,10 +1337,33 @@ export function MockLiveSite({
               </nav>
             </div>
             <div className="flex items-center space-x-4 text-sm">
-              <span className="text-gray-300">{mockLiveSiteRoute}</span>
+              <select
+                value={mockLiveSiteRoute}
+                onChange={(e) => setMockLiveSiteRoute(e.target.value as MockLiveSiteRoute)}
+                className="px-3 py-1 bg-gray-800 text-white rounded border border-gray-700 hover:border-gray-600 cursor-pointer"
+              >
+                <optgroup label="Website Pages">
+                  <option value="/">Homepage</option>
+                  <option value="/about">About</option>
+                  <option value="/search">Search Results</option>
+                </optgroup>
+                <optgroup label="Journal Pages">
+                  <option value="/journal/advma">Advanced Materials - Home</option>
+                  <option value="/journal/embo">EMBO Journal - Home</option>
+                </optgroup>
+                <optgroup label="Table of Contents">
+                  <option value="/toc/advma/current">ADVMA - Current Issue</option>
+                  <option value="/toc/embo/current">EMBO - Current Issue</option>
+                  <option value="/toc/advma/vol-35-issue-47">ADVMA - Vol 35 Issue 47</option>
+                  <option value="/toc/embo/vol-35-issue-47">EMBO - Vol 35 Issue 47</option>
+                </optgroup>
+                <optgroup label="Articles">
+                  <option value="/article/advma/67/12/p45">Sample Article</option>
+                </optgroup>
+              </select>
               <button
                 onClick={() => setCurrentView('design-console')}
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Back to Console
               </button>

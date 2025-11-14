@@ -34,6 +34,9 @@ interface WebsiteTemplatesProps {
   allTemplates: Template[] // All available templates from the theme
   usePageStore?: any // Zustand store for divergence tracking
   consoleMode?: 'single' | 'multi' // Console mode for showing/hiding promote button
+  selectionMode?: boolean // Enable checkbox selection for templates
+  selectedTemplates?: Set<string> // Currently selected template IDs
+  onToggleTemplateSelection?: (templateId: string) => void // Toggle selection callback
 }
 
 export function WebsiteTemplates({
@@ -43,7 +46,10 @@ export function WebsiteTemplates({
   hasSubjectOrganization,
   allTemplates,
   usePageStore,
-  consoleMode = 'multi' // Default to multi for backwards compatibility
+  consoleMode = 'multi', // Default to multi for backwards compatibility
+  selectionMode = false,
+  selectedTemplates = new Set(),
+  onToggleTemplateSelection
 }: WebsiteTemplatesProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
@@ -306,13 +312,15 @@ export function WebsiteTemplates({
                   <TemplateRow 
                     key={template.id} 
                     template={template}
-                    showDivergence={true}
+                    showDivergence={!selectionMode}
                     usePageStore={usePageStore}
                     getIndentationLevel={getIndentationLevel}
                     isGroupHeader={isGroupHeader(template)}
                     isCollapsed={collapsedGroups.has(template.id)}
                     childrenCount={getChildren(template.id).length}
                     onToggleGroup={() => toggleGroup(template.id)}
+                    isSelected={selectedTemplates.has(template.id)}
+                    onToggleSelect={selectionMode ? onToggleTemplateSelection : undefined}
                     consoleMode={consoleMode}
                     websiteId={websiteId}
                     onPromoteToPublisherTheme={handlePromoteToTheme}

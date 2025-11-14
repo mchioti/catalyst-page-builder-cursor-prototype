@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import React from 'react'
 import { nanoid } from 'nanoid'
 import { arrayMove } from '@dnd-kit/sortable'
-import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info } from 'lucide-react'
+import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info, Plus } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates, ALL_TEMPLATES } from './components/SiteManager/SiteManagerTemplates'
@@ -1216,7 +1216,7 @@ function buildWidget(item: SpecItem): Widget {
 const usePageStore = create<PageState>((set, get) => ({
   // Routing  
   currentView: 'page-builder',
-  siteManagerView: 'overview', 
+  siteManagerView: 'websites', 
   editingContext: 'page', // 'template' | 'page' | 'website'
   templateEditingContext: null, // Track template editing context for propagation
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
@@ -3751,11 +3751,64 @@ function SkinWrap({ skin, children }: { skin: Skin; children: ReactNode }) {
 
 // Template Creation Wizard Component
 
+// All Designs Page Component
+function AllDesigns() {
+  const { themes, setSiteManagerView } = usePageStore()
+  
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Designs</h2>
+        <p className="text-gray-600 mt-1">Browse and manage design systems for your publishing websites</p>
+      </div>
+      
+      {/* Designs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {themes.map((theme) => (
+          <div 
+            key={theme.id}
+            className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all cursor-pointer group"
+            onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <Palette className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {theme.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">v{theme.version}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                {theme.description}
+              </p>
+              
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.primary }}></div>
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.secondary }}></div>
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.accent }}></div>
+                </div>
+                <span className="text-xs text-gray-500">{theme.templates.length} page layouts</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Design System Console Websites component  
 function SiteManagerWebsites() {
   const { websites, themes, removeModification, updateWebsite } = usePageStore()
   const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
-  const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
   const getThemeForWebsite = (websiteId: string) => {
     const website = websites.find(w => w.id === websiteId)
@@ -3866,17 +3919,9 @@ function SiteManagerWebsites() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Websites</h2>
-          <p className="text-gray-600 mt-1">Manage websites and track template customizations</p>
-        </div>
-        <button 
-          onClick={() => setShowCreateWebsite(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add Website
-        </button>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Websites</h2>
+        <p className="text-gray-600 mt-1">Manage websites and track template customizations</p>
       </div>
       
       {/* Websites Table */}
@@ -4121,9 +4166,6 @@ function SiteManagerWebsites() {
           </div>
         </div>
       )}
-      
-      // Website Creation Wizard
-      {showCreateWebsite && <WebsiteCreationWizard onClose={() => setShowCreateWebsite(false)} usePageStore={usePageStore} themePreviewImages={themePreviewImages} />}
     </div>
   )
 }
@@ -4231,86 +4273,25 @@ function DesignConsole() {
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
           <nav className="p-4">
             <button
-              onClick={() => setSiteManagerView('overview')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                siteManagerView === 'overview'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+              onClick={() => setSiteManagerView('create-website')}
+              className="flex items-center gap-3 w-full px-4 py-3 mb-4 text-left text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Plus className="w-5 h-5" />
+              Add Website
+            </button>
+
+            <div className="mb-3">
+              <button
+                onClick={() => setSiteManagerView('websites')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
+                  siteManagerView === 'websites'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
                 }`}
               >
-              <Home className="w-5 h-5" />
-              Overview
-              </button>
-
-            <div className="mt-6 mb-3">
-              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Designs
-            </div>
-            </div>
-            <div className="space-y-1">
-              {themes.map((theme) => (
-                <div key={theme.id}>
-                  <button
-                    onClick={() => toggleTheme(theme.id)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Palette className="w-4 h-4" />
-                      <span className="font-medium">{theme.name}</span>
-          </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${
-                      isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
-                    }`} />
-                  </button>
-
-                  {isThemeExpanded(theme.id) && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-theme-settings`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Settings className="w-4 h-4" />
-                        Design Settings
-                      </button>
-                      
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-publication-cards`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Palette className="w-4 h-4" />
-                        Publication Cards
-                      </button>
-                      
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-templates`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <FileText className="w-4 h-4" />
-                        Design Templates
-                      </button>
-                        </div>
-                  )}
-                      </div>
-                    ))}
-                  </div>
-                  
-            <div className="mt-6 mb-3">
-              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Websites
-                            </div>
-                          </div>
+              </button>
+            </div>
             <div className="space-y-1">
               {displayedWebsites.map((website) => (
                 <div key={website.id}>
@@ -4392,18 +4373,77 @@ function DesignConsole() {
                   )}
                 </div>
               ))}
-              
+            </div>
+                  
+            <div className="mt-6 mb-3">
               <button
-                onClick={() => setSiteManagerView('websites')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors mt-2 ${
-                  siteManagerView === 'websites'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+                onClick={() => setSiteManagerView('designs')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
+                  siteManagerView === 'designs'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
                 }`}
               >
-                <List className="w-4 h-4" />
-                All Websites
+                Designs
               </button>
+            </div>
+            <div className="space-y-1">
+              {themes.map((theme) => (
+                <div key={theme.id}>
+                  <button
+                    onClick={() => toggleTheme(theme.id)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-4 h-4" />
+                      <span className="font-medium">{theme.name}</span>
+          </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${
+                      isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
+                    }`} />
+                  </button>
+
+                  {isThemeExpanded(theme.id) && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-theme-settings`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Design Settings
+                      </button>
+                      
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-publication-cards`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Publication Cards
+                      </button>
+                      
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Design Templates
+                      </button>
+                        </div>
+                  )}
+                      </div>
+                    ))}
                   </div>
                   
             <div className="mt-6 mb-3">
@@ -4630,7 +4670,27 @@ function DesignConsole() {
           )}
 
 
+          {siteManagerView === 'create-website' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Create New Website</h2>
+                <p className="text-gray-600 mt-1">Follow the steps below to configure your new publishing website</p>
+              </div>
+              <WebsiteCreationWizard 
+                onComplete={(website) => {
+                  // After wizard completion, navigate to the new website's settings
+                  setSiteManagerView(`${website.id}-settings` as DesignConsoleView)
+                }}
+                onCancel={() => setSiteManagerView('websites')}
+                usePageStore={usePageStore}
+                themePreviewImages={themePreviewImages}
+              />
+            </div>
+          )}
+
           {siteManagerView === 'websites' && <SiteManagerWebsites />}
+          
+          {siteManagerView === 'designs' && <AllDesigns />}
           
           {siteManagerView === 'settings' && (
             <div>
