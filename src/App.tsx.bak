@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import React from 'react'
 import { nanoid } from 'nanoid'
 import { arrayMove } from '@dnd-kit/sortable'
-import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info } from 'lucide-react'
+import { ChevronDown, Settings, X, Home, Palette, FileText, Globe, Cog, ArrowLeft, List, AlertTriangle, CheckCircle, Info, Plus } from 'lucide-react'
 import { ThemeEditor } from './components/SiteManager/ThemeEditor'
 import { PublicationCards } from './components/SiteManager/PublicationCards'
 import { SiteManagerTemplates, ALL_TEMPLATES } from './components/SiteManager/SiteManagerTemplates'
@@ -11,6 +11,8 @@ import { WebsiteTemplates } from './components/SiteManager/WebsiteTemplates'
 import { WebsiteBrandingConfiguration } from './components/SiteManager/WebsiteBrandingConfiguration'
 import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
+import { mockWebsites } from './data/mockWebsites'
+import { mockThemes } from './data/mockThemes'
 import { PublicationCard } from './components/Publications/PublicationCard'
 import { CanvasThemeProvider } from './components/Canvas/CanvasThemeProvider'
 import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
@@ -1216,17 +1218,21 @@ function buildWidget(item: SpecItem): Widget {
 const usePageStore = create<PageState>((set, get) => ({
   // Routing  
   currentView: 'page-builder',
-  siteManagerView: 'overview', 
+  siteManagerView: 'websites', 
   editingContext: 'page', // 'template' | 'page' | 'website'
   templateEditingContext: null, // Track template editing context for propagation
   currentWebsiteId: 'wiley-main', // Track which website is currently being edited
   mockLiveSiteRoute: '/', // Default to homepage
+  previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // For theme preview in Design Console
+  previewThemeId: 'classic-ux3-theme', // For theme preview in Design Console
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
   setTemplateEditingContext: (context) => set({ templateEditingContext: context }),
   setCurrentWebsiteId: (websiteId) => set({ currentWebsiteId: websiteId }),
   setMockLiveSiteRoute: (route) => set({ mockLiveSiteRoute: route }),
+  setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => set({ previewBrandMode: mode }),
+  setPreviewThemeId: (themeId: string) => set({ previewThemeId: themeId }),
   
   // Notifications & Issues
   notifications: [],
@@ -1415,137 +1421,15 @@ const usePageStore = create<PageState>((set, get) => ({
   // Templates are now organized within themes instead of standalone
   templates: [],
   
-  websites: [
-    {
-      id: 'wiley-main',
-      name: 'Wiley Online Library',
-      domain: 'https://onlinelibrary.wiley.com/',
-      themeId: 'modernist-theme',
-      status: 'active' as const,
-      createdAt: new Date('2024-06-01'),
-      updatedAt: new Date('2024-09-15'),
-      modifications: [
-        {
-          path: 'branding.logo.src',
-          originalValue: '/default-logo.svg',
-          modifiedValue: '/wiley-logo.svg',
-          modifiedAt: 'website',
-          modifiedBy: 'admin',
-          timestamp: new Date('2024-06-01'),
-          reason: 'Brand consistency'
-        },
-        {
-          path: 'colors.primary',
-          originalValue: '#1e40af',
-          modifiedValue: '#0066cc',
-          modifiedAt: 'website',
-          modifiedBy: 'admin',
-          timestamp: new Date('2024-06-15'),
-          reason: 'Match brand guidelines'
-        }
-      ],
-      customSections: [],
-      branding: {
-        primaryColor: '#0066cc',
-        secondaryColor: '#f8f9fa',
-        logoUrl: '/wiley-logo.svg',
-        fontFamily: 'Inter'
-      },
-      purpose: {
-        contentTypes: ['journals', 'books'],
-        hasSubjectOrganization: true,
-        publishingTypes: ['academic', 'research']
-      },
-      deviationScore: 15,
-      lastThemeSync: new Date('2024-08-01')
-    },
-    {
-      id: 'research-hub',
-      name: 'Wiley Research Hub',
-      domain: 'research.wiley.com',
-      themeId: 'classicist-theme',
-      status: 'active' as const,
-      createdAt: new Date('2024-07-10'),
-      updatedAt: new Date('2024-09-20'),
-      modifications: [
-        {
-          path: 'layout.sidebar',
-          originalValue: 'left',
-          modifiedValue: 'right',
-          modifiedAt: 'website',
-          modifiedBy: 'editor',
-          timestamp: new Date('2024-07-20'),
-          reason: 'Better UX for research content'
-        }
-      ],
-      customSections: [],
-      branding: {
-        primaryColor: '#7c3aed',
-        logoUrl: '/research-logo.svg'
-      },
-      purpose: {
-        contentTypes: ['journals'],
-        hasSubjectOrganization: false,
-        publishingTypes: ['research']
-      },
-      deviationScore: 8,
-      lastThemeSync: new Date('2024-09-01')
-    },
-    {
-      id: 'journal-of-science',
-      name: 'Journal of Advanced Science',
-      domain: 'advancedscience.wiley.com',
-      themeId: 'modernist-theme',
-      status: 'active' as const,
-      createdAt: new Date('2024-08-15'),
-      updatedAt: new Date('2024-09-25'),
-      modifications: [
-        {
-          path: 'colors.accent',
-          originalValue: '#10b981',
-          modifiedValue: '#dc2626',
-          modifiedAt: 'website',
-          modifiedBy: 'editorial-team',
-          timestamp: new Date('2024-08-20'),
-          reason: 'Match journal brand colors'
-        },
-        {
-          path: 'layout.hero.showFeaturedArticle',
-          originalValue: 'false',
-          modifiedValue: 'true',
-          modifiedAt: 'website',
-          modifiedBy: 'editorial-team',
-          timestamp: new Date('2024-08-25'),
-          reason: 'Highlight latest research'
-        }
-      ],
-      customSections: [],
-      branding: {
-        primaryColor: '#dc2626',
-        secondaryColor: '#f3f4f6',
-        logoUrl: '/jas-logo.svg',
-        fontFamily: 'Source Serif Pro'
-      },
-      purpose: {
-        contentTypes: ['journals', 'conferences'],
-        hasSubjectOrganization: true,
-        publishingTypes: ['scientific', 'peer-reviewed']
-      },
-      deviationScore: 22,
-      lastThemeSync: new Date('2024-09-10')
-    }
-  ] as Website[],
+  websites: mockWebsites,
   
-  themes: [
-    {
-      id: 'modernist-theme',
-      name: 'Modern',
-      description: 'Clean, minimalist, digital-first design with sans-serif fonts, generous white space, and vibrant accents. Perfect for modern open-access journals and tech-focused publishers.',
+  themes: mockThemes,
+      description: 'Classic academic publishing theme from AXP 2.0, now upgraded with a proper design system. Features Volkhov and Lato typography, teal brand colors, and traditional scholarly aesthetics. Perfect for established publishers and academic institutions.',
       version: '3.0.0',
       publishingType: 'journals' as const,
-      author: 'Catalyst Design Team',
+      author: 'Atypon Design Team',
       createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-12-22'),
+      updatedAt: new Date('2025-01-09'),
       
       // Complete template package for academic publishing
       templates: [
@@ -1626,27 +1510,176 @@ const usePageStore = create<PageState>((set, get) => ({
         }
       ],
       
+      // Layer 1: Foundation Colors (Core Palette from Figma)
+      foundation: {
+        colors: {
+          teal: {
+            50: '#f0fafa', 100: '#d9f2f2', 200: '#b3e5e6', 300: '#8cd8d9',
+            400: '#66cbcd', 500: '#40bec0', 600: '#339899', 700: '#267273',
+            800: '#1a4c4d', 900: '#0f3d3e'
+          },
+          purple: {
+            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+            800: '#5b21b6', 900: '#4c1d95'
+          },
+          red: {
+            50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+            400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+            800: '#991b1b', 900: '#7f1d1d'
+          },
+          green: {
+            50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+            400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+            800: '#166534', 900: '#14532d'
+          },
+          yellow: {
+            50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047',
+            400: '#facc15', 500: '#eab308', 600: '#ca8a04', 700: '#a16207',
+            800: '#854d0e', 900: '#713f12'
+          },
+          blue: {
+            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+            800: '#1e40af', 900: '#1e3a8a'
+          },
+          gray: {
+            50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db',
+            400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151',
+            800: '#1f2937', 900: '#111827', 950: '#030712'
+          }
+        },
+        typography: {
+          families: {
+            primary: 'Volkhov, serif',
+            secondary: 'Lato, sans-serif'
+          },
+          weights: { light: 300, regular: 400, bold: 700 },
+          sizes: {
+            h1: { desktop: '48px', mobile: '36px', lineHeight: '1.2' },
+            h2: { desktop: '40px', mobile: '32px', lineHeight: '1.25' },
+            h3: { desktop: '32px', mobile: '28px', lineHeight: '1.3' },
+            h4: { desktop: '28px', mobile: '24px', lineHeight: '1.35' },
+            h5: { desktop: '24px', mobile: '20px', lineHeight: '1.4' },
+            h6: { desktop: '20px', mobile: '18px', lineHeight: '1.4' },
+            bodyXl: { size: '20px', lineHeight: '32px' },
+            bodyLg: { size: '18px', lineHeight: '28px' },
+            bodyMd: { size: '16px', lineHeight: '24px' },
+            bodySm: { size: '14px', lineHeight: '20px' },
+            bodyXs: { size: '12px', lineHeight: '16px' }
+          }
+        },
+        spacing: {
+          base: { 0: '0', 1: '8px', 2: '16px', 3: '24px', 4: '32px', 5: '40px', 6: '48px', 7: '56px', 8: '64px', 9: '72px', 10: '80px' },
+          semantic: { none: '0', xs: '8px', sm: '16px', md: '24px', lg: '32px', xl: '48px', '2xl': '64px', '3xl': '80px' }
+        }
+      },
+      
+      // Layer 2: Semantic Colors (Theme-level mapping)
+      semanticColors: {
+        interactive: {
+          primary: { default: '#339899', hover: '#267273', active: '#1a4c4d' },
+          secondary: { default: '#2563eb', hover: '#1d4ed8', active: '#1e40af' },
+          accent: { default: '#8b5cf6', hover: '#7c3aed', active: '#6d28d9' }
+        },
+        surface: {
+          background: '#ffffff',
+          card: '#ffffff',
+          border: '#e5e7eb',
+          divider: '#f3f4f6'
+        },
+        content: {
+          primary: '#111827',
+          secondary: '#4b5563',
+          muted: '#6b7280',
+          inverse: '#ffffff',
+          link: '#339899',
+          linkHover: '#267273'
+        },
+        feedback: {
+          success: '#16a34a',
+          warning: '#ca8a04',
+          error: '#dc2626',
+          info: '#2563eb'
+        }
+      },
+      
+      // Legacy flat colors (for backward compatibility)
       colors: {
-        primary: '#2563eb',    // Modern vibrant blue
-        secondary: '#64748b',  // Clean slate gray
-        accent: '#06b6d4',     // Bright cyan accent
-        background: '#ffffff', // Pure white for maximum contrast
-        text: '#0f172a',       // Deep slate for readability
-        muted: '#94a3b8'       // Light slate for secondary text
+        primary: '#339899',    // Teal 600 (new brand color from Figma)
+        secondary: '#2563eb',  // Blue 600 (legacy)
+        accent: '#8b5cf6',     // Purple 500
+        background: '#ffffff',
+        text: '#111827',       // Gray 900
+        muted: '#6b7280'       // Gray 500
       },
       typography: {
-        headingFont: 'Inter, sans-serif',           // Modern geometric sans-serif
-        bodyFont: 'Inter, sans-serif',             // Consistent modern typography
-        baseSize: '17px',                          // Slightly larger for digital reading
-        scale: 1.333                               // Perfect fourth for clean hierarchy
+        headingFont: 'Volkhov, serif',    // Classic serif for headings
+        bodyFont: 'Lato, sans-serif',     // Clean sans-serif for body
+        baseSize: '16px',
+        scale: 1.25,                       // Major third scale
+        
+        // Typography styles for semantic CSS classes
+        styles: {
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '48px', lineHeight: '1.2', letterSpacing: '0', weight: 700 },
+            mobile: { size: '36px', lineHeight: '1.2', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '40px', lineHeight: '1.25', letterSpacing: '0', weight: 700 },
+            mobile: { size: '32px', lineHeight: '1.25', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '32px', lineHeight: '1.3', letterSpacing: '0', weight: 700 },
+            mobile: { size: '28px', lineHeight: '1.3', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '28px', lineHeight: '1.35', letterSpacing: '0', weight: 700 },
+            mobile: { size: '24px', lineHeight: '1.35', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 700 },
+            mobile: { size: '20px', lineHeight: '1.4', letterSpacing: '0', weight: 700 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '1.4', letterSpacing: '0', weight: 700 },
+            mobile: { size: '18px', lineHeight: '1.4', letterSpacing: '0', weight: 700 }
+          },
+          'body-lg': {
+            family: 'secondary',
+            desktop: { size: '20px', lineHeight: '32px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '18px', lineHeight: '28px', letterSpacing: '0', weight: 400 }
+          },
+          'body-md': {
+            family: 'secondary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '0', weight: 400 }
+          },
+          'body-sm': {
+            family: 'secondary',
+            desktop: { size: '14px', lineHeight: '20px', letterSpacing: '0', weight: 400 },
+            mobile: { size: '14px', lineHeight: '20px', letterSpacing: '0', weight: 400 }
+          }
+        },
+        
+        semantic: {
+          primary: 'Volkhov, serif',
+          secondary: 'Lato, sans-serif'
+        }
       },
       spacing: {
-        base: '1rem',
-        scale: 1.5
+        base: '8px',
+        scale: 1
       },
       components: {
         button: {
-          borderRadius: '4px',
+          borderRadius: '2px',  // Figma spec: 2px for Classic UX3
           fontWeight: '500',
           transition: 'all 0.2s'
         },
@@ -1662,8 +1695,8 @@ const usePageStore = create<PageState>((set, get) => ({
         }
       },
       
-      // Modern theme: Maximum flexibility for digital-first design
-      customizationRules: {
+      // Classic UX3: Maximum flexibility for digital-first design (config-level modifications only)
+      modificationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -1683,7 +1716,7 @@ const usePageStore = create<PageState>((set, get) => ({
           canModifyScale: true
         },
         components: {
-          canModifyButtonRadius: true, // Modern allows border radius changes
+          canModifyButtonRadius: true, // Classic UX3 allows border radius changes
           canModifyButtonWeight: true,
           canModifyCardRadius: true,
           canModifyCardShadow: true,
@@ -1699,278 +1732,8 @@ const usePageStore = create<PageState>((set, get) => ({
     },
     
     {
-      id: 'classicist-theme',
-      name: 'Classic',
-      description: 'Traditional, scholarly theme inspired by classic academic journals. Features serif fonts, formal color palette, and dense, text-forward layout. Perfect for established university presses and historical societies.',
-      version: '2.1.0',
-      publishingType: 'academic' as const,
-      author: 'Catalyst Design Team',
-      createdAt: new Date('2024-02-01'),
-      updatedAt: new Date('2024-09-10'),
-      
-      // Corporate template package
-      templates: [
-        {
-          id: 'global-home',
-          name: 'Global Home',
-          description: 'Main homepage template with hero section, featured content, and navigation',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.5.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-09-10'),
-          tags: ['homepage', 'global', 'hero', 'featured'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1200px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['branding.*', 'sections.hero.*'],
-          lockedElements: ['navigation.structure'],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        },
-        {
-          id: 'about-us',
-          name: 'About Us',
-          description: 'About page template with company information, team, and mission statement',
-          category: 'supporting' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.1.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-03-05'),
-          updatedAt: new Date('2024-06-20'),
-          tags: ['about', 'company', 'team', 'mission'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1000px',
-            spacing: 'spacious'
-          },
-          allowedModifications: ['content.*'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        },
-        {
-          id: 'contact-us',
-          name: 'Contact Us',
-          description: 'Contact page template with contact forms, office locations, and contact information',
-          category: 'supporting' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.3.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2024-02-20'),
-          updatedAt: new Date('2024-07-10'),
-          tags: ['contact', 'forms', 'locations', 'information'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '800px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['contact.*'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        primary: '#7c2d12',    // Deep brown for scholarly gravitas
-        secondary: '#f7f3f0',  // Warm off-white parchment
-        accent: '#b45309',     // Burnt orange for highlights
-        background: '#fefcfb', // Subtle warm white
-        text: '#1c1917',       // Rich dark brown for text
-        muted: '#78716c'       // Warm gray for secondary text
-      },
-      typography: {
-        headingFont: 'Crimson Text, serif',       // Classic scholarly serif
-        bodyFont: 'Crimson Text, serif',         // Consistent serif typography
-        baseSize: '16px',                        // Traditional reading size
-        scale: 1.25                              // Classic ratio for hierarchy
-      },
-      spacing: {
-        base: '1rem',
-        scale: 1.25
-      },
-      components: {
-        button: {
-          borderRadius: '6px',
-          fontWeight: '600'
-        },
-        card: {
-          borderRadius: '12px',
-          border: 'none',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        },
-        form: {
-          borderRadius: '6px',
-          border: '2px solid #e2e8f0'
-        }
-      },
-      
-      // Classic theme: Restrictive customization to maintain scholarly tradition
-      customizationRules: {
-        colors: {
-          canModifyPrimary: false, // Primary color locked to maintain scholarly identity
-          canModifySecondary: true,
-          canModifyAccent: true, // Allow accent color changes for some flexibility
-          canModifyBackground: false, // Background locked to maintain readability
-          canModifyText: false, // Text color locked for accessibility
-          canModifyMuted: false // Muted text locked for consistency
-        },
-        typography: {
-          canModifyHeadingFont: false, // Serif fonts are locked for tradition
-          canModifyBodyFont: false, // Body font locked to maintain scholarly appearance
-          canModifyBaseSize: true, // Allow size adjustments for accessibility
-          canModifyScale: false // Scale locked to maintain hierarchy
-        },
-        spacing: {
-          canModifyBase: false, // Base spacing locked for consistency
-          canModifyScale: false // Scale locked for traditional layout
-        },
-        components: {
-          canModifyButtonRadius: false, // No rounded buttons - maintains formal look
-          canModifyButtonWeight: false, // Font weight locked for consistency
-          canModifyCardRadius: false, // Card styling locked for uniformity
-          canModifyCardShadow: false, // Shadow locked to prevent over-styling
-          canModifyFormRadius: false // Form styling locked for professionalism
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
-      id: 'curator-theme',
-      name: 'Curator',
-      description: 'Visually rich, image-forward theme perfect for publishers of art books, magazines, and image-heavy journals. Prioritizes large hero images, masonry grids, and elegant typography that complements visuals.',
-      version: '1.0.0',
-      publishingType: 'visual' as const,
-      author: 'Catalyst Design Team',
-      createdAt: new Date('2024-12-22'),
-      updatedAt: new Date('2024-12-22'),
-      
-      // Visual-focused template package
-      templates: [
-        {
-          id: 'gallery-home',
-          name: 'Gallery Home',
-          description: 'Visual homepage with large hero images and masonry content grid',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '1.0.0',
-          author: 'Catalyst Design Team',
-          createdAt: new Date('2024-12-22'),
-          updatedAt: new Date('2024-12-22'),
-          tags: ['gallery', 'visual', 'hero', 'masonry'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1600px',
-            spacing: 'generous'
-          },
-          allowedModifications: ['hero.*', 'gallery.*', 'colors.*'],
-          lockedElements: ['structure.masonry'],
-          defaultModificationScope: 'Publication (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        primary: '#18181b',    // Rich charcoal for sophistication
-        secondary: '#f8fafc',  // Pure light gray for contrast
-        accent: '#ef4444',     // Bold red for visual punctuation
-        background: '#ffffff', // Pure white to showcase imagery
-        text: '#27272a',       // Dark zinc for readability
-        muted: '#71717a'       // Medium zinc for captions and metadata
-      },
-      typography: {
-        headingFont: 'Playfair Display, serif',   // Elegant display serif
-        bodyFont: 'Source Sans Pro, sans-serif',  // Clean sans-serif for body
-        baseSize: '18px',                         // Larger for visual emphasis
-        scale: 1.414                              // √2 ratio for visual harmony
-      },
-      spacing: {
-        base: '1.25rem',
-        scale: 1.618                              // Golden ratio for visual appeal
-      },
-      components: {
-        button: {
-          borderRadius: '2px',
-          fontWeight: '400',
-          transition: 'all 0.3s ease'
-        },
-        card: {
-          borderRadius: '0px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          border: 'none'
-        },
-        form: {
-          borderRadius: '0px',
-          border: '1px solid #d4d4d8',
-          focusColor: '#ef4444'
-        }
-      },
-      
-      // Curator theme: Balanced customization for artistic flexibility
-      customizationRules: {
-        colors: {
-          canModifyPrimary: true, // Allow primary color changes for artistic expression
-          canModifySecondary: true,
-          canModifyAccent: true,
-          canModifyBackground: true, // Background customization for visual impact
-          canModifyText: false, // Text color locked for readability over images
-          canModifyMuted: true
-        },
-        typography: {
-          canModifyHeadingFont: true, // Allow font changes for artistic expression
-          canModifyBodyFont: false, // Body font locked to maintain readability
-          canModifyBaseSize: true,
-          canModifyScale: true // Allow scale changes for visual hierarchy
-        },
-        spacing: {
-          canModifyBase: true, // Allow spacing changes for artistic layouts
-          canModifyScale: true
-        },
-        components: {
-          canModifyButtonRadius: false, // Sharp edges maintained for modern aesthetic
-          canModifyButtonWeight: true, // Allow weight changes for emphasis
-          canModifyCardRadius: false, // Sharp cards maintained for gallery feel
-          canModifyCardShadow: true, // Allow shadow customization for depth
-          canModifyFormRadius: false // Sharp forms for consistency
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
       id: 'wiley-figma-ds-v2',
-      name: 'Wiley Design System V2',
+      name: 'Wiley',
       description: 'Complete Figma design system with 3-layer token architecture (Foundation → Semantic → Overrides). Comprehensive MCP extraction: 88 core colors, 159 semantic colors, multi-brand support (Wiley/WT/Dummies), 5-color button system, and polished prefab sections.',
       version: '2.1.0',
       publishingType: 'journals' as const,
@@ -2007,7 +1770,38 @@ const usePageStore = create<PageState>((set, get) => ({
       ],
       
       colors: {
-        // Base Website Theme (Wiley mode) - Legacy support
+        /* ========================================================================
+           🎨 3-LAYER TOKEN ARCHITECTURE
+           ========================================================================
+           
+           This theme demonstrates the proper Design System → Theme architecture:
+           
+           LAYER 1: FOUNDATION TOKENS (defined below as `foundation`)
+           - Raw color ramps (neutral 0-900, primaryData 100-600, etc.)
+           - Multi-brand support (wiley/wt/dummies modes)
+           - 88 core color variables extracted from Figma
+           - Single source of truth for all color values
+           
+           LAYER 2: SEMANTIC TOKENS (defined as `semanticColors`)
+           - Maps foundation tokens to semantic roles
+           - Context-aware (light/dark variants for different backgrounds)
+           - Examples: "interactive-primary", "text-primary", "surface-background"
+           - Components consume these, NOT Layer 1 directly
+           
+           LAYER 3: LOCAL OVERRIDES (Page Builder capability)
+           - Individual element overrides (e.g., one button = #FF00FF)
+           - Bypasses semantic system for ultimate flexibility
+           - Applied via Properties Panel inline styles
+           
+           Benefits:
+           ✅ Change foundation → semantic updates automatically
+           ✅ Switch brands (wiley→wt→dummies) at runtime
+           ✅ Clear token lineage and maintainability
+           ✅ Engineering team sees proper architecture
+           
+           ======================================================================== */
+        
+        // Legacy flat colors (backward compatibility - will be deprecated)
         primary: '#00d875',       // Wiley green (light variant - default)
         secondary: '#f2f2eb',     // Light cream
         accent: '#008f8a',        // Teal accent
@@ -2015,139 +1809,143 @@ const usePageStore = create<PageState>((set, get) => ({
         text: '#5d5e5c',
         muted: '#5d5e5c',
         
-        // 🎨 SEMANTIC COLOR SYSTEM: Light/Dark Pairs for Accessibility
-        // "Light" = bright colors for DARK backgrounds
-        // "Dark" = muted colors for LIGHT backgrounds
+        // 🎨 LAYER 2: SEMANTIC COLOR SYSTEM
+        // Maps foundation tokens to semantic roles with context awareness
+        // "light" variants = bright colors for DARK backgrounds
+        // "dark" variants = muted colors for LIGHT backgrounds
         semanticColors: {
+          // PRIMARY: Main interactive color (buttons, links, CTAs)
+          // Maps to: foundation.primaryData (bright green) + primaryHeritage (teal)
           primary: {
-            light: '#00d875',     // Bright green - use on dark backgrounds
-            dark: '#008f8a',      // Teal - use on light backgrounds
+            light: 'foundation.primaryData.600',
+            dark: 'foundation.primaryHeritage.600',
             hover: {
-              light: '#60e7a9',   // Lighter green hover
-              dark: '#006663'     // Darker teal hover
+              light: 'foundation.primaryData.400',
+              dark: 'foundation.primaryHeritage.400'  // Lighter heritage for hover on light backgrounds
             }
           },
+          // SECONDARY: Alternate action color (Figma Brand 2)
+          // Maps to: foundation.paper (cream bg) + primaryHeritage (dark teal text)
           secondary: {
-            // Figma Brand 2: Solid button with light bg and dark text
-            // Content Color=Dark variant from Figma API
             bg: {
-              light: '#f2f2eb',    // Paper 100 (cream) - use on dark backgrounds
-              dark: '#f2f2eb'      // Paper 100 (cream) - use on light backgrounds
+              light: 'foundation.paper.100',
+              dark: 'foundation.paper.100'
             },
             text: {
-              light: '#003b44',    // Heritage 900 (dark teal) - use on dark backgrounds
-              dark: '#003b44'      // Heritage 900 (dark teal) - use on light backgrounds
+              light: 'foundation.primaryHeritage.900',
+              dark: 'foundation.primaryHeritage.900'
             },
             hover: {
               bg: {
-                light: '#ffffff',  // Neutral/0 (white) on hover
-                dark: '#ffffff'
+                light: 'foundation.neutral.0',
+                dark: 'foundation.neutral.0'
               },
               text: {
-                light: '#003b44',  // Keep dark teal text
-                dark: '#003b44'
+                light: 'foundation.primaryHeritage.900',
+                dark: 'foundation.primaryHeritage.900'
               }
             }
           },
+          // TERTIARY: Strong accent color (Figma Brand 3)
+          // Maps to: foundation.primaryHeritage[900] (dark teal solid)
           tertiary: {
-            // Figma Brand 3: Solid button with dark bg and light text
-            // Content Color=Light variant from Figma API
             bg: {
-              light: '#003b44',    // Heritage 900 (dark teal) - use on dark backgrounds  
-              dark: '#003b44'      // Heritage 900 (dark teal) - use on light backgrounds
+              light: 'foundation.primaryHeritage.900',
+              dark: 'foundation.primaryHeritage.900'
             },
             text: {
-              light: '#ffffff',    // White text - use on dark backgrounds
-              dark: '#ffffff'      // White text - use on light backgrounds
+              light: 'foundation.neutral.0',
+              dark: 'foundation.neutral.0'
             },
             hover: {
               bg: {
-                light: '#005662',  // Slightly lighter teal on hover (Heritage 800)
+                light: '#005662',  // Derived: lightened version of heritage.900
                 dark: '#005662'
               },
               text: {
-                light: '#ffffff',  // Keep white text
-                dark: '#ffffff'
+                light: 'foundation.neutral.0',
+                dark: 'foundation.neutral.0'
               }
             }
           },
-          // color4 = Neutral Dark (comprehensive MCP extraction)
-          // Context-aware: light beige on light backgrounds, black on dark backgrounds
+          // NEUTRAL DARK: Subdued button style (color4)
+          // Maps to: foundation.neutral (beige/black) - context-aware
           neutralDark: {
             bg: {
-              light: '#d4d2cf',    // Light beige - use on light backgrounds
-              dark: '#000000'      // Black - use on dark backgrounds
+              light: '#d4d2cf',    // Derived: approximate neutral.300
+              dark: 'foundation.neutral.900.wiley'
             },
             text: {
-              light: '#000000',    // Black text - for light backgrounds
-              dark: '#ffffff'      // White text - for dark backgrounds
+              light: 'foundation.neutral.900.wiley',
+              dark: 'foundation.neutral.0.wiley'
             },
             hover: {
               bg: {
-                light: '#c4c2bf',  // Slightly darker beige on hover
-                dark: '#313131'    // Dark grey on hover
+                light: '#c4c2bf',  // Derived: darkened
+                dark: 'foundation.neutral.700.wiley'
               },
               text: {
-                light: '#000000',  // Keep black text
-                dark: '#ffffff'    // Keep white text
+                light: 'foundation.neutral.900.wiley',
+                dark: 'foundation.neutral.0.wiley'
               }
             }
           },
-          // color5 = Neutral Light (comprehensive MCP extraction)
-          // Context-aware: white on light backgrounds, medium grey on dark backgrounds
+          // NEUTRAL LIGHT: Lightest button style (color5)
+          // Maps to: foundation.neutral (white/grey) - context-aware
           neutralLight: {
             bg: {
-              light: '#ffffff',    // White - use on light backgrounds
-              dark: '#5d5e5c'      // Medium grey - use on dark backgrounds
+              light: 'foundation.neutral.0.wiley',
+              dark: 'foundation.neutral.700.wiley'
             },
             text: {
-              light: '#000000',    // Black text - for light backgrounds
-              dark: '#ffffff'      // White text - for dark backgrounds
+              light: 'foundation.neutral.900.wiley',
+              dark: 'foundation.neutral.0.wiley'
             },
             hover: {
               bg: {
-                light: '#f5f5f5',  // Light grey on hover
-                dark: '#6d6e6c'    // Slightly lighter grey on hover
+                light: 'foundation.neutral.100.wiley',
+                dark: '#6d6e6c'  // Derived: lightened
               },
               text: {
-                light: '#000000',  // Keep black text
-                dark: '#ffffff'    // Keep white text
+                light: 'foundation.neutral.900.wiley',
+                dark: 'foundation.neutral.0.wiley'
               }
             }
           }
         },
         
-        // Multi-Brand Journal Theme Presets
+        // Multi-Brand Journal Theme Presets (Layer 2 → Layer 1 mapping)
+        // Each brand maps to its corresponding foundation.*.{brand} values
         journalThemes: {
           wiley: {
             name: 'Wiley (Green)',
-            primary: '#00d875',
-            primaryLight: '#bff5dd',
-            primaryHover: '#60e7a9',
-            accent: '#008f8a',
-            accentDark: '#003b44',
-            background: '#f2f2eb',
-            text: '#5d5e5c'
+            primary: '#00d875',        // → foundation.primaryData[600].wiley
+            primaryLight: '#bff5dd',   // → foundation.primaryData[100].wiley
+            primaryHover: '#60e7a9',   // → foundation.primaryData[400].wiley
+            accent: '#008f8a',         // → foundation.primaryHeritage[600].wiley
+            accentDark: '#003b44',     // → foundation.primaryHeritage[900].wiley
+            background: '#f2f2eb',     // → foundation.paper[100].wiley
+            text: '#5d5e5c'            // → foundation.neutral[700].wiley
           },
           wt: {
             name: 'WT (Olive)',
-            primary: '#3c711a',
-            primaryLight: '#f3fce9',
-            primaryHover: '#68b929',
-            accent: '#448874',
-            accentDark: '#10231e',
-            background: '#b0b0b0',
-            text: '#313131'
+            primary: '#3c711a',        // → foundation.primaryData[600].wt
+            primaryLight: '#f3fce9',   // → foundation.primaryData[100].wt (approximate)
+            primaryHover: '#68b929',   // → foundation.primaryData[400].wt
+            accent: '#448874',         // → foundation.primaryHeritage[600].wt
+            accentDark: '#10231e',     // → foundation.primaryHeritage[900].wt
+            background: '#ffffff',     // → foundation.paper[100].wt
+            text: '#313131'            // → foundation.neutral[700].wt
           },
           dummies: {
             name: 'Dummies (Gold)',
-            primary: '#74520f',
-            primaryLight: '#f7ffc1',
-            primaryHover: '#a68202',
-            accent: '#75dbff',
-            accentDark: '#065074',
-            background: '#b0b0b0',
-            text: '#313131'
+            primary: '#74520f',        // → foundation.primaryData[600].dummies
+            primaryLight: '#f7ffc1',   // → foundation.primaryData[100].dummies
+            primaryHover: '#a68202',   // → foundation.primaryHeritage[600].dummies
+            accent: '#75dbff',         // → foundation.secondaryData[100].dummies (approximate)
+            accentDark: '#065074',     // → Derived dark variant
+            background: '#ffffff',     // → foundation.paper[100].dummies
+            text: '#313131'            // → foundation.neutral[700].dummies
           }
         },
         
@@ -2196,13 +1994,44 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       typography: {
+        /* ========================================================================
+           📝 3-LAYER TYPOGRAPHY ARCHITECTURE (From Figma DS)
+           ========================================================================
+           
+           LAYER 1: FOUNDATION FONTS
+           - Inter: Primary sans-serif (body, headings, UI, buttons)
+           - IBM Plex Mono: Secondary monospace (code, technical emphasis)
+           
+           LAYER 2: SEMANTIC MAPPING (Universal across all brands)
+           - font-primary → Inter (Wiley, WT, Dummies all use Inter)
+           - font-secondary → IBM Plex Mono (universal for code/emphasis)
+           
+           LAYER 3: TEXT STYLES (Responsive desktop + mobile)
+           - Headings: h1-h6 (h5-h6 = h4 base with allowSmaller)
+           - Body: xs, sm, md, lg, xl
+           - Components: button (sm, lg), menu
+        ======================================================================== */
+        
+        // Foundation fonts from Design System
+        foundation: {
+          sans: 'Inter, system-ui, -apple-system, sans-serif',
+          mono: 'IBM Plex Mono, Courier New, monospace'
+        },
+        
+        // Semantic mapping (same for all brands)
+        semantic: {
+          primary: 'Inter, system-ui, -apple-system, sans-serif',   // Body, headings, UI
+          secondary: 'IBM Plex Mono, Courier New, monospace'       // Code, emphasis
+        },
+        
+        // Legacy properties (for backward compatibility)
         headingFont: 'Inter, system-ui, -apple-system, sans-serif',
         bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
         baseSize: '16px',
         scale: 1.333,
         
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-        
+        // Font weights
         weights: {
           light: 300,
           regular: 400,
@@ -2211,20 +2040,131 @@ const usePageStore = create<PageState>((set, get) => ({
           bold: 700
         },
         
-        // Essential sizes (simplified from full extraction)
+        // Complete text styles from Figma (responsive: desktop + mobile)
+        styles: {
+          // HEADINGS (h1-h4 from Figma, h5-h6 inherit h4)
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 },
+            mobile: { size: '48px', lineHeight: '56px', letterSpacing: '-0.96px', weight: 700 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 },
+            mobile: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 600 },
+            mobile: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            baseOn: 'heading-h4',
+            allowSmaller: true, // Can be manually set smaller than h4
+            desktop: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 600 },
+            mobile: { size: '18px', lineHeight: '24px', letterSpacing: '-0.36px', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            baseOn: 'heading-h4',
+            allowSmaller: true, // Can be manually set smaller than h4
+            desktop: { size: '18px', lineHeight: '24px', letterSpacing: '-0.36px', weight: 600 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 600 }
+          },
+          
+          // BODY TEXT (xs-xl)
+          'body-xl': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 400 },
+            mobile: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 400 }
+          },
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px', weight: 400 },
+            mobile: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px', weight: 400 }
+          },
+          'body-xs': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px', weight: 400 },
+            mobile: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px', weight: 400 }
+          },
+          
+          // CODE/MONO (Uses IBM Plex Mono - secondary font)
+          'code-mono': {
+            family: 'secondary',
+            desktop: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 400 }
+          },
+          
+          // BUTTONS
+          'button-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' }
+          },
+          'button-sm': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' },
+            mobile: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' }
+          },
+          
+          // MENU (LOW PRIORITY - basic spec for now)
+          'menu-item': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 }
+          }
+        },
+        
+        // Legacy desktop/mobile structure (for backward compatibility)
         desktop: {
           body: {
+            xs: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px' },
             sm: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px' },
             md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px' },
-            lg: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' }
+            lg: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px' },
+            xl: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' }
           },
           heading: {
+            sm: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' },
             md: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px' },
             lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px' },
             xl: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px' }
           }
         },
+        mobile: {
+          body: {
+            xs: { size: '12px', lineHeight: '20px', letterSpacing: '-0.24px' },
+            sm: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px' },
+            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px' },
+            lg: { size: '18px', lineHeight: '28px', letterSpacing: '-0.36px' },
+            xl: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px' }
+          },
+          heading: {
+            sm: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px' },
+            md: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px' },
+            lg: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px' },
+            xl: { size: '48px', lineHeight: '56px', letterSpacing: '-0.96px' }
+          }
+        },
         
+        // Component-specific typography
         components: {
           button: {
             sm: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500 },
@@ -2234,25 +2174,263 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       spacing: {
-        base: '1rem',
-        scale: 1.5
+        /* ========================================================================
+           📏 SPACING & LAYOUT TOKENS (From Figma DS)
+           ========================================================================
+           
+           LAYER 1: BASE TOKENS (Foundation)
+           - Base-4 spacing scale: 0px, 4px, 8px, 12px, 16px, ..., 84px
+           - Single source of truth for all spacing values
+           
+           LAYER 2: SEMANTIC TOKENS
+           - Semantic spacing: none, xs, sm, md, lg, xl, 2xl, 3xl
+           - Corner radius: none, xs, sm, md, lg
+           
+           Applied to: Section padding, widget gaps, button/card border-radius
+        ======================================================================== */
+        
+        // BASE TOKENS (Foundation Layer) - Base-4 scale
+        base: {
+          0: '0px',      // base-0
+          1: '4px',      // base-1
+          2: '8px',      // base-2
+          3: '12px',     // base-3
+          4: '16px',     // base-4
+          5: '20px',     // base-5
+          6: '24px',     // base-6
+          7: '28px',     // base-7
+          8: '32px',     // base-8
+          9: '36px',     // base-9
+          10: '40px',    // base-10
+          11: '44px',    // base-11
+          12: '48px',    // base-12
+          13: '52px',    // base-13
+          14: '56px',    // base-14
+          15: '60px',    // base-15
+          16: '64px',    // base-16
+          17: '68px',    // base-17
+          18: '72px',    // base-18
+          19: '76px',    // base-19
+          20: '80px',    // base-20
+          21: '84px'     // base-21
+        },
+        
+        // SEMANTIC TOKENS (Layer 2) - Spacing
+        semantic: {
+          none: '0px',       // base-0
+          xs: '4px',         // base-1
+          sm: '8px',         // base-2
+          md: '16px',        // base-4
+          lg: '24px',        // base-6
+          xl: '32px',        // base-8
+          '2xl': '40px',     // base-10
+          '3xl': '64px'      // base-16
+        },
+        
+        // CORNER RADIUS TOKENS
+        radius: {
+          none: '0px',       // base-0
+          xs: '4px',         // base-1
+          sm: '8px',         // base-2
+          md: '16px',        // base-4
+          lg: '28px'         // base-7
+        },
+        
+        // GRID SYSTEM TOKENS (From Figma DS)
+        grid: {
+          // Container max-widths for different breakpoints
+          container: {
+            sm: '640px',      // Mobile/Small tablet
+            md: '768px',      // Tablet
+            lg: '1024px',     // Desktop small
+            xl: '1280px',     // Desktop large
+            '2xl': '1536px',  // Wide desktop
+            full: '100%'      // Full width
+          },
+          
+          // Column counts for responsive layouts
+          columns: {
+            mobile: 4,        // 4-column grid on mobile
+            tablet: 8,        // 8-column grid on tablet
+            desktop: 12       // 12-column grid on desktop
+          },
+          
+          // Gutter sizes (space between columns)
+          gutter: {
+            mobile: '16px',   // base-4
+            tablet: '24px',   // base-6
+            desktop: '32px'   // base-8
+          },
+          
+          // Breakpoints for media queries
+          breakpoints: {
+            sm: '640px',      // Mobile → Tablet
+            md: '768px',      // Tablet → Desktop Small
+            lg: '1024px',     // Desktop Small → Desktop Large
+            xl: '1280px',     // Desktop Large → Wide
+            '2xl': '1536px'   // Wide and above
+          }
+        }
+      },
+      
+      // TYPOGRAPHY SYSTEM - Brand-specific fonts and letter spacing
+      typography: {
+        // Default (fallback)
+        headingFont: 'Inter, sans-serif',
+        bodyFont: '"Open Sans", sans-serif',
+        baseSize: '16px',
+        scale: 1.25,
+        
+        // BRAND-SPECIFIC TYPOGRAPHY (from Figma DS)
+        // Each brand has distinct personality through font choices
+        wiley: {
+          headingFont: 'Inter, sans-serif',               // Modern sans-serif
+          bodyFont: '"Open Sans", sans-serif',            // Clean, readable
+          buttonFont: '"IBM Plex Mono", monospace',       // Technical feel
+          letterSpacing: {
+            heading: '-0.02em',     // Tight, modern (negative spacing)
+            body: '-2',             // Condensed body text
+            button: '1'             // Wide button text (10% in Figma)
+          },
+          weights: {
+            light: '300',
+            regular: '400',
+            semibold: '600',
+            bold: '700'
+          }
+        },
+        wt: {
+          headingFont: '"Noto Serif", serif',             // Classic serif (WT's signature)
+          bodyFont: '"Open Sans", sans-serif',            // Same body as Wiley
+          buttonFont: '"IBM Plex Mono", monospace',       // Same button as Wiley
+          letterSpacing: {
+            heading: '0',           // Normal spacing for serif
+            body: '0',              // Normal body spacing
+            button: '0'             // Normal button spacing
+          },
+          weights: {
+            // WT uses CONDENSED weights (distinct personality)
+            light: 'ExtraCondensed Light',
+            regular: 'ExtraCondensed',
+            medium: 'ExtraCondensed Medium',
+            bold: 'ExtraCondensed Bold'
+          }
+        },
+        dummies: {
+          headingFont: '"Open Sans", sans-serif',         // Friendly sans (all Open Sans)
+          bodyFont: '"Open Sans", sans-serif',            // Same font for consistency
+          buttonFont: '"IBM Plex Mono", monospace',       // Same button as Wiley
+          letterSpacing: {
+            heading: '0',           // Normal spacing
+            body: '0',              // Normal body spacing
+            button: '0'             // Normal button spacing
+          },
+          weights: {
+            light: '300',
+            regular: '400',
+            semibold: '600',
+            bold: '700'
+          }
+        },
+        
+        // Typography styles for semantic CSS classes
+        // These use 'primary' font family which resolves to brand-specific heading font
+        styles: {
+          h1: {
+            fontSize: '48px',
+            fontSizeMobile: '36px',
+            fontWeight: 700,
+            lineHeight: 1.2,
+            letterSpacing: '0'  // Will be overridden by brand letterSpacing
+          },
+          h2: {
+            fontSize: '36px',
+            fontSizeMobile: '28px',
+            fontWeight: 700,
+            lineHeight: 1.3,
+            letterSpacing: '0'
+          },
+          h3: {
+            fontSize: '28px',
+            fontSizeMobile: '24px',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          },
+          h4: {
+            fontSize: '24px',
+            fontSizeMobile: '20px',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          },
+          h5: {
+            fontSize: '20px',
+            fontSizeMobile: '18px',
+            fontWeight: 600,
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          h6: {
+            fontSize: '16px',
+            fontSizeMobile: '16px',
+            fontWeight: 600,
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyXL: {
+            fontSize: '24px',
+            fontSizeMobile: '20px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyLG: {
+            fontSize: '20px',
+            fontSizeMobile: '18px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          body: {
+            fontSize: '16px',
+            fontSizeMobile: '16px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodySM: {
+            fontSize: '14px',
+            fontSizeMobile: '14px',
+            lineHeight: 1.5,
+            letterSpacing: '0'
+          },
+          bodyXS: {
+            fontSize: '12px',
+            fontSizeMobile: '12px',
+            lineHeight: 1.4,
+            letterSpacing: '0'
+          }
+        }
       },
       
       components: {
         button: {
-          borderRadius: '6px',
+          borderRadius: 'radius.sm',  // 8px - Uses semantic token
           fontWeight: '500',
           textTransform: 'none',
           fontSize: '16px',
           letterSpacing: '1.6px',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          padding: {
+            small: 'semantic.sm',      // 8px
+            medium: 'semantic.md',     // 16px
+            large: 'semantic.lg'       // 24px
+          }
         },
         card: {
           // Content Card specs from Figma
-          borderRadius: '8px',
+          borderRadius: 'radius.sm',   // 8px - Uses semantic token
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: '24px',
+          padding: 'semantic.lg',      // 24px - Uses semantic token
           layout: 'vertical-left',
           spacing: 'small',
           variants: {
@@ -2279,13 +2457,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       modificationRules: {
-        colors: {
-          canModifyPrimary: true,
-          canSelectJournalTheme: true  // NEW: Allow selecting from 3 brand modes
-        }
-      },
-      
-      customizationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -2322,403 +2493,8 @@ const usePageStore = create<PageState>((set, get) => ({
     },
     
     {
-      id: 'wiley-ds-mcp',
-      name: 'Wiley DS MCP (Complete Extraction)',
-      description: 'Complete Figma design system extracted via MCP + REST API hybrid approach. All 88 core colors, 159 semantic colors, 74 text styles, and complete button system (5 brands × 2 variants).',
-      version: '3.0.0',
-      publishingType: 'journals' as const,
-      author: 'Wiley Design Team (MCP Extraction)',
-      createdAt: new Date('2025-11-06'),
-      updatedAt: new Date('2025-11-06'),
-      
-      templates: [
-        {
-          id: 'wiley-ds-mcp-home',
-          name: 'MCP Homepage',
-          description: 'Complete design system foundation with all token systems',
-          category: 'website' as TemplateCategory,
-          status: 'active' as TemplateStatus,
-          version: '3.0.0',
-          author: 'Wiley Design Team',
-          createdAt: new Date('2025-11-06'),
-          updatedAt: new Date('2025-11-06'),
-          tags: ['homepage', 'figma', 'mcp', 'complete', 'multi-brand'],
-          sections: [],
-          layout: {
-            header: true,
-            footer: true,
-            sidebar: 'none',
-            maxWidth: '1400px',
-            spacing: 'comfortable'
-          },
-          allowedModifications: ['branding.logo', 'branding.colors'],
-          lockedElements: [],
-          defaultModificationScope: 'Website (this)',
-          broadenModificationOptions: ['Website (this or all websites that inherit the same theme)'],
-          narrowModificationOptions: []
-        }
-      ],
-      
-      colors: {
-        // Base Website Theme Colors
-        primary: '#00d875',       // Primary Data/600 (Wiley bright green)
-        secondary: '#f2f2eb',     // Neutral/100 (paper cream)
-        accent: '#008f8a',        // Primary Heritage/600 (teal)
-        background: '#ffffff',    // Neutral/0
-        text: '#313131',          // Neutral/700
-        muted: '#5d5e5c',         // Neutral/600
-        
-        // 🎨 COMPLETE SEMANTIC COLOR SYSTEM FROM FIGMA
-        // Extracted from VariableCollectionId:25:8880 (159 semantic colors)
-        // Structure matches DS V2 for compatibility with CanvasThemeProvider
-        semanticColors: {
-          // color1 = Brand 1 (Primary Data - bright green)
-          primary: {
-            light: '#00d875',     // Bright green - use on dark backgrounds
-            dark: '#008f8a',      // Teal - use on light backgrounds
-            hover: {
-              light: '#60e7a9',   // Lighter green hover
-              dark: '#006663'     // Darker teal hover
-            }
-          },
-          // color2 = Brand 2 (Neutral Light - cream/teal combo)
-          secondary: {
-            bg: {
-              light: '#f2f2eb',    // Paper 100 (cream)
-              dark: '#f2f2eb'      // Paper 100 (cream)
-            },
-            text: {
-              light: '#003b44',    // Heritage 900 (dark teal)
-              dark: '#003b44'      // Heritage 900 (dark teal)
-            },
-            hover: {
-              bg: {
-                light: '#ffffff',  // White on hover
-                dark: '#ffffff'
-              },
-              text: {
-                light: '#003b44',  // Keep dark teal text
-                dark: '#003b44'
-              }
-            }
-          },
-          // color3 = Brand 3 (Heritage Dark - dark teal solid)
-          tertiary: {
-            bg: {
-              light: '#003b44',    // Heritage 900 (dark teal)
-              dark: '#003b44'      // Heritage 900 (dark teal)
-            },
-            text: {
-              light: '#ffffff',    // White text
-              dark: '#ffffff'      // White text
-            },
-            hover: {
-              bg: {
-                light: '#005662',  // Slightly lighter teal on hover
-                dark: '#005662'
-              },
-              text: {
-                light: '#ffffff',  // Keep white text
-                dark: '#ffffff'
-              }
-            }
-          },
-          // color4 = Neutral Dark (from Figma)
-          // On LIGHT backgrounds: light beige (#d4d2cf) with black text
-          // On DARK backgrounds: black (#000000) with white text
-          neutralDark: {
-            bg: {
-              light: '#d4d2cf',    // Figma: --foreground/medium/primary (light beige) - use on light backgrounds
-              dark: '#000000'      // Figma: --foreground/dark/primary (black) - use on dark backgrounds
-            },
-            text: {
-              light: '#000000',    // Figma: --text/dark/primary (black) - for light backgrounds
-              dark: '#ffffff'      // Figma: --text/light/primary (white) - for dark backgrounds
-            },
-            hover: {
-              bg: {
-                light: '#c4c2bf',  // Slightly darker beige on hover
-                dark: '#313131'    // Dark grey on hover
-              },
-              text: {
-                light: '#000000',  // Keep black text
-                dark: '#ffffff'    // Keep white text
-              }
-            }
-          },
-          // color5 = Neutral Light (from Figma)
-          // On LIGHT backgrounds: white (#ffffff) with black text
-          // On DARK backgrounds: medium grey (#5d5e5c) with white text
-          neutralLight: {
-            bg: {
-              light: '#ffffff',    // Figma: --foreground/light/primary (white) - use on light backgrounds
-              dark: '#5d5e5c'      // Figma: --foreground/dark/secondary (medium grey) - use on dark backgrounds
-            },
-            text: {
-              light: '#000000',    // Figma: --text/dark/primary (black) - for light backgrounds
-              dark: '#ffffff'      // Figma: --text/light/primary (white) - for dark backgrounds
-            },
-            hover: {
-              bg: {
-                light: '#f5f5f5',  // Light grey on hover
-                dark: '#6d6e6c'    // Slightly lighter grey on hover
-              },
-              text: {
-                light: '#000000',  // Keep black text
-                dark: '#ffffff'    // Keep white text
-              }
-            }
-          }
-        },
-        
-        // 🎨 COMPLETE CORE COLOR SYSTEM (88 variables)
-        // Extracted from VariableCollectionId:23:499 with 3 modes
-        coreColors: {
-          // Neutral scale (pure functional colors)
-          neutral: {
-            0: { wiley: '#FFFFFF', wt: '#FFFFFF', dummies: '#FFFFFF' },
-            50: { wiley: '#FFFFFF', wt: '#FFFFFF', dummies: '#FFFFFF' },
-            100: { wiley: '#FFFFEE', wt: '#FFFFFF', dummies: '#FFFFFF' },
-            200: { wiley: '#EEEEEE', wt: '#EEEEEE', dummies: '#EEEEEE' },
-            300: { wiley: '#DDDDCC', wt: '#DDDDDD', dummies: '#DDDDDD' },
-            400: { wiley: '#CCCCCC', wt: '#AAAAAA', dummies: '#AAAAAA' },
-            500: { wiley: '#AAAAAA', wt: '#888888', dummies: '#888888' },
-            600: { wiley: '#888888', wt: '#555555', dummies: '#555555' },
-            700: { wiley: '#5D5E5C', wt: '#313131', dummies: '#313131' },
-            800: { wiley: '#303030', wt: '#212121', dummies: '#212121' },
-            900: { wiley: '#000000', wt: '#141414', dummies: '#141414' }
-          },
-          // Primary Data scale (bright greens/teals for Wiley, varies by brand)
-          primaryData: {
-            100: { wiley: '#BFF5DD', wt: '#F3FCEC', dummies: '#F7FFCE' },
-            200: { wiley: '#9FEBCD', wt: '#CAF4F0', dummies: '#F7FFCE' },
-            300: { wiley: '#80E1BE', wt: '#AFECDD', dummies: '#FFAC98' },
-            400: { wiley: '#60E7A9', wt: '#68B929', dummies: '#A67108' },
-            500: { wiley: '#40D288', wt: '#FFFFFF', dummies: '#FFFFFF' },
-            600: { wiley: '#00D875', wt: '#3C711A', dummies: '#74520F' }
-          },
-          // Primary Heritage scale (teal/heritage colors)
-          primaryHeritage: {
-            400: { wiley: '#00BF8B', wt: '#87A69F', dummies: '#DEAF6F' },
-            600: { wiley: '#008F8A', wt: '#448874', dummies: '#A68202' },
-            900: { wiley: '#003B44', wt: '#10231E', dummies: '#231A07' }
-          },
-          // Secondary Data scale (complementary colors)
-          secondaryData: {
-            100: { wiley: '#C1F4FF', wt: '#FFFFED', dummies: '#FEF0C8' },
-            600: { wiley: '#00A4CC', wt: '#D3C207', dummies: '#F59E0B' }
-          },
-          // Functional colors
-          functional: {
-            text1: { wiley: '#003B44', wt: '#11AA55', dummies: '#11AA55' },
-            text2: { wiley: '#008F8A', wt: '#FFFFFF', dummies: '#FFFFFF' }
-          }
-        },
-        
-        // Multi-Brand Journal Theme Presets (from 3 Figma modes)
-        journalThemes: {
-          wiley: {
-            name: 'Wiley (Green)',
-            primary: '#00d875',
-            primaryLight: '#bff5dd',
-            primaryHover: '#60e7a9',
-            accent: '#008f8a',
-            accentDark: '#003b44',
-            background: '#ffffee',
-            text: '#5d5e5c'
-          },
-          wt: {
-            name: 'WT (Olive)',
-            primary: '#3c711a',
-            primaryLight: '#f3fce9',
-            primaryHover: '#68b929',
-            accent: '#448874',
-            accentDark: '#10231e',
-            background: '#ffffff',
-            text: '#313131'
-          },
-          dummies: {
-            name: 'Dummies (Gold)',
-            primary: '#74520f',
-            primaryLight: '#f7ffc1',
-            primaryHover: '#a68202',
-            accent: '#75dbff',
-            accentDark: '#065074',
-            background: '#ffffff',
-            text: '#313131'
-          }
-        }
-      },
-      
-      typography: {
-        headingFont: 'Inter, system-ui, -apple-system, sans-serif',
-        bodyFont: 'Inter, system-ui, -apple-system, sans-serif',
-        baseSize: '16px',
-        scale: 1.333,
-        
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-        
-        weights: {
-          light: 300,
-          regular: 400,
-          medium: 500,
-          semibold: 600,
-          bold: 700,
-          extrabold: 800
-        },
-        
-        // Complete typography system (74 text styles extracted from Figma)
-        // Desktop typography
-        desktop: {
-          display: {
-            xl: { size: '120px', lineHeight: '144px', letterSpacing: '-2.4px', weight: 700 },
-            lg: { size: '96px', lineHeight: '112px', letterSpacing: '-1.92px', weight: 700 },
-            md: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 }
-          },
-          heading: {
-            xl: { size: '80px', lineHeight: '96px', letterSpacing: '-1.6px', weight: 700 },
-            lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 },
-            md: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 },
-            sm: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 700 }
-          },
-          body: {
-            lg: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 400 },
-            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
-            sm: { size: '14px', lineHeight: '24px', letterSpacing: '-0.28px', weight: 400 }
-          },
-          label: {
-            lg: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
-            md: { size: '14px', lineHeight: '16px', letterSpacing: '0px', weight: 500 },
-            sm: { size: '12px', lineHeight: '16px', letterSpacing: '0px', weight: 500 }
-          }
-        },
-        
-        // Mobile typography (responsive)
-        mobile: {
-          display: {
-            xl: { size: '64px', lineHeight: '80px', letterSpacing: '-1.28px', weight: 700 },
-            lg: { size: '48px', lineHeight: '64px', letterSpacing: '-0.96px', weight: 700 }
-          },
-          heading: {
-            lg: { size: '32px', lineHeight: '40px', letterSpacing: '-0.64px', weight: 700 },
-            md: { size: '24px', lineHeight: '32px', letterSpacing: '-0.48px', weight: 700 },
-            sm: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 700 }
-          },
-          body: {
-            lg: { size: '20px', lineHeight: '28px', letterSpacing: '-0.4px', weight: 400 },
-            md: { size: '16px', lineHeight: '24px', letterSpacing: '-0.32px', weight: 400 },
-            sm: { size: '14px', lineHeight: '20px', letterSpacing: '-0.28px', weight: 400 }
-          }
-        },
-        
-        // Component-specific typography
-        components: {
-          button: {
-            lg: { size: '16px', lineHeight: '24px', letterSpacing: '1.6px', weight: 500, transform: 'uppercase' },
-            md: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' },
-            sm: { size: '14px', lineHeight: '16px', letterSpacing: '1.4px', weight: 500, transform: 'uppercase' }
-          },
-          link: {
-            lg: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
-            md: { size: '14px', lineHeight: '24px', letterSpacing: '0px', weight: 500 },
-            sm: { size: '12px', lineHeight: '16px', letterSpacing: '0px', weight: 500 }
-          }
-        }
-      },
-      
-      spacing: {
-        base: '1rem',  // 16px base unit
-        scale: 1.5,
-        
-        // Complete spacing scale (base-4 system from Figma)
-        sizes: {
-          xs: '4px',
-          sm: '8px',
-          md: '16px',
-          lg: '24px',
-          xl: '32px',
-          '2xl': '48px',
-          '3xl': '64px',
-          '4xl': '80px',
-          '5xl': '96px',
-          '6xl': '120px'
-        }
-      },
-      
-      components: {
-        button: {
-          borderRadius: '6px',
-          fontWeight: '500',
-          textTransform: 'uppercase',
-          fontSize: '16px',
-          letterSpacing: '1.6px',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          // Button sizing from MCP screenshot
-          sizes: {
-            small: { height: '32px', padding: '8px 16px', fontSize: '14px' },
-            medium: { height: '40px', padding: '12px 24px', fontSize: '14px' },
-            large: { height: '48px', padding: '16px 32px', fontSize: '16px' }
-          }
-        },
-        card: {
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: '24px'
-        },
-        form: {
-          borderRadius: '6px',
-          border: '1px solid #ADACA8',
-          focusColor: '#00d875'
-        }
-      },
-      
-      modificationRules: {
-        colors: {
-          canModifyPrimary: true,
-          canSelectJournalTheme: true
-        }
-      },
-      
-      customizationRules: {
-        colors: {
-          canModifyPrimary: true,
-          canModifySecondary: true,
-          canModifyAccent: true,
-          canModifyBackground: true,
-          canModifyText: false,
-          canModifyMuted: true,
-          canSelectJournalPreset: true
-        },
-        typography: {
-          canModifyHeadingFont: false,
-          canModifyBodyFont: false,
-          canModifyBaseSize: true,
-          canModifyScale: true
-        },
-        spacing: {
-          canModifyBase: true,
-          canModifyScale: true
-        },
-        components: {
-          canModifyButtonRadius: true,
-          canModifyButtonWeight: true,
-          canModifyCardRadius: true,
-          canModifyCardShadow: true,
-          canModifyFormRadius: true
-        }
-      },
-      
-      globalSections: {
-        header: PREFAB_SECTIONS['header-section'] as any,
-        footer: PREFAB_SECTIONS['footer-section'] as any
-      },
-      publicationCardVariants: []
-    },
-    
-    {
       id: 'ibm-carbon-ds',
-      name: 'IBM Carbon DS',
+      name: 'IBM (carbon)',
       description: 'IBM Carbon Design System v11 - Enterprise design with structured layers and comprehensive button system',
       version: '11.0.0',
       publishingType: 'journals' as const,
@@ -2944,6 +2720,63 @@ const usePageStore = create<PageState>((set, get) => ({
             lg: { size: '16px', lineHeight: '22px', letterSpacing: '0px', weight: 400 },
             md: { size: '14px', lineHeight: '18px', letterSpacing: '0.16px', weight: 400 }
           }
+        },
+        
+        // Mapped styles for CSS generation (compatible with generateTypographyCSS)
+        styles: {
+          // Headings (H1-H6)
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '42px', lineHeight: '48px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '28px', lineHeight: '32px', letterSpacing: '0px', weight: 400 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '36px', lineHeight: '42px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '28px', lineHeight: '32px', letterSpacing: '0px', weight: 400 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '28px', lineHeight: '34px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '26px', letterSpacing: '0px', weight: 600 },
+            mobile: { size: '20px', lineHeight: '24px', letterSpacing: '0px', weight: 600 }
+          },
+          // Body text
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '24px', letterSpacing: '0px', weight: 400 },
+            mobile: { size: '16px', lineHeight: '22px', letterSpacing: '0px', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '20px', letterSpacing: '0.16px', weight: 400 },
+            mobile: { size: '14px', lineHeight: '18px', letterSpacing: '0.16px', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '16px', letterSpacing: '0.32px', weight: 400 },
+            mobile: { size: '12px', lineHeight: '16px', letterSpacing: '0.32px', weight: 400 }
+          }
+        },
+        
+        // Semantic font mapping for CSS generation
+        semantic: {
+          primary: 'IBM Plex Sans, system-ui, -apple-system, sans-serif',
+          secondary: 'IBM Plex Mono, monospace'
         }
       },
       
@@ -2995,12 +2828,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       modificationRules: {
-        colors: {
-          canModifyPrimary: true
-        }
-      },
-      
-      customizationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -3153,6 +2980,59 @@ const usePageStore = create<PageState>((set, get) => ({
           '4xl': '38px',
           '5xl': '46px',
           '6xl': '56px'
+        },
+        
+        // Typography styles for semantic CSS classes
+        styles: {
+          'heading-h1': {
+            family: 'primary',
+            desktop: { size: '38px', lineHeight: '1.23', letterSpacing: '0', weight: 600 },
+            mobile: { size: '30px', lineHeight: '1.35', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h2': {
+            family: 'primary',
+            desktop: { size: '30px', lineHeight: '1.35', letterSpacing: '0', weight: 600 },
+            mobile: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h3': {
+            family: 'primary',
+            desktop: { size: '24px', lineHeight: '1.4', letterSpacing: '0', weight: 600 },
+            mobile: { size: '20px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h4': {
+            family: 'primary',
+            desktop: { size: '20px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '18px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h5': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '16px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'heading-h6': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '1.5', letterSpacing: '0', weight: 600 },
+            mobile: { size: '14px', lineHeight: '1.5', letterSpacing: '0', weight: 600 }
+          },
+          'body-lg': {
+            family: 'primary',
+            desktop: { size: '16px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 },
+            mobile: { size: '16px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 }
+          },
+          'body-md': {
+            family: 'primary',
+            desktop: { size: '14px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 },
+            mobile: { size: '14px', lineHeight: '1.5715', letterSpacing: '0', weight: 400 }
+          },
+          'body-sm': {
+            family: 'primary',
+            desktop: { size: '12px', lineHeight: '1.66', letterSpacing: '0', weight: 400 },
+            mobile: { size: '12px', lineHeight: '1.66', letterSpacing: '0', weight: 400 }
+          }
+        },
+        
+        semantic: {
+          primary: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif"
         }
       },
       
@@ -3198,12 +3078,6 @@ const usePageStore = create<PageState>((set, get) => ({
       },
       
       modificationRules: {
-        colors: {
-          canModifyPrimary: true
-        }
-      },
-      
-      customizationRules: {
         colors: {
           canModifyPrimary: true,
           canModifySecondary: true,
@@ -3787,11 +3661,64 @@ function SkinWrap({ skin, children }: { skin: Skin; children: ReactNode }) {
 
 // Template Creation Wizard Component
 
+// All Designs Page Component
+function AllDesigns() {
+  const { themes, setSiteManagerView } = usePageStore()
+  
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Designs</h2>
+        <p className="text-gray-600 mt-1">Browse and manage design systems for your publishing websites</p>
+      </div>
+      
+      {/* Designs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {themes.map((theme) => (
+          <div 
+            key={theme.id}
+            className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all cursor-pointer group"
+            onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <Palette className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {theme.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">v{theme.version}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                {theme.description}
+              </p>
+              
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.primary }}></div>
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.secondary }}></div>
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" style={{ backgroundColor: theme.colors.accent }}></div>
+                </div>
+                <span className="text-xs text-gray-500">{theme.templates.length} page layouts</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Design System Console Websites component  
 function SiteManagerWebsites() {
   const { websites, themes, removeModification, updateWebsite } = usePageStore()
   const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
-  const [showCreateWebsite, setShowCreateWebsite] = useState(false)
   
   const getThemeForWebsite = (websiteId: string) => {
     const website = websites.find(w => w.id === websiteId)
@@ -3902,17 +3829,9 @@ function SiteManagerWebsites() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Websites</h2>
-          <p className="text-gray-600 mt-1">Manage websites and track template customizations</p>
-        </div>
-        <button 
-          onClick={() => setShowCreateWebsite(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add Website
-        </button>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Websites</h2>
+        <p className="text-gray-600 mt-1">Manage websites and track template customizations</p>
       </div>
       
       {/* Websites Table */}
@@ -4157,20 +4076,14 @@ function SiteManagerWebsites() {
           </div>
         </div>
       )}
-      
-      // Website Creation Wizard
-      {showCreateWebsite && <WebsiteCreationWizard onClose={() => setShowCreateWebsite(false)} usePageStore={usePageStore} themePreviewImages={themePreviewImages} />}
     </div>
   )
 }
 
 // Theme preview images for Create Website dialog - Designed by Gemini! 🎨✨
 const themePreviewImages = {
-  'modernist-theme': '/theme-previews/digital-open-publishers.png', // Teal geometric - "TECHNOLOGY • ACCESS • IDEAS"
-  'classicist-theme': '/theme-previews/academic-review.png',         // Navy & gold academic - "TRADITION • KNOWLEDGE • DISCOVERY"  
-  'curator-theme': '/theme-previews/lumina-press.png',               // Artistic overlays - "ART • VISION • CREATION"
-  'wiley-figma-ds-v2': 'https://placehold.co/400x250/00D875/003B44?text=DS+V2+Multi-Brand', // Systematic extraction with 3-brand support
-  'wiley-ds-mcp': '/theme-previews/wiley-ds.png',                   // Wiley Design System - Complete MCP extraction
+  'classic-ux3-theme': '/theme-previews/classic-ux3-ds.png',        // Classic UX3 - Academic publishing theme with Volkhov + Lato
+  'wiley-figma-ds-v2': '/theme-previews/wiley-ds.png',              // Wiley Design System V2 - Complete foundation + semantic + overrides
   'ibm-carbon-ds': '/theme-previews/ibm-carbon-ds.png',             // IBM Carbon hexagon logo showcase - light/dark variants
   'ant-design': '/theme-previews/ant-ds.png'                        // Ant Design
 }
@@ -4191,11 +4104,6 @@ function DesignConsole() {
   const displayedWebsites = consoleMode === 'single' 
     ? websites.filter(w => w.id === 'journal-of-science') // Single website example
     : websites // Show all websites for multi-website publisher
-
-  // Get only themes that are currently used by displayed websites
-  const usedThemes = themes.filter(theme => 
-    displayedWebsites.some(website => website.themeId === theme.id)
-  )
 
   const toggleTheme = (themeId: string) => {
     const newExpanded = new Set(expandedThemes)
@@ -4275,86 +4183,25 @@ function DesignConsole() {
         <div className="w-64 bg-slate-100 shadow-sm border-r border-slate-200">
           <nav className="p-4">
             <button
-              onClick={() => setSiteManagerView('overview')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                siteManagerView === 'overview'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+              onClick={() => setSiteManagerView('create-website')}
+              className="flex items-center gap-3 w-full px-4 py-3 mb-4 text-left text-sm font-medium rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Plus className="w-5 h-5" />
+              Add Website
+            </button>
+
+            <div className="mb-3">
+              <button
+                onClick={() => setSiteManagerView('websites')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
+                  siteManagerView === 'websites'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
                 }`}
               >
-              <Home className="w-5 h-5" />
-              Overview
-              </button>
-
-            <div className="mt-6 mb-3">
-              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Themes
-            </div>
-            </div>
-            <div className="space-y-1">
-              {usedThemes.map((theme) => (
-                <div key={theme.id}>
-                  <button
-                    onClick={() => toggleTheme(theme.id)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Palette className="w-4 h-4" />
-                      <span className="font-medium">{theme.name}</span>
-          </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${
-                      isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
-                    }`} />
-                  </button>
-
-                  {isThemeExpanded(theme.id) && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-theme-settings`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Settings className="w-4 h-4" />
-                        Theme Settings
-                      </button>
-                      
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-publication-cards`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Palette className="w-4 h-4" />
-                        Publication Cards
-                      </button>
-                      
-                      <button
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-templates`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <FileText className="w-4 h-4" />
-                        Theme Templates
-                      </button>
-                        </div>
-                  )}
-                      </div>
-                    ))}
-                  </div>
-                  
-            <div className="mt-6 mb-3">
-              <div className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Websites
-                            </div>
-                          </div>
+              </button>
+            </div>
             <div className="space-y-1">
               {displayedWebsites.map((website) => (
                 <div key={website.id}>
@@ -4436,18 +4283,77 @@ function DesignConsole() {
                   )}
                 </div>
               ))}
-              
+            </div>
+                  
+            <div className="mt-6 mb-3">
               <button
-                onClick={() => setSiteManagerView('websites')}
-                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors mt-2 ${
-                  siteManagerView === 'websites'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+                onClick={() => setSiteManagerView('designs')}
+                className={`flex items-center gap-3 w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
+                  siteManagerView === 'designs'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
                 }`}
               >
-                <List className="w-4 h-4" />
-                All Websites
+                Designs
               </button>
+            </div>
+            <div className="space-y-1">
+              {themes.map((theme) => (
+                <div key={theme.id}>
+                  <button
+                    onClick={() => toggleTheme(theme.id)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-left text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-4 h-4" />
+                      <span className="font-medium">{theme.name}</span>
+          </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${
+                      isThemeExpanded(theme.id) ? 'transform rotate-180' : ''
+                    }`} />
+                  </button>
+
+                  {isThemeExpanded(theme.id) && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-theme-settings`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Design Settings
+                      </button>
+                      
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-publication-cards`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Palette className="w-4 h-4" />
+                        Publication Cards
+                      </button>
+                      
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Design Templates
+                      </button>
+                        </div>
+                  )}
+                      </div>
+                    ))}
                   </div>
                   
             <div className="mt-6 mb-3">
@@ -4476,7 +4382,7 @@ function DesignConsole() {
                         <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Design System Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {usedThemes.map((theme) => (
+                {themes.map((theme) => (
                   <div key={theme.id} className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{theme.name}</h3>
                     <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
@@ -4485,7 +4391,7 @@ function DesignConsole() {
                         onClick={() => setSiteManagerView(`${theme.id}-theme-settings` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Theme Settings →
+                        Design Settings →
                       </button>
                       <button 
                         onClick={() => setSiteManagerView(`${theme.id}-publication-cards` as DesignConsoleView)}
@@ -4497,7 +4403,7 @@ function DesignConsole() {
                         onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Theme Templates →
+                        Design Templates →
                       </button>
                         </div>
                   </div>
@@ -4560,7 +4466,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-theme-settings' && (
                   <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Settings</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Design - Settings</h2>
                 <p className="text-slate-600 mt-1">Configure clean, minimalist design with sans-serif fonts, generous white space, and vibrant accents</p>
                       </div>
               <ThemeEditor usePageStore={usePageStore} themeId="modernist-theme" />
@@ -4569,11 +4475,11 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-publication-cards' && (
                       <div>
               <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Modern Theme - Publication Cards</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Modern Design - Publication Cards</h2>
                 <p className="text-slate-600 mt-1">Predefined publication card designs with clean, minimalist styling and vibrant accents</p>
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
+                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Modern design. Websites using this design can customize these cards in their individual Publication Cards settings.</p>
                       </div>
                       </div>
               <ThemePublicationCards themeId="modernist-theme" />
@@ -4582,59 +4488,7 @@ function DesignConsole() {
           {siteManagerView === 'modernist-theme-templates' && (
             <SiteManagerTemplates themeId="modernist-theme" usePageStore={usePageStore} />
           )}
-          
-          {siteManagerView === 'classicist-theme-theme-settings' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure traditional, scholarly design with serif fonts and formal color palette</p>
-                            </div>
-              <ThemeEditor usePageStore={usePageStore} themeId="classicist-theme" />
-                    </div>
-                  )}
-          {siteManagerView === 'classicist-theme-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Classic Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Predefined publication card designs with traditional, scholarly styling and formal typography</p>
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Classic theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                </div>
-              </div>
-              <ThemePublicationCards themeId="classicist-theme" />
-              </div>
-            )}
-          {siteManagerView === 'classicist-theme-templates' && (
-            <SiteManagerTemplates themeId="classicist-theme" usePageStore={usePageStore} />
-          )}
             
-          {siteManagerView === 'curator-theme-theme-settings' && (
-                <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Settings</h2>
-                <p className="text-slate-600 mt-1">Configure visually rich, image-forward design with elegant typography and masonry layouts</p>
-                    </div>
-              <ThemeEditor usePageStore={usePageStore} themeId="curator-theme" />
-                    </div>
-          )}
-          {siteManagerView === 'curator-theme-publication-cards' && (
-                    <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Curator Theme - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Predefined publication card designs with visually rich, image-forward styling and elegant typography</p>
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-blue-700 text-sm font-medium">📖 Reference Cards</p>
-                  <p className="text-blue-600 text-sm mt-1">These are the out-of-the-box publication cards that come with the Curator theme. Websites using this theme can customize these cards in their individual Publication Cards settings.</p>
-                    </div>
-                    </div>
-              <ThemePublicationCards themeId="curator-theme" />
-                  </div>
-          )}
-          {siteManagerView === 'curator-theme-templates' && (
-            <SiteManagerTemplates themeId="curator-theme" usePageStore={usePageStore} />
-          )}
-
           {siteManagerView === 'wiley-main-settings' && (
                       <div>
               <div className="mb-6 border-b pb-4">
@@ -4678,51 +4532,6 @@ function DesignConsole() {
                 <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
                       </div>
             </div>
-          )}
-
-          {siteManagerView === 'research-hub-settings' && (
-                      <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Website Settings</h2>
-                <p className="text-slate-600 mt-1">Configure domain, purpose, and website-specific settings</p>
-                      </div>
-              <WebsiteSettings websiteId="research-hub" />
-              </div>
-            )}
-          {siteManagerView === 'research-hub-branding' && (
-            <WebsiteBrandingConfiguration websiteId="research-hub" usePageStore={usePageStore} />
-          )}
-          {siteManagerView === 'research-hub-templates' && (
-            <WebsiteTemplates
-              websiteId="research-hub"
-              websiteName="Wiley Research Hub"
-              enabledContentTypes={['journals']}
-              hasSubjectOrganization={false}
-              allTemplates={ALL_TEMPLATES}
-              usePageStore={usePageStore}
-              consoleMode={consoleMode}
-            />
-          )}
-          {siteManagerView === 'research-hub-publication-cards' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Publication Cards</h2>
-                <p className="text-slate-600 mt-1">Design publication cards optimized for research journals with simple organization</p>
-          </div>
-              <PublicationCards usePageStore={usePageStore} />
-            </div>
-          )}
-          {siteManagerView === 'research-hub-custom-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Research Hub - Custom Templates</h2>
-                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-            </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-          </div>
-        </div>
           )}
 
           {siteManagerView === 'journal-of-science-settings' && (
@@ -4771,7 +4580,27 @@ function DesignConsole() {
           )}
 
 
+          {siteManagerView === 'create-website' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Create New Website</h2>
+                <p className="text-gray-600 mt-1">Follow the steps below to configure your new publishing website</p>
+              </div>
+              <WebsiteCreationWizard 
+                onComplete={(website) => {
+                  // After wizard completion, navigate to the new website's settings
+                  setSiteManagerView(`${website.id}-settings` as DesignConsoleView)
+                }}
+                onCancel={() => setSiteManagerView('websites')}
+                usePageStore={usePageStore}
+                themePreviewImages={themePreviewImages}
+              />
+            </div>
+          )}
+
           {siteManagerView === 'websites' && <SiteManagerWebsites />}
+          
+          {siteManagerView === 'designs' && <AllDesigns />}
           
           {siteManagerView === 'settings' && (
             <div>
@@ -4782,7 +4611,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme settings not explicitly handled */}
           {siteManagerView.endsWith('-theme-settings') && 
-           !['modernist-theme-theme-settings', 'classicist-theme-theme-settings', 'curator-theme-theme-settings'].includes(siteManagerView) && (
+           !['modernist-theme-theme-settings'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-theme-settings', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4800,7 +4629,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme publication cards not explicitly handled */}
           {siteManagerView.endsWith('-publication-cards') && siteManagerView.includes('-theme-') &&
-           !['modernist-theme-publication-cards', 'classicist-theme-publication-cards', 'curator-theme-publication-cards'].includes(siteManagerView) && (
+           !['modernist-theme-publication-cards'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-publication-cards', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4822,7 +4651,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any theme templates not explicitly handled */}
           {siteManagerView.endsWith('-templates') && !siteManagerView.includes('-custom-templates') &&
-           !['modernist-theme-templates', 'classicist-theme-templates', 'curator-theme-templates'].includes(siteManagerView) && (
+           !['modernist-theme-templates'].includes(siteManagerView) && (
             (() => {
               const themeId = siteManagerView.replace('-templates', '')
               const theme = themes.find(t => t.id === themeId)
@@ -4834,7 +4663,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website settings not explicitly handled */}
           {siteManagerView.endsWith('-settings') && !siteManagerView.endsWith('-theme-settings') &&
-           !['wiley-main-settings', 'research-hub-settings', 'journal-of-science-settings'].includes(siteManagerView) && (
+           !['wiley-main-settings', 'journal-of-science-settings'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-settings', '')
               const website = websites.find(w => w.id === websiteId)
@@ -4884,7 +4713,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website publication cards not explicitly handled */}
           {siteManagerView.endsWith('-publication-cards') && !siteManagerView.includes('-theme-') &&
-           !['wiley-main-publication-cards', 'research-hub-publication-cards', 'journal-of-science-publication-cards'].includes(siteManagerView) && (
+           !['wiley-main-publication-cards', 'journal-of-science-publication-cards'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-publication-cards', '')
               const website = websites.find(w => w.id === websiteId)
@@ -4902,7 +4731,7 @@ function DesignConsole() {
           
           {/* Dynamic fallback for any website custom templates not explicitly handled */}
           {siteManagerView.endsWith('-custom-templates') &&
-           !['wiley-main-custom-templates', 'research-hub-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
+           !['wiley-main-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-custom-templates', '')
               const website = websites.find(w => w.id === websiteId)
@@ -5301,216 +5130,6 @@ function ThemePublicationCards({ themeId }: { themeId: string }) {
         }
       ]
     },
-    'classicist-theme': {
-      name: 'Classic Theme',
-      description: 'Traditional, scholarly publication cards with serif typography, formal styling, and academic conventions',
-      usageContexts: ['Academic Search', 'Scholarly Listings', 'Institutional Displays', 'Reference Pages'],
-      cards: [
-        {
-          id: 'classic-article-compact',
-          name: 'Article Card (Compact)',
-          type: 'Article',
-          description: 'Traditional academic style for search and listings',
-          context: 'Academic Search, Reference Lists',
-          features: ['Formal typography', 'Citation format', 'Academic status', 'Publication venues'],
-          style: {
-            layout: 'compact',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '600',
-            titleSize: '16px',
-            metaColor: '#6b7280',
-            metaFont: 'Georgia, serif',
-            metaSize: '14px',
-            accentColor: '#7c3aed',
-            statusColors: {
-              fullAccess: '#059669',
-              freeAccess: '#d97706',
-              subscription: '#6b7280'
-            },
-            spacing: '14px',
-            borderRadius: '6px'
-          }
-        },
-        {
-          id: 'classic-article-detailed',
-          name: 'Article Card (Detailed)',
-          type: 'Article',
-          description: 'Formal academic presentation with complete metadata',
-          context: 'Academic Journals, Scholarly Archives',
-          features: ['Complete citations', 'Abstract access', 'Reference formatting', 'Academic buttons'],
-          style: {
-            layout: 'detailed',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '18px',
-            metaColor: '#6b7280',
-            metaFont: 'Georgia, serif',
-            metaSize: '14px',
-            accentColor: '#7c3aed',
-            buttonStyle: 'traditional',
-            spacing: '18px',
-            borderRadius: '8px'
-          }
-        },
-        {
-          id: 'classic-issue-banner',
-          name: 'Issue Card (Banner)',
-          type: 'Issue',
-          description: 'Formal journal issue presentation',
-          context: 'Academic Journals, Issue Archives',
-          features: ['Traditional layout', 'Academic formatting', 'ISSN prominence', 'Scholarly branding'],
-          style: {
-            layout: 'banner',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '22px',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            imageStyle: 'traditional',
-            spacing: '20px',
-            borderRadius: '8px'
-          }
-        },
-        {
-          id: 'classic-book-featured',
-          name: 'Book Card (Featured)',
-          type: 'Book',
-          description: 'Scholarly book presentation with academic conventions',
-          context: 'Academic Books, University Press',
-          features: ['Scholarly typography', 'Academic metadata', 'ISBN prominence', 'Citation ready'],
-          style: {
-            layout: 'featured',
-            backgroundColor: '#fefefe',
-            borderColor: '#d1d5db',
-            titleColor: '#374151',
-            titleFont: 'Georgia, serif',
-            titleWeight: '700',
-            titleSize: '20px',
-            metaColor: '#6b7280',
-            accentColor: '#7c3aed',
-            imageStyle: 'cover-traditional',
-            authorDisplay: 'formal',
-            spacing: '18px',
-            borderRadius: '8px'
-          }
-        }
-      ]
-    },
-    'curator-theme': {
-      name: 'Curator Theme',
-      description: 'Visually rich, editorial-style publication cards with image-forward design and sophisticated layouts',
-      usageContexts: ['Visual Discovery', 'Editorial Features', 'Magazine Layouts', 'Image-Rich Collections'],
-      cards: [
-        {
-          id: 'curator-article-compact',
-          name: 'Article Card (Compact)',
-          type: 'Article',
-          description: 'Visual-first design for discovery and browsing',
-          context: 'Visual Search, Editorial Grids',
-          features: ['Image thumbnails', 'Editorial typography', 'Visual hierarchy', 'Aesthetic focus'],
-          style: {
-            layout: 'compact',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '600',
-            titleSize: '16px',
-            metaColor: '#6b7280',
-            metaFont: 'Source Sans Pro, sans-serif',
-            metaSize: '13px',
-            accentColor: '#ef4444',
-            statusColors: {
-              fullAccess: '#10b981',
-              freeAccess: '#f59e0b',
-              subscription: '#6b7280'
-            },
-            spacing: '18px',
-            borderRadius: '12px',
-            imageStyle: 'thumbnail'
-          }
-        },
-        {
-          id: 'curator-article-detailed',
-          name: 'Article Card (Detailed)',
-          type: 'Article',
-          description: 'Editorial-style detailed presentation',
-          context: 'Editorial Features, Visual Articles',
-          features: ['Hero images', 'Magazine layout', 'Editorial buttons', 'Rich presentation'],
-          style: {
-            layout: 'detailed',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '22px',
-            metaColor: '#6b7280',
-            metaFont: 'Source Sans Pro, sans-serif',
-            metaSize: '14px',
-            accentColor: '#ef4444',
-            buttonStyle: 'editorial',
-            spacing: '24px',
-            borderRadius: '16px',
-            imageStyle: 'hero'
-          }
-        },
-        {
-          id: 'curator-issue-banner',
-          name: 'Issue Card (Banner)',
-          type: 'Issue',
-          description: 'Magazine-style issue presentation',
-          context: 'Editorial Issues, Visual Collections',
-          features: ['Cover prominence', 'Magazine layout', 'Visual impact', 'Editorial branding'],
-          style: {
-            layout: 'banner',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '26px',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            imageStyle: 'magazine-cover',
-            spacing: '28px',
-            borderRadius: '16px'
-          }
-        },
-        {
-          id: 'curator-book-featured',
-          name: 'Book Card (Featured)',
-          type: 'Book',
-          description: 'Visual book presentation with editorial flair',
-          context: 'Book Features, Visual Collections',
-          features: ['Cover art focus', 'Editorial typography', 'Visual metadata', 'Aesthetic presentation'],
-          style: {
-            layout: 'featured',
-            backgroundColor: '#ffffff',
-            borderColor: '#f3f4f6',
-            titleColor: '#1f2937',
-            titleFont: 'Playfair Display, serif',
-            titleWeight: '700',
-            titleSize: '24px',
-            metaColor: '#6b7280',
-            accentColor: '#ef4444',
-            imageStyle: 'cover-editorial',
-            authorDisplay: 'visual',
-            spacing: '24px',
-            borderRadius: '16px'
-          }
-        }
-      ]
-    }
   }
 
   const themeData = themePublicationCards[themeId as keyof typeof themePublicationCards]
@@ -5888,7 +5507,12 @@ export default function App() {
     return (
       <>
         <DynamicBrandingCSS websiteId={currentWebsiteId} />
-        <DesignConsole />
+        <CanvasThemeProvider 
+          usePageStore={usePageStore} 
+          scopeCSS={true}
+        >
+          <DesignConsole />
+        </CanvasThemeProvider>
         <NotificationContainer />
       </>
     )
@@ -5915,15 +5539,13 @@ export default function App() {
   return (
     <>
       <DynamicBrandingCSS websiteId={currentWebsiteId} />
-      <CanvasThemeProvider usePageStore={usePageStore}>
-        <PageBuilder 
-          usePageStore={usePageStore}
-          buildWidget={buildWidget}
-          TemplateCanvas={TemplateCanvas}
-          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-          isSection={isSection}
-        />
-      </CanvasThemeProvider>
+      <PageBuilder 
+        usePageStore={usePageStore}
+        buildWidget={buildWidget}
+        TemplateCanvas={TemplateCanvas}
+        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+        isSection={isSection}
+      />
       <NotificationContainer />
       <IssuesSidebar />
     </>
