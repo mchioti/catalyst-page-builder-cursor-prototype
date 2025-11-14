@@ -7,7 +7,9 @@ import {
   ChevronDown, 
   Globe, 
   Layers, 
-  Plus 
+  Plus,
+  ArrowLeft,
+  Cog
 } from 'lucide-react'
 import type { DesignConsoleView } from '../../types'
 import { usePageStore } from '../../App'
@@ -18,12 +20,10 @@ import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
 import { WebsiteBrandingConfiguration } from '../SiteManager/WebsiteBrandingConfiguration'
 import { WebsiteCreationWizard } from '../Wizards/WebsiteCreation'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
-
-// Import other needed components
 import AllDesigns from './AllDesigns'
-import SiteManagerWebsites from './SiteManagerWebsites'
-import WebsiteSettings from './WebsiteSettings'
-import ThemePublicationCards from './ThemePublicationCards'
+import { SiteManagerWebsites } from '../SiteManager/SiteManagerWebsites'
+import { WebsiteSettings } from '../SiteManager/WebsiteSettings'
+import { ThemePublicationCards } from '../SiteManager/ThemePublicationCards'
 
 // Theme preview images
 const themePreviewImages = {
@@ -33,7 +33,7 @@ const themePreviewImages = {
   'ant-design': '/theme-previews/ant-ds.png'
 }
 
-function DesignConsole() {
+export function DesignConsole() {
   const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['wiley-main'])) // Default expand wiley-main
@@ -693,5 +693,3 @@ function DesignConsole() {
     </div>
   )
 }
-
-export default DesignConsole
