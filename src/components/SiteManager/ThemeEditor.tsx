@@ -1,6 +1,11 @@
 import React, { useMemo, useEffect } from 'react'
 import { resolveThemeColors, type BrandMode } from '../../utils/tokenResolver'
 import { Button } from '../../foundation'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Color input component
 function ColorInput({ 
@@ -216,7 +221,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
   useEffect(() => {
     if (setPreviewThemeId && selectedTheme) {
       setPreviewThemeId(selectedTheme)
-      console.log('🎨 ThemeEditor: Set preview theme ID to', selectedTheme)
+      debugLog('log', '🎨 ThemeEditor: Set preview theme ID to', selectedTheme)
     }
   }, [selectedTheme, setPreviewThemeId])
   
@@ -233,7 +238,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
   // Sync previewBrandMode with website's brand when viewing Website Settings
   useEffect(() => {
     if (isWebsiteLevel && currentWebsite?.brandMode && currentWebsite.brandMode !== previewBrandMode) {
-      console.log('🔄 Syncing previewBrandMode to website brand:', currentWebsite.brandMode)
+      debugLog('log', '🔄 Syncing previewBrandMode to website brand:', currentWebsite.brandMode)
       setPreviewBrandMode(currentWebsite.brandMode)
     }
   }, [isWebsiteLevel, currentWebsite?.brandMode, previewBrandMode, setPreviewBrandMode])
@@ -279,7 +284,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     ? (currentWebsite?.brandMode || 'wiley')
     : previewBrandMode
   
-  console.log('🎨 ThemeEditor Render:', {
+  debugLog('log', '🎨 ThemeEditor Render:', {
     websiteId,
     websiteName: currentWebsite?.name,
     themeId: currentTheme?.id,
@@ -303,7 +308,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     // Resolve token references based on brand mode
     const resolved = resolveThemeColors(tempTheme, brandMode)
     
-    console.log('✅ Colors Resolved for brand:', brandMode, {
+    debugLog('log', '✅ Colors Resolved for brand:', brandMode, {
       primary: resolved.colors.semanticColors?.primary,
       primaryLight: resolved.colors.semanticColors?.primary?.light,
       primaryDark: resolved.colors.semanticColors?.primary?.dark
@@ -375,7 +380,7 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                           <button
                             key={mode}
                             onClick={() => {
-                              console.log('👁️ Previewing brand:', mode)
+                              debugLog('log', '👁️ Previewing brand:', mode)
                               setPreviewBrandMode(mode)
                             }}
                             className={`

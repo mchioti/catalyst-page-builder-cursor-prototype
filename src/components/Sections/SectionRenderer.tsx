@@ -12,6 +12,11 @@ import {
 // Force module refresh after fixing duplicate schema keys
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 import { useBrandingStore } from '../../stores/brandingStore'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Helper function to resolve spacing token references (e.g., 'semantic.lg' → '24px')
 function resolveSpacingToken(tokenRef: string | undefined, usePageStore: any): string | undefined {
@@ -153,7 +158,7 @@ export function DraggableWidgetInSection({
           if (target.closest('.tabs-widget')) {
             e.preventDefault()
             e.stopPropagation()
-            console.log('🎯 Tabs widget container clicked for properties')
+            debugLog('log', '🎯 Tabs widget container clicked for properties')
             if (activeSectionToolbar !== widget.sectionId) {
               setActiveSectionToolbar?.(null)
             }
@@ -178,7 +183,7 @@ export function DraggableWidgetInSection({
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            console.log('🎯 Overlay click detected:', { 
+            debugLog('log', '🎯 Overlay click detected:', { 
               widgetId: widget.id, 
               widgetType: widget.type 
             })
@@ -347,7 +352,7 @@ export function SectionRenderer({
       || websiteBranding?.breakpoints?.desktop 
       || '1280px'
     
-    console.log('🎯 SectionRenderer - Applying breakpoint:', {
+    debugLog('log', '🎯 SectionRenderer - Applying breakpoint:', {
       sectionId: section.id,
       behavior,
       websiteId,
@@ -790,7 +795,7 @@ export function SectionRenderer({
           // Debug logging for drop zone
           React.useEffect(() => {
             if (isOver) {
-              console.log('🎯 Drop zone active:', area.id, 'in section:', section.id)
+              debugLog('log', '🎯 Drop zone active:', area.id, 'in section:', section.id)
             }
           }, [isOver, area.id, section.id])
           

@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Globe, BookOpen, FileText, Edit3 } from 'lucide-react'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 export type EditingScope = 'global' | 'issue-type' | 'journal' | 'individual'
 
@@ -187,7 +192,7 @@ export function TemplateEditingScopeButton({
   }
 
   const editingOptions = getEditingOptions()
-  console.log('🎯 Generated editing options for', mockLiveSiteRoute, ':', editingOptions.map(opt => ({ id: opt.id, label: opt.label })))
+  debugLog('log', '🎯 Generated editing options for', mockLiveSiteRoute, ':', editingOptions.map(opt => ({ id: opt.id, label: opt.label })))
   
   const primaryOption = editingOptions.find(opt => opt.isPrimary) || editingOptions[0]
   const dropdownOptions = editingOptions.filter(opt => !opt.isPrimary)
@@ -215,12 +220,12 @@ export function TemplateEditingScopeButton({
         left: rect.left,
         width: rect.width
       })
-      console.log('📍 Button position calculated:', { top: rect.top, left: rect.left, width: rect.width })
+      debugLog('log', '📍 Button position calculated:', { top: rect.top, left: rect.left, width: rect.width })
     }
   }, [isOpen])
 
   const handleEditClick = (scope: EditingScope) => {
-    console.log('🎯 TemplateEditingScopeButton - Edit clicked:', {
+    debugLog('log', '🎯 TemplateEditingScopeButton - Edit clicked:', {
       scope,
       issueType, 
       journalCode,
@@ -256,7 +261,7 @@ export function TemplateEditingScopeButton({
           {dropdownOptions.length > 0 && (
             <button
               onClick={() => {
-                console.log('🔽 Dropdown toggle clicked, current state:', isOpen)
+                debugLog('log', '🔽 Dropdown toggle clicked, current state:', isOpen)
                 setIsOpen(!isOpen)
               }}
               className="px-2 py-2 bg-blue-600 text-white rounded-r-full shadow-lg hover:bg-blue-700 border-l border-blue-500"
@@ -280,7 +285,7 @@ export function TemplateEditingScopeButton({
             left: buttonPosition.left + buttonPosition.width - 320, // 320px = w-80, right-align
             transform: 'translateY(-100%)', // Position above button
           }}
-          onMouseEnter={() => console.log('🖱️ Portal dropdown hover - should be visible now')}
+          onMouseEnter={() => debugLog('log', '🖱️ Portal dropdown hover - should be visible now')}
         >
           <div className="p-2 border-b border-gray-100">
             <h4 className="text-sm font-semibold text-gray-700">More Editing Options</h4>

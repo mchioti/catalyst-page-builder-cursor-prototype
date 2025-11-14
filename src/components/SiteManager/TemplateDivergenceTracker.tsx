@@ -10,6 +10,11 @@ import { Eye, RotateCcw, ArrowUp, Lock, Unlock, ChevronDown, ChevronUp } from 'l
 import { detectTemplateChanges } from '../../utils/templateDiff'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { TemplateDiffModal } from './TemplateDiffModal'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 export interface TemplateDivergenceTrackerProps {
   templateId: string
@@ -52,7 +57,7 @@ export function TemplateDivergenceTracker({
   const thisWebsiteHasModification = hasBaseTemplate
   
   // Debug logging
-  console.log('🎯 TemplateDivergenceTracker render:', {
+  debugLog('log', '🎯 TemplateDivergenceTracker render:', {
     templateId,
     templateName,
     allModifications: templateModifications.length,
@@ -223,7 +228,7 @@ function CustomizationItem({
   }
 
   const handleViewDiff = () => {
-    console.log('View diff for:', modification.route)
+    debugLog('log', 'View diff for:', modification.route)
     setIsDiffModalOpen(true)
   }
   

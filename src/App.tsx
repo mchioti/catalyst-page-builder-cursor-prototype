@@ -36,7 +36,11 @@ import {
   PREFAB_SECTIONS, 
   INITIAL_CANVAS_ITEMS 
 } from './constants'
+import { createDebugLogger } from './utils/logger'
 
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // NOTE: AI Content Generation functions moved to src/utils/aiContentGeneration.ts
 
@@ -701,7 +705,7 @@ function InteractiveWidgetRenderer({
                     
                     // Enhanced click handling for editor mode
                     document.addEventListener('click', function(e) {
-                      console.log('HTML Widget Editor Click:', e.target);
+                      debugLog('log', 'HTML Widget Editor Click:', e.target);
                     }, true);
                     
                     // Initialize interactive elements
@@ -1628,15 +1632,15 @@ export const usePageStore = create<PageState>((set, get) => ({
   
   // Template Divergence Management
   trackModification: (route, journalCode, journalName, templateId) => {
-    console.log('🔵 trackModification CALLED:', { route, journalCode, journalName, templateId })
+    debugLog('log', '🔵 trackModification CALLED:', { route, journalCode, journalName, templateId })
     const state = get()
     const existingModification = state.templateModifications.find(c => c.route === route)
-    console.log('🔍 Existing modification:', existingModification)
-    console.log('📊 Current modifications:', state.templateModifications)
+    debugLog('log', '🔍 Existing modification:', existingModification)
+    debugLog('log', '📊 Current modifications:', state.templateModifications)
     
     if (existingModification) {
       // Update existing
-      console.log('♻️ Updating existing modification, count:', existingModification.modificationCount + 1)
+      debugLog('log', '♻️ Updating existing modification, count:', existingModification.modificationCount + 1)
       set((s) => ({
         templateModifications: s.templateModifications.map(c => 
           c.route === route 
@@ -1646,7 +1650,7 @@ export const usePageStore = create<PageState>((set, get) => ({
       }))
     } else {
       // Add new
-      console.log('✨ Creating NEW modification')
+      debugLog('log', '✨ Creating NEW modification')
       const newModification: TemplateModification = {
         route,
         journalCode,
@@ -1663,7 +1667,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     
     // Verify update
     const updatedState = get()
-    console.log('✅ Updated modifications:', updatedState.templateModifications)
+    debugLog('log', '✅ Updated modifications:', updatedState.templateModifications)
   },
   
   getModificationsForTemplate: (templateId) => {
@@ -1720,7 +1724,7 @@ export const usePageStore = create<PageState>((set, get) => ({
       journalCode = journalCodeMatch ? journalCodeMatch[1] : null
     }
     
-    console.log(`🔄 Resetting ${route} to base template`, { journalCode, routeType: route.startsWith('journal/') ? 'journal template' : 'individual issue' })
+    debugLog('log', `🔄 Resetting ${route} to base template`, { journalCode, routeType: route.startsWith('journal/') ? 'journal template' : 'individual issue' })
     
     // Remove route-specific canvas (individual issue)
     const newRouteCanvasItems = { ...routeCanvasItems }
@@ -1731,7 +1735,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     const newJournalTemplateCanvas = { ...journalTemplateCanvas }
     if (journalCode) {
       delete newJournalTemplateCanvas[journalCode]
-      console.log(`  ↳ Also clearing journal template for: ${journalCode}`)
+      debugLog('log', `  ↳ Also clearing journal template for: ${journalCode}`)
     }
     
     // Remove modification tracking for BOTH individual issue AND journal template
@@ -1743,7 +1747,7 @@ export const usePageStore = create<PageState>((set, get) => ({
       )
     }))
     
-    console.log(`✅ Reset complete - ${route} will now inherit from base template`)
+    debugLog('log', `✅ Reset complete - ${route} will now inherit from base template`)
   },
   
   promoteToBase: (route, templateId) => {
@@ -1758,11 +1762,11 @@ export const usePageStore = create<PageState>((set, get) => ({
       // Promoting from journal template level
       const journalCode = route.replace('journal/', '')
       customizedCanvas = journalTemplateCanvas[journalCode] || []
-      console.log(`⬆️ Promoting journal template to base: ${journalCode}`)
+      debugLog('log', `⬆️ Promoting journal template to base: ${journalCode}`)
     } else {
       // Promoting from individual route level (legacy behavior)
       customizedCanvas = routeCanvasItems[route] || []
-      console.log(`⬆️ Promoting individual route to base: ${route}`)
+      debugLog('log', `⬆️ Promoting individual route to base: ${route}`)
     }
     
     if (!customizedCanvas || customizedCanvas.length === 0) {
@@ -1795,8 +1799,8 @@ export const usePageStore = create<PageState>((set, get) => ({
       templateModifications: s.templateModifications.filter(c => c.route !== route)
     }))
     
-    console.log(`✅ Promoted ${route} to base template`)
-    console.log(`📊 ${affectedModifications.length} journals will inherit this change`)
+    debugLog('log', `✅ Promoted ${route} to base template`)
+    debugLog('log', `📊 ${affectedModifications.length} journals will inherit this change`)
   },
   
   promoteToJournalTemplate: (route, journalCode, templateId) => {
@@ -1809,7 +1813,7 @@ export const usePageStore = create<PageState>((set, get) => ({
       return
     }
     
-    console.log(`⬆️ Promoting individual issue to journal template: ${journalCode}`)
+    debugLog('log', `⬆️ Promoting individual issue to journal template: ${journalCode}`)
     
     // Set as journal template (affects all issues for this journal)
     set((s) => ({
@@ -1833,8 +1837,8 @@ export const usePageStore = create<PageState>((set, get) => ({
       )
     }))
     
-    console.log(`✅ Promoted to journal template: ${journalCode}`)
-    console.log(`📊 All ${journalCode} issues will inherit this change`)
+    debugLog('log', `✅ Promoted to journal template: ${journalCode}`)
+    debugLog('log', `📊 All ${journalCode} issues will inherit this change`)
   },
   
   promoteToPublisherTheme: (templateId, journalCode) => {
@@ -1846,12 +1850,12 @@ export const usePageStore = create<PageState>((set, get) => ({
       return
     }
     
-    console.log(`⬆️ Promoting base template to publisher theme: ${templateId}`)
+    debugLog('log', `⬆️ Promoting base template to publisher theme: ${templateId}`)
     
     // TODO: Implement publisher theme storage
     // For now, just show success message
-    console.log(`✅ Base template promoted to Publisher Theme`)
-    console.log(`📊 All websites in publisher network will inherit this change`)
+    debugLog('log', `✅ Base template promoted to Publisher Theme`)
+    debugLog('log', `📊 All websites in publisher network will inherit this change`)
     
     // This would store in a publisherThemeCanvas at a higher level
     // publisherThemeCanvas[templateId] = globalTemplateCanvas

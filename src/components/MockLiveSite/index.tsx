@@ -7,7 +7,12 @@ import { ConflictResolutionDialog } from './ConflictResolutionDialog'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
+import { createDebugLogger } from '../../utils/logger'
 import '../../styles/journal-themes.css'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Utility function to extract journal code from route/context
 const getJournalCode = (route: string): string => {
@@ -88,7 +93,7 @@ function MockJournalTOC({
                                     isInEditingMode && 
                                     isCurrentlyOnTOCRoute
   
-  console.log('🔍 TOC Canvas Decision:', {
+  debugLog('log', '🔍 TOC Canvas Decision:', {
     route: currentRoute,
     hasCanvas: hasCanvasContent,
     editingContext: editingContext,
@@ -98,7 +103,7 @@ function MockJournalTOC({
   })
   
   if (shouldRenderCanvasContent) {
-    console.log('🎨 Rendering canvas content for TOC (user has been editing):', canvasItems.length, 'items')
+    debugLog('log', '🎨 Rendering canvas content for TOC (user has been editing):', canvasItems.length, 'items')
     return (
       <div className={`min-h-screen journal-${journalCode}`}>
         {/* Render canvas content with sidebar support */}
@@ -752,7 +757,7 @@ export function MockLiveSite({
     // Ensure current website branding is initialized
     if (currentWebsiteId && !getWebsiteBranding(currentWebsiteId)) {
       initializeWebsiteBranding(currentWebsiteId)
-      console.log('🎨 Initialized website branding with breakpoints for:', currentWebsiteId)
+      debugLog('log', '🎨 Initialized website branding with breakpoints for:', currentWebsiteId)
     }
   }, [currentWebsiteId, initializeWebsiteBranding, getWebsiteBranding])
   
@@ -799,7 +804,7 @@ export function MockLiveSite({
     
     // Debug skip logic
     if (templateEditingContext?.scope === 'global') {
-      console.log('🚫 Skip check for', mockLiveSiteRoute, '(journal:', journalCode, '):', {
+      debugLog('log', '🚫 Skip check for', mockLiveSiteRoute, '(journal:', journalCode, '):', {
         skipRoutes: templateEditingContext?.skipRoutes,
         skipJournals: templateEditingContext?.skipJournals,
         isSkippedRoute,
@@ -855,7 +860,7 @@ export function MockLiveSite({
     canvasSource = `Global canvas (${canvasItems.length} items)`
   }
   
-  console.log(`📊 Canvas Selection for ${mockLiveSiteRoute}:`, {
+  debugLog('log', `📊 Canvas Selection for ${mockLiveSiteRoute}:`, {
     editingContext,
     templateScope: templateEditingContext?.scope,
     journalCode,
@@ -903,7 +908,7 @@ export function MockLiveSite({
         affectedIssues: ['all-journals', 'all-issues']
       }
       
-      console.log('🔧 Setting override global template context:', globalContext)
+      debugLog('log', '🔧 Setting override global template context:', globalContext)
       if (setTemplateEditingContext) {
         setTemplateEditingContext(globalContext)
       }
@@ -925,9 +930,9 @@ export function MockLiveSite({
         skipJournals: affectedJournals.map(j => j.journalCode) // Track which journals to skip
       }
       
-      console.log('🔧 Setting selective global template context (SKIP mode):', globalContext)
-      console.log('🚫 Journals to skip:', globalContext.skipJournals)
-      console.log('🚫 Routes to skip:', globalContext.skipRoutes)
+      debugLog('log', '🔧 Setting selective global template context (SKIP mode):', globalContext)
+      debugLog('log', '🚫 Journals to skip:', globalContext.skipJournals)
+      debugLog('log', '🚫 Routes to skip:', globalContext.skipRoutes)
       if (setTemplateEditingContext) {
         setTemplateEditingContext(globalContext)
       }
@@ -966,7 +971,7 @@ export function MockLiveSite({
       ? `vol ${volumeIssueMatch[1]}, issue ${volumeIssueMatch[2]}`
       : null
     
-    console.log(`🎯 Edit Scope Selected:`, {
+    debugLog('log', `🎯 Edit Scope Selected:`, {
       scope,
       issueType,
       journalCode,
@@ -980,7 +985,7 @@ export function MockLiveSite({
     // Handle different editing scopes
     if (scope === 'individual' && mockLiveSiteRoute === '/') {
       // Homepage Individual Editing: Navigate back to page builder
-      console.log(`🏠 Loading homepage for editing`)
+      debugLog('log', `🏠 Loading homepage for editing`)
       
       setEditingContext('page')
       setCurrentView('page-builder')
@@ -999,11 +1004,11 @@ export function MockLiveSite({
       if (existingRouteCanvas.length > 0) {
         // Load existing edits for this route
         sectionsToLoad = existingRouteCanvas
-        console.log(`📝 Loading existing edits for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
+        debugLog('log', `📝 Loading existing edits for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
       } else {
         // Load fresh template for this route
         sectionsToLoad = createTOCTemplate(journalCode)
-        console.log(`📝 Loading fresh template for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
+        debugLog('log', `📝 Loading fresh template for route:`, mockLiveSiteRoute, sectionsToLoad.length, 'sections')
         
         // Don't save to route-specific storage immediately - let auto-save handle actual changes
       }
@@ -1040,7 +1045,7 @@ export function MockLiveSite({
       if (existingJournalTemplate.length > 0) {
         // Load existing saved journal template
         templateToEdit = existingJournalTemplate
-        console.log(`🎨 Loading existing journal template:`, journalCode, templateToEdit.length, 'sections')
+        debugLog('log', `🎨 Loading existing journal template:`, journalCode, templateToEdit.length, 'sections')
         
         notificationMessage = `Editing ${journalName} template. Changes apply to all ${journalName} issues.`
       } else {
@@ -1050,13 +1055,13 @@ export function MockLiveSite({
         if (currentRouteEdits.length > 0) {
           // Start with existing individual edits as the base for template editing
           templateToEdit = currentRouteEdits
-          console.log(`🎨 Creating journal template from individual modifications:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
+          debugLog('log', `🎨 Creating journal template from individual modifications:`, journalCode, templateToEdit.length, 'sections from', mockLiveSiteRoute)
           
           notificationMessage = `Creating ${journalName} template from your current issue. Changes will apply to all ${journalName} issues.`
         } else {
           // No edits, start with fresh base template
           templateToEdit = baseTemplate
-          console.log(`🎨 Creating fresh journal template:`, journalCode, templateToEdit.length, 'sections')
+          debugLog('log', `🎨 Creating fresh journal template:`, journalCode, templateToEdit.length, 'sections')
           
           notificationMessage = `Creating ${journalName} template. Changes will apply to all ${journalName} issues.`
         }
@@ -1088,7 +1093,7 @@ export function MockLiveSite({
       // Issue Type Template Editing (e.g., all current issues)
       const templateSections = createTOCTemplate(journalCode || 'advma')
       
-      console.log(`🌐 Loading issue type template for editing:`, issueType, templateSections.length, 'sections')
+      debugLog('log', `🌐 Loading issue type template for editing:`, issueType, templateSections.length, 'sections')
       
       replaceCanvasItems(templateSections)
       
@@ -1146,7 +1151,7 @@ export function MockLiveSite({
                       (item as any).areas.length !== (baseItem as any).areas.length)
             })
           
-          console.log(`🔍 Checking individual route ${route}:`, {
+          debugLog('log', `🔍 Checking individual route ${route}:`, {
             routeCanvasLength: routeCanvas.length,
             baseTemplateLength: baseTemplate.length,
             hasActualChanges
@@ -1182,7 +1187,7 @@ export function MockLiveSite({
                       (item as any).areas.length !== (baseItem as any).areas.length)
             })
           
-          console.log(`🔍 Checking journal template ${code}:`, {
+          debugLog('log', `🔍 Checking journal template ${code}:`, {
             journalTemplateLength: journalTemplate.length,
             baseTemplateLength: baseTemplate.length,
             hasJournalChanges
@@ -1203,7 +1208,7 @@ export function MockLiveSite({
       // Remove duplicates
       const uniqueAffectedJournals = [...new Set(allAffectedJournals)]
       
-      console.log('🔍 Global template conflict check:', {
+      debugLog('log', '🔍 Global template conflict check:', {
         allRoutes: Object.keys(storeState.routeCanvasItems || {}),
         routesWithActualModifications,
         journalsWithTemplateModifications,
@@ -1238,26 +1243,26 @@ export function MockLiveSite({
           affectedIssues: ['all-journals', 'all-issues']
         }
         
-        console.log('🔧 Setting normal global template context:', globalContext)
+        debugLog('log', '🔧 Setting normal global template context:', globalContext)
         if (setTemplateEditingContext) {
           setTemplateEditingContext(globalContext)
         }
       }
       
-      console.log(`🌍 Loading global template for editing:`, templateSections.length, 'sections')
+      debugLog('log', `🌍 Loading global template for editing:`, templateSections.length, 'sections')
       
       replaceCanvasItems(templateSections)
       
-      console.log('🔧 Setting editing context to template')
+      debugLog('log', '🔧 Setting editing context to template')
       setEditingContext('template')
       
-      console.log('🔧 Setting view to page-builder')
+      debugLog('log', '🔧 Setting view to page-builder')
       setCurrentView('page-builder')
       
       // Verify state after setting
       setTimeout(() => {
         const currentState = usePageStore.getState()
-        console.log('🔍 State after global template setup:', {
+        debugLog('log', '🔍 State after global template setup:', {
           editingContext: currentState.editingContext,
           templateEditingContext: currentState.templateEditingContext,
           currentView: currentState.currentView
