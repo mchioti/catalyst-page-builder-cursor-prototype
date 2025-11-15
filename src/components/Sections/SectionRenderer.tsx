@@ -308,7 +308,7 @@ export function SectionRenderer({
   usePageStore,
   isLiveMode = false,
   journalContext,
-  websiteId = 'wiley-main', // Default website ID
+  websiteId = 'catalyst-demo-site', // Default website ID
   sidebarHeight,
   isInSidebarGroup = false
 }: SectionRendererProps) {

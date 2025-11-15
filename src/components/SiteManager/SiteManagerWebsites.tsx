@@ -2,9 +2,16 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { Website, Theme, Modification } from '../../types'
 import { usePageStore } from '../../App'
+import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
+import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = true // Enable to see website navigation logs
+const debugLog = createDebugLogger(DEBUG)
 
 export function SiteManagerWebsites() {
-  const { websites, themes, removeModification, updateWebsite } = usePageStore()
+  const { websites, themes, removeModification, updateWebsite, setCurrentWebsiteId, setCurrentView, setEditingContext, replaceCanvasItems, canvasItems, setIsEditingLoadedWebsite } = usePageStore()
   const [showModificationAnalysis, setShowModificationAnalysis] = useState<string | null>(null)
   
   const getThemeForWebsite = (websiteId: string) => {
@@ -84,6 +91,50 @@ export function SiteManagerWebsites() {
     alert(actionMessage)
   }
 
+  const handleEditWebsiteHomepage = (website: Website) => {
+    debugLog('log', '🔵 ========== START handleEditWebsiteHomepage ==========')
+    debugLog('log', '🔵 Website ID:', website.id)
+    debugLog('log', '🔵 Website name:', website.name)
+    
+    // Set the current website
+    setCurrentWebsiteId(website.id)
+    debugLog('log', '✅ currentWebsiteId set to:', website.id)
+    
+    // Set editing context to page (not template)
+    setEditingContext('page')
+    debugLog('log', '✅ editingContext set to: page')
+    
+    // Mark that we're loading a website (not a blank canvas)
+    setIsEditingLoadedWebsite(true)
+    debugLog('log', '✅ isEditingLoadedWebsite set to: true')
+    
+    // Load appropriate homepage content based on website
+    if (website.id === 'catalyst-demo-site') {
+      // Catalyst has a modified homepage (diverged from base template)
+      debugLog('log', '✏️ Loading Catalyst modified homepage...')
+      const catalystHomepage = createCatalystHomepage()
+      debugLog('log', '📦 Created Catalyst homepage with', catalystHomepage.length, 'sections')
+      debugLog('log', '📦 First section:', catalystHomepage[0])
+      replaceCanvasItems(catalystHomepage)
+      debugLog('log', '✅ replaceCanvasItems called')
+      debugLog('log', '✅ Canvas should now have Catalyst content')
+    } else if (website.id === 'febs-press' && website.deviationScore === 0) {
+      // FEBS Press uses the clean base template (no modifications yet)
+      debugLog('log', '📄 Loading generic template homepage...')
+      const homepageTemplate = createHomepageTemplate()
+      debugLog('log', '📦 Created template with', homepageTemplate.length, 'sections')
+      replaceCanvasItems(homepageTemplate)
+      debugLog('log', '✅ Generic homepage loaded to canvas')
+    } else {
+      debugLog('warn', '⚠️ No content loaded for website:', website.id)
+    }
+    
+    // Navigate to Page Builder
+    debugLog('log', '🚀 Navigating to Page Builder view')
+    setCurrentView('page-builder')
+    debugLog('log', '🔵 ========== END handleEditWebsiteHomepage ==========')
+  }
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -119,7 +170,12 @@ export function SiteManagerWebsites() {
                   <tr key={website.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6">
                       <div>
-                        <div className="font-semibold text-gray-900">{website.name}</div>
+                        <button
+                          onClick={() => handleEditWebsiteHomepage(website)}
+                          className="font-semibold text-blue-600 hover:text-blue-800 hover:underline text-left"
+                        >
+                          {website.name}
+                        </button>
                         <div className="text-sm text-gray-600">{website.domain}</div>
                       </div>
                     </td>
@@ -170,7 +226,7 @@ export function SiteManagerWebsites() {
         const website = websites.find(w => w.id === showModificationAnalysis)
         if (!website) return null
         
-        const theme = getThemeForWebsite(website.id)
+        const theme = getThemeForWebsite(website.id) || null
         
         return (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

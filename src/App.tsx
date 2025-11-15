@@ -33,8 +33,7 @@ import {
 import { 
   MOCK_SCHOLARLY_ARTICLES, 
   DEFAULT_PUBLICATION_CARD_CONFIG, 
-  PREFAB_SECTIONS, 
-  INITIAL_CANVAS_ITEMS 
+  PREFAB_SECTIONS
 } from './constants'
 import { createDebugLogger } from './utils/logger'
 
@@ -1216,11 +1215,11 @@ function buildWidget(item: SpecItem): Widget {
 
 export const usePageStore = create<PageState>((set, get) => ({
   // Routing  
-  currentView: 'page-builder',
+  currentView: 'design-console',
   siteManagerView: 'websites', 
   editingContext: 'page', // 'template' | 'page' | 'website'
   templateEditingContext: null, // Track template editing context for propagation
-  currentWebsiteId: 'wiley-main', // Track which website is currently being edited
+  currentWebsiteId: 'catalyst-demo-site', // Track which website is currently being edited
   mockLiveSiteRoute: '/', // Default to homepage
   previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // For theme preview in Design Console
   previewThemeId: 'classic-ux3-theme', // For theme preview in Design Console
@@ -1411,7 +1410,7 @@ export const usePageStore = create<PageState>((set, get) => ({
   },
   
   // Page Builder
-  canvasItems: INITIAL_CANVAS_ITEMS,
+  canvasItems: [], // Start empty - content loaded via Design Console navigation
   routeCanvasItems: {}, // Route-specific canvas storage
   globalTemplateCanvas: [], // Global template changes
   journalTemplateCanvas: {}, // Journal-specific template storage
@@ -1466,6 +1465,8 @@ export const usePageStore = create<PageState>((set, get) => ({
   addSection: (section) => set((s) => ({ canvasItems: [...s.canvasItems, section] })),
   moveItem: (fromIndex, toIndex) => set((s) => ({ canvasItems: arrayMove(s.canvasItems, fromIndex, toIndex) })),
   replaceCanvasItems: (items) => set({ canvasItems: items }),
+  isEditingLoadedWebsite: false, // Track if editing a website loaded from Design Console vs blank draft
+  setIsEditingLoadedWebsite: (value: boolean) => set({ isEditingLoadedWebsite: value }),
   selectWidget: (id) => {
     // Simple approach: just update state without scroll intervention
     // The preventDefault() in click handlers should be enough

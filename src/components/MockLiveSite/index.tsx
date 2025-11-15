@@ -747,7 +747,7 @@ export function MockLiveSite({
   const editingContext = usePageStore((state: any) => state.editingContext)
   const templateEditingContext = usePageStore((state: any) => state.templateEditingContext)
   const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
-  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'wiley-main'
+  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'catalyst-demo-site'
   const journalCode = getJournalCode(mockLiveSiteRoute)
   
   // Initialize branding store for breakpoints

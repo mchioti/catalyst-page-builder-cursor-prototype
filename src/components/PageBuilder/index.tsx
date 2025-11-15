@@ -79,11 +79,10 @@
 import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { PREFAB_SECTIONS } from './prefabSections'
-import { createHomepageTemplate, shouldAutoLoadHomepage } from './homepageTemplate'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file
-const DEBUG = false
+const DEBUG = false // Set to true to see PageBuilder canvas state
 const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
@@ -164,7 +163,15 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite } = usePageStore()
+  
+  // Debug: Log canvas state on render
+  debugLog('log', '🎨 PageBuilder render - Canvas items:', canvasItems.length)
+  if (canvasItems.length > 0) {
+    debugLog('log', '🎨 First canvas item:', canvasItems[0]?.type, canvasItems[0]?.name || canvasItems[0]?.id)
+  } else {
+    debugLog('log', '🎨 Canvas is EMPTY')
+  }
   
   // Detect editing context
   const isIndividualIssueEdit = editingContext === 'page' && mockLiveSiteRoute.includes('/toc/')
@@ -197,21 +204,45 @@ export function PageBuilder({
   const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
   
   // Homepage template auto-loading
+  // Load a starter canvas with one section when Page Builder opens with empty canvas
   useEffect(() => {
-    debugLog('log', '🔍 Auto-loading check:', {
-      editingContext,
-      mockLiveSiteRoute,
-      canvasItemsLength: canvasItems.length,
-      shouldLoad: shouldAutoLoadHomepage(editingContext, mockLiveSiteRoute, canvasItems)
-    })
-    
-    if (shouldAutoLoadHomepage(editingContext, mockLiveSiteRoute, canvasItems)) {
-      debugLog('log', '🏠 Auto-loading homepage template...')
-      const homepageTemplate = createHomepageTemplate()
-      replaceCanvasItems(homepageTemplate)
-      showToast('Homepage template loaded! Edit sections to match your vision.', 'success')
+    if (editingContext === 'page' && canvasItems.length === 0) {
+      debugLog('log', '📄 Empty canvas detected - loading starter section')
+      
+      // Create a simple one-column section as a starting point
+      const starterSection = {
+        id: nanoid(),
+        name: 'Section',
+        type: 'content-block' as const,
+        layout: 'one-column' as const,
+        areas: [
+          {
+            id: nanoid(),
+            name: 'Content',
+            widgets: []
+          }
+        ],
+        styling: {
+          paddingTop: 'medium' as const,
+          paddingBottom: 'medium' as const,
+          paddingLeft: 'medium' as const,
+          paddingRight: 'medium' as const,
+          gap: 'medium' as const,
+          variant: 'full-width' as const,
+          textColor: 'default' as const
+        },
+        background: {
+          type: 'color' as const,
+          color: '#ffffff',
+          opacity: 1
+        }
+      }
+      
+      replaceCanvasItems([starterSection])
+      setIsEditingLoadedWebsite(false) // Mark as blank canvas (not a loaded website)
+      showToast('Starter section loaded - drag widgets from the library to begin', 'success')
     }
-  }, [editingContext, mockLiveSiteRoute, canvasItems]) // Watch for changes to editing context, route, and canvas content
+  }, []) // Only run once on mount
   
   // Route-specific canvas saving for individual issue edits
   useEffect(() => {
@@ -1323,11 +1354,16 @@ export function PageBuilder({
               onSectionsLoad={handleTemplateSectionsLoad}
             />
             
-            {/* Regular Page Editing Context - Show minimal info */}
-            {usePageStore((state: any) => state.editingContext) === 'page' && (
+            {/* Regular Page Editing Context - Show minimal info (only when canvas has content) */}
+            {usePageStore((state: any) => state.editingContext) === 'page' && canvasItems.length > 0 && (
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  Editing: <strong>Wiley Online Library Homepage</strong>
+                  Editing: <strong>{!isEditingLoadedWebsite ? 'Blank Canvas' : (() => {
+                    const currentWebsiteId = usePageStore.getState().currentWebsiteId
+                    const websites = usePageStore.getState().websites
+                    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+                    return currentWebsite ? `${currentWebsite.name} Homepage` : 'Homepage'
+                  })()}</strong>
                 </div>
                 <button
                   onClick={() => {
@@ -1346,7 +1382,7 @@ export function PageBuilder({
               {canvasItems.length === 0 ? (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center text-gray-500">
-                    <p className="text-lg mb-2">Start building your page</p>
+                    <p className="text-lg mb-2">Loading starter section...</p>
                     <p className="text-sm">Drag widgets from the library to get started</p>
                   </div>
                 </div>

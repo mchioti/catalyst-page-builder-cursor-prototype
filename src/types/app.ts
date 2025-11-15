@@ -16,21 +16,16 @@ export type DesignConsoleView =
   | 'classicist-theme-publication-cards'
   | 'classicist-theme-templates'
   // Website-level views (per-website customization)
-  | 'wiley-main-settings'
-  | 'wiley-main-branding'
-  | 'wiley-main-templates'
-  | 'wiley-main-publication-cards'
-  | 'wiley-main-custom-templates'
-  | 'research-hub-settings'
-  | 'research-hub-branding'
-  | 'research-hub-templates'
-  | 'research-hub-publication-cards'
-  | 'research-hub-custom-templates'
-  | 'journal-of-science-settings'
-  | 'journal-of-science-branding'
-  | 'journal-of-science-templates'
-  | 'journal-of-science-publication-cards'
-  | 'journal-of-science-custom-templates'
+  | 'catalyst-demo-site-settings'
+  | 'catalyst-demo-site-branding'
+  | 'catalyst-demo-site-templates'
+  | 'catalyst-demo-site-publication-cards'
+  | 'catalyst-demo-site-custom-templates'
+  | 'febs-press-settings'
+  | 'febs-press-branding'
+  | 'febs-press-templates'
+  | 'febs-press-publication-cards'
+  | 'febs-press-custom-templates'
   // System views
   | 'websites' 
   | 'create-website'
@@ -160,6 +155,8 @@ export type PageState = {
   addSection: (section: WidgetSection) => void
   moveItem: (fromIndex: number, toIndex: number) => void
   replaceCanvasItems: (items: CanvasItem[]) => void
+  isEditingLoadedWebsite: boolean
+  setIsEditingLoadedWebsite: (value: boolean) => void
   selectWidget: (id: string | null) => void
   deleteWidget: (widgetId: string) => void
   

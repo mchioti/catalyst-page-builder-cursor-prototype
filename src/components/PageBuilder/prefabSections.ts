@@ -149,13 +149,13 @@ export const createMainNavigationPrefab = (): CanvasItem => {
     opacity: 1
   }
 
-  // Wiley logo/title (left side)
+  // Website logo/title (left side)
   const logoWidget = {
     id: nanoid(),
     type: 'heading' as const,
     sectionId: navSection.id,
     skin: 'minimal' as const,
-    text: 'Wiley Online Library',
+    text: 'Your Website Name',
     level: 2 as const,
     align: 'left' as const,
     style: 'default' as const,
@@ -219,7 +219,7 @@ export const createHeroPrefab = (): CanvasItem => {
     type: 'heading' as const,
     sectionId: heroSection.id,
     skin: 'minimal' as const,
-    text: 'Wiley Online Library',
+    text: 'Welcome to Your Website',
     level: 1 as const,
     align: 'center' as const,
     style: 'hero' as const,
@@ -234,7 +234,7 @@ export const createHeroPrefab = (): CanvasItem => {
     type: 'text' as const,
     sectionId: heroSection.id,
     skin: 'minimal' as const,
-    text: 'Discover breakthrough research in computing, technology, and digital innovation. Access thousands of peer-reviewed articles from leading journals and conferences.',
+    text: 'Add your hero message here. This is a Hero section that comes as part of the Classic-themed Homepage template. Edit this text to introduce your website to visitors.',
     align: 'center' as const
   }
 
@@ -244,7 +244,7 @@ export const createHeroPrefab = (): CanvasItem => {
     type: 'button' as const,
     sectionId: heroSection.id,
     skin: 'minimal' as const,
-    text: 'Explore Journals',
+    text: 'Get Started',
     href: '#',
     variant: 'primary' as const,
     size: 'large' as const
@@ -255,7 +255,7 @@ export const createHeroPrefab = (): CanvasItem => {
     type: 'button' as const,
     sectionId: heroSection.id,
     skin: 'minimal' as const,
-    text: 'Browse Collections',
+    text: 'Learn More',
     href: '#',
     variant: 'secondary' as const,
     size: 'large' as const
@@ -300,7 +300,7 @@ export const createFeaturesPrefab = (): CanvasItem => {
     type: 'heading' as const,
     sectionId: featuresSection.id,
     skin: 'minimal' as const,
-    text: 'Featured Research',
+    text: 'Featured Content',
     level: 2 as const,
     align: 'center' as const,
     style: 'default' as const,
