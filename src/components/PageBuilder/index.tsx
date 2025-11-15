@@ -531,6 +531,96 @@ export function PageBuilder({
       const libraryItem = active.data.current.item
       const { replaceCanvasItems, canvasItems } = usePageStore.getState()
       
+      // Case 0: Dropped into tab panel (HIGHEST PRIORITY)
+      if (over.data?.current?.type === 'tab-panel') {
+        debugLog('log','✅ Library widget dropped into tab panel!', {
+          libraryItem,
+          tabId: over.data.current.tabId,
+          widgetId: over.data.current.widgetId
+        })
+        
+        const tabId = over.data.current.tabId
+        const tabsWidgetId = over.data.current.widgetId
+        
+        // Create new widget from library item
+        const newWidget = buildWidget(libraryItem)
+        
+        debugLog('log','🔧 Created widget:', newWidget.type, newWidget.id, 'for tab:', tabId)
+        
+        // Find the tabs widget and the specific tab, update it with the new widget
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+          // Check if this is the tabs widget (standalone)
+          if (canvasItem.type === 'tabs' && canvasItem.id === tabsWidgetId) {
+            const tabsWidget = canvasItem as any // TabsWidget
+            const tabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
+            
+            if (tabIndex !== -1) {
+              const updatedTabs = [...tabsWidget.tabs]
+              updatedTabs[tabIndex] = {
+                ...updatedTabs[tabIndex],
+                widgets: [...(updatedTabs[tabIndex].widgets || []), newWidget]
+              }
+              
+              debugLog('log','🎯 Setting activeTabIndex to:', tabIndex, 'for dropped widget (standalone)')
+              debugLog('log','📦 Tabs before update:', tabsWidget.tabs)
+              debugLog('log','📦 Tabs after update:', updatedTabs)
+              
+              return {
+                ...tabsWidget,
+                tabs: updatedTabs,
+                activeTabIndex: tabIndex
+              }
+            }
+          }
+          
+          // Check if the tabs widget is inside a section
+          if (isSection(canvasItem)) {
+            const section = canvasItem as WidgetSection
+            let foundAndUpdated = false
+            
+            const updatedAreas = section.areas.map((area: any) => {
+              const updatedWidgets = area.widgets.map((widget: any) => {
+                if (widget.type === 'tabs' && widget.id === tabsWidgetId) {
+                  foundAndUpdated = true
+                  const tabIndex = widget.tabs.findIndex((t: any) => t.id === tabId)
+                  
+                  if (tabIndex !== -1) {
+                    const updatedTabs = [...widget.tabs]
+                    updatedTabs[tabIndex] = {
+                      ...updatedTabs[tabIndex],
+                      widgets: [...(updatedTabs[tabIndex].widgets || []), newWidget]
+                    }
+                    
+                    debugLog('log','🎯 Setting activeTabIndex to:', tabIndex, 'for dropped widget (in section)')
+                    debugLog('log','📦 Tabs before update:', widget.tabs)
+                    debugLog('log','📦 Tabs after update:', updatedTabs)
+                    
+                    return {
+                      ...widget,
+                      tabs: updatedTabs,
+                      activeTabIndex: tabIndex
+                    }
+                  }
+                }
+                return widget
+              })
+              
+              return { ...area, widgets: updatedWidgets }
+            })
+            
+            if (foundAndUpdated) {
+              return { ...section, areas: updatedAreas }
+            }
+          }
+          
+          return canvasItem
+        })
+        
+        replaceCanvasItems(updatedCanvasItems)
+        debugLog('log','✅ Widget added to tab panel!')
+        return
+      }
+      
       // Case 1: Dropped into existing section area (old behavior for backwards compatibility)
       if (over.data?.current?.type === 'section-area') {
         debugLog('log','✅ Library widget dropped into existing section area!')
@@ -663,102 +753,6 @@ export function PageBuilder({
         return canvasItem
       })
       replaceCanvasItems(updatedCanvasItems)
-      return
-    }
-    
-    // Handle library widget drop into tab panel
-    if (active.data?.current?.type === 'library-widget' && over.data?.current?.type === 'tab-panel') {
-      debugLog('log','✅ Library widget dropped into tab panel!', {
-        libraryItem: active.data.current.item,
-        tabId: over.data.current.tabId,
-        widgetId: over.data.current.widgetId
-      })
-      
-      const libraryItem = active.data.current.item
-      const tabId = over.data.current.tabId
-      const tabsWidgetId = over.data.current.widgetId
-      
-      // Create new widget from library item
-      const newWidget = buildWidget(libraryItem)
-      
-      debugLog('log','🔧 Created widget:', newWidget.type, newWidget.id, 'for tab:', tabId)
-      
-      // Add widget to the specific tab panel
-      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-      
-      const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
-        // Check if item is the tabs widget (could be standalone or in a section)
-        if (!isSection(canvasItem) && canvasItem.id === tabsWidgetId && canvasItem.type === 'tabs') {
-          const tabsWidget = canvasItem as any // TabsWidget
-          // Find which tab index we're dropping into
-          const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
-          debugLog('log','🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget')
-          debugLog('log','📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
-            id: t.id,
-            label: t.label,
-            widgetCount: t.widgets.length
-          })))
-          const updatedTabs = tabsWidget.tabs.map((tab: any) => 
-            tab.id === tabId 
-              ? { ...tab, widgets: [...tab.widgets, newWidget] }
-              : tab
-          )
-          debugLog('log','📦 Tabs after update:', updatedTabs.map((t: any) => ({
-            id: t.id,
-            label: t.label,
-            widgetCount: t.widgets.length
-          })))
-          return {
-            ...tabsWidget,
-            activeTabIndex: targetTabIndex >= 0 ? targetTabIndex : tabsWidget.activeTabIndex,
-            tabs: updatedTabs
-          }
-        }
-        
-        // Check in section areas for the tabs widget
-        if (isSection(canvasItem)) {
-          return {
-            ...canvasItem,
-            areas: (canvasItem as WidgetSection).areas.map((area: any) => ({
-              ...area,
-              widgets: area.widgets.map((widget: Widget) => {
-                if (widget.id === tabsWidgetId && widget.type === 'tabs') {
-                  const tabsWidget = widget as any // TabsWidget
-                  // Find which tab index we're dropping into
-                  const targetTabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
-                  debugLog('log','🎯 Setting activeTabIndex to:', targetTabIndex, 'for dropped widget (in section)')
-                  debugLog('log','📦 Tabs before update:', tabsWidget.tabs.map((t: any) => ({
-                    id: t.id,
-                    label: t.label,
-                    widgetCount: t.widgets.length
-                  })))
-                  const updatedTabs = tabsWidget.tabs.map((tab: any) => 
-                    tab.id === tabId 
-                      ? { ...tab, widgets: [...tab.widgets, newWidget] }
-                      : tab
-                  )
-                  debugLog('log','📦 Tabs after update:', updatedTabs.map((t: any) => ({
-                    id: t.id,
-                    label: t.label,
-                    widgetCount: t.widgets.length
-                  })))
-                  return {
-                    ...tabsWidget,
-                    activeTabIndex: targetTabIndex >= 0 ? targetTabIndex : tabsWidget.activeTabIndex,
-                    tabs: updatedTabs
-                  }
-                }
-                return widget
-              })
-            }))
-          }
-        }
-        
-        return canvasItem
-      })
-      
-      replaceCanvasItems(updatedCanvasItems)
-      debugLog('log','✅ Widget added to tab panel!')
       return
     }
     
