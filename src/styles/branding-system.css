@@ -444,16 +444,7 @@
   color: #1f2937;
 }
 
-/* Underline Style (default) - ONLY apply red underline for underline style */
-.tabs-nav:not(.tabs-pills):not(.tabs-buttons) .tab-button.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #ef4444; /* Red underline */
-}
+/* Underline Style - Now theme-specific (see theme CSS files) */
 
 /* Pills Style */
 .tabs-pills .tab-button {

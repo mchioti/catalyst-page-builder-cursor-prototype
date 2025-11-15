@@ -537,48 +537,7 @@ ${generateTypographyCSS(theme)}
   font-weight: 600;
 }
 
-/* Pills variant */
-.tabs-pills {
-  border-bottom: none;
-}
-
-.tabs-pills .tab-button {
-  border-radius: 9999px;
-  background: #f3f4f6;
-  margin-bottom: 0;
-}
-
-.tabs-pills .tab-button:hover {
-  background: #e5e7eb;
-}
-
-.tabs-pills .tab-button.active {
-  background: var(--theme-color-primary);
-  color: white;
-  border-bottom-color: transparent;
-}
-
-/* Buttons variant */
-.tabs-buttons {
-  border-bottom: none;
-}
-
-.tabs-buttons .tab-button {
-  border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  margin-bottom: 0;
-}
-
-.tabs-buttons .tab-button:hover {
-  border-color: #9ca3af;
-}
-
-.tabs-buttons .tab-button.active {
-  background: var(--theme-color-primary);
-  color: white;
-  border-color: var(--theme-color-primary);
-}
+/* Pills and Buttons variants are now theme-specific (see theme overrides below) */
 
 /* ====================================
    CARDS
@@ -951,6 +910,70 @@ const generateThemeSpecificCSS = (theme: any): string => {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* ====================================
+   CLASSIC TAB VARIANTS
+   ==================================== */
+
+/* Classic Pills Tabs */
+.tabs-pills {
+  border-bottom: none;
+}
+
+.tabs-pills .tab-button {
+  border-radius: 9999px;
+  background: #f3f4f6;
+  margin-bottom: 0;
+  font-family: var(--theme-body-font, 'Lato, sans-serif');
+}
+
+.tabs-pills .tab-button:hover {
+  background: #e5e7eb;
+}
+
+.tabs-pills .tab-button.active {
+  background: var(--theme-color-primary);
+  color: white;
+  border-bottom-color: transparent;
+}
+
+/* Classic Buttons Tabs */
+.tabs-buttons {
+  border-bottom: none;
+}
+
+.tabs-buttons .tab-button {
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  margin-bottom: 0;
+  font-family: var(--theme-body-font, 'Lato, sans-serif');
+}
+
+.tabs-buttons .tab-button:hover {
+  border-color: #9ca3af;
+}
+
+.tabs-buttons .tab-button.active {
+  background: var(--theme-color-primary);
+  color: white;
+  border-color: var(--theme-color-primary);
+}
+
+/* Classic Underline Tabs - Use theme primary color */
+.tabs-underline .tab-button {
+  position: relative;
+}
+
+.tabs-underline .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--theme-color-primary);  /* Teal for Classic */
+}
 `
   }
   
@@ -979,6 +1002,108 @@ const generateThemeSpecificCSS = (theme: any): string => {
   font-size: 16px;
   line-height: 24px;
   letter-spacing: 1.6px;
+}
+
+/* ====================================
+   WILEY TAB VARIANTS
+   ==================================== */
+
+/* Wiley Underline Tabs (Anchor Link Nav) */
+.tabs-underline .tab-button {
+  font-family: var(--theme-body-font);
+  font-size: var(--foundation-button-font-size-large, 16px);  /* Large = 16px for Wiley */
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  padding: 0.75rem 1rem;
+  color: var(--foundation-content-secondary, #6b7280);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tabs-underline .tab-button:hover {
+  color: var(--foundation-content-primary, #171717);
+}
+
+.tabs-underline .tab-button.active {
+  color: var(--foundation-content-primary, #171717);
+  font-weight: 500;
+}
+
+/* Wiley green underline indicator */
+.tabs-underline .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--foundation-action-primary);
+}
+
+/* Wiley Pills Tabs (Tab Bar) */
+.tabs-pills {
+  border-bottom: none;
+}
+
+.tabs-pills .tab-button {
+  height: 56px;
+  padding: 0 32px;
+  font-family: var(--theme-body-font);
+  font-size: var(--foundation-button-font-size-large, 16px);  /* Large = 16px for Wiley */
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  border-radius: 28px;
+  background: transparent;
+  border: 2px solid transparent;
+  color: var(--foundation-content-secondary, #6b7280);
+  margin-bottom: 0;
+  transition: all 0.2s ease;
+}
+
+/* Inactive hover - subtle gray background */
+.tabs-pills .tab-button:hover:not(.active) {
+  background: var(--foundation-surface-secondary, #f5f5f5);
+  color: var(--foundation-content-primary, #171717);
+}
+
+/* Pills on LIGHT backgrounds */
+.foundation-context-light .tabs-pills .tab-button.active,
+.tabs-pills .tab-button.active {
+  background: transparent;
+  border: 2px solid var(--foundation-action-primary);
+  color: var(--foundation-action-primary);
+}
+
+.foundation-context-light .tabs-pills .tab-button.active:hover,
+.tabs-pills .tab-button.active:hover {
+  background: var(--foundation-surface-primary-subtle, rgba(0, 204, 170, 0.05));
+  border-color: var(--foundation-action-primary);
+  color: var(--foundation-action-primary);
+}
+
+/* Pills on DARK backgrounds */
+.foundation-context-dark .tabs-pills .tab-button {
+  color: var(--foundation-content-secondary-inverse, #d4d4d4);
+}
+
+.foundation-context-dark .tabs-pills .tab-button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--foundation-content-primary-inverse, #ffffff);
+}
+
+.foundation-context-dark .tabs-pills .tab-button.active {
+  background: var(--foundation-action-primary);
+  color: var(--foundation-action-primary-text);
+  border: none;
+}
+
+.foundation-context-dark .tabs-pills .tab-button.active:hover {
+  background: var(--foundation-action-primary-hover);
+  color: var(--foundation-action-primary-text);
 }
 `
   }
@@ -1053,9 +1178,9 @@ const generateThemeSpecificCSS = (theme: any): string => {
   padding: 0 1rem;
   height: 48px;
   color: var(--carbon-text-primary, #161616);
-  border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: all 70ms cubic-bezier(0, 0, 0.38, 0.9);
+  position: relative;
 }
 
 .tab-button:hover {
@@ -1066,7 +1191,17 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .tab-button.active {
   color: var(--carbon-text-primary, #161616);
   font-weight: 600;
-  border-bottom-color: var(--theme-color-primary, #0f62fe);
+}
+
+/* Carbon underline indicator using ::after */
+.tabs-underline .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--theme-color-primary, #0f62fe);
 }
 
 /* Carbon Menu - Horizontal navigation */
@@ -1448,8 +1583,8 @@ const generateThemeSpecificCSS = (theme: any): string => {
   color: rgba(0, 0, 0, 0.85);
   padding: 12px 0;
   margin: 0 32px 0 0;
-  border-bottom: 2px solid transparent;
   transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: relative;
 }
 
 .tab-button:hover {
@@ -1458,7 +1593,17 @@ const generateThemeSpecificCSS = (theme: any): string => {
 
 .tab-button.active {
   color: #1890ff;
-  border-bottom-color: #1890ff;
+}
+
+/* Ant Design underline indicator using ::after */
+.tabs-underline .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #1890ff;
 }
 
 /* Ant Design Menu */

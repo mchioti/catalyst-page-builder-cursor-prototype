@@ -28,6 +28,7 @@ import {
 } from '../../types'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 import { IconSelector } from '../IconSelector'
+import { getSupportedTabVariants, getTabVariantLabel, type TabVariant } from '../../config/themeTabVariants'
 
 // Import the DEFAULT_PUBLICATION_CARD_CONFIG constant
 const DEFAULT_PUBLICATION_CARD_CONFIG = {
@@ -1850,13 +1851,44 @@ export function PropertiesPanel({
             <label className="block text-sm font-medium text-gray-700 mb-2">Tab Style</label>
             <select
               value={(widget as TabsWidget).tabStyle}
-              onChange={(e) => updateWidget({ tabStyle: e.target.value as 'underline' | 'pills' | 'buttons' })}
+              onChange={(e) => updateWidget({ tabStyle: e.target.value as TabVariant })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="underline">Underline</option>
-              <option value="pills">Pills</option>
-              <option value="buttons">Buttons</option>
+              {(() => {
+                // Get current theme ID from store
+                const currentWebsite = usePageStore.getState().websites.find(
+                  (w: any) => w.id === usePageStore.getState().currentWebsiteId
+                )
+                const currentThemeId = currentWebsite?.themeId || 'classic-ux3-theme'
+                
+                // Get supported variants for this theme
+                const supportedVariants = getSupportedTabVariants(currentThemeId)
+                
+                // Render only supported variants
+                return supportedVariants.map((variant) => (
+                  <option key={variant} value={variant}>
+                    {getTabVariantLabel(variant)}
+                  </option>
+                ))
+              })()}
             </select>
+            {(() => {
+              const currentWebsite = usePageStore.getState().websites.find(
+                (w: any) => w.id === usePageStore.getState().currentWebsiteId
+              )
+              const currentThemeId = currentWebsite?.themeId || 'classic-ux3-theme'
+              const supportedVariants = getSupportedTabVariants(currentThemeId)
+              
+              // Show helper text if some variants are not available
+              if (supportedVariants.length < 3) {
+                return (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Available variants for this theme
+                  </p>
+                )
+              }
+              return null
+            })()}
           </div>
           
           <div>
