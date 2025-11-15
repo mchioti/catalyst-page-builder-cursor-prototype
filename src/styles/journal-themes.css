@@ -40,16 +40,31 @@
 
 /* Journal variant-specific button classes */
 
-/* Primary Button - Uses journal primary color */
+/* Primary Button - Uses journal primary color + theme typography/sizing */
 .journal-primary-button {
+  /* Colors: journal-specific */
   background-color: var(--journal-primary, #ffffff);
   color: var(--journal-text, #2563eb);
   border: 2px solid var(--journal-primary, #dbeafe);
+  
+  /* Typography & Sizing: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  font-size: var(--journal-button-font-size-medium, 1rem);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Layout: inherited from theme */
+  padding: var(--journal-button-padding-medium, 0.5rem 1rem);
+  height: var(--journal-button-height-medium, auto);
+  border-radius: var(--journal-button-radius-medium, 0.375rem);
+  
+  /* Interaction */
   transition: all 0.2s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .journal-primary-button:hover {
@@ -59,16 +74,31 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Secondary Button - Uses journal secondary color */
+/* Secondary Button - Uses journal secondary color + theme typography/sizing */
 .journal-secondary-button {
+  /* Colors: journal-specific */
   background-color: var(--journal-secondary, #f3f4f6);
   color: var(--journal-text-dark, #1f2937);
   border: 2px solid var(--journal-secondary, #d1d5db);
+  
+  /* Typography & Sizing: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  font-size: var(--journal-button-font-size-medium, 1rem);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Layout: inherited from theme */
+  padding: var(--journal-button-padding-medium, 0.5rem 1rem);
+  height: var(--journal-button-height-medium, auto);
+  border-radius: var(--journal-button-radius-medium, 0.375rem);
+  
+  /* Interaction */
   transition: all 0.2s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .journal-secondary-button:hover {
@@ -79,16 +109,31 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Outline Button - Uses journal primary for border */
+/* Outline Button - Uses journal primary for border + theme typography/sizing */
 .journal-outline-button {
+  /* Colors: journal-specific */
   background-color: transparent;
   color: var(--journal-primary, #2563eb);
   border: 2px solid var(--journal-primary, #2563eb);
+  
+  /* Typography & Sizing: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  font-size: var(--journal-button-font-size-medium, 1rem);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Layout: inherited from theme */
+  padding: var(--journal-button-padding-medium, 0.5rem 1rem);
+  height: var(--journal-button-height-medium, auto);
+  border-radius: var(--journal-button-radius-medium, 0.375rem);
+  
+  /* Interaction */
   transition: all 0.2s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .journal-outline-button:hover {
@@ -96,12 +141,20 @@
   color: var(--journal-text, #ffffff);
 }
 
-/* Link Button - Uses journal primary for text */
+/* Link Button - Uses journal primary for text + theme typography */
 .journal-link {
+  /* Colors: journal-specific */
   color: var(--journal-primary, #2563eb);
+  
+  /* Typography: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Interaction */
   transition: color 0.2s ease;
   text-decoration: none;
-  font-weight: 500;
   cursor: pointer;
 }
 
@@ -111,15 +164,31 @@
 }
 
 /* Legacy classes - keeping for backward compatibility */
+/* Now properly inherits theme typography and button styling */
 .journal-themed-button {
+  /* Colors: journal-specific */
   background-color: var(--journal-primary, #ffffff);
   color: var(--journal-text, #2563eb);
   border: 2px solid var(--journal-primary, #dbeafe);
+  
+  /* Typography & Sizing: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  font-size: var(--journal-button-font-size-medium, 1rem);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Layout: inherited from theme */
+  padding: var(--journal-button-padding-medium, 0.5rem 1rem);
+  height: var(--journal-button-height-medium, auto);
+  border-radius: var(--journal-button-radius-medium, 0.375rem);
+  
+  /* Interaction */
   transition: all 0.2s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .journal-themed-button:hover {
@@ -136,14 +205,29 @@
 
 /* Journal-themed outline button variant */
 .journal-themed-button-outline {
+  /* Colors: journal-specific */
   background-color: transparent;
   color: var(--journal-primary, #2563eb);
   border: 2px solid var(--journal-primary, #2563eb);
+  
+  /* Typography & Sizing: inherited from theme */
+  font-family: var(--journal-button-font-family, inherit);
+  font-weight: var(--journal-button-font-weight, 500);
+  font-size: var(--journal-button-font-size-medium, 1rem);
+  letter-spacing: var(--journal-button-letter-spacing, 0);
+  text-transform: var(--journal-button-text-transform, none);
+  
+  /* Layout: inherited from theme */
+  padding: var(--journal-button-padding-medium, 0.5rem 1rem);
+  height: var(--journal-button-height-medium, auto);
+  border-radius: var(--journal-button-radius-medium, 0.375rem);
+  
+  /* Interaction */
   transition: all 0.2s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .journal-themed-button-outline:hover {
@@ -187,4 +271,47 @@
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* ========================================================================== */
+/* TYPOGRAPHY - Inherit from theme                                          */
+/* ========================================================================== */
+
+/* Apply theme typography to journal pages ONLY (not homepage) */
+.journal-advma,
+.journal-embo {
+  /* Body text inherits theme font */
+  font-family: var(--journal-font-family-body);
+}
+
+/* Headings inherit theme heading font */
+.journal-advma h1,
+.journal-advma h2,
+.journal-advma h3,
+.journal-advma h4,
+.journal-advma h5,
+.journal-advma h6,
+.journal-embo h1,
+.journal-embo h2,
+.journal-embo h3,
+.journal-embo h4,
+.journal-embo h5,
+.journal-embo h6 {
+  font-family: var(--journal-font-family-heading);
+  font-weight: var(--journal-font-weight-heading);
+  letter-spacing: var(--journal-letter-spacing-heading);
+}
+
+/* Body text inherits theme body font */
+.journal-advma p,
+.journal-advma div,
+.journal-advma span,
+.journal-advma li,
+.journal-embo p,
+.journal-embo div,
+.journal-embo span,
+.journal-embo li {
+  font-family: var(--journal-font-family-body);
+  font-weight: var(--journal-font-weight-body);
+  letter-spacing: var(--journal-letter-spacing-body);
 }

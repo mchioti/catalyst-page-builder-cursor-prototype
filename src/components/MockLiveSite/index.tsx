@@ -1308,7 +1308,7 @@ export function MockLiveSite({
   return (
     <CanvasThemeProvider usePageStore={usePageStore}>
       <>
-        <div className={`min-h-screen bg-white journal-${journalCode}`}>
+        <div className={`min-h-screen bg-white${journalCode !== 'default' ? ` journal-${journalCode}` : ''}`}>
         {/* Mock Live Site Navigation */}
         <div className="bg-gray-900 text-white px-6 py-3">
           <div className="flex items-center justify-between max-w-6xl mx-auto">

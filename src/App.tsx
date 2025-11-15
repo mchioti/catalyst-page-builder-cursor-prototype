@@ -1993,7 +1993,7 @@ export default function App() {
   if (currentView === 'design-console') {
     return (
       <>
-        <DynamicBrandingCSS websiteId={currentWebsiteId} />
+        <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
         <CanvasThemeProvider 
           usePageStore={usePageStore} 
           scopeCSS={true}
@@ -2008,7 +2008,7 @@ export default function App() {
   if (currentView === 'mock-live-site') {
     return (
       <>
-        <DynamicBrandingCSS websiteId={currentWebsiteId} />
+        <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
         <CanvasThemeProvider usePageStore={usePageStore}>
           <MockLiveSite 
             mockLiveSiteRoute={mockLiveSiteRoute}
@@ -2025,7 +2025,7 @@ export default function App() {
   
   return (
     <>
-      <DynamicBrandingCSS websiteId={currentWebsiteId} />
+      <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
       <PageBuilder 
         usePageStore={usePageStore}
         buildWidget={buildWidget}
