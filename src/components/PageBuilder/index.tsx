@@ -885,12 +885,12 @@ export function PageBuilder({
         
         // Verify the target section exists
         const targetSection = canvasItems.find((item: CanvasItem) => 
-          isSection(item) && item.id === over.data.current.sectionId
+          isSection(item) && item.id === over.data.current?.sectionId
         )
         
         if (!targetSection) {
           debugLog('error','❌ Target section not found!', {
-            expectedSectionId: over.data.current.sectionId,
+            expectedSectionId: over.data.current?.sectionId,
             availableSections: canvasItems.filter(isSection).map((s: any) => s.id)
           })
           return
@@ -910,8 +910,8 @@ export function PageBuilder({
                 }
                 // Add to target area with updated sectionId
                 if (area.id === toAreaId) {
-                  const updatedWidget = { ...draggedWidget, sectionId: over.data.current!.sectionId }
-                  debugLog('log','➕ Adding to target area:', toAreaId, 'in section:', over.data.current.sectionId)
+                  const updatedWidget = { ...draggedWidget, sectionId: over.data.current?.sectionId || '' }
+                  debugLog('log','➕ Adding to target area:', toAreaId, 'in section:', over.data.current?.sectionId)
                   return { ...area, widgets: [...area.widgets, updatedWidget] }
                 }
                 return area

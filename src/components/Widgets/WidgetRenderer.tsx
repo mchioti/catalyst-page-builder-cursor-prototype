@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, TabItem } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 import { useDroppable } from '@dnd-kit/core'
@@ -940,12 +940,12 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
           'medium': 'typo-heading-h4',  // Medium → H4 style (24px/20px)
           'small': 'typo-heading-h6'    // Small → H6 style (18px/16px)
         }
-        return sizeToTypographyMap[widget.size] || 'typo-heading-h4'
+        return sizeToTypographyMap[widget.size || 'medium'] || 'typo-heading-h4'
       }
     } else {
       // Legacy themes: Use Tailwind size classes
-      const effectiveSize = widget.size === 'auto' ? getSemanticDefaultSize(widget.level) : widget.size
-      return sizeClasses[effectiveSize]
+      const effectiveSize = widget.size === 'auto' ? getSemanticDefaultSize(widget.level) : (widget.size || 'medium')
+      return sizeClasses[effectiveSize] || sizeClasses.medium
     }
   }
   
@@ -1636,30 +1636,12 @@ const TabsWidgetRenderer: React.FC<{
     }
   }
   
-  // Get alignment classes
-  const getAlignmentClasses = () => {
-    switch (widget.align) {
-      case 'center':
-        return 'justify-center'
-      case 'right':
-        return 'justify-end'
-      default:
-        return 'justify-start'
-    }
-  }
-  
   // Get tab style classes - NO TAILWIND, pure semantic classes
   const getTabNavClasses = () => {
     const baseClasses = 'tabs-nav'
     const styleClasses = widget.tabStyle === 'pills' ? 'tabs-pills' : widget.tabStyle === 'buttons' ? 'tabs-buttons' : 'tabs-underline'
     const alignmentClasses = widget.align === 'center' ? 'tabs-center' : widget.align === 'right' ? 'tabs-right' : 'tabs-left'
     return `${baseClasses} ${styleClasses} ${alignmentClasses}`
-  }
-  
-  const getTabButtonClasses = (isActive: boolean) => {
-    const baseClasses = 'tab-button'
-    const activeClass = isActive ? 'active' : ''
-    return `${baseClasses} ${activeClass}`
   }
   
   return (

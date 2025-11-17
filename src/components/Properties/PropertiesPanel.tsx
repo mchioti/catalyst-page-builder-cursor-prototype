@@ -990,7 +990,7 @@ export function PropertiesPanel({
                   <label className="block text-sm font-medium text-gray-700 mb-1">Typography Style</label>
                   <select
                     value={widget.typographyStyle || ''}
-                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
+                    onChange={(e) => updateWidget({ typographyStyle: (e.target.value || undefined) as any })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     <option value="">Default</option>
@@ -1015,7 +1015,7 @@ export function PropertiesPanel({
                   </label>
                   <select
                     value={widget.typographyStyle || ''}
-                    onChange={(e) => updateWidget({ typographyStyle: e.target.value || undefined })}
+                    onChange={(e) => updateWidget({ typographyStyle: (e.target.value || undefined) as any })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     <option value="">Default</option>

@@ -629,7 +629,7 @@ export function SectionRenderer({
   }
 
   // Make section droppable for sidebar repositioning
-  const { isOver: isSectionOver, setNodeRef: setSectionDropRef } = useDroppable({
+  const { setNodeRef: setSectionDropRef } = useDroppable({
     id: section.id,
     data: {
       type: 'section',

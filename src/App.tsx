@@ -24,18 +24,15 @@ import { type LibraryItem as SpecItem } from './library'
 import { 
 // Widget types
   type Widget, type WidgetSection, type CanvasItem, isSection, 
-  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type MenuWidget, type MenuItem, type HTMLWidget, type CodeWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
-  // Template types  
-  type TemplateCategory, type TemplateStatus, type Modification, type Website, type Theme,
+  type Skin, type WidgetBase, type TextWidget, type ImageWidget, type NavbarWidget, type MenuWidget, type HTMLWidget, type CodeWidget, type HeadingWidget, type ButtonWidget, type PublicationListWidget, type PublicationDetailsWidget,
   // App types
-  type DesignConsoleView, type PageState, type Notification, type PageIssue, type NotificationType, type TemplateModification,
+  type PageState, type Notification, type PageIssue, type NotificationType, type TemplateModification,
   // Schema.org types
   type SchemaObject, type SchemaOrgType
 } from './types'
 import { 
   MOCK_SCHOLARLY_ARTICLES, 
-  DEFAULT_PUBLICATION_CARD_CONFIG, 
-  PREFAB_SECTIONS
+  DEFAULT_PUBLICATION_CARD_CONFIG
 } from './constants'
 import { createDebugLogger } from './utils/logger'
 
@@ -1875,7 +1872,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     debugLog('log', `📊 ${affectedModifications.length} journals will inherit this change`)
   },
   
-  promoteToJournalTemplate: (route, journalCode, templateId) => {
+  promoteToJournalTemplate: (route, journalCode, _templateId) => {
     const state = get()
     const { routeCanvasItems } = state
     const customizedCanvas = routeCanvasItems[route]
@@ -1913,7 +1910,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     debugLog('log', `📊 All ${journalCode} issues will inherit this change`)
   },
   
-  promoteToPublisherTheme: (templateId, journalCode) => {
+  promoteToPublisherTheme: (templateId, _journalCode) => {
     const state = get()
     const { globalTemplateCanvas } = state
     
