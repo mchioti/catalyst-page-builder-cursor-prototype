@@ -294,9 +294,23 @@ export type CustomSection = {
   id: string
   name: string
   description?: string
+  source?: 'mock' | 'user'  // Source of the section: 'mock' = demo data, 'user' = created by user
+  websiteId?: string  // Which website this section belongs to (optional for backwards compatibility)
+  websiteName?: string  // Website display name for reference
   widgets: Widget[]  // Keep this for metadata/counting (legacy)
   section?: WidgetSection  // Full section structure for reconstruction (legacy)
   canvasItems?: CanvasItem[]  // Full canvas items for reconstruction (new approach)
+  createdAt: Date
+}
+
+export type CustomStarterPage = {
+  id: string
+  name: string
+  description?: string
+  source?: 'mock' | 'user'  // Source of the page: 'mock' = demo data, 'user' = created by user
+  websiteId: string  // Which website this starter belongs to
+  websiteName: string  // Website display name for reference
+  canvasItems: CanvasItem[]  // Full page content
   createdAt: Date
 }
 

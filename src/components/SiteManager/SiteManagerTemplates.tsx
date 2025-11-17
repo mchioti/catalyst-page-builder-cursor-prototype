@@ -1044,16 +1044,22 @@ export const ALL_TEMPLATES = [...WEBSITE_TEMPLATES, ...PUBLICATION_TEMPLATES, ..
 interface SiteManagerTemplatesProps {
   themeId?: string // Theme ID to display in header badge
   usePageStore?: any // Zustand store hook for divergence tracking
+  libraryType?: 'templates' | 'starters' | 'sections' // Which library to display (set by navigation)
 }
 
-export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTemplatesProps) {
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
+export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: SiteManagerTemplatesProps) {
+  // If libraryType is provided via navigation, lock to that type; otherwise allow manual switching
+  const [selectedType, setSelectedType] = useState<'templates' | 'starters' | 'sections'>(libraryType || 'templates')
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>(libraryType === 'templates' ? 'publication' : libraryType === 'starters' ? 'website' : 'global')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'draft' | 'archived'>('all')
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
   const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set()) // For bulk updates
+  
+  // Lock to libraryType if provided from navigation
+  const isLockedToLibrary = Boolean(libraryType)
 
   // Map theme IDs to display names
   const getThemeName = (themeId?: string): string => {
@@ -1069,20 +1075,44 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
     }
   }
 
+  // Define categories with their type grouping
+  // Note: Supporting Pages are MERGED with Website Pages under 'starters' type
   const categories = [
-    { key: 'website', label: 'Website Page Templates', description: 'Complete pages for the Publisher\'s site', type: 'page' },
-    { key: 'publication', label: 'Publication Page Templates', description: 'Complete journal and article page layouts', type: 'page' },
-    { key: 'supporting', label: 'Supporting Pages Templates', description: 'Supporting and auxiliary page layouts', type: 'page' },
-    { key: 'global', label: 'Global Section Templates', description: 'Reusable components like headers, footers, navigation', type: 'section' },
-    { key: 'section', label: 'Content Section Templates', description: 'Individual content components and sections', type: 'section' }
+    // Templates (data-driven hierarchical pages with inheritance)
+    { key: 'publication', label: 'Publication Page Templates', description: 'Data-driven hierarchical pages (Journal → Archive → Issue → Article)', type: 'templates', group: 'publication' },
+    
+    // Starter Pages (marketing/creative pages, copy not inherit)
+    // Website and Supporting are both shown under 'website' category for starters
+    { key: 'website', label: 'Starter Pages', description: 'Website, Supporting, and Legal pages (Homepage, About, Contact, Privacy, etc.)', type: 'starters', group: 'all' },
+    { key: 'supporting', label: 'Supporting Pages', description: 'Hidden - merged with website', type: 'starters', group: 'supporting', hidden: true },
+    
+    // Sections (reusable prefab components)
+    { key: 'global', label: 'Global Sections', description: 'Site-wide components (Header, Footer, Navigation, etc.)', type: 'sections', group: 'global' },
+    { key: 'section', label: 'Content Sections', description: 'Reusable content components (Hero, Features, CTA, etc.)', type: 'sections', group: 'content' }
   ] as const
+  
+  // Get categories for the selected type (exclude hidden ones)
+  const availableCategories = categories.filter(cat => cat.type === selectedType && !cat.hidden)
+  
+  // Handle type change - auto-switch to first available category
+  const handleTypeChange = (newType: 'templates' | 'starters' | 'sections') => {
+    setSelectedType(newType)
+    const firstCategory = categories.find(cat => cat.type === newType)
+    if (firstCategory) {
+      setSelectedCategory(firstCategory.key)
+    }
+  }
 
   // Combine all templates
   const allTemplates = [...WEBSITE_TEMPLATES, ...PUBLICATION_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
   
   // Filter templates based on selected category, search, and status
   const filteredTemplates = allTemplates.filter(template => {
-    const matchesCategory = template.category === selectedCategory
+    // Special case: When viewing 'website' under starters type, include BOTH website AND supporting templates
+    const matchesCategory = selectedType === 'starters' && selectedCategory === 'website'
+      ? (template.category === 'website' || template.category === 'supporting')
+      : template.category === selectedCategory
+      
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -1323,14 +1353,19 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {categories.find(c => c.key === selectedCategory)?.label || 'Templates'}
+                  {selectedType === 'templates' && '📋 Templates'}
+                  {selectedType === 'starters' && '🎨 Starter Pages'}
+                  {selectedType === 'sections' && '🧩 Sections'}
+                  {availableCategories.length > 1 && ` • ${categories.find(c => c.key === selectedCategory)?.label.replace(' Page Templates', '').replace(' Sections', '')}`}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {getThemeName(themeId)}
                 </span>
               </div>
               <p className="text-gray-600 mt-1">
-                {categories.find(c => c.key === selectedCategory)?.description || 'Manage and organize templates across your publishing platform'}
+                {selectedType === 'templates' && 'Data-driven hierarchical pages with inheritance (Journal → Archive → Issue → Article)'}
+                {selectedType === 'starters' && 'Marketing and creative pages - create independent copies for each website'}
+                {selectedType === 'sections' && 'Reusable prefab components - drag & drop into any page'}
               </p>
             </div>
           </div>
@@ -1383,7 +1418,9 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
-                    New Template
+                    {selectedType === 'templates' && 'New Template'}
+                    {selectedType === 'starters' && 'New Starter Page'}
+                    {selectedType === 'sections' && 'New Section'}
                   </button>
                 </div>
               </div>
@@ -1414,9 +1451,9 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
                         />
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {selectedCategory === 'global' || selectedCategory === 'section' 
-                          ? 'Section Template Name' 
-                          : 'Page Template Name'}
+                        {selectedType === 'templates' && 'Template Name'}
+                        {selectedType === 'starters' && 'Starter Page Name'}
+                        {selectedType === 'sections' && 'Section Name'}
                       </th>
                       <th className="text-right py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -1452,71 +1489,118 @@ export function SiteManagerTemplates({ themeId, usePageStore }: SiteManagerTempl
 
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Template Types</h3>
-            <nav className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Page Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Complete page layouts</div>
+            {/* Only show Browse section if NOT locked to a specific library */}
+            {!isLockedToLibrary && (
+              <>
+                <h3 className="font-semibold text-gray-900 mb-4">Browse</h3>
+                
+                {/* Top-Level Type Selector */}
+                <nav className="space-y-2 mb-6">
+                  <button
+                    onClick={() => handleTypeChange('templates')}
+                    className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                      selectedType === 'templates'
+                        ? 'bg-purple-100 text-purple-900'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>📋 Templates</span>
+                      {selectedType === 'templates' && <span className="text-xs">▼</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Data-driven pages with inheritance</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleTypeChange('starters')}
+                    className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                      selectedType === 'starters'
+                        ? 'bg-blue-100 text-blue-900'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>🎨 Starter Pages</span>
+                      {selectedType === 'starters' && <span className="text-xs">▼</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Marketing & creative pages (copy, not inherit)</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleTypeChange('sections')}
+                    className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                      selectedType === 'sections'
+                        ? 'bg-green-100 text-green-900'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>🧩 Sections</span>
+                      {selectedType === 'sections' && <span className="text-xs">▼</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Reusable prefab components</div>
+                  </button>
+                </nav>
+              </>
+            )}
+            
+            {/* Category Navigation (filtered by selected type) - Show if multiple categories exist */}
+            {availableCategories.length > 1 && (
+              <div className={isLockedToLibrary ? '' : 'border-t border-gray-200 pt-4'}>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+                  {selectedType === 'templates' && 'Content Types'}
+                  {selectedType === 'starters' && 'Page Types'}
+                  {selectedType === 'sections' && 'Section Types'}
+                </h4>
                 <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'page').map((category) => (
+                  {availableCategories.map((category) => (
                     <button
                       key={category.key}
                       onClick={() => setSelectedCategory(category.key)}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                         selectedCategory === category.key
-                          ? 'bg-blue-100 text-blue-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? selectedType === 'templates' ? 'bg-purple-50 text-purple-900 font-medium' :
+                            selectedType === 'starters' ? 'bg-blue-50 text-blue-900 font-medium' :
+                            'bg-green-50 text-green-900 font-medium'
+                          : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <div>{category.label.replace(' Page Templates', '')}</div>
+                      <div>{category.label.replace(' Page Templates', '').replace(' Sections', '')}</div>
                       <div className="text-xs text-gray-500 mt-1">{category.description}</div>
                     </button>
                   ))}
                 </div>
               </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Section Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Reusable components & sections</div>
-                <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'section').map((category) => (
-                    <button
-                      key={category.key}
-                      onClick={() => setSelectedCategory(category.key)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.key
-                          ? 'bg-green-100 text-green-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div>{category.label.replace(' Section Templates', '')}</div>
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </nav>
+            )}
 
-            {/* Color Legend */}
+            {/* Info Box */}
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Template Types</h4>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <span className="text-gray-600">Website Infrastructure</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                  <span className="text-gray-600">Content Generation</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-gray-600">Creative Sandbox</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                  <span className="text-gray-600">Reusable Components</span>
-                </div>
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">About</h4>
+              <div className="space-y-2 text-xs text-gray-600">
+                {selectedType === 'templates' && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-500 mt-1"></div>
+                      <span><strong>Templates</strong> are data-driven pages with inheritance. Changes propagate to child pages.</span>
+                    </div>
+                  </>
+                )}
+                {selectedType === 'starters' && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+                      <span><strong>Starter Pages</strong> are independent copies. No inheritance or propagation.</span>
+                    </div>
+                  </>
+                )}
+                {selectedType === 'sections' && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500 mt-1"></div>
+                      <span><strong>Sections</strong> are reusable components. Drag & drop into any page.</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             </div>

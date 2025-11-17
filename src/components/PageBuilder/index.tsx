@@ -163,7 +163,7 @@ export function PageBuilder({
   isSection
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage } = usePageStore()
   
   // Debug: Log canvas state on render
   debugLog('log', '🎨 PageBuilder render - Canvas items:', canvasItems.length)
@@ -1374,6 +1374,65 @@ export function PageBuilder({
                 >
                   Switch to Template Mode
                 </button>
+                <button
+                  onClick={() => {
+                    const currentWebsiteId = usePageStore.getState().currentWebsiteId
+                    const currentWebsite = usePageStore.getState().websites.find((w: any) => w.id === currentWebsiteId)
+                    
+                    if (canvasItems.length === 0) {
+                      showToast('Cannot save empty page as starter', 'error')
+                      return
+                    }
+
+                    const starterName = prompt('Enter a name for this starter page:')
+                    if (!starterName?.trim()) return
+
+                    const starterDescription = prompt('Enter a description (optional):') || 'Custom starter page'
+
+                    // Deep clone and regenerate IDs for canvas items to avoid conflicts
+                    const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
+                      if (isSection(item)) {
+                        const newSectionId = nanoid()
+                        return {
+                          ...item,
+                          id: newSectionId,
+                          areas: (item as WidgetSection).areas.map((area: any) => ({
+                            ...area,
+                            id: nanoid(),
+                            widgets: area.widgets.map((widget: any) => ({
+                              ...widget,
+                              id: nanoid(),
+                              sectionId: newSectionId
+                            }))
+                          }))
+                        }
+                      } else {
+                        return {
+                          ...item,
+                          id: nanoid()
+                        }
+                      }
+                    })
+
+                    // Create the custom starter page
+                    const newStarterPage = {
+                      id: nanoid(),
+                      name: starterName.trim(),
+                      description: starterDescription,
+                      source: 'user' as const,
+                      websiteId: currentWebsiteId,
+                      websiteName: currentWebsite?.name || 'Unknown',
+                      createdAt: new Date(),
+                      canvasItems: clonedCanvasItems
+                    }
+
+                    addCustomStarterPage(newStarterPage)
+                    showToast(`Starter page "${starterName.trim()}" saved!`, 'success')
+                  }}
+                  className="ml-3 text-xs text-green-600 hover:text-green-800 underline"
+                >
+                  Save as Starter Page
+                </button>
               </div>
             )}
             
@@ -1492,84 +1551,13 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
   usePageStore: any
   buildWidget: (item: any) => Widget
 }) {
-  const { customSections = [], canvasItems, replaceCanvasItems, addCustomSection, selectWidget } = usePageStore()
+  const { customSections = [], customStarterPages = [], canvasItems, replaceCanvasItems, removeCustomStarterPage, selectWidget, currentWebsiteId } = usePageStore()
 
   // DIY Widgets - Advanced/Technical widgets for power users
   const diyWidgets = [
     { id: 'html-block', label: 'HTML Block', type: 'html-block' as const, description: 'Custom HTML content', skin: 'minimal' as const, status: 'supported' as const },
     { id: 'code-block', label: 'Code Block', type: 'code-block' as const, description: 'Syntax-highlighted code', skin: 'minimal' as const, status: 'supported' as const }
   ]
-
-  // Save current canvas as a custom section
-  const saveCurrentAsSection = () => {
-    try {
-      // Clear any selection first to avoid interference
-      selectWidget(null)
-      
-      if (canvasItems.length === 0) {
-        showToast('Cannot save empty canvas as section', 'error')
-        return
-      }
-
-      const sectionName = prompt('Enter a name for this custom section:')
-      if (!sectionName?.trim()) return
-
-      const sectionDescription = prompt('Enter a description (optional):') || 'Custom saved section'
-
-      // Count total widgets
-      const totalWidgets = canvasItems.reduce((count: number, item: CanvasItem) => {
-        if (isSection(item)) {
-          return count + item.areas.reduce((areaCount: number, area: any) => areaCount + area.widgets.length, 0)
-        } else {
-          return count + 1 // standalone widget
-        }
-      }, 0)
-
-      // Deep clone and regenerate IDs for canvas items to avoid conflicts
-      const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
-        if (isSection(item)) {
-          // For sections, also regenerate widget IDs
-          const newSectionId = nanoid()
-          return {
-            ...item,
-            id: newSectionId,
-            areas: item.areas.map(area => ({
-              ...area,
-              id: nanoid(),
-              widgets: area.widgets.map(widget => ({
-                ...widget,
-                id: nanoid(),
-                sectionId: newSectionId // Set to the new section ID
-              }))
-            }))
-          }
-        } else {
-          // For standalone widgets
-          return {
-            ...item,
-            id: nanoid()
-          }
-        }
-      })
-
-      // Create the custom section with proper structure
-      const newSavedSection = {
-        id: nanoid(),
-        name: sectionName.trim(),
-        description: sectionDescription,
-        widgets: [], // Legacy field, keeping empty for compatibility
-        createdAt: new Date(),
-        canvasItems: clonedCanvasItems
-      }
-
-      addCustomSection(newSavedSection)
-      showToast(`Section "${sectionName.trim()}" saved with ${totalWidgets} widget${totalWidgets !== 1 ? 's' : ''}!`, 'success')
-    
-    } catch (error) {
-      debugLog('error','❌ ERROR in saveCurrentAsSection:', error)
-      showToast('Error saving section: ' + (error instanceof Error ? error.message : String(error)), 'error')
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -1624,14 +1612,6 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
           <Plus className="w-4 h-4" />
           Saved Sections
         </h3>
-        
-        <button
-          onClick={saveCurrentAsSection}
-          className="w-full p-3 text-left border-2 border-dashed border-gray-300 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors mb-3"
-        >
-          <div className="font-medium text-sm text-gray-600">+ Save Current Canvas</div>
-          <div className="text-xs text-gray-500">Save current sections as reusable template</div>
-        </button>
 
         {customSections.length > 0 ? (
           <div className="space-y-2">
@@ -1686,6 +1666,75 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
             <div className="text-4xl mb-2">📦</div>
             <div className="text-sm">No saved sections yet</div>
             <div className="text-xs mt-1">Create some sections and save them for reuse</div>
+          </div>
+        )}
+      </div>
+
+      {/* Saved Starter Pages */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Saved Starter Pages
+        </h3>
+
+        {customStarterPages.filter((page: any) => page.websiteId === currentWebsiteId).length > 0 ? (
+          <div className="space-y-2">
+            {customStarterPages
+              .filter((page: any) => page.websiteId === currentWebsiteId)
+              .map((page: any) => {
+                const itemCount = page.canvasItems?.length || 0
+                
+                return (
+                  <div key={page.id} className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{page.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{page.description}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {itemCount} section{itemCount !== 1 ? 's' : ''} • 
+                          Saved {new Date(page.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-2">
+                        <button
+                          onClick={() => {
+                            const confirmed = window.confirm(
+                              `⚠️ Replace current page?\n\nYour current page will be replaced by "${page.name}".\n\nThis action cannot be undone. Continue?`
+                            )
+                            
+                            if (confirmed) {
+                              const itemsToLoad = page.canvasItems || []
+                              selectWidget(null)
+                              replaceCanvasItems(itemsToLoad)
+                              showToast(`"${page.name}" loaded!`, 'success')
+                            }
+                          }}
+                          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
+                        >
+                          Load
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete "${page.name}"?`)) {
+                              removeCustomStarterPage(page.id)
+                              showToast(`"${page.name}" deleted`, 'success')
+                            }
+                          }}
+                          className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex-shrink-0"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">📄</div>
+            <div className="text-sm">No saved starter pages yet</div>
+            <div className="text-xs mt-1">Save your pages as reusable starters</div>
           </div>
         )}
       </div>

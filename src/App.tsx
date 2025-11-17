@@ -8,6 +8,8 @@ import { MockLiveSite } from './components/MockLiveSite'
 import { TemplateCanvas } from './components/Templates/TemplateCanvas'
 import { mockWebsites } from './data/mockWebsites'
 import { mockThemes } from './data/mockThemes'
+import { mockStarterPages } from './data/mockStarterPages'
+import { mockSections } from './data/mockSections'
 import { PublicationCard } from './components/Publications/PublicationCard'
 import { CanvasThemeProvider } from './components/Canvas/CanvasThemeProvider'
 import { generateAIContent, generateAISingleContent } from './utils/aiContentGeneration'
@@ -1213,6 +1215,46 @@ function buildWidget(item: SpecItem): Widget {
   }
 }
 
+// LocalStorage keys
+const STORAGE_KEYS = {
+  CUSTOM_STARTER_PAGES: 'catalyst-custom-starter-pages',
+  CUSTOM_SECTIONS: 'catalyst-custom-sections'
+}
+
+// Load user-created starters and sections from localStorage
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T[]): T[] => {
+  try {
+    const stored = localStorage.getItem(key)
+    if (!stored) return defaultValue
+    return JSON.parse(stored)
+  } catch (error) {
+    console.error(`Failed to load ${key} from localStorage:`, error)
+    return defaultValue
+  }
+}
+
+// Save to localStorage
+const saveToLocalStorage = <T,>(key: string, data: T[]) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch (error) {
+    console.error(`Failed to save ${key} to localStorage:`, error)
+  }
+}
+
+// Initialize with mock data + user-created data from localStorage
+const initializeCustomStarterPages = () => {
+  const userCreatedPages = loadFromLocalStorage(STORAGE_KEYS.CUSTOM_STARTER_PAGES, [])
+  // Merge: mock demo pages + user-created pages
+  return [...mockStarterPages, ...userCreatedPages]
+}
+
+const initializeCustomSections = () => {
+  const userCreatedSections = loadFromLocalStorage(STORAGE_KEYS.CUSTOM_SECTIONS, [])
+  // Merge: mock demo sections + user-created sections
+  return [...mockSections, ...userCreatedSections]
+}
+
 export const usePageStore = create<PageState>((set, get) => ({
   // Routing  
   currentView: 'design-console',
@@ -1414,7 +1456,8 @@ export const usePageStore = create<PageState>((set, get) => ({
   routeCanvasItems: {}, // Route-specific canvas storage
   globalTemplateCanvas: [], // Global template changes
   journalTemplateCanvas: {}, // Journal-specific template storage
-  customSections: [],
+  customSections: initializeCustomSections(), // Mock demo sections + user-created sections from localStorage
+  customStarterPages: initializeCustomStarterPages(), // Mock demo pages + user-created pages from localStorage
   // Template System Data
   // Templates are now organized within themes instead of standalone
   templates: [],
@@ -1539,8 +1582,36 @@ export const usePageStore = create<PageState>((set, get) => ({
       selectedWidget: state.selectedWidget === widgetId ? null : state.selectedWidget
     }
   }),
-  addCustomSection: (section) => set((s) => ({ customSections: [...s.customSections, section] })),
-  removeCustomSection: (id) => set((s) => ({ customSections: s.customSections.filter(section => section.id !== id) })),
+  addCustomSection: (section) => set((s) => {
+    const newSections = [...s.customSections, section]
+    // Save only user-created sections (exclude mock demo sections)
+    const userCreatedSections = newSections.filter(sec => sec.source === 'user')
+    saveToLocalStorage(STORAGE_KEYS.CUSTOM_SECTIONS, userCreatedSections)
+    return { customSections: newSections }
+  }),
+  removeCustomSection: (id) => set((s) => {
+    const filteredSections = s.customSections.filter(section => section.id !== id)
+    // Save only user-created sections (exclude mock demo sections)
+    const userCreatedSections = filteredSections.filter(sec => sec.source === 'user')
+    saveToLocalStorage(STORAGE_KEYS.CUSTOM_SECTIONS, userCreatedSections)
+    return { customSections: filteredSections }
+  }),
+  
+  // Custom Starter Pages management
+  addCustomStarterPage: (starterPage) => set((s) => {
+    const newPages = [...s.customStarterPages, starterPage]
+    // Save only user-created pages (exclude mock demo pages)
+    const userCreatedPages = newPages.filter(page => page.source === 'user')
+    saveToLocalStorage(STORAGE_KEYS.CUSTOM_STARTER_PAGES, userCreatedPages)
+    return { customStarterPages: newPages }
+  }),
+  removeCustomStarterPage: (id) => set((s) => {
+    const filteredPages = s.customStarterPages.filter(page => page.id !== id)
+    // Save only user-created pages (exclude mock demo pages)
+    const userCreatedPages = filteredPages.filter(page => page.source === 'user')
+    saveToLocalStorage(STORAGE_KEYS.CUSTOM_STARTER_PAGES, userCreatedPages)
+    return { customStarterPages: filteredPages }
+  }),
   addPublicationCardVariant: (variant) => set((s) => ({ publicationCardVariants: [...s.publicationCardVariants, variant] })),
   removePublicationCardVariant: (id) => set((s) => ({ publicationCardVariants: s.publicationCardVariants.filter(variant => variant.id !== id) })),
   setInsertPosition: (position) => set({ insertPosition: position }),

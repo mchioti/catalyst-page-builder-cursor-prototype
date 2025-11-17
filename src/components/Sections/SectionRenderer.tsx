@@ -556,7 +556,8 @@ export function SectionRenderer({
 
   const handleSaveSection = () => {
     if (sectionName.trim()) {
-      const { addCustomSection } = usePageStore.getState()
+      const { addCustomSection, currentWebsiteId, websites } = usePageStore.getState()
+      const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
       
       // Count widgets in the section for better metadata
       const widgetCount = section.areas.reduce((count, area) => count + area.widgets.length, 0)
@@ -581,6 +582,9 @@ export function SectionRenderer({
         id: nanoid(),
         name: sectionName.trim(),
         description: sectionDescription.trim() || 'Custom saved section',
+        source: 'user' as const,
+        websiteId: currentWebsiteId,
+        websiteName: currentWebsite?.name || 'Unknown',
         widgets: section.areas.flatMap(area => area.widgets), // Legacy field for compatibility
         createdAt: new Date(),
         section: sectionWithNewId, // Legacy field for compatibility

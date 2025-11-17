@@ -52,20 +52,16 @@ export function WebsiteTemplates({
   onToggleTemplateSelection
 }: WebsiteTemplatesProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>('website')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
-  // Categories (same as Theme Templates)
-  const categories = [
-    { key: 'website', label: 'Website Page Templates', description: 'Complete pages for the Publisher\'s site', type: 'page' },
-    { key: 'publication', label: 'Publication Page Templates', description: 'Complete journal and article page layouts', type: 'page' },
-    { key: 'supporting', label: 'Supporting Pages Templates', description: 'Supporting and auxiliary page layouts', type: 'page' },
-    { key: 'global', label: 'Global Section Templates', description: 'Reusable components like headers, footers, navigation', type: 'section' },
-    { key: 'section', label: 'Content Section Templates', description: 'Individual content components and sections', type: 'section' }
-  ] as const
-
   // Filter templates to only show those relevant to this website's content types and settings
+  // NOTE: Website and Supporting page templates are excluded - these are now "Starter Pages"
   const relevantTemplates = allTemplates.filter(template => {
+    // EXCLUDE Website and Supporting page templates (these are now Starter Pages, not Templates)
+    if (template.category === 'website' || template.category === 'supporting') {
+      return false
+    }
+    
     // Filter out Subject Browse template if subject organization is not enabled
     if (template.id === 'subject-browse-taxonomy' && !hasSubjectOrganization) {
       return false
@@ -79,14 +75,12 @@ export function WebsiteTemplates({
     return enabledContentTypes.includes(template.contentType)
   })
 
-  // Filter by category and search term
+  // Filter by search term only (no category filtering needed - we show all template types together)
   const filteredTemplates = relevantTemplates.filter(template => {
-    const matchesCategory = template.category === selectedCategory
-    
-    if (!searchTerm) return matchesCategory
+    if (!searchTerm) return true
     
     const searchLower = searchTerm.toLowerCase()
-    return matchesCategory && (
+    return (
       template.name.toLowerCase().includes(searchLower) ||
       template.description.toLowerCase().includes(searchLower) ||
       template.tags.some(tag => tag.toLowerCase().includes(searchLower))
@@ -262,25 +256,21 @@ export function WebsiteTemplates({
         </div>
       </div>
 
-      {/* Main Content Grid with Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-3">
-          {/* Search */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search templates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+      {/* Search */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search templates..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
 
-          {/* Templates Table */}
+      {/* Templates Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         {filteredTemplates.length === 0 ? (
           <div className="p-12 text-center">
@@ -295,9 +285,7 @@ export function WebsiteTemplates({
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {selectedCategory === 'global' || selectedCategory === 'section' 
-                      ? 'Section Template Name' 
-                      : 'Page Template Name'}
+                    Template Name
                   </th>
                   <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Modifications
@@ -334,58 +322,6 @@ export function WebsiteTemplates({
             </table>
           </div>
         )}
-      </div>
-        </div>
-
-        {/* Sidebar - Template Categories */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Template Types</h3>
-            <nav className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Page Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Complete page layouts</div>
-                <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'page').map((category) => (
-                    <button
-                      key={category.key}
-                      onClick={() => setSelectedCategory(category.key)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.key
-                          ? 'bg-blue-100 text-blue-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div>{category.label.replace(' Page Templates', '')}</div>
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Section Templates</h4>
-                <div className="text-xs text-gray-500 mb-3">Reusable components & sections</div>
-                <div className="space-y-1">
-                  {categories.filter(cat => cat.type === 'section').map((category) => (
-                    <button
-                      key={category.key}
-                      onClick={() => setSelectedCategory(category.key)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.key
-                          ? 'bg-green-100 text-green-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div>{category.label.replace(' Section Templates', '')}</div>
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </nav>
-          </div>
-        </div>
       </div>
     </div>
   )

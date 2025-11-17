@@ -1,6 +1,6 @@
 // Application and UI state types
 
-import type { CanvasItem, Widget, WidgetSection, CustomSection, PublicationCardVariant, ContentBlockLayout } from './widgets'
+import type { CanvasItem, Widget, WidgetSection, CustomSection, CustomStarterPage, PublicationCardVariant, ContentBlockLayout } from './widgets'
 import type { BaseTemplate, Website, Theme, Modification } from './templates'
 import type { SchemaObject, SchemaOrgType } from './schema'
 
@@ -12,9 +12,27 @@ export type DesignConsoleView =
   | 'modernist-theme-theme-settings' 
   | 'modernist-theme-publication-cards'
   | 'modernist-theme-templates' 
+  | 'modernist-theme-template-library'
+  | 'modernist-theme-starter-library'
+  | 'modernist-theme-section-library'
   | 'classicist-theme-theme-settings' 
   | 'classicist-theme-publication-cards'
   | 'classicist-theme-templates'
+  | 'classicist-theme-template-library'
+  | 'classicist-theme-starter-library'
+  | 'classicist-theme-section-library'
+  | 'classic-ux3-theme-template-library'
+  | 'classic-ux3-theme-starter-library'
+  | 'classic-ux3-theme-section-library'
+  | 'wiley-figma-ds-v2-template-library'
+  | 'wiley-figma-ds-v2-starter-library'
+  | 'wiley-figma-ds-v2-section-library'
+  | 'ibm-carbon-ds-template-library'
+  | 'ibm-carbon-ds-starter-library'
+  | 'ibm-carbon-ds-section-library'
+  | 'ant-design-template-library'
+  | 'ant-design-starter-library'
+  | 'ant-design-section-library'
   // Website-level views (per-website customization)
   | 'catalyst-demo-site-settings'
   | 'catalyst-demo-site-branding'
@@ -137,6 +155,7 @@ export type PageState = {
   globalTemplateCanvas: CanvasItem[] // Global template changes that apply to all TOC routes
   journalTemplateCanvas: Record<string, CanvasItem[]> // Journal-specific template storage (journalCode -> template)
   customSections: CustomSection[]
+  customStarterPages: CustomStarterPage[]
   publicationCardVariants: PublicationCardVariant[]
   selectedWidget: string | null
   insertPosition: { relativeTo: string; position: 'above' | 'below' } | null
@@ -175,6 +194,8 @@ export type PageState = {
   clearJournalTemplateCanvas: (journalCode: string) => void
   addCustomSection: (section: CustomSection) => void
   removeCustomSection: (id: string) => void
+  addCustomStarterPage: (starterPage: CustomStarterPage) => void
+  removeCustomStarterPage: (id: string) => void
   addPublicationCardVariant: (variant: PublicationCardVariant) => void
   removePublicationCardVariant: (id: string) => void
   setInsertPosition: (position: { relativeTo: string; position: 'above' | 'below' } | null) => void

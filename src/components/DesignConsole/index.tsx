@@ -17,6 +17,7 @@ import { SiteManagerTemplates } from '../SiteManager/SiteManagerTemplates'
 import { PublicationCards } from '../SiteManager/PublicationCards'
 import { ThemeEditor } from '../SiteManager/ThemeEditor'
 import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
+import { WebsiteDesignLibrary } from '../SiteManager/WebsiteDesignLibrary'
 import { WebsiteBrandingConfiguration } from '../SiteManager/WebsiteBrandingConfiguration'
 import { WebsiteCreationWizard } from '../Wizards/WebsiteCreation'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
@@ -216,7 +217,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <Globe className="w-4 h-4" />
-                        Custom Templates
+                        Design Library
                       </button>
                     </div>
                   )}
@@ -279,15 +280,37 @@ export function DesignConsole() {
                       </button>
                       
                       <button
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-template-library` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${theme.id}-templates`
+                          siteManagerView === `${theme.id}-template-library`
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
                         <FileText className="w-4 h-4" />
-                        Design Templates
+                        Template Library
+                      </button>
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-starter-library` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-starter-library`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Starter Page Library
+                      </button>
+                      <button
+                        onClick={() => setSiteManagerView(`${theme.id}-section-library` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${theme.id}-section-library`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Section Library
                       </button>
                         </div>
                   )}
@@ -588,14 +611,35 @@ export function DesignConsole() {
             })()
           )}
           
-          {/* Dynamic fallback for any theme templates not explicitly handled */}
-          {siteManagerView.endsWith('-templates') && !siteManagerView.includes('-custom-templates') &&
-           !['modernist-theme-templates'].includes(siteManagerView) && (
+          {/* Dynamic handler for Template Library (Publication templates only) */}
+          {siteManagerView.endsWith('-template-library') && (
             (() => {
-              const themeId = siteManagerView.replace('-templates', '')
+              const themeId = siteManagerView.replace('-template-library', '')
               const theme = themes.find(t => t.id === themeId)
               return theme ? (
-                <SiteManagerTemplates themeId={themeId} usePageStore={usePageStore} />
+                <SiteManagerTemplates themeId={themeId} usePageStore={usePageStore} libraryType="templates" />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic handler for Starter Page Library (Website + Supporting pages merged) */}
+          {siteManagerView.endsWith('-starter-library') && (
+            (() => {
+              const themeId = siteManagerView.replace('-starter-library', '')
+              const theme = themes.find(t => t.id === themeId)
+              return theme ? (
+                <SiteManagerTemplates themeId={themeId} usePageStore={usePageStore} libraryType="starters" />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic handler for Section Library (Global + Content sections) */}
+          {siteManagerView.endsWith('-section-library') && (
+            (() => {
+              const themeId = siteManagerView.replace('-section-library', '')
+              const theme = themes.find(t => t.id === themeId)
+              return theme ? (
+                <SiteManagerTemplates themeId={themeId} usePageStore={usePageStore} libraryType="sections" />
               ) : null
             })()
           )}
@@ -675,16 +719,11 @@ export function DesignConsole() {
               const websiteId = siteManagerView.replace('-custom-templates', '')
               const website = websites.find(w => w.id === websiteId)
               return website ? (
-                <div>
-                  <div className="mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-slate-800">{website.name} - Custom Templates</h2>
-                    <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-                  </div>
-                  <div className="bg-white p-6 rounded-lg border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                    <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-                  </div>
-                </div>
+                <WebsiteDesignLibrary
+                  websiteId={website.id}
+                  websiteName={website.name}
+                  usePageStore={usePageStore}
+                />
               ) : null
             })()
           )}
