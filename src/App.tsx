@@ -1263,11 +1263,20 @@ const STORAGE_KEYS = {
 }
 
 // Load user-created starters and sections from localStorage
+// Reviver function to convert date strings back to Date objects
+const dateReviver = (key: string, value: any) => {
+  // Check if the value looks like an ISO date string
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+    return new Date(value)
+  }
+  return value
+}
+
 const loadFromLocalStorage = <T,>(key: string, defaultValue: T[]): T[] => {
   try {
     const stored = localStorage.getItem(key)
     if (!stored) return defaultValue
-    return JSON.parse(stored)
+    return JSON.parse(stored, dateReviver) // Use reviver to convert date strings
   } catch (error) {
     console.error(`Failed to load ${key} from localStorage:`, error)
     return defaultValue

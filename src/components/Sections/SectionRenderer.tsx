@@ -118,6 +118,7 @@ export function DraggableWidgetInSection({
     data: {
       type: 'widget-target',
       widgetId: widget.id,
+      widgetType: widget.type,
       sectionId: sectionId,
       areaId: areaId
     }
@@ -166,29 +167,42 @@ export function DraggableWidgetInSection({
       }}
       className={`${!isLiveMode && !widgetDrag.isDragging ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
         !isLiveMode && isSelected && !widgetDrag.isDragging ? 'ring-2 ring-blue-500' : ''
+      } ${
+        !isLiveMode && widgetDrop.isOver ? 'ring-2 ring-green-500' : ''
       } group relative`}
-      onClick={(e) => {
-        // Handle clicks for tabs widget (since it has no overlay)
-        if (!isLiveMode && widget.type === 'tabs') {
-          const target = e.target as HTMLElement
-          // Don't interfere with tab buttons, drop zones, or widgets inside panels
-          if (target.closest('.tab-button') || target.closest('.droppable-tab-panel')) {
-            return
-          }
-          // If click is on outer container or tab navigation area
-          if (target.closest('.tabs-widget')) {
-            e.preventDefault()
-            e.stopPropagation()
-            debugLog('log', '🎯 Tabs widget container clicked for properties')
-            if (activeSectionToolbar !== widget.sectionId) {
-              setActiveSectionToolbar?.(null)
-            }
-            setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
-            onWidgetClick(widget.id, e)
-          }
-        }
-      }}
     >
+      {/* Drop indicator - shows where the new widget will be inserted */}
+      {!isLiveMode && widgetDrop.isOver && (
+        <div className="absolute -top-2 left-0 right-0 h-1 bg-green-500 rounded-full shadow-lg z-50">
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium">
+            ↑ Insert before this {widget.type}
+          </div>
+        </div>
+      )}
+      
+      <div
+        onClick={(e) => {
+          // Handle clicks for tabs widget (since it has no overlay)
+          if (!isLiveMode && widget.type === 'tabs') {
+            const target = e.target as HTMLElement
+            // Don't interfere with tab buttons, drop zones, or widgets inside panels
+            if (target.closest('.tab-button') || target.closest('.droppable-tab-panel')) {
+              return
+            }
+            // If click is on outer container or tab navigation area
+            if (target.closest('.tabs-widget')) {
+              e.preventDefault()
+              e.stopPropagation()
+              debugLog('log', '🎯 Tabs widget container clicked for properties')
+              if (activeSectionToolbar !== widget.sectionId) {
+                setActiveSectionToolbar?.(null)
+              }
+              setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+              onWidgetClick(widget.id, e)
+            }
+          }
+        }}
+      >
       {/* Overlay to capture clicks on interactive widgets - only in editor mode */}
       {!isLiveMode && widget.type !== 'tabs' && widget.type !== 'collapse' && (
         <div 
@@ -309,6 +323,7 @@ export function DraggableWidgetInSection({
           sectionContentMode={sectionContentMode}
           isLiveMode={isLiveMode}
         />
+      </div>
       </div>
     </div>
   )
@@ -874,14 +889,14 @@ export function SectionRenderer({
                           : 'border-purple-300 opacity-60'
                       }` 
                     : activeDropZone === `drop-${area.id}` 
-                      ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
+                      ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
                       : activeDropZone === `drop-${area.id}` 
-                        ? 'bg-blue-50 rounded p-2 ring-2 ring-blue-200 border-2 border-blue-300' 
+                        ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
                         : isCardArea 
                           ? cardBorderClass // Card styling in editor mode - context-aware border
                           : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
-                          ? 'rounded p-2' // Transparent background to show section gradient/color/image or hero styling
-                          : 'bg-white rounded p-2'
+                          ? 'rounded p-4' // Transparent background to show section gradient/color/image or hero styling - MORE padding in edit mode
+                          : 'bg-white rounded p-4' // MORE padding in edit mode for easier drops
             }`}
           >
             {!isLiveMode && !isSpecialSection && area.widgets.length === 0 && (
@@ -913,7 +928,9 @@ export function SectionRenderer({
               // Special layout for button areas - display buttons side by side
               area.name === 'Button Row' || area.name === 'Button Area' || (area.widgets.length > 1 && area.widgets.every(w => w.type === 'button'))
                 ? 'flex flex-wrap gap-3 justify-center'
-                : 'space-y-2'
+                : isLiveMode 
+                  ? 'space-y-2'  // Tight spacing in live mode
+                  : 'space-y-4'  // More generous spacing in edit mode for easier drops
             }`}>
               {area.widgets.map((widget) => (
                 <DraggableWidgetInSection

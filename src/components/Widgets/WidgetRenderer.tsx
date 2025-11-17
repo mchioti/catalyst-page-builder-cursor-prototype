@@ -1187,7 +1187,11 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
     try {
       if (widget.aiSource.generatedContent && widget.aiSource.lastGenerated) {
         // Use cached content if it exists and is recent (less than 1 hour old)
-        const hoursSinceGeneration = (Date.now() - widget.aiSource.lastGenerated.getTime()) / (1000 * 60 * 60)
+        // Handle both Date objects and date strings (from localStorage)
+        const lastGenTime = widget.aiSource.lastGenerated instanceof Date 
+          ? widget.aiSource.lastGenerated.getTime()
+          : new Date(widget.aiSource.lastGenerated).getTime()
+        const hoursSinceGeneration = (Date.now() - lastGenTime) / (1000 * 60 * 60)
         if (hoursSinceGeneration < 1) {
           publications = widget.aiSource.generatedContent
         } else {
@@ -2045,8 +2049,15 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
               height: spacer.height || '2rem',
               width: '100%'
             }}
-            aria-hidden="true"
-          />
+            className={isLiveMode ? '' : 'border-2 border-dashed border-blue-200 bg-blue-50/30 flex items-center justify-center'}
+            aria-hidden={isLiveMode ? "true" : undefined}
+          >
+            {!isLiveMode && (
+              <span className="text-xs text-blue-400 font-medium">
+                Spacer ({spacer.height || '2rem'})
+              </span>
+            )}
+          </div>
         )
       }
       
