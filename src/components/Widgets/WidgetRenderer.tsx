@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 import { useDroppable } from '@dnd-kit/core'
@@ -1698,6 +1698,293 @@ const TabsWidgetRenderer: React.FC<{
   )
 }
 
+// Droppable Collapse Panel Component
+const DroppableCollapsePanel: React.FC<{
+  panelId: string
+  widgets: Widget[]
+  widgetId: string
+  schemaObjects: any[]
+  journalContext?: string
+  sectionContentMode?: 'light' | 'dark'
+  isOpen: boolean
+  isLiveMode?: boolean
+}> = ({ panelId, widgets, widgetId, schemaObjects, journalContext, sectionContentMode, isOpen, isLiveMode = false }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `collapse-panel-${panelId}`,
+    data: {
+      type: 'collapse-panel',
+      panelId: panelId,
+      widgetId: widgetId,
+      accepts: ['widget']
+    }
+  })
+  
+  if (!isOpen && !isLiveMode) {
+    // Show collapsed panel as a thin line with hint in editor mode
+    return (
+      <div className="text-xs text-gray-400 italic py-1">
+        (Panel collapsed - click header to expand)
+      </div>
+    )
+  }
+  
+  if (!isOpen && isLiveMode) {
+    // Hide collapsed panel completely in live mode
+    return null
+  }
+  
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative ${!isLiveMode ? 'min-h-[150px] border-2 rounded-md p-4' : 'py-4'} transition-all ${
+        !isLiveMode && isOver 
+          ? 'border-blue-400 bg-blue-50 border-solid' 
+          : !isLiveMode && widgets.length === 0
+          ? 'border-blue-300 bg-blue-50/30 border-dashed'
+          : !isLiveMode
+          ? 'border-gray-200 bg-transparent border-solid'
+          : '' // No border/background in live mode
+      }`}
+      style={{ 
+        minHeight: isLiveMode && widgets.length === 0 ? '0px' : '150px',
+        width: '100%',
+        position: 'relative'
+      }}
+      data-droppable-type="collapse-panel"
+      data-panel-id={panelId}
+    >
+      {widgets.length === 0 ? (
+        !isLiveMode && (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm italic">
+            {isOver ? 'Drop widget here' : 'Drag widgets here from the library'}
+          </div>
+        )
+      ) : (
+        <>
+          {/* Drop zone indicator when dragging over - only in editor mode */}
+          {!isLiveMode && isOver && (
+            <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/50 rounded-md z-10 flex items-center justify-center pointer-events-none">
+              <span className="text-blue-600 font-medium text-sm">Drop widget here</span>
+            </div>
+          )}
+          <div className="space-y-3">
+            {widgets.map(widget => (
+              isLiveMode ? (
+                <WidgetRenderer 
+                  key={widget.id}
+                  widget={widget}
+                  schemaObjects={schemaObjects}
+                  journalContext={journalContext}
+                  sectionContentMode={sectionContentMode}
+                  isLiveMode={isLiveMode}
+                />
+              ) : (
+                <ClickableWidgetInTabPanel
+                  key={widget.id}
+                  widget={widget}
+                  tabsWidgetId={widgetId}
+                  tabId={panelId}
+                  schemaObjects={schemaObjects}
+                  journalContext={journalContext}
+                  sectionContentMode={sectionContentMode}
+                />
+              )
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Collapse/Accordion Widget Renderer
+const CollapseWidgetRenderer: React.FC<{
+  widget: CollapseWidget
+  schemaObjects?: any[]
+  journalContext?: string
+  sectionContentMode?: 'light' | 'dark'
+  isLiveMode?: boolean
+}> = ({ widget, schemaObjects = [], journalContext, sectionContentMode, isLiveMode = false }) => {
+  // Track which panels are open/closed locally, but sync with widget state
+  const [openPanels, setOpenPanels] = useState<Set<string>>(
+    new Set(widget.panels.filter(p => p.isOpen).map(p => p.id))
+  )
+  
+  // Sync local state with widget state when widget updates
+  React.useEffect(() => {
+    setOpenPanels(new Set(widget.panels.filter(p => p.isOpen).map(p => p.id)))
+  }, [widget.panels])
+  
+  const togglePanel = (panelId: string) => {
+    const newOpenPanels = new Set(openPanels)
+    
+    if (widget.allowMultiple) {
+      // Allow multiple panels open (accordion mode off)
+      if (newOpenPanels.has(panelId)) {
+        newOpenPanels.delete(panelId)
+      } else {
+        newOpenPanels.add(panelId)
+      }
+    } else {
+      // Only one panel open at a time (accordion mode on)
+      if (newOpenPanels.has(panelId)) {
+        newOpenPanels.delete(panelId)
+      } else {
+        newOpenPanels.clear()
+        newOpenPanels.add(panelId)
+      }
+    }
+    
+    setOpenPanels(newOpenPanels)
+    
+    // Update widget state in store
+    const store = window.usePageStore || usePageStore
+    if (store) {
+      const { canvasItems, replaceCanvasItems } = store.getState()
+      const updatedItems = canvasItems.map((item: any) => {
+        // Update standalone collapse widget
+        if (item.id === widget.id && item.type === 'collapse') {
+          return { 
+            ...item, 
+            panels: item.panels.map((p: CollapsePanel) => ({
+              ...p,
+              isOpen: newOpenPanels.has(p.id)
+            }))
+          }
+        }
+        // Update collapse widget inside sections
+        if (item.areas) {
+          return {
+            ...item,
+            areas: item.areas.map((area: any) => ({
+              ...area,
+              widgets: area.widgets.map((w: any) => {
+                if (w.id === widget.id && w.type === 'collapse') {
+                  return { 
+                    ...w, 
+                    panels: w.panels.map((p: CollapsePanel) => ({
+                      ...p,
+                      isOpen: newOpenPanels.has(p.id)
+                    }))
+                  }
+                }
+                return w
+              })
+            }))
+          }
+        }
+        return item
+      })
+      replaceCanvasItems(updatedItems)
+    }
+  }
+  
+  const getCollapseStyleClasses = () => {
+    switch (widget.style) {
+      case 'bordered':
+        return 'collapse-bordered'
+      case 'minimal':
+        return 'collapse-minimal'
+      default:
+        return 'collapse-default'
+    }
+  }
+  
+  return (
+    <div 
+      className={`collapse-widget w-full space-y-2 ${getCollapseStyleClasses()}`}
+      data-collapse-widget="true"
+    >
+      {widget.panels.map((panel, panelIndex) => {
+        const isOpen = openPanels.has(panel.id)
+        
+        return (
+          <div 
+            key={panel.id} 
+            className={`collapse-panel ${widget.style === 'bordered' ? 'border border-gray-200 rounded-md' : ''}`}
+          >
+            {/* Panel Header */}
+            <div className={`collapse-header-wrapper flex items-center ${widget.style === 'bordered' ? '' : widget.style === 'minimal' ? 'border-b border-gray-200' : ''}`}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation() // Prevent interference with widget selection
+                  togglePanel(panel.id)
+                }}
+                className={`flex-1 text-left px-4 py-3 font-medium transition-colors flex items-center justify-between ${
+                  widget.style === 'bordered' 
+                    ? 'hover:bg-gray-50' 
+                    : widget.style === 'minimal'
+                    ? 'hover:bg-gray-50'
+                    : 'bg-gray-100 hover:bg-gray-200 rounded-l-md'
+                }`}
+                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 20 }}
+                type="button"
+              >
+                <div className="flex items-center gap-2">
+                  {widget.iconPosition === 'left' && (
+                    <span className={`transform transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                      {panel.icon || '▶'}
+                    </span>
+                  )}
+                  <span>{panel.title}</span>
+                </div>
+                {widget.iconPosition === 'right' && (
+                  <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                    {panel.icon || '▼'}
+                  </span>
+                )}
+              </button>
+              
+              {/* Edit Widget Button - only show on first panel in edit mode */}
+              {!isLiveMode && panelIndex === 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation() // Don't toggle the panel
+                    // Trigger widget selection via data attribute
+                    const event = new CustomEvent('selectCollapseWidget', { 
+                      detail: { widgetId: widget.id },
+                      bubbles: true 
+                    })
+                    e.currentTarget.dispatchEvent(event)
+                  }}
+                  className={`px-3 py-4 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors ${
+                    widget.style === 'bordered' 
+                      ? '' 
+                      : widget.style === 'minimal'
+                      ? ''
+                      : 'bg-gray-100 hover:bg-blue-50 rounded-r-md'
+                  }`}
+                  style={{ pointerEvents: 'auto', position: 'relative', zIndex: 20 }}
+                  type="button"
+                  title="Edit widget properties"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Panel Content */}
+            {isOpen && (
+              <div className={`collapse-content ${widget.style === 'bordered' ? 'p-4' : 'px-4'}`}>
+                <DroppableCollapsePanel
+                  panelId={panel.id}
+                  widgets={panel.widgets}
+                  widgetId={widget.id}
+                  schemaObjects={schemaObjects}
+                  journalContext={journalContext}
+                  sectionContentMode={sectionContentMode}
+                  isOpen={isOpen}
+                  isLiveMode={isLiveMode}
+                />
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 
 // Main Widget Renderer Component
 export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string; sectionContentMode?: 'light' | 'dark'; isLiveMode?: boolean }> = ({ widget, schemaObjects = [], journalContext, sectionContentMode, isLiveMode = false }) => {
@@ -1725,6 +2012,44 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
         return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
       case 'publication-list':
         return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
+      
+      case 'collapse':
+        return <CollapseWidgetRenderer widget={widget as CollapseWidget} schemaObjects={schemaObjects} journalContext={journalContext} sectionContentMode={sectionContentMode} isLiveMode={isLiveMode} />
+      
+      case 'divider': {
+        const divider = widget as any // DividerWidget
+        return (
+          <div 
+            style={{ 
+              marginTop: divider.marginTop || '1rem',
+              marginBottom: divider.marginBottom || '1rem'
+            }}
+          >
+            <hr 
+              style={{
+                borderStyle: divider.style || 'solid',
+                borderWidth: divider.thickness || '1px',
+                borderColor: divider.color || '#e5e7eb',
+                margin: 0
+              }}
+            />
+          </div>
+        )
+      }
+      
+      case 'spacer': {
+        const spacer = widget as any // SpacerWidget
+        return (
+          <div 
+            style={{ 
+              height: spacer.height || '2rem',
+              width: '100%'
+            }}
+            aria-hidden="true"
+          />
+        )
+      }
+      
       default:
         return <div className="text-gray-500">Unsupported widget type: {(widget as any).type}</div>
     }

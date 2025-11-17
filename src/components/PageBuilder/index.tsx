@@ -41,7 +41,7 @@
  * 
  * 4. **Collision Detection** (customCollisionDetection below):
  *    - Priority order:
- *      a. tab-panel (for tabs widget)
+ *      a. tab-panel (for tabs widget) & collapse-panel (for collapse/accordion widget)
  *      b. widget-target (for precise positioning)
  *      c. section-area (for area drops)
  *      d. closestCenter (fallback)
@@ -86,12 +86,17 @@ const DEBUG = false // Set to true to see PageBuilder canvas state
 const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
+  DragOverlay,
   useSensors,
   useSensor,
   PointerSensor,
   rectIntersection,
-  closestCenter
+  closestCenter,
+  pointerWithin
 } from '@dnd-kit/core'
+import {
+  restrictToWindowEdges
+} from '@dnd-kit/modifiers'
 import type {
   DragStartEvent,
   DragOverEvent,
@@ -164,6 +169,9 @@ export function PageBuilder({
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage } = usePageStore()
+  
+  // Track active drag item for DragOverlay
+  const [activeDragItem, setActiveDragItem] = useState<{ widget?: Widget; type?: string; item?: any } | null>(null)
   
   // Debug: Log canvas state on render
   debugLog('log', '🎨 PageBuilder render - Canvas items:', canvasItems.length)
@@ -349,21 +357,22 @@ export function PageBuilder({
     })
   )
   
-  // Custom collision detection that prioritizes tab-panel first, then section-area drop zones
+  // Custom collision detection that prioritizes tab-panel/collapse-panel first, then section-area drop zones
   const customCollisionDetection = (args: any) => {
     const activeType = args.active?.data?.current?.type
     
-    // FIRST: Try to find tab-panel collisions (most specific, highest priority)
-    const tabPanelCollisions = rectIntersection({
+    // FIRST: Try to find tab-panel or collapse-panel collisions (most specific, highest priority)
+    const containerPanelCollisions = rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter((container: any) => 
-        container.data?.current?.type === 'tab-panel'
+        container.data?.current?.type === 'tab-panel' || 
+        container.data?.current?.type === 'collapse-panel'
       )
     })
     
-    if (tabPanelCollisions.length > 0) {
-      debugLog('log','🎯 Tab panel collision detected!', tabPanelCollisions)
-      return tabPanelCollisions
+    if (containerPanelCollisions.length > 0) {
+      debugLog('log','🎯 Tab/Collapse panel collision detected!', containerPanelCollisions)
+      return containerPanelCollisions
     }
     
     // SECOND: For section-widgets, PRIORITIZE widget-target collisions (for precise positioning)
@@ -381,9 +390,10 @@ export function PageBuilder({
       }
     }
     
-    // THIRD: For library widgets and section-widgets, try section-area collisions
+    // THIRD: For library widgets and section-widgets, try section-area collisions using POINTER position
+    // This way the CURSOR position matters, not the widget's bounding box
     if (activeType === 'library-widget' || activeType === 'section-widget') {
-      const sectionAreaCollisions = rectIntersection({
+      const sectionAreaCollisions = pointerWithin({
         ...args,
         droppableContainers: args.droppableContainers.filter((container: any) => 
           container.data?.current?.type === 'section-area'
@@ -391,13 +401,13 @@ export function PageBuilder({
       })
       
       if (sectionAreaCollisions.length > 0) {
-        // Collision detected for widget drop
+        // Collision detected for widget drop based on cursor position
         return sectionAreaCollisions
       }
     }
     
-    // FOURTH: Try to find section-area collisions for other items
-    const sectionAreaCollisions = rectIntersection({
+    // FOURTH: Try to find section-area collisions for other items using pointer position
+    const sectionAreaCollisions = pointerWithin({
       ...args,
       droppableContainers: args.droppableContainers.filter((container: any) => 
         container.data?.current?.type === 'section-area'
@@ -408,13 +418,20 @@ export function PageBuilder({
       return sectionAreaCollisions
     }
     
-    // Fall back to default collision detection
+    // Fall back to closest center (for section reordering, etc.)
     return closestCenter(args)
   }
   
   const handleDragStart = (event: DragStartEvent) => {
     const draggedItem = event.active.data?.current?.item
     const isSidebar = draggedItem && isSection(draggedItem) && draggedItem.type === 'sidebar'
+    
+    // Set active drag item for DragOverlay
+    setActiveDragItem({
+      widget: draggedItem,
+      type: event.active.data?.current?.type,
+      item: draggedItem
+    })
     
     debugLog('log','🚀 Drag Start:', {
       activeId: event.active.id,
@@ -443,10 +460,18 @@ export function PageBuilder({
       const activeItem = event.active.data?.current?.item
       const isDraggingSidebar = activeItem && isSection(activeItem) && activeItem.type === 'sidebar'
       
-      // Special logging for tab panels
+      // Special logging for tab panels and collapse panels
       if (event.over.data?.current?.type === 'tab-panel') {
         debugLog('log','🎯 DRAGGING OVER TAB PANEL!', {
           tabId: event.over.data.current.tabId,
+          widgetId: event.over.data.current.widgetId,
+          activeType: event.active.data?.current?.type
+        })
+      }
+      
+      if (event.over.data?.current?.type === 'collapse-panel') {
+        debugLog('log','🎯 DRAGGING OVER COLLAPSE PANEL!', {
+          panelId: event.over.data.current.panelId,
           widgetId: event.over.data.current.widgetId,
           activeType: event.active.data?.current?.type
         })
@@ -522,7 +547,8 @@ export function PageBuilder({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     
-    // Clear drop zone highlighting
+    // Clear active drag item and drop zone highlighting
+    setActiveDragItem(null)
     setActiveDropZone(null)
     
     debugLog('log','🎯 Drag End Event:', {
@@ -534,7 +560,8 @@ export function PageBuilder({
       hasOver: !!over,
       isLibraryWidget: active.data?.current?.type === 'library-widget',
       isSortableItem: !active.data?.current?.type || active.data?.current?.type === 'sortable',
-      isTabPanel: over?.data?.current?.type === 'tab-panel'
+      isTabPanel: over?.data?.current?.type === 'tab-panel',
+      isCollapsePanel: over?.data?.current?.type === 'collapse-panel'
     })
 
     if (!over) {
@@ -649,6 +676,90 @@ export function PageBuilder({
         
         replaceCanvasItems(updatedCanvasItems)
         debugLog('log','✅ Widget added to tab panel!')
+        return
+      }
+      
+      // Case 0b: Dropped into collapse panel (HIGHEST PRIORITY, similar to tab panel)
+      if (over.data?.current?.type === 'collapse-panel') {
+        debugLog('log','✅ Library widget dropped into collapse panel!', {
+          libraryItem,
+          panelId: over.data.current.panelId,
+          widgetId: over.data.current.widgetId
+        })
+        
+        const panelId = over.data.current.panelId
+        const collapseWidgetId = over.data.current.widgetId
+        
+        // Create new widget from library item
+        const newWidget = buildWidget(libraryItem)
+        
+        debugLog('log','🔧 Created widget:', newWidget.type, newWidget.id, 'for collapse panel:', panelId)
+        
+        // Find the collapse widget and the specific panel, update it with the new widget
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+          // Check if this is the collapse widget (standalone)
+          if (canvasItem.type === 'collapse' && canvasItem.id === collapseWidgetId) {
+            const collapseWidget = canvasItem as any // CollapseWidget
+            const panelIndex = collapseWidget.panels.findIndex((p: any) => p.id === panelId)
+            
+            if (panelIndex !== -1) {
+              const updatedPanels = [...collapseWidget.panels]
+              updatedPanels[panelIndex] = {
+                ...updatedPanels[panelIndex],
+                widgets: [...(updatedPanels[panelIndex].widgets || []), newWidget]
+              }
+              
+              debugLog('log','📦 Panels after update:', updatedPanels)
+              
+              return {
+                ...collapseWidget,
+                panels: updatedPanels
+              }
+            }
+          }
+          
+          // Check if the collapse widget is inside a section
+          if (isSection(canvasItem)) {
+            const section = canvasItem as WidgetSection
+            let foundAndUpdated = false
+            
+            const updatedAreas = section.areas.map((area: any) => {
+              const updatedWidgets = area.widgets.map((widget: any) => {
+                if (widget.type === 'collapse' && widget.id === collapseWidgetId) {
+                  foundAndUpdated = true
+                  const panelIndex = widget.panels.findIndex((p: any) => p.id === panelId)
+                  
+                  if (panelIndex !== -1) {
+                    const updatedPanels = [...widget.panels]
+                    updatedPanels[panelIndex] = {
+                      ...updatedPanels[panelIndex],
+                      widgets: [...(updatedPanels[panelIndex].widgets || []), newWidget]
+                    }
+                    
+                    debugLog('log','📦 Panels after update (in section):', updatedPanels)
+                    
+                    return {
+                      ...widget,
+                      panels: updatedPanels
+                    }
+                  }
+                }
+                return widget
+              })
+              
+              return { ...area, widgets: updatedWidgets }
+            })
+            
+            if (foundAndUpdated) {
+              return { ...section, areas: updatedAreas }
+            }
+          }
+          
+          return canvasItem
+        })
+        
+        replaceCanvasItems(updatedCanvasItems)
+        debugLog('log','✅ Widget added to collapse panel!')
         return
       }
       
@@ -795,11 +906,148 @@ export function PageBuilder({
         overData: over?.data?.current 
       })
       
+      // Case 0a: Dropped into tab panel
+      if (over?.data?.current?.type === 'tab-panel') {
+        debugLog('log','✅ Moving existing widget into tab panel!')
+        const draggedWidget = active.data.current.widget
+        const fromAreaId = active.data.current.fromAreaId
+        const tabId = over.data.current.tabId
+        const tabsWidgetId = over.data.current.widgetId
+        
+        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+        
+        // Remove from source area and add to tab panel
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+          // Update sections to remove widget from source area
+          if (isSection(canvasItem)) {
+            return {
+              ...canvasItem,
+              areas: (canvasItem as WidgetSection).areas.map((area: any) => {
+                if (area.id === fromAreaId) {
+                  return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
+                }
+                
+                // Also check if this area contains the tabs widget that needs updating
+                const updatedWidgets = area.widgets.map((widget: any) => {
+                  if (widget.type === 'tabs' && widget.id === tabsWidgetId) {
+                    const tabIndex = widget.tabs.findIndex((t: any) => t.id === tabId)
+                    if (tabIndex !== -1) {
+                      const updatedTabs = [...widget.tabs]
+                      updatedTabs[tabIndex] = {
+                        ...updatedTabs[tabIndex],
+                        widgets: [...(updatedTabs[tabIndex].widgets || []), draggedWidget]
+                      }
+                      return { ...widget, tabs: updatedTabs, activeTabIndex: tabIndex }
+                    }
+                  }
+                  return widget
+                })
+                
+                return { ...area, widgets: updatedWidgets }
+              })
+            }
+          }
+          
+          // Also check standalone tabs widgets
+          if (canvasItem.type === 'tabs' && canvasItem.id === tabsWidgetId) {
+            const tabsWidget = canvasItem as any
+            const tabIndex = tabsWidget.tabs.findIndex((t: any) => t.id === tabId)
+            if (tabIndex !== -1) {
+              const updatedTabs = [...tabsWidget.tabs]
+              updatedTabs[tabIndex] = {
+                ...updatedTabs[tabIndex],
+                widgets: [...(updatedTabs[tabIndex].widgets || []), draggedWidget]
+              }
+              return { ...tabsWidget, tabs: updatedTabs, activeTabIndex: tabIndex }
+            }
+          }
+          
+          return canvasItem
+        })
+        
+        replaceCanvasItems(updatedCanvasItems)
+        debugLog('log','✅ Widget moved into tab panel!')
+        return
+      }
+      
+      // Case 0b: Dropped into collapse panel
+      if (over?.data?.current?.type === 'collapse-panel') {
+        debugLog('log','✅ Moving existing widget into collapse panel!')
+        const draggedWidget = active.data.current.widget
+        const fromAreaId = active.data.current.fromAreaId
+        const panelId = over.data.current.panelId
+        const collapseWidgetId = over.data.current.widgetId
+        
+        const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+        
+        // Remove from source area and add to collapse panel
+        const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
+          // Update sections to remove widget from source area
+          if (isSection(canvasItem)) {
+            return {
+              ...canvasItem,
+              areas: (canvasItem as WidgetSection).areas.map((area: any) => {
+                if (area.id === fromAreaId) {
+                  return { ...area, widgets: area.widgets.filter((w: Widget) => w.id !== draggedWidget.id) }
+                }
+                
+                // Also check if this area contains the collapse widget that needs updating
+                const updatedWidgets = area.widgets.map((widget: any) => {
+                  if (widget.type === 'collapse' && widget.id === collapseWidgetId) {
+                    const panelIndex = widget.panels.findIndex((p: any) => p.id === panelId)
+                    if (panelIndex !== -1) {
+                      const updatedPanels = [...widget.panels]
+                      updatedPanels[panelIndex] = {
+                        ...updatedPanels[panelIndex],
+                        widgets: [...(updatedPanels[panelIndex].widgets || []), draggedWidget]
+                      }
+                      return { ...widget, panels: updatedPanels }
+                    }
+                  }
+                  return widget
+                })
+                
+                return { ...area, widgets: updatedWidgets }
+              })
+            }
+          }
+          
+          // Also check standalone collapse widgets
+          if (canvasItem.type === 'collapse' && canvasItem.id === collapseWidgetId) {
+            const collapseWidget = canvasItem as any
+            const panelIndex = collapseWidget.panels.findIndex((p: any) => p.id === panelId)
+            if (panelIndex !== -1) {
+              const updatedPanels = [...collapseWidget.panels]
+              updatedPanels[panelIndex] = {
+                ...updatedPanels[panelIndex],
+                widgets: [...(updatedPanels[panelIndex].widgets || []), draggedWidget]
+              }
+              return { ...collapseWidget, panels: updatedPanels }
+            }
+          }
+          
+          return canvasItem
+        })
+        
+        replaceCanvasItems(updatedCanvasItems)
+        debugLog('log','✅ Widget moved into collapse panel!')
+        return
+      }
+      
       // Case 1: Dropped on specific section area OR on a widget
       if (over?.data?.current?.type === 'section-area' || over?.data?.current?.type === 'widget-target') {
         const draggedWidget = active.data.current.widget
         const fromAreaId = active.data.current.fromAreaId
         const toAreaId = over.data.current.areaId
+        
+        debugLog('log', '🎯 Section widget dropped on area:', {
+          widgetType: draggedWidget.type,
+          widgetId: draggedWidget.id,
+          fromAreaId,
+          toAreaId,
+          dropType: over.data.current.type,
+          targetSectionId: over.data.current.sectionId
+        })
         
         // Handle reordering within the same area - detect drop position
         if (fromAreaId === toAreaId) {
@@ -1172,6 +1420,7 @@ export function PageBuilder({
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      modifiers={[restrictToWindowEdges]}
     >
       <div 
         className="h-screen bg-slate-50 flex overflow-hidden"
@@ -1344,7 +1593,7 @@ export function PageBuilder({
             )}
           </div>
 
-          <div className="flex-1 p-6 bg-slate-50" onClick={() => selectWidget(null)}>
+          <div className="flex-1 p-6 bg-slate-50 overflow-y-auto overflow-x-hidden" onClick={() => selectWidget(null)}>
             {/* Removed redundant template banner - handled by TemplateCanvas */}
 
             {/* Template Canvas - Handles loading template sections */}
@@ -1541,6 +1790,24 @@ export function PageBuilder({
         </div>
       )}
       </div>
+      
+      {/* DragOverlay - renders the dragging item in a portal */}
+      <DragOverlay dropAnimation={null}>
+        {activeDragItem ? (
+          <div className="bg-white border-2 border-blue-500 rounded-lg shadow-2xl p-4 opacity-90 cursor-grabbing">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                <span className="text-blue-600 font-semibold text-xs">
+                  {activeDragItem.widget?.type?.[0]?.toUpperCase() || '?'}
+                </span>
+              </div>
+              <div className="text-sm font-medium text-gray-900">
+                {activeDragItem.item?.label || activeDragItem.widget?.type || 'Widget'}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }

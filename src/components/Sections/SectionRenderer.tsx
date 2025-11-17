@@ -131,6 +131,28 @@ export function DraggableWidgetInSection({
   const setNodeRef = (node: HTMLElement | null) => {
     widgetDrag.setNodeRef(node)
     widgetDrop.setNodeRef(node)
+    
+    // Listen for custom collapse widget selection event
+    if (node && widget.type === 'collapse') {
+      const handleCollapseSelect = (e: Event) => {
+        const customEvent = e as CustomEvent
+        if (customEvent.detail?.widgetId === widget.id) {
+          e.preventDefault()
+          e.stopPropagation()
+          debugLog('log', '🎯 Collapse widget edit button clicked')
+          if (activeSectionToolbar !== widget.sectionId) {
+            setActiveSectionToolbar?.(null)
+          }
+          setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+          onWidgetClick(widget.id, e as any)
+        }
+      }
+      
+      node.addEventListener('selectCollapseWidget', handleCollapseSelect)
+      return () => {
+        node.removeEventListener('selectCollapseWidget', handleCollapseSelect)
+      }
+    }
   }
   
   return (
@@ -138,14 +160,13 @@ export function DraggableWidgetInSection({
       ref={setNodeRef}
       data-testid={`canvas-widget-${widget.id}`}
       data-widget-type={widget.type}
-      style={widgetDrag.transform ? {
-        transform: `translate3d(${widgetDrag.transform.x}px, ${widgetDrag.transform.y}px, 0)`,
-      } : undefined}
+      style={{
+        // When dragging, hide the original widget (DragOverlay shows the dragging version)
+        visibility: widgetDrag.isDragging ? 'hidden' : 'visible',
+      }}
       className={`${!isLiveMode && !widgetDrag.isDragging ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
         !isLiveMode && isSelected && !widgetDrag.isDragging ? 'ring-2 ring-blue-500' : ''
-      } group relative ${
-        widgetDrag.isDragging ? 'opacity-50' : ''
-      }`}
+      } group relative`}
       onClick={(e) => {
         // Handle clicks for tabs widget (since it has no overlay)
         if (!isLiveMode && widget.type === 'tabs') {
@@ -169,7 +190,7 @@ export function DraggableWidgetInSection({
       }}
     >
       {/* Overlay to capture clicks on interactive widgets - only in editor mode */}
-      {!isLiveMode && widget.type !== 'tabs' && (
+      {!isLiveMode && widget.type !== 'tabs' && widget.type !== 'collapse' && (
         <div 
           className="absolute inset-0 z-10 bg-transparent hover:bg-blue-50/10 transition-colors"
           style={{ pointerEvents: 'auto' }}

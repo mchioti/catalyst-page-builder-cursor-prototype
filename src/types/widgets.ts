@@ -213,7 +213,40 @@ export type TabsWidget = WidgetBase & {
   align?: 'left' | 'center' | 'right'
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget
+// Collapse/Accordion widget types
+export type CollapsePanel = {
+  id: string
+  title: string
+  isOpen: boolean    // Track individual panel open/closed state
+  icon?: string      // Optional: emoji or icon
+  widgets: Widget[]  // Array of widgets in this panel (DROP ZONE)
+}
+
+export type CollapseWidget = WidgetBase & {
+  type: 'collapse'
+  panels: CollapsePanel[]
+  allowMultiple: boolean  // Allow multiple panels open at once
+  iconPosition: 'left' | 'right'
+  style: 'default' | 'bordered' | 'minimal'
+}
+
+// Divider widget - horizontal rule for visual separation
+export type DividerWidget = WidgetBase & {
+  type: 'divider'
+  style: 'solid' | 'dashed' | 'dotted'
+  thickness: string // e.g., '1px', '2px', '3px'
+  color: string // e.g., '#e5e7eb', '#000000'
+  marginTop: string // e.g., '1rem', '16px'
+  marginBottom: string // e.g., '1rem', '16px'
+}
+
+// Spacer widget - vertical spacing for layout control
+export type SpacerWidget = WidgetBase & {
+  type: 'spacer'
+  height: string // e.g., '1rem', '2rem', '50px', '10vh'
+}
+
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'

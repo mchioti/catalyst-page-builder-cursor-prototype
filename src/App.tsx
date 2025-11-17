@@ -1201,6 +1201,50 @@ function buildWidget(item: SpecItem): Widget {
         align: 'left'
       } as any; // TabsWidget
     
+    case 'divider':
+      // Horizontal rule for visual separation
+      return {
+        ...baseWidget,
+        type: 'divider',
+        style: 'solid',
+        thickness: '1px',
+        color: '#e5e7eb', // gray-200
+        marginTop: '1rem',
+        marginBottom: '1rem'
+      } as any; // DividerWidget
+    
+    case 'spacer':
+      // Vertical spacing
+      return {
+        ...baseWidget,
+        type: 'spacer',
+        height: '2rem' // Default 32px spacing
+      } as any; // SpacerWidget
+    
+    case 'collapse':
+      // Start with 2 empty panels so widget is visible
+      return {
+        ...baseWidget,
+        type: 'collapse',
+        panels: [
+          {
+            id: nanoid(),
+            title: 'Panel 1',
+            isOpen: true,  // First panel open by default
+            widgets: []
+          },
+          {
+            id: nanoid(),
+            title: 'Panel 2',
+            isOpen: false,
+            widgets: []
+          }
+        ],
+        allowMultiple: false, // Accordion behavior by default
+        iconPosition: 'right',
+        style: 'default'
+      } as any; // CollapseWidget
+    
     default:
       // Fallback to text widget
       return {

@@ -2480,6 +2480,200 @@ export function PropertiesPanel({
           </div>
         </div>
       )}
+      
+      {widget.type === 'divider' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+            <select
+              value={(widget as any).style || 'solid'}
+              onChange={(e) => updateWidget({ style: e.target.value as 'solid' | 'dashed' | 'dotted' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thickness</label>
+            <select
+              value={(widget as any).thickness || '1px'}
+              onChange={(e) => updateWidget({ thickness: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="1px">1px (Thin)</option>
+              <option value="2px">2px (Medium)</option>
+              <option value="3px">3px (Thick)</option>
+              <option value="4px">4px (Extra Thick)</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <input
+              type="color"
+              value={(widget as any).color || '#e5e7eb'}
+              onChange={(e) => updateWidget({ color: e.target.value })}
+              className="w-full h-10 border border-gray-300 rounded-md cursor-pointer"
+            />
+            <input
+              type="text"
+              value={(widget as any).color || '#e5e7eb'}
+              onChange={(e) => updateWidget({ color: e.target.value })}
+              placeholder="#e5e7eb"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mt-2 text-sm font-mono"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Margin Top</label>
+            <input
+              type="text"
+              value={(widget as any).marginTop || '1rem'}
+              onChange={(e) => updateWidget({ marginTop: e.target.value })}
+              placeholder="1rem"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">e.g., 1rem, 16px, 2em</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Margin Bottom</label>
+            <input
+              type="text"
+              value={(widget as any).marginBottom || '1rem'}
+              onChange={(e) => updateWidget({ marginBottom: e.target.value })}
+              placeholder="1rem"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">e.g., 1rem, 16px, 2em</p>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'spacer' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Height</label>
+            <select
+              value={(widget as any).height || '2rem'}
+              onChange={(e) => updateWidget({ height: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
+            >
+              <option value="0.5rem">0.5rem (8px) - Extra Small</option>
+              <option value="1rem">1rem (16px) - Small</option>
+              <option value="2rem">2rem (32px) - Medium</option>
+              <option value="3rem">3rem (48px) - Large</option>
+              <option value="4rem">4rem (64px) - Extra Large</option>
+              <option value="6rem">6rem (96px) - Huge</option>
+            </select>
+            
+            <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">Custom Height</label>
+            <input
+              type="text"
+              value={(widget as any).height || '2rem'}
+              onChange={(e) => updateWidget({ height: e.target.value })}
+              placeholder="2rem"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">e.g., 2rem, 50px, 5vh, 10%</p>
+          </div>
+        </div>
+      )}
+      
+      {widget.type === 'collapse' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Accordion Behavior</label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={(widget as any).allowMultiple || false}
+                onChange={(e) => updateWidget({ allowMultiple: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 mr-2"
+              />
+              <span className="text-sm text-gray-700">Allow multiple panels open</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              When off, only one panel can be open at a time (accordion mode)
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+            <select
+              value={(widget as any).style || 'default'}
+              onChange={(e) => updateWidget({ style: e.target.value as 'default' | 'bordered' | 'minimal' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="default">Default (Gray background)</option>
+              <option value="bordered">Bordered</option>
+              <option value="minimal">Minimal</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Icon Position</label>
+            <select
+              value={(widget as any).iconPosition || 'right'}
+              onChange={(e) => updateWidget({ iconPosition: e.target.value as 'left' | 'right' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Panels</label>
+            <div className="space-y-2 mb-3">
+              {((widget as any).panels || []).map((panel: any, index: number) => (
+                <div key={panel.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <input
+                    type="text"
+                    value={panel.title}
+                    onChange={(e) => {
+                      const newPanels = [...(widget as any).panels]
+                      newPanels[index] = { ...newPanels[index], title: e.target.value }
+                      updateWidget({ panels: newPanels })
+                    }}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                    placeholder="Panel title"
+                  />
+                  <button
+                    onClick={() => {
+                      const newPanels = (widget as any).panels.filter((_: any, i: number) => i !== index)
+                      updateWidget({ panels: newPanels })
+                    }}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    title="Delete panel"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                const newPanel = {
+                  id: `panel-${Date.now()}`,
+                  title: `Panel ${((widget as any).panels?.length || 0) + 1}`,
+                  isOpen: false,
+                  widgets: []
+                }
+                updateWidget({ panels: [...((widget as any).panels || []), newPanel] })
+              }}
+              className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
+            >
+              + Add Panel
+            </button>
+          </div>
+        </div>
+      )}
         </div>
       )}
     </div>
