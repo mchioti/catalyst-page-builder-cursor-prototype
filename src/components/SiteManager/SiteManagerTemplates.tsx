@@ -1366,7 +1366,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   {getThemeName(themeId)}
                 </span>
                 {isPBAdmin && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
                     ⚙️ PB Admin Mode
                   </span>
                 )}
@@ -1426,7 +1426,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   {isPBAdmin && (
                     <button 
                       onClick={handleCreateTemplate}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2"
                     >
                       <Plus className="h-4 w-4" />
                       {selectedType === 'templates' && 'Create New Template'}

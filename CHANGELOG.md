@@ -15,10 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Console modes: Multi-Website Publisher, Single Website
   - Available across all views (Design Console, Page Builder, Mock Live Site)
   - Replaces old console mode toggle in Design Console header
+  - Subtle indigo color scheme (not bright purple)
+  - Collapsed by default to minimize distraction
 - **PB Admin Persona**: New admin role for managing design system assets
-  - Purple "PB Admin Mode" badge in theme libraries
-  - "Create New Template/Stub/Section" button (purple) visible only to PB Admin
+  - Indigo "PB Admin Mode" badge in theme libraries
+  - "Create New Template/Stub/Section" button (indigo) visible only to PB Admin
   - Foundation for future admin capabilities (edit, duplicate, move between themes)
+- **Stub Loading to Editor**: Load button in website Stubs view
+  - Loads stub directly into Page Builder editor
+  - Confirmation dialog before replacing current content
+  - Success notification after loading
 
 ### Changed
 - **Terminology Update**: Renamed "Starter Pages" to "Stubs" throughout the UI
@@ -26,10 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - DIY Zone: "Saved Starter Pages" → "Saved Stubs"
   - Design Console: "Starter Page Library" → "Stub Library"
   - Design Library: "Saved Starter Pages" tab → "Saved Stubs"
+  - Website-level: "Design Library" → "Stubs" menu item
   - All empty states, prompts, and tooltips updated
   - Icon changed from Plus to FileText for stub sections
 - **Console Mode Management**: Moved from Design Console header to Prototype Controls panel
 - **State Management**: Added `currentPersona` and `consoleMode` to global Zustand store
+- **Stub Actions**: "View/Preview" button → "Load" button with download icon
+  - More actionable and clear about what the button does
+
+### Removed
+- **FEBS Mock Starter Pages**: Deleted FEBS Homepage (2017) and FEBS Homepage (2020) demo stubs
+  - Only Catalyst Classic Homepage Template remains as demo content
 
 ### Added
 - **Divider Widget**: Horizontal line separator with customizable style, thickness, color, and margins

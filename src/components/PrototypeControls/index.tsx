@@ -17,7 +17,7 @@ export function PrototypeControls({
   consoleMode,
   onConsoleModeChange
 }: PrototypeControlsProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const personaLabels: Record<Persona, { label: string; icon: string; description: string }> = {
     publisher: {
@@ -38,23 +38,23 @@ export function PrototypeControls({
   }
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-[9999] bg-white border-2 border-purple-500 rounded-t-lg shadow-2xl">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-[9999] bg-white border-2 border-indigo-300 rounded-t-lg shadow-2xl">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2 bg-purple-50 cursor-pointer hover:bg-purple-100 transition-colors"
+        className="flex items-center justify-between px-4 py-2 bg-indigo-50 cursor-pointer hover:bg-indigo-100 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <Settings className="w-4 h-4 text-purple-700" />
-          <span className="text-sm font-semibold text-purple-900">🎭 Prototype Controls</span>
-          <span className="text-xs text-purple-600 bg-purple-200 px-2 py-0.5 rounded-full">
+          <Settings className="w-4 h-4 text-indigo-600" />
+          <span className="text-sm font-semibold text-indigo-900">🎭 Prototype Controls</span>
+          <span className="text-xs text-indigo-700 bg-indigo-200 px-2 py-0.5 rounded-full">
             {personaLabels[currentPersona].icon} {personaLabels[currentPersona].label}
           </span>
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-purple-700" />
+          <ChevronDown className="w-4 h-4 text-indigo-600" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-purple-700" />
+          <ChevronUp className="w-4 h-4 text-indigo-600" />
         )}
       </div>
 
@@ -102,7 +102,7 @@ export function PrototypeControls({
                   onClick={() => onPersonaChange(persona)}
                   className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
                     currentPersona === persona
-                      ? 'bg-purple-600 text-white ring-2 ring-purple-400'
+                      ? 'bg-indigo-600 text-white ring-2 ring-indigo-300'
                       : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
@@ -111,7 +111,7 @@ export function PrototypeControls({
                     <div className="flex-1">
                       <div className="font-medium text-sm">{personaLabels[persona].label}</div>
                       <div className={`text-xs mt-0.5 ${
-                        currentPersona === persona ? 'text-purple-100' : 'text-gray-500'
+                        currentPersona === persona ? 'text-indigo-100' : 'text-gray-500'
                       }`}>
                         {personaLabels[persona].description}
                       </div>

@@ -1,10 +1,10 @@
 /**
- * Website Design Library
- * Shows saved starter pages and sections created by users for this specific website
+ * Website Stubs
+ * Shows saved stubs and sections created by users for this specific website
  */
 
 import { useState } from 'react'
-import { Search, FileText, Layout, Trash2, Eye } from 'lucide-react'
+import { Search, FileText, Layout, Trash2, Download } from 'lucide-react'
 
 interface WebsiteDesignLibraryProps {
   websiteId: string
@@ -17,7 +17,16 @@ export function WebsiteDesignLibrary({
   websiteName,
   usePageStore
 }: WebsiteDesignLibraryProps) {
-  const { customStarterPages = [], customSections = [], removeCustomStarterPage, removeCustomSection } = usePageStore()
+  const { 
+    customStarterPages = [], 
+    customSections = [], 
+    removeCustomStarterPage, 
+    removeCustomSection,
+    replaceCanvasItems,
+    setCurrentView,
+    selectWidget,
+    addNotification
+  } = usePageStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState<'starters' | 'sections'>('starters')
 
@@ -50,16 +59,35 @@ export function WebsiteDesignLibrary({
     }
   }
 
-  const handlePreview = (id: string, type: 'starter' | 'section') => {
-    console.log('Preview:', type, id)
-    // TODO: Implement preview functionality
+  const handleLoad = (id: string, type: 'starter' | 'section', name: string) => {
+    if (type === 'starter') {
+      const starterPage = customStarterPages.find((p: any) => p.id === id)
+      if (!starterPage) {
+        addNotification({ type: 'error', title: 'Error', message: 'Stub not found' })
+        return
+      }
+      
+      const confirmed = window.confirm(
+        `Load "${name}" into editor?\n\nYour current page will be replaced. This action cannot be undone.`
+      )
+      
+      if (confirmed) {
+        selectWidget(null)
+        replaceCanvasItems(starterPage.canvasItems || [])
+        setCurrentView('page-builder')
+        addNotification({ type: 'success', title: 'Stub Loaded', message: `"${name}" loaded into editor` })
+      }
+    } else {
+      // For sections, just show a message for now
+      addNotification({ type: 'info', title: 'Section Load', message: 'Section loading to be implemented' })
+    }
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Design Library</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Stubs</h2>
         <p className="text-gray-600 mt-1">
           Your saved stubs and reusable sections for this website
         </p>
@@ -146,11 +174,12 @@ export function WebsiteDesignLibrary({
                       </div>
                       <div className="flex gap-2 ml-4">
                         <button
-                          onClick={() => handlePreview(page.id, 'starter')}
-                          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Preview"
+                          onClick={() => handleLoad(page.id, 'starter', page.name)}
+                          className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded transition-colors flex items-center gap-1.5"
+                          title="Load in editor"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
+                          Load
                         </button>
                         <button
                           onClick={() => handleDelete(page.id, 'starter', page.name)}
@@ -208,11 +237,12 @@ export function WebsiteDesignLibrary({
                       </div>
                       <div className="flex gap-2 ml-4">
                         <button
-                          onClick={() => handlePreview(section.id, 'section')}
-                          className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                          title="Preview"
+                          onClick={() => handleLoad(section.id, 'section', section.name)}
+                          className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded transition-colors flex items-center gap-1.5"
+                          title="Load in editor"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
+                          Load
                         </button>
                         <button
                           onClick={() => handleDelete(section.id, 'section', section.name)}

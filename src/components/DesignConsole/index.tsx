@@ -193,7 +193,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <Globe className="w-4 h-4" />
-                        Design Library
+                        Stubs
                       </button>
                     </div>
                   )}
