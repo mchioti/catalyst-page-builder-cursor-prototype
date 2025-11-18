@@ -55,7 +55,7 @@ export function WebsiteTemplates({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   // Filter templates to only show those relevant to this website's content types and settings
-  // NOTE: ONLY show Publication Page Templates - exclude Starter Pages (website/supporting) and Sections (global/section)
+  // NOTE: ONLY show Publication Page Templates - exclude Stubs (website/supporting) and Sections (global/section)
   const relevantTemplates = allTemplates.filter(template => {
     // ONLY show Publication Page Templates - exclude everything else
     if (template.category !== 'publication') {

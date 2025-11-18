@@ -61,7 +61,7 @@ export function WebsiteDesignLibrary({
       <div className="border-b border-gray-200 pb-6">
         <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Design Library</h2>
         <p className="text-gray-600 mt-1">
-          Your saved starter pages and reusable sections for this website
+          Your saved stubs and reusable sections for this website
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export function WebsiteDesignLibrary({
         >
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            Saved Starter Pages ({websiteStarterPages.length})
+            Saved Stubs ({websiteStarterPages.length})
           </div>
         </button>
         <button
@@ -101,7 +101,7 @@ export function WebsiteDesignLibrary({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder={`Search ${selectedTab === 'starters' ? 'starter pages' : 'sections'}...`}
+            placeholder={`Search ${selectedTab === 'starters' ? 'stubs' : 'sections'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -117,12 +117,12 @@ export function WebsiteDesignLibrary({
             <div className="p-12 text-center">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'No starter pages found' : 'No saved starter pages yet'}
+                {searchTerm ? 'No stubs found' : 'No saved stubs yet'}
               </h3>
               <p className="text-gray-600">
                 {searchTerm 
                   ? 'Try adjusting your search terms.' 
-                  : 'Save a page as a starter in the Page Builder to see it here.'}
+                  : 'Save a page as a stub in the Page Builder to see it here.'}
               </p>
             </div>
           ) : (

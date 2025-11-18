@@ -299,7 +299,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <FileText className="w-4 h-4" />
-                        Starter Page Library
+                        Stub Library
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${theme.id}-section-library` as DesignConsoleView)}
@@ -622,7 +622,7 @@ export function DesignConsole() {
             })()
           )}
           
-          {/* Dynamic handler for Starter Page Library (Website + Supporting pages merged) */}
+          {/* Dynamic handler for Stub Library (Website + Supporting pages merged) */}
           {siteManagerView.endsWith('-starter-library') && (
             (() => {
               const themeId = siteManagerView.replace('-starter-library', '')

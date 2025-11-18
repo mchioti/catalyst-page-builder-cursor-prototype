@@ -1786,14 +1786,14 @@ export function PageBuilder({
                     const currentWebsite = usePageStore.getState().websites.find((w: any) => w.id === currentWebsiteId)
                     
                     if (canvasItems.length === 0) {
-                      showToast('Cannot save empty page as starter', 'error')
+                      showToast('Cannot save empty page as stub', 'error')
                       return
                     }
 
-                    const starterName = prompt('Enter a name for this starter page:')
+                    const starterName = prompt('Enter a name for this stub:')
                     if (!starterName?.trim()) return
 
-                    const starterDescription = prompt('Enter a description (optional):') || 'Custom starter page'
+                    const starterDescription = prompt('Enter a description (optional):') || 'Custom stub'
 
                     // Deep clone and regenerate IDs for canvas items to avoid conflicts
                     const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
@@ -1833,11 +1833,11 @@ export function PageBuilder({
                     }
 
                     addCustomStarterPage(newStarterPage)
-                    showToast(`Starter page "${starterName.trim()}" saved!`, 'success')
+                    showToast(`Stub "${starterName.trim()}" saved!`, 'success')
                   }}
                   className="ml-3 text-xs text-green-600 hover:text-green-800 underline"
                 >
-                  Save as Starter Page
+                  Save as Stub
                 </button>
               </div>
             )}
@@ -2094,11 +2094,11 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
         )}
       </div>
 
-      {/* Saved Starter Pages */}
+      {/* Saved Stubs */}
       <div>
         <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Saved Starter Pages
+          <FileText className="w-4 h-4" />
+          Saved Stubs
         </h3>
 
         {customStarterPages.filter((page: any) => page.websiteId === currentWebsiteId).length > 0 ? (
@@ -2157,8 +2157,8 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
         ) : (
           <div className="text-center py-8 text-gray-500">
             <div className="text-4xl mb-2">📄</div>
-            <div className="text-sm">No saved starter pages yet</div>
-            <div className="text-xs mt-1">Save your pages as reusable starters</div>
+            <div className="text-sm">No saved stubs yet</div>
+            <div className="text-xs mt-1">Save your pages as reusable stubs</div>
           </div>
         )}
       </div>

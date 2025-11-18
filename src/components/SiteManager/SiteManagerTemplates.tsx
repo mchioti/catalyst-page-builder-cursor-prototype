@@ -1081,9 +1081,9 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
     // Templates (data-driven hierarchical pages with inheritance)
     { key: 'publication', label: 'Publication Page Templates', description: 'Data-driven hierarchical pages (Journal → Archive → Issue → Article)', type: 'templates', group: 'publication' },
     
-    // Starter Pages (marketing/creative pages, copy not inherit)
-    // Website and Supporting are both shown under 'website' category for starters
-    { key: 'website', label: 'Starter Pages', description: 'Website, Supporting, and Legal pages (Homepage, About, Contact, Privacy, etc.)', type: 'starters', group: 'all' },
+    // Stubs (marketing/creative pages, copy not inherit)
+    // Website and Supporting are both shown under 'website' category for stubs
+    { key: 'website', label: 'Stubs', description: 'Website, Supporting, and Legal pages (Homepage, About, Contact, Privacy, etc.)', type: 'starters', group: 'all' },
     { key: 'supporting', label: 'Supporting Pages', description: 'Hidden - merged with website', type: 'starters', group: 'supporting', hidden: true },
     
     // Sections (reusable prefab components)
@@ -1354,7 +1354,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold text-gray-900">
                   {selectedType === 'templates' && '📋 Templates'}
-                  {selectedType === 'starters' && '🎨 Starter Pages'}
+                  {selectedType === 'starters' && '📄 Stubs'}
                   {selectedType === 'sections' && '🧩 Sections'}
                   {availableCategories.length > 1 && ` • ${categories.find(c => c.key === selectedCategory)?.label.replace(' Page Templates', '').replace(' Sections', '')}`}
                 </h2>
@@ -1419,7 +1419,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   >
                     <Plus className="h-4 w-4" />
                     {selectedType === 'templates' && 'New Template'}
-                    {selectedType === 'starters' && 'New Starter Page'}
+                    {selectedType === 'starters' && 'New Stub'}
                     {selectedType === 'sections' && 'New Section'}
                   </button>
                 </div>
@@ -1452,7 +1452,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {selectedType === 'templates' && 'Template Name'}
-                        {selectedType === 'starters' && 'Starter Page Name'}
+                        {selectedType === 'starters' && 'Stub Name'}
                         {selectedType === 'sections' && 'Section Name'}
                       </th>
                       <th className="text-right py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1520,7 +1520,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>🎨 Starter Pages</span>
+                      <span>📄 Stubs</span>
                       {selectedType === 'starters' && <span className="text-xs">▼</span>}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">Marketing & creative pages (copy, not inherit)</div>
@@ -1589,7 +1589,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   <>
                     <div className="flex items-start gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
-                      <span><strong>Starter Pages</strong> are independent copies. No inheritance or propagation.</span>
+                      <span><strong>Stubs</strong> are independent copies. No inheritance or propagation.</span>
                     </div>
                   </>
                 )}

@@ -9,27 +9,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Terminology Update**: Renamed "Starter Pages" to "Stubs" throughout the UI
+  - Page Builder: "Save as Starter Page" → "Save as Stub"
+  - DIY Zone: "Saved Starter Pages" → "Saved Stubs"
+  - Design Console: "Starter Page Library" → "Stub Library"
+  - Design Library: "Saved Starter Pages" tab → "Saved Stubs"
+  - All empty states, prompts, and tooltips updated
+  - Icon changed from Plus to FileText for stub sections
+
+### Added
+- **Divider Widget**: Horizontal line separator with customizable style, thickness, color, and margins
+  - Styles: Solid, Dashed, Dotted
+  - Properties panel for full customization
+- **Spacer Widget**: Invisible spacing element with configurable height
+  - Preset heights (1rem, 2rem, 3rem, 4rem, 5rem)
+  - Custom height input with unit support
+- **Collapse/Accordion Widget**: Expandable panels for content organization
+  - Multiple panels with nested widget drop zones
+  - Accordion mode (single panel) or multi-panel mode
+  - Customizable icon position (left/right) and styles (default/bordered/minimal)
+  - Panel management (add/remove/rename)
+  - Drag-and-drop support for adding widgets to panels
+- **Widget Drop Visual Feedback**: Green "Insert before here" indicator shows exact drop position
+  - Subtle green ring highlights target widget during hover
+  - Dynamic label shows widget type being inserted before
+  - Works for all widget types and section areas
+
+### Fixed
+- **CRITICAL: Drag-and-Drop Architecture**: Implemented proper dnd-kit pattern with `DragOverlay`
+  - Fixed infinite horizontal scrolling during widget drag
+  - Fixed widgets getting lost during drag operations
+  - Fixed inconsistent drop zone highlighting
+  - Fixed collapse widget DnD issues
+  - Removed manual transform/z-index/pointerEvents hacks that were fighting dnd-kit's design
+  - Original widget now hidden with `visibility: hidden` during drag (proper pattern)
+  - DragOverlay renders dragging widget in portal (no viewport expansion)
+- **Widget Insertion Precision**: Fixed widgets always dropping at bottom instead of at hover position
+  - Added `widget-target` collision detection for both library widgets AND existing widgets
+  - Widgets now insert exactly where the green "Insert before here" indicator shows
+  - Fixed same-area reordering (index adjustment when source is before target)
+  - Fixed cross-area moves (proper removal from source, insertion at target)
+  - Works correctly for stubs, custom pages, and prefab sections
+- **Date Serialization**: Fixed `getTime is not a function` error when loading stubs
+  - Added `dateReviver` to correctly parse Date objects from localStorage
+  - Added defensive checks in widget renderers for Date/string compatibility
+- **Collapse Widget UX**: Added dedicated "Edit" button to access widget properties without interfering with panel expand/collapse
+- **Collapse Panel Toggling**: Panel headers now work correctly in edit mode with proper event propagation
+- **Spacer Widget Visibility**: Made spacer visible in edit mode with dashed border and label
+
+### Changed
+- **Widget Status**: Divider, Spacer, and Collapse widgets moved from 'planned' to 'supported' in library
+- **Drag Visual Feedback**: Dragging now shows clean preview in DragOverlay instead of transformed original widget
+
+### Technical Improvements
+- Aligned drag-and-drop implementation with dnd-kit best practices
+- Removed workaround code that was causing viewport/collision issues
+- Improved code maintainability by following framework conventions
+
 ---
 
 ## [v0.3.0] - 2024-11-17
 
 ### Added
-- **Starter Pages Persistence**: User-created starter pages now persist across server restarts using localStorage
+- **Stubs Persistence**: User-created stubs now persist across server restarts using localStorage
 - **Mock Demo Data**: Pre-defined FEBS homepage variants (2017, 2020) and Catalyst templates for demos
-- **Design Library**: New consolidated view for saved starter pages and sections per website
-  - Tabbed interface for Starter Pages and Sections
+- **Design Library**: New consolidated view for saved stubs and sections per website
+  - Tabbed interface for Stubs and Sections
   - Search functionality for both types
   - Preview and Delete actions
   - Website-scoped filtering
 - **Source Tracking**: Added `source` field ('mock' | 'user') to distinguish demo data from user-created content
-- **"Save as Starter Page" Button**: Added to Page Builder header (next to "Switch to Template Mode")
+- **"Save as Stub" Button**: Added to Page Builder header (next to "Switch to Template Mode")
   - Prompts for name and description
   - Deep clones canvas with regenerated IDs
   - Automatically tagged with 'user' source
 
 ### Changed
 - **Templates View Refinement**: Now shows ONLY Publication Page Templates
-  - Removed Website and Supporting page templates (now "Starter Pages")
+  - Removed Website and Supporting page templates (now "Stubs")
   - Removed Global and Section templates (now in "Sections")
   - Removed sidebar navigation (no longer needed with single category)
   - Applies to both Website Templates view and Add Website dialog
@@ -38,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DIY Zone**: Removed "+ Save Current Canvas" button (individual section save buttons preferred)
 
 ### Fixed
-- **Templates Regression**: Fixed sections and starter pages incorrectly appearing in templates view
+- **Templates Regression**: Fixed sections and stubs incorrectly appearing in templates view
 - **Type Safety**: Added optional chaining for drag-and-drop operations (`over.data.current?.sectionId`)
 - **Linter Errors**: Fixed all TypeScript linter errors across 6 files
   - PropertiesPanel: Typography style type mismatches
