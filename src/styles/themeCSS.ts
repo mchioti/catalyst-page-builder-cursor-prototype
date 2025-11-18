@@ -689,12 +689,12 @@ const generateThemeSpecificCSS = (theme: any): string => {
   height: 36px;
 }
 
-/* PRIMARY BUTTONS (Color1) - Solid Teal (Figma: Surface-action-primary) */
-/* Uses foundation colors from theme, overrides context-aware base CSS */
+/* PRIMARY BUTTONS (Color1) - Uses dynamic Foundation action-primary color */
+/* Now respects color changes from ThemeEditor */
 .btn-solid-color1,
 .btn-solid-color1.on-light-bg,
 .btn-solid-color1.on-dark-bg {
-  background: var(--foundation-teal-700, #267273);
+  background: var(--foundation-action-primary, #267273);
   color: white;
   border: none;
 }
@@ -702,7 +702,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-solid-color1:hover,
 .btn-solid-color1.on-light-bg:hover,
 .btn-solid-color1.on-dark-bg:hover {
-  background: var(--foundation-teal-800, #1a4c4d); /* Darker teal on hover */
+  background: var(--foundation-action-primary-hover, #1a4c4d); /* Darker on hover */
 }
 
 .btn-solid-color1:disabled,
@@ -714,11 +714,11 @@ const generateThemeSpecificCSS = (theme: any): string => {
   opacity: 0.6;
 }
 
-/* SECONDARY BUTTONS (Color2) - Black/Dark (Figma: Secondary contained) */
+/* SECONDARY BUTTONS (Color2) - Uses dynamic Foundation action-secondary color */
 .btn-solid-color2,
 .btn-solid-color2.on-light-bg,
 .btn-solid-color2.on-dark-bg {
-  background: var(--foundation-gray-900, #111827);
+  background: var(--foundation-action-secondary, #111827);
   color: white;
   border: none;
 }
@@ -726,7 +726,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-solid-color2:hover,
 .btn-solid-color2.on-light-bg:hover,
 .btn-solid-color2.on-dark-bg:hover {
-  background: var(--foundation-gray-950, #030712); /* Darker black on hover */
+  background: var(--foundation-action-secondary-hover, #030712); /* Darker on hover */
 }
 
 .btn-solid-color2:disabled,
@@ -738,11 +738,11 @@ const generateThemeSpecificCSS = (theme: any): string => {
   opacity: 0.6;
 }
 
-/* NEUTRAL/DEFAULT BUTTONS (Color3) - Medium Grey */
+/* ACCENT BUTTONS (Color3) - Uses dynamic Foundation action-tertiary (accent) color */
 .btn-solid-color3,
 .btn-solid-color3.on-light-bg,
 .btn-solid-color3.on-dark-bg {
-  background: var(--foundation-gray-500, #6b7280);
+  background: var(--foundation-action-tertiary, #6b7280);
   color: white;
   border: none;
 }
@@ -750,7 +750,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-solid-color3:hover,
 .btn-solid-color3.on-light-bg:hover,
 .btn-solid-color3.on-dark-bg:hover {
-  background: var(--foundation-gray-600, #4b5563); /* Darker grey on hover */
+  background: var(--foundation-action-tertiary-hover, #4b5563); /* Darker on hover */
 }
 
 .btn-solid-color3:disabled,
@@ -819,16 +819,16 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-outline-color3.on-light-bg,
 .btn-outline-color3.on-dark-bg {
   background: transparent;
-  color: var(--foundation-gray-500, #6b7280);
-  border: 2px solid var(--foundation-gray-500, #6b7280);
+  color: var(--foundation-action-tertiary, #6b7280);
+  border: 2px solid var(--foundation-action-tertiary, #6b7280);
 }
 
 .btn-outline-color3:hover,
 .btn-outline-color3.on-light-bg:hover,
 .btn-outline-color3.on-dark-bg:hover {
   background: transparent; /* No fill on hover */
-  color: var(--foundation-gray-600, #4b5563); /* Darker on hover */
-  border-color: var(--foundation-gray-600, #4b5563);
+  color: var(--foundation-action-tertiary-hover, #4b5563); /* Darker on hover */
+  border-color: var(--foundation-action-tertiary-hover, #4b5563);
 }
 
 .btn-outline-color3:disabled,
@@ -891,7 +891,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-link-color3,
 .btn-link-color3.on-light-bg,
 .btn-link-color3.on-dark-bg {
-  color: var(--foundation-gray-500, #6b7280);
+  color: var(--foundation-action-tertiary, #6b7280);
   background: transparent;
   border: none;
 }
@@ -899,7 +899,7 @@ const generateThemeSpecificCSS = (theme: any): string => {
 .btn-link-color3:hover,
 .btn-link-color3.on-light-bg:hover,
 .btn-link-color3.on-dark-bg:hover {
-  color: var(--foundation-gray-600, #4b5563); /* Darker on hover */
+  color: var(--foundation-action-tertiary-hover, #4b5563); /* Darker on hover */
   text-decoration: underline;
 }
 

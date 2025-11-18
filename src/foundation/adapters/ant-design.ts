@@ -8,11 +8,25 @@ import type { FoundationTokens } from '../tokens/contracts'
 
 export function mapAntDesignToFoundation(theme: any): FoundationTokens {
   
-  // Ant Design Daybreak Blue
-  const daybreaBlue = theme.colors.primary || '#1890ff'
-  const polarGreen = theme.colors.success || '#52c41a'
-  const dustRed = theme.colors.error || '#ff4d4f'
-  const neutralGrey = theme.colors.border || '#d9d9d9'
+  // Primary: Use theme.colors.primary (from ThemeEditor overrides) or fallback to Ant Blue
+  const actionPrimary = theme.colors?.primary || '#1890ff'  // Daybreak Blue
+  const actionPrimaryHover = theme.colors?.primaryDark || '#40a9ff'
+  const actionPrimaryActive = theme.colors?.primaryDark || '#096dd9'
+  
+  // Secondary: Use theme.colors.secondary or fallback to Ant Red (Danger)
+  const actionSecondary = theme.colors?.secondary || '#ff4d4f'  // Dust Red
+  const actionSecondaryHover = '#ff7875'
+  const actionSecondaryActive = '#d9363e'
+  
+  // Tertiary: Use theme.colors.accent or fallback to white (Default button)
+  const actionTertiary = theme.colors?.accent || '#ffffff'
+  const actionTertiaryHover = theme.colors?.accentDark || '#fafafa'
+  const actionTertiaryActive = theme.colors?.accentDark || '#f0f0f0'
+  
+  // Success/Error (not overridable - maintain design system integrity)
+  const polarGreen = '#52c41a'  // Success
+  const dustRed = '#ff4d4f'  // Error (distinct from secondary)
+  const neutralGrey = '#d9d9d9'
   
   // Text colors
   const textPrimary = theme.colors.text || '#000000d9' // 85% opacity black
@@ -21,21 +35,21 @@ export function mapAntDesignToFoundation(theme: any): FoundationTokens {
   
   return {
     // Action Colors
-    'action-primary': daybreaBlue,
-    'action-primary-hover': '#40a9ff',
-    'action-primary-active': '#096dd9',
+    'action-primary': actionPrimary,
+    'action-primary-hover': actionPrimaryHover,
+    'action-primary-active': actionPrimaryActive,
     'action-primary-disabled': '#f5f5f5',
     'action-primary-text': '#ffffff',
     
-    'action-secondary': dustRed, // Danger button
-    'action-secondary-hover': '#ff7875',
-    'action-secondary-active': '#d9363e',
+    'action-secondary': actionSecondary,
+    'action-secondary-hover': actionSecondaryHover,
+    'action-secondary-active': actionSecondaryActive,
     'action-secondary-disabled': '#f5f5f5',
     'action-secondary-text': '#ffffff',
     
-    'action-tertiary': '#ffffff', // Default button
-    'action-tertiary-hover': '#ffffff',
-    'action-tertiary-active': '#ffffff',
+    'action-tertiary': actionTertiary,
+    'action-tertiary-hover': actionTertiaryHover,
+    'action-tertiary-active': actionTertiaryActive,
     'action-tertiary-disabled': '#f5f5f5',
     'action-tertiary-text': textPrimary,
     

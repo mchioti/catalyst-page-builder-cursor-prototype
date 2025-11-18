@@ -30,6 +30,12 @@ function MockHomepage({
   schemaObjects: any[]
   websiteId: string
 }) {
+  debugLog('log', '🏠 MockHomepage RENDER:', {
+    canvasItemsCount: canvasItems?.length || 0,
+    schemaObjectsCount: schemaObjects?.length || 0,
+    websiteId,
+    canvasItems: canvasItems
+  })
 
   return (
     <div className="min-h-screen">
@@ -739,6 +745,8 @@ export function MockLiveSite({
   usePageStore
 }: MockLiveSiteProps) {
   
+  debugLog('log', '🚀 MockLiveSite RENDER START:', { mockLiveSiteRoute })
+  
   // Get canvas data from store (MUST BE FIRST - needed by other hooks)
   const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
   const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas) as CanvasItem[]
@@ -749,6 +757,14 @@ export function MockLiveSite({
   const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
   const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'catalyst-demo-site'
   const journalCode = getJournalCode(mockLiveSiteRoute)
+  
+  debugLog('log', '📊 MockLiveSite State:', {
+    route: mockLiveSiteRoute,
+    canvasItemsCount: canvasItems?.length || 0,
+    websiteId: currentWebsiteId,
+    editingContext,
+    schemaObjectsCount: schemaObjects?.length || 0
+  })
   
   // Initialize branding store for breakpoints
   const { initializeWebsiteBranding, getWebsiteBranding } = useBrandingStore()
@@ -1279,8 +1295,14 @@ export function MockLiveSite({
 
 
   const renderPage = () => {
+    debugLog('log', '🎬 renderPage called:', {
+      route: mockLiveSiteRoute,
+      effectiveCanvasItemsCount: effectiveCanvasItems?.length || 0
+    })
+    
     switch (mockLiveSiteRoute) {
       case '/':
+        debugLog('log', '🏠 Rendering MockHomepage with', effectiveCanvasItems?.length || 0, 'items')
         return <MockHomepage canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} websiteId={currentWebsiteId} />
       case '/toc/advma/current':
         return <MockJournalTOC journalCode="advma" setMockLiveSiteRoute={setMockLiveSiteRoute} canvasItems={effectiveCanvasItems} schemaObjects={schemaObjects} editingContext={usePageStore.getState().editingContext} currentRoute={mockLiveSiteRoute} websiteId={currentWebsiteId} />

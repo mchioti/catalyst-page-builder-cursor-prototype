@@ -111,10 +111,23 @@ export const mockWebsites: Website[] = [
     modifications: [],  // No modifications yet
     customSections: [],
     branding: {
-      primaryColor: '#00AB9F',  // FEBS teal from screenshots
-      secondaryColor: '#f8f9fa',
+      primaryColor: '#00B5FF',  // FEBS blue
+      secondaryColor: '#E3E3E3',  // Light gray
+      accentColor: '#C25338',  // Rust/terracotta
       logoUrl: '/febs-logo.svg',
-      fontFamily: 'Inter'
+      fontFamily: '"Open Sans", icomoon, sans-serif'
+    },
+    // Theme overrides applied via ThemeEditor (simulates user customization)
+    themeOverrides: {
+      colors: {
+        primary: '#00B5FF',
+        secondary: '#E3E3E3',
+        accent: '#C25338'
+      },
+      typography: {
+        headingFont: '"Open Sans", icomoon, sans-serif',
+        bodyFont: '"Open Sans", icomoon, sans-serif'
+      }
     },
     purpose: {
       contentTypes: ['journals'],

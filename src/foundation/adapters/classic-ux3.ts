@@ -30,24 +30,24 @@ export function mapClassicUX3ToFoundation(theme: any): FoundationTokens {
   // ACTION COLORS (Button colors)
   // ========================================================================
   
-  // Primary: Teal
-  const actionPrimary = getFoundationColor('teal.600')
-  const actionPrimaryHover = getFoundationColor('teal.700')
-  const actionPrimaryActive = getFoundationColor('teal.800')
+  // Primary: Use theme.colors.primary (from ThemeEditor overrides) or fallback to default teal
+  const actionPrimary = theme.colors?.primary || getFoundationColor('teal.600')
+  const actionPrimaryHover = theme.colors?.primaryDark || getFoundationColor('teal.700')
+  const actionPrimaryActive = theme.colors?.primaryDark || getFoundationColor('teal.800')
   const actionPrimaryDisabled = getFoundationColor('gray.300')
   const actionPrimaryText = '#FFFFFF'
   
-  // Secondary: Blue
-  const actionSecondary = getFoundationColor('blue.600')
+  // Secondary: Use theme.colors.secondary or fallback to default blue
+  const actionSecondary = theme.colors?.secondary || getFoundationColor('blue.600')
   const actionSecondaryHover = getFoundationColor('blue.700')
   const actionSecondaryActive = getFoundationColor('blue.800')
   const actionSecondaryDisabled = getFoundationColor('gray.300')
   const actionSecondaryText = '#FFFFFF'
   
-  // Tertiary: Neutral Gray
-  const actionTertiary = getFoundationColor('gray.600')
-  const actionTertiaryHover = getFoundationColor('gray.700')
-  const actionTertiaryActive = getFoundationColor('gray.800')
+  // Tertiary: Use theme.colors.accent or fallback to default gray
+  const actionTertiary = theme.colors?.accent || getFoundationColor('gray.600')
+  const actionTertiaryHover = theme.colors?.accentDark || getFoundationColor('gray.700')
+  const actionTertiaryActive = theme.colors?.accentDark || getFoundationColor('gray.800')
   const actionTertiaryDisabled = getFoundationColor('gray.300')
   const actionTertiaryText = '#FFFFFF'
   

@@ -852,14 +852,6 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
     right: 'text-right'
   }
   
-  const colorClasses = {
-    default: 'text-gray-900',
-    primary: 'text-blue-600',
-    secondary: 'text-green-600', 
-    accent: 'text-orange-600',
-    muted: 'text-gray-500'
-  }
-  
   const sizeClasses = {
     small: 'text-lg',
     medium: 'text-xl', 
@@ -891,7 +883,7 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
       case 'underlined':
         return 'border-b-2 border-current pb-2 inline-block'
       case 'highlighted':
-        return 'bg-gradient-to-r from-yellow-100 to-yellow-50 px-3 py-2 rounded'
+        return 'px-3 py-2 rounded inline-block' // Inline-block to fit text width, color via inline style
       case 'decorated':
         return 'relative'
       case 'gradient':
@@ -901,6 +893,64 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
       default:
         return ''
     }
+  }
+  
+  // Calculate luminance to determine if a color is dark or light
+  const getColorLuminance = (color: string): number => {
+    // Extract RGB values from CSS variable or hex color
+    const rgb = getComputedRGBFromVar(color)
+    if (!rgb) return 0.5 // Default to medium if can't calculate
+    
+    // Calculate relative luminance (WCAG formula)
+    const [r, g, b] = rgb.map(val => {
+      const normalized = val / 255
+      return normalized <= 0.03928
+        ? normalized / 12.92
+        : Math.pow((normalized + 0.055) / 1.055, 2.4)
+    })
+    
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  
+  // Get RGB values from CSS variable or hex color
+  const getComputedRGBFromVar = (varName: string): [number, number, number] | null => {
+    if (typeof window === 'undefined') return null
+    
+    // Create temporary element to compute the color
+    const temp = document.createElement('div')
+    temp.style.color = varName.includes('var(') ? varName : `var(${varName}, #0066cc)`
+    document.body.appendChild(temp)
+    
+    const computed = window.getComputedStyle(temp).color
+    document.body.removeChild(temp)
+    
+    // Parse rgb(r, g, b) or rgba(r, g, b, a)
+    const match = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+    if (match) {
+      return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])]
+    }
+    
+    return null
+  }
+  
+  // Get inline styles for specific heading styles that need dynamic theme colors
+  const getInlineStyles = (): React.CSSProperties => {
+    const style = widget.style || 'default'
+    
+    if (style === 'highlighted') {
+      // Get the primary color and determine if it's dark
+      const primaryColor = 'var(--foundation-action-primary, #0066cc)'
+      const luminance = getColorLuminance(primaryColor)
+      const isDark = luminance < 0.5
+      
+      // Use solid primary theme color with appropriate text color
+      return {
+        backgroundColor: primaryColor,
+        color: isDark ? '#ffffff' : '#000000'
+      }
+    }
+    
+    return {}
   }
   
   const HeadingTag = `h${widget.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
@@ -952,12 +1002,14 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   const headingClasses = [
     getStyleClasses(),
     alignClasses[widget.align || 'left'],
-    getSizeClass(),
-    colorClasses[widget.color || 'default']
+    getSizeClass()
   ].filter(Boolean).join(' ')
   
   return (
-    <HeadingTag className={headingClasses}>
+    <HeadingTag 
+      className={headingClasses}
+      style={getInlineStyles()}
+    >
       {widget.icon?.enabled && widget.icon?.position === 'left' && (
         <span className="mr-2">{widget.icon?.emoji || '🎯'}</span>
       )}
@@ -1819,6 +1871,77 @@ const CollapseWidgetRenderer: React.FC<{
     setOpenPanels(new Set(widget.panels.filter(p => p.isOpen).map(p => p.id)))
   }, [widget.panels])
   
+  // Calculate luminance to determine if primary color is dark or light
+  const getColorLuminance = (color: string): number => {
+    const rgb = getComputedRGBFromVar(color)
+    if (!rgb) return 0.5
+    
+    const [r, g, b] = rgb.map(val => {
+      const normalized = val / 255
+      return normalized <= 0.03928
+        ? normalized / 12.92
+        : Math.pow((normalized + 0.055) / 1.055, 2.4)
+    })
+    
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  
+  const getComputedRGBFromVar = (varName: string): [number, number, number] | null => {
+    if (typeof window === 'undefined') return null
+    
+    const temp = document.createElement('div')
+    temp.style.color = varName.includes('var(') ? varName : `var(${varName}, #0066cc)`
+    document.body.appendChild(temp)
+    
+    const computed = window.getComputedStyle(temp).color
+    document.body.removeChild(temp)
+    
+    const match = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+    if (match) {
+      return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])]
+    }
+    
+    return null
+  }
+  
+  // Check if current theme is Classic
+  const isClassicTheme = () => {
+    const store = window.usePageStore || usePageStore
+    if (!store) return false
+    
+    const state = store.getState()
+    const currentWebsite = state.websites?.find((w: any) => w.id === state.currentWebsiteId)
+    const currentTheme = state.themes?.find((t: any) => t.id === currentWebsite?.themeId)
+    
+    return currentTheme?.id === 'classic-ux3-theme'
+  }
+  
+  // Get styles for default collapse style (primary color background for Classic only)
+  const getDefaultStyleColors = () => {
+    if (!isClassicTheme()) {
+      // Non-Classic themes: use original gray styling
+      return {}
+    }
+    
+    // Classic theme: use primary color with adaptive text
+    const primaryColor = 'var(--foundation-action-primary, #0066cc)'
+    const luminance = getColorLuminance(primaryColor)
+    const isDark = luminance < 0.5
+    
+    return {
+      backgroundColor: primaryColor,
+      color: isDark ? '#ffffff' : '#000000'
+    }
+  }
+  
+  // Get CSS classes for default style (gray for non-Classic, styled for Classic)
+  const getDefaultStyleClasses = () => {
+    if (!isClassicTheme()) {
+      return 'bg-gray-100 hover:bg-gray-200'
+    }
+    return '' // Classic uses inline styles
+  }
+  
   const togglePanel = (panelId: string) => {
     const newOpenPanels = new Set(openPanels)
     
@@ -1919,9 +2042,13 @@ const CollapseWidgetRenderer: React.FC<{
                     ? 'hover:bg-gray-50' 
                     : widget.style === 'minimal'
                     ? 'hover:bg-gray-50'
-                    : 'bg-gray-100 hover:bg-gray-200 rounded-l-md'
+                    : `rounded-l-md ${getDefaultStyleClasses()}`
                 }`}
-                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 20 }}
+                style={
+                  widget.style === 'default' 
+                    ? { ...getDefaultStyleColors(), pointerEvents: 'auto', position: 'relative', zIndex: 20 }
+                    : { pointerEvents: 'auto', position: 'relative', zIndex: 20 }
+                }
                 type="button"
               >
                 <div className="flex items-center gap-2">
@@ -1951,14 +2078,20 @@ const CollapseWidgetRenderer: React.FC<{
                     })
                     e.currentTarget.dispatchEvent(event)
                   }}
-                  className={`px-3 py-4 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors ${
+                  className={`px-3 py-4 transition-colors ${
                     widget.style === 'bordered' 
-                      ? '' 
+                      ? 'text-gray-500 hover:text-blue-600 hover:bg-blue-50' 
                       : widget.style === 'minimal'
-                      ? ''
-                      : 'bg-gray-100 hover:bg-blue-50 rounded-r-md'
+                      ? 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                      : isClassicTheme() 
+                        ? 'rounded-r-md hover:opacity-80'
+                        : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-r-md bg-gray-100'
                   }`}
-                  style={{ pointerEvents: 'auto', position: 'relative', zIndex: 20 }}
+                  style={
+                    widget.style === 'default' 
+                      ? { ...getDefaultStyleColors(), pointerEvents: 'auto', position: 'relative', zIndex: 20 }
+                      : { pointerEvents: 'auto', position: 'relative', zIndex: 20 }
+                  }
                   type="button"
                   title="Edit widget properties"
                 >

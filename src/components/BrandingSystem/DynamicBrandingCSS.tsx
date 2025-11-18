@@ -18,10 +18,28 @@ export const DynamicBrandingCSS: React.FC<{
   websiteId: string
   usePageStore: PageStore 
 }> = ({ websiteId, usePageStore }) => {
+  debugLog('log', '🎨 DynamicBrandingCSS COMPONENT RENDER:', { websiteId })
+  
   const { getWebsiteBranding, initializeWebsiteBranding, branding } = useBrandingStore();
 
   // Subscribe to branding store changes to trigger re-renders
   const websiteBranding = branding.websites[websiteId];
+  
+  debugLog('log', '📊 DynamicBrandingCSS State:', {
+    websiteId,
+    hasWebsiteBranding: !!websiteBranding,
+    brandingKeys: websiteBranding ? Object.keys(websiteBranding) : []
+  })
+  
+  // Also watch for changes in website theme overrides from usePageStore
+  const { websites, themes } = usePageStore.getState();
+  const currentWebsite = websites.find((w: any) => w.id === websiteId);
+  const currentTheme = currentWebsite ? themes.find((t: any) => t.id === currentWebsite.themeId) : null;
+  
+  // Serialize theme colors for dependency tracking
+  const websiteThemeColors = currentWebsite?.themeOverrides?.colors ? 
+    JSON.stringify(currentWebsite.themeOverrides.colors) : 
+    (currentTheme?.colors ? JSON.stringify(currentTheme.colors) : '');
 
   useEffect(() => {
     debugLog('log', '🎨 DynamicBrandingCSS effect triggered:', { websiteId, websiteBranding: !!websiteBranding });
@@ -43,9 +61,43 @@ export const DynamicBrandingCSS: React.FC<{
       existingStyle.remove();
     }
 
+    // Get current website for website-level colors
+    const { websites, currentWebsiteId, themes } = usePageStore.getState();
+    const currentWebsite = websites.find((w: any) => w.id === websiteId);
+    const currentTheme = currentWebsite ? themes.find((t: any) => t.id === currentWebsite.themeId) : null;
+    
     // Generate CSS for all journals
     // Journals inherit typography and button styling from theme, but keep their own colors
     const cssRules: string[] = [];
+    
+    // Inject website-level brand colors (from themeOverrides if exists, otherwise from base theme)
+    if (currentWebsite && currentTheme) {
+      // Get effective colors: website overrides take precedence over theme defaults
+      const effectiveColors = {
+        primary: currentWebsite.themeOverrides?.colors?.primary || currentTheme.colors.primary,
+        secondary: currentWebsite.themeOverrides?.colors?.secondary || currentTheme.colors.secondary,
+        accent: currentWebsite.themeOverrides?.colors?.accent || currentTheme.colors.accent,
+      };
+      
+      cssRules.push(`
+        :root {
+          /* Website-level brand colors (from ThemeEditor) */
+          --website-primary: ${effectiveColors.primary};
+          --website-secondary: ${effectiveColors.secondary};
+          --website-accent: ${effectiveColors.accent};
+        }
+        
+        /* Apply website colors to default buttons when no journal/subject context */
+        .website-brand,
+        body:not([class*="journal-"]):not([class*="subject-"]) {
+          --brand-primary: ${effectiveColors.primary};
+          --brand-secondary: ${effectiveColors.secondary};
+          --brand-accent: ${effectiveColors.accent};
+        }
+      `);
+      
+      debugLog('log', '🎨 Website brand colors injected:', effectiveColors);
+    }
 
     websiteBranding.journals.forEach(journal => {
       cssRules.push(`
@@ -142,7 +194,7 @@ export const DynamicBrandingCSS: React.FC<{
 
     debugLog('log', '🎨 Dynamic branding CSS injected for website:', websiteId);
     debugLog('log', '📝 Generated CSS:', cssRules.join('\n'));
-  }, [websiteId, websiteBranding, initializeWebsiteBranding]);
+  }, [websiteId, websiteBranding, initializeWebsiteBranding, usePageStore, websiteThemeColors]);
 
   return null; // This component doesn't render anything
 };

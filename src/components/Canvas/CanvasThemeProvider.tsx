@@ -78,6 +78,8 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     isDesignConsolePreview,
     themeIdToUse,
     brandMode,
+    hasOverrides: !!currentWebsite?.themeOverrides,
+    overrideColors: currentWebsite?.themeOverrides?.colors,
     source: isDesignConsolePreview ? 'previewBrandMode (Design Console)' : 'storeBrandMode (Page Builder/Live)',
     timestamp: new Date().toISOString()
   })
@@ -86,7 +88,26 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
   const rawTheme = themes.find((t: any) => t.id === themeIdToUse) || themes.find((t: any) => t.id === 'classic-ux3-theme')
   
   // Resolve token references based on brand mode
-  const currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
+  let currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
+  
+  // 🎨 CRITICAL: Merge website-level theme overrides (from ThemeEditor)
+  // This ensures color changes made via Design Console > Website > Branding are reflected
+  if (currentTheme && currentWebsite?.themeOverrides) {
+    debugLog('log', '🔀 Merging website themeOverrides into theme:', {
+      websiteId: currentWebsiteId,
+      overrides: currentWebsite.themeOverrides,
+      beforeMerge: currentTheme.colors.primary,
+      afterMerge: currentWebsite.themeOverrides.colors?.primary || currentTheme.colors.primary
+    })
+    
+    currentTheme = {
+      ...currentTheme,
+      colors: { ...currentTheme.colors, ...currentWebsite.themeOverrides.colors },
+      typography: { ...currentTheme.typography, ...currentWebsite.themeOverrides.typography },
+      spacing: { ...currentTheme.spacing, ...currentWebsite.themeOverrides.spacing },
+      components: { ...currentTheme.components, ...currentWebsite.themeOverrides.components }
+    }
+  }
   
   debugLog('log', '🔍 CanvasThemeProvider Debug:', {
     currentWebsiteId,
@@ -95,7 +116,9 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     brandMode,
     currentTheme: currentTheme?.name,
     themesCount: themes.length,
-    semanticColorsResolved: !!currentTheme?.colors?.semanticColors
+    semanticColorsResolved: !!currentTheme?.colors?.semanticColors,
+    hasOverrides: !!currentWebsite?.themeOverrides,
+    effectiveColors: currentTheme?.colors
   })
   
   if (!currentTheme) {
@@ -217,6 +240,15 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
     // 🚀 ATYPON DESIGN FOUNDATION - Token Injection
     // Map theme-specific structures to universal Foundation tokens
     try {
+      debugLog('log', '🎨 About to inject Foundation tokens with theme colors:', {
+        themeId: currentTheme.id,
+        primary: currentTheme.colors.primary,
+        secondary: currentTheme.colors.secondary,
+        accent: currentTheme.colors.accent,
+        currentView,
+        hasSemanticColors: !!currentTheme.colors.semanticColors
+      })
+      
       let foundationTokens = null
       
       // Map each theme to Foundation tokens
@@ -404,7 +436,18 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }
         debugLog('log', '🧹 Cleanup: Removed theme styles:', styleId)
       }
     }
-  }, [currentTheme.id, brandMode, scopeCSS, currentWebsiteId, previewThemeId, currentView]) // Re-run when theme, brand mode, scoping, website, preview theme, or view changes
+  }, [
+    currentTheme.id, 
+    brandMode, 
+    scopeCSS, 
+    currentWebsiteId, 
+    previewThemeId, 
+    currentView,
+    // Track actual color values to detect changes
+    currentTheme.colors.primary,
+    currentTheme.colors.secondary,
+    currentTheme.colors.accent
+  ]) // Re-run when theme, brand mode, scoping, website, colors, or view change
 
   return (
     <div 

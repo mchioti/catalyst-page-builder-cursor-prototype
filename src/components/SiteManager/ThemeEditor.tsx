@@ -262,6 +262,25 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
     }
   }
   
+  const updateThemeTypography = (typography: Partial<Theme['typography']>) => {
+    if (!currentTheme) return
+    
+    if (isWebsiteLevel && websiteId && currentWebsite) {
+      // Website-level: Apply changes immediately to website overrides
+      updateWebsite(websiteId, {
+        themeOverrides: {
+          ...currentWebsite.themeOverrides,
+          typography: { ...currentWebsite.themeOverrides?.typography, ...typography }
+        }
+      })
+    } else if (isThemeLevel) {
+      // Theme-level: Apply changes immediately to the global theme
+      updateTheme(selectedTheme, {
+        typography: { ...currentTheme.typography, ...typography }
+      })
+    }
+  }
+  
   // Get effective theme values (base theme + website overrides)
   const getEffectiveThemeValues = () => {
     if (!currentTheme) return null
@@ -399,29 +418,46 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
                   </div>
                 )}
                 
-                {/* Legacy flat colors - hidden for DS V2 (uses semantic system instead) */}
-                {!effectiveTheme.colors.foundation && (
-                  <div className="space-y-4">
-                    <ColorInput
-                      label="Primary color"
-                      value={effectiveTheme.colors.primary}
-                      onChange={(value) => updateThemeColors({ primary: value })}
-                    />
-                    <ColorInput
-                      label="Secondary color"
-                      value={effectiveTheme.colors.secondary}
-                      onChange={(value) => updateThemeColors({ secondary: value })}
-                    />
-                  </div>
-                )}
-                
-                {/* DS V2: Show explanation for hidden legacy colors */}
-                {effectiveTheme.colors.foundation && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-xs text-blue-700">
-                      ℹ️ This theme uses a <strong>multi-brand foundation system</strong>. All colors are managed through the button variants below and automatically adapt when you switch brands.
+                {/* Check if theme allows color customization */}
+                {!currentTheme?.modificationRules?.colors?.canModifyPrimary && 
+                 !currentTheme?.modificationRules?.colors?.canModifySecondary ? (
+                  <div className="p-3 bg-gray-100 border border-gray-300 rounded-md">
+                    <p className="text-xs text-gray-700">
+                      🔒 <strong>{currentTheme?.name} colors are locked</strong> to maintain brand compliance and design system integrity.
                     </p>
                   </div>
+                ) : (
+                  <>
+                    {/* Legacy flat colors - hidden for DS V2 (uses semantic system instead) */}
+                    {!effectiveTheme.colors.foundation && (
+                      <div className="space-y-4">
+                        <ColorInput
+                          label="Primary color"
+                          value={effectiveTheme.colors.primary}
+                          onChange={(value) => updateThemeColors({ primary: value })}
+                        />
+                        <ColorInput
+                          label="Secondary color"
+                          value={effectiveTheme.colors.secondary}
+                          onChange={(value) => updateThemeColors({ secondary: value })}
+                        />
+                        <ColorInput
+                          label="Accent color"
+                          value={effectiveTheme.colors.accent}
+                          onChange={(value) => updateThemeColors({ accent: value })}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* DS V2: Show explanation for hidden legacy colors */}
+                    {effectiveTheme.colors.foundation && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-xs text-blue-700">
+                          ℹ️ This theme uses a <strong>multi-brand foundation system</strong>. All colors are managed through the button variants below and automatically adapt when you switch brands.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               
@@ -989,6 +1025,57 @@ export function ThemeEditor({ usePageStore, themeId, websiteId }: ThemeEditorPro
               <h3 className="text-lg font-semibold text-gray-900">Typography</h3>
             </div>
             
+            {/* Font Family Controls */}
+            {(currentTheme?.modificationRules?.typography?.canModifyHeadingFont || 
+              currentTheme?.modificationRules?.typography?.canModifyBodyFont) && (
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Font Families</h4>
+                
+                {currentTheme?.modificationRules?.typography?.canModifyHeadingFont && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Heading Font
+                    </label>
+                    <input
+                      type="text"
+                      value={effectiveTheme.typography.headingFont}
+                      onChange={(e) => updateThemeTypography({ headingFont: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., Inter, system-ui, sans-serif"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Used for headings (H1-H6)
+                    </p>
+                  </div>
+                )}
+                
+                {currentTheme?.modificationRules?.typography?.canModifyBodyFont && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Body Font
+                    </label>
+                    <input
+                      type="text"
+                      value={effectiveTheme.typography.bodyFont}
+                      onChange={(e) => updateThemeTypography({ bodyFont: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., Open Sans, system-ui, sans-serif"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Used for body text and paragraphs
+                    </p>
+                  </div>
+                )}
+                
+                <div className="pt-3 border-t border-gray-300">
+                  <p className="text-xs text-gray-600">
+                    💡 <strong>Tip:</strong> Use web-safe fonts or include Google Fonts in your implementation.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Typography Preview</h4>
             <div 
               className="theme-preview p-6 border border-gray-200 rounded-lg bg-white space-y-6"
               style={{

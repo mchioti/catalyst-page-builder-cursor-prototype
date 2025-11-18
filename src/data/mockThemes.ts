@@ -1410,12 +1410,12 @@ export const mockThemes: Theme[] = [
       
       modificationRules: {
         colors: {
-          canModifyPrimary: true,
-          canModifySecondary: true,
-          canModifyAccent: false,  // Accent tied to primary
-          canModifyBackground: true,
+          canModifyPrimary: false,  // IBM Carbon colors are locked (brand compliance)
+          canModifySecondary: false,
+          canModifyAccent: false,
+          canModifyBackground: false,
           canModifyText: false,
-          canModifyMuted: true
+          canModifyMuted: false
         },
         typography: {
           canModifyHeadingFont: false,  // IBM Plex Sans locked

@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Theme-Aware Color Customization**: Intelligent color controls that adapt based on theme restrictions
+  - IBM Carbon theme colors are now locked (brand compliance) - color inputs automatically hidden in ThemeEditor
+  - Ant Design theme is now fully flexible - colors can be customized like Classic theme
+  - Theme `modificationRules.colors` property controls whether color inputs are shown
+  - Shows "🔒 Colors are locked" message for rigid themes (IBM Carbon)
+  - Accent color input added to ThemeEditor for flexible themes
+- **Font Family Customization**: Live font family editing for Classic theme
+  - New "Font Families" section in ThemeEditor's Typography panel
+  - Separate inputs for "Heading Font" and "Body Font"
+  - Real-time preview updates as you type
+  - Respects `modificationRules.typography.canModifyHeadingFont` and `canModifyBodyFont` flags
+  - Only shown for themes that allow font customization (Classic UX3)
+  - Includes helpful tip about web-safe fonts and Google Fonts
 - **Prototype Controls Panel**: Floating panel at bottom of screen for switching personas and console modes
   - 3 personas: Publisher, PB Admin, Developer
   - Console modes: Multi-Website Publisher, Single Website
@@ -27,6 +40,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Success notification after loading
 
 ### Changed
+- **Improved Semantic Icons**: Updated all major navigation icons for better visual clarity and intuitive understanding
+  - **Templates** → `LayoutTemplate` 📐: Document with wireframe/blueprint overlay (was generic `FileText`)
+    - Applied to: Website Templates, Template Library, all template-related navigation
+    - Communicates: Structured, reusable layout patterns
+  - **Stubs** → `FilePlus2` ➕📄: File with plus indicator (was `Globe` or `FileText`)
+    - Applied to: Website Stubs, Stub Library, Design Library tabs, all stub-related navigation
+    - Communicates: Draft/starting points to build from
+  - **Publication Cards** → `Newspaper` 📰: Structured content representation (was `FileText` or `Palette`)
+    - Applied to: Website Publication Cards, Design Publication Cards, all card-related navigation
+    - Communicates: Published content with miniature layout (articles, journals, publications)
+  - **Sections** → `Layers` 📚: Stackable component blocks (was `Layout` or `FileText`)
+    - Applied to: Section Library, Design Library section tabs, all section-related navigation
+    - Communicates: Reusable UI blocks that can be stacked and combined
+  - Follows UI design best practices for semantic iconography
+- **Collapse Widget "Default" Style - Classic Theme Only**: Now uses dynamic primary theme color with adaptive text contrast
+  - **Classic theme**: Background uses `--foundation-action-primary` CSS variable with adaptive white/black text
+  - **Other themes**: Maintain original gray background (`bg-gray-100`)
+  - Text color automatically adapts based on luminance (WCAG calculation)
+  - Dropdown label simplified to "Default" (behavior varies by theme)
+  - Automatically updates when primary color changes in ThemeEditor (Classic only)
+- **Heading "Highlighted" Style**: Now uses dynamic primary theme color with adaptive text contrast
+  - Solid background uses `--foundation-action-primary` CSS variable (was hardcoded yellow gradient)
+  - Text color automatically adapts: white text on dark backgrounds, black text on light backgrounds
+  - Uses WCAG luminance calculation (same as section contentMode logic)
+  - Background width fits text content (inline-block) instead of full width
+  - Automatically updates when primary color changes in ThemeEditor
+  - Consistent with theme branding across all components
+- **FEBS Press Website Defaults**: Pre-configured with custom branding to demonstrate theme customization
+  - Primary color: #00B5FF (bright blue)
+  - Secondary color: #E3E3E3 (light gray)
+  - Accent color: #C25338 (rust/terracotta)
+  - Font family: "Open Sans", icomoon, sans-serif
+  - Applied via `themeOverrides` to simulate user customization
+- **Ant Design Foundation Adapter**: Now flexible and reads theme colors from ThemeEditor
+  - `action-primary` uses `theme.colors.primary` with fallback to Daybreak Blue (#1890ff)
+  - `action-secondary` uses `theme.colors.secondary` with fallback to Dust Red (#ff4d4f)
+  - `action-tertiary` uses `theme.colors.accent` with fallback to white (#ffffff)
+  - Maintains same behavior as Classic theme for consistency
+- **Button Color Labels**: Removed hardcoded color names from Ant Design dropdown
+  - Changed from "Primary (Blue)", "Danger (Red)", "Default (Grey)"
+  - Now shows semantic labels: "Primary", "Secondary", "Accent"
+  - Colors are now dynamic based on ThemeEditor settings
+- **IBM Carbon Theme**: All color modifications disabled
+  - `modificationRules.colors` set to `canModify: false` for all color properties
+  - Maintains IBM brand compliance and design system integrity
+  - Typography and spacing remain customizable
 - **Terminology Update**: Renamed "Starter Pages" to "Stubs" throughout the UI
   - Page Builder: "Save as Starter Page" → "Save as Stub"
   - DIY Zone: "Saved Starter Pages" → "Saved Stubs"
@@ -40,7 +99,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stub Actions**: "View/Preview" button → "Load" button with download icon
   - More actionable and clear about what the button does
 
+### Fixed
+- **Website Color Branding**: Colors changed via ThemeEditor now immediately reflect across all views
+  - `CanvasThemeProvider` now merges `website.themeOverrides` into theme before passing to Foundation adapters
+  - Foundation Button components (and all Foundation components) now use updated colors from ThemeEditor
+  - Fixed issue where `--foundation-action-primary` and other Foundation tokens were using base theme colors instead of website-specific overrides
+  - Added dependency tracking for `themeOverrides` to trigger CSS re-injection on color changes
+  - `DynamicBrandingCSS` also injects website-level colors as `--website-primary`, `--website-secondary`, `--website-accent` CSS variables
+  - Fixed Classic theme adapter to read `theme.colors.primary`, `theme.colors.secondary`, and `theme.colors.accent` from ThemeEditor instead of hardcoded colors
+  - Fixed old-style button CSS to use dynamic Foundation tokens:
+    - `.btn-solid-color1` now uses `--foundation-action-primary` (was hardcoded teal)
+    - `.btn-solid-color2` now uses `--foundation-action-secondary` (was hardcoded gray)
+    - `.btn-solid-color3` now uses `--foundation-action-tertiary` for accent color (was hardcoded gray)
+    - Outline and link button variants also updated to use dynamic accent color
+  - Mock Live Site buttons now update immediately when colors change
+  - Removed hardcoded color names from button properties panel (e.g., "Primary (Blue)" → "Primary") since colors are now dynamic
+
 ### Removed
+- **Heading Widget Color Theme Property**: Removed color selection dropdown from heading properties
+  - Simplifies UI and enforces design consistency
+  - Headings now use theme's default text color (consistent with semantic HTML)
+  - Visual emphasis should come from heading styles (Hero, Decorated, Gradient) rather than arbitrary color changes
+  - Semantic hierarchy (H1→H6) provides natural visual distinction through size/weight
+  - Rationale: Modern design systems favor contextual styling over per-element color overrides
 - **FEBS Mock Starter Pages**: Deleted FEBS Homepage (2017) and FEBS Homepage (2020) demo stubs
   - Only Catalyst Classic Homepage Template remains as demo content
 

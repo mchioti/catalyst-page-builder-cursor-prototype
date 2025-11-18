@@ -1114,22 +1114,6 @@ export function PropertiesPanel({
             </select>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Color Theme</label>
-              <select
-                value={(widget as HeadingWidget).color || 'default'}
-                onChange={(e) => updateWidget({ color: e.target.value as HeadingWidget['color'] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="default">Default</option>
-                <option value="primary">Primary Blue</option>
-                <option value="secondary">Secondary Green</option>
-                <option value="accent">Accent Orange</option>
-                <option value="muted">Muted Gray</option>
-              </select>
-            </div>
-            
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
             <select
@@ -1151,7 +1135,6 @@ export function PropertiesPanel({
               <option value="xl">Extra Large</option>
             </select>
           </div>
-          </div>
           
           <div className="border-t pt-4">
             <IconSelector
@@ -1170,8 +1153,8 @@ export function PropertiesPanel({
                 <li>• Use semantic levels (H1→H2→H3) for proper structure</li>
                 <li>• Auto sizing creates visual hierarchy: H1=XL, H2=Large, etc.</li>
                 <li>• Keep headings concise and descriptive</li>
+                <li>• Use styles (Hero, Decorated) for visual emphasis</li>
                 <li>• Override size only when needed for design consistency</li>
-                <li>• Consider accessibility when choosing colors</li>
               </ul>
               </div>
             </div>
@@ -1625,23 +1608,24 @@ export function PropertiesPanel({
                   )
                 }
                 
-                // Ant Design button types
+                // Ant Design button types (colors now dynamic from ThemeEditor)
                 if (currentTheme?.id === 'ant-design') {
                   return (
                     <>
-                      <option value="color1">Primary (Blue)</option>
-                      <option value="color2">Danger (Red)</option>
-                      <option value="color3">Default (Grey)</option>
+                      <option value="color1">Primary</option>
+                      <option value="color2">Secondary</option>
+                      <option value="color3">Accent</option>
                     </>
                   )
                 }
                 
                 // Modern and other themes use Primary, Secondary, Accent (3 colors)
+                // Color names removed - colors are now dynamic based on ThemeEditor settings
                 return (
                   <>
-                    <option value="color1">Primary (Blue)</option>
-                    <option value="color2">Secondary (Gray)</option>
-                    <option value="color3">Accent (Orange)</option>
+                    <option value="color1">Primary</option>
+                    <option value="color2">Secondary</option>
+                    <option value="color3">Accent</option>
                   </>
                 )
               })()}
@@ -2608,7 +2592,7 @@ export function PropertiesPanel({
               onChange={(e) => updateWidget({ style: e.target.value as 'default' | 'bordered' | 'minimal' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="default">Default (Gray background)</option>
+              <option value="default">Default</option>
               <option value="bordered">Bordered</option>
               <option value="minimal">Minimal</option>
             </select>

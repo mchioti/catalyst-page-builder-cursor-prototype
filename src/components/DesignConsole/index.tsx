@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { 
   Settings, 
   Palette, 
-  FileText, 
-  CreditCard, 
+  LayoutTemplate,
+  FilePlus2,
+  Newspaper,
   ChevronDown, 
   Globe, 
   Layers, 
@@ -168,7 +169,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <LayoutTemplate className="w-4 h-4" />
                         Templates
                       </button>
 
@@ -180,7 +181,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <Newspaper className="w-4 h-4" />
                         Publication Cards
                       </button>
 
@@ -192,7 +193,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <Globe className="w-4 h-4" />
+                        <FilePlus2 className="w-4 h-4" />
                         Stubs
                       </button>
                     </div>
@@ -251,7 +252,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <Palette className="w-4 h-4" />
+                        <Newspaper className="w-4 h-4" />
                         Publication Cards
                       </button>
                       
@@ -263,7 +264,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <LayoutTemplate className="w-4 h-4" />
                         Template Library
                       </button>
                       <button
@@ -274,7 +275,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <FilePlus2 className="w-4 h-4" />
                         Stub Library
                       </button>
                       <button
@@ -285,7 +286,7 @@ export function DesignConsole() {
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        <Layers className="w-4 h-4" />
                         Section Library
                       </button>
                         </div>

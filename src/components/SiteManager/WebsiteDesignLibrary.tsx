@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Search, FileText, Layout, Trash2, Download } from 'lucide-react'
+import { Search, FilePlus2, Layers, Trash2, Download } from 'lucide-react'
 
 interface WebsiteDesignLibraryProps {
   websiteId: string
@@ -104,7 +104,7 @@ export function WebsiteDesignLibrary({
           }`}
         >
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
+            <FilePlus2 className="w-4 h-4" />
             Saved Stubs ({websiteStarterPages.length})
           </div>
         </button>
@@ -117,7 +117,7 @@ export function WebsiteDesignLibrary({
           }`}
         >
           <div className="flex items-center gap-2">
-            <Layout className="w-4 h-4" />
+            <Layers className="w-4 h-4" />
             Saved Sections ({websiteSections.length})
           </div>
         </button>
@@ -143,7 +143,7 @@ export function WebsiteDesignLibrary({
           // Starter Pages
           filteredStarters.length === 0 ? (
             <div className="p-12 text-center">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <FilePlus2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {searchTerm ? 'No stubs found' : 'No saved stubs yet'}
               </h3>
@@ -162,7 +162,7 @@ export function WebsiteDesignLibrary({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-blue-600" />
+                          <FilePlus2 className="w-5 h-5 text-blue-600" />
                           <h3 className="text-lg font-semibold text-gray-900">{page.name}</h3>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">{page.description}</p>
@@ -199,7 +199,7 @@ export function WebsiteDesignLibrary({
           // Saved Sections
           filteredSections.length === 0 ? (
             <div className="p-12 text-center">
-              <Layout className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <Layers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {searchTerm ? 'No sections found' : 'No saved sections yet'}
               </h3>
@@ -225,7 +225,7 @@ export function WebsiteDesignLibrary({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <Layout className="w-5 h-5 text-green-600" />
+                          <Layers className="w-5 h-5 text-green-600" />
                           <h3 className="text-lg font-semibold text-gray-900">{section.name}</h3>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">{section.description}</p>
