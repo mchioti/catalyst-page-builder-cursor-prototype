@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Prototype Controls Panel**: Floating panel at bottom of screen for switching personas and console modes
+  - 3 personas: Publisher, PB Admin, Developer
+  - Console modes: Multi-Website Publisher, Single Website
+  - Available across all views (Design Console, Page Builder, Mock Live Site)
+  - Replaces old console mode toggle in Design Console header
+- **PB Admin Persona**: New admin role for managing design system assets
+  - Purple "PB Admin Mode" badge in theme libraries
+  - "Create New Template/Stub/Section" button (purple) visible only to PB Admin
+  - Foundation for future admin capabilities (edit, duplicate, move between themes)
+
 ### Changed
 - **Terminology Update**: Renamed "Starter Pages" to "Stubs" throughout the UI
   - Page Builder: "Save as Starter Page" → "Save as Stub"
@@ -17,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Design Library: "Saved Starter Pages" tab → "Saved Stubs"
   - All empty states, prompts, and tooltips updated
   - Icon changed from Plus to FileText for stub sections
+- **Console Mode Management**: Moved from Design Console header to Prototype Controls panel
+- **State Management**: Added `currentPersona` and `consoleMode` to global Zustand store
 
 ### Added
 - **Divider Widget**: Horizontal line separator with customizable style, thickness, color, and margins

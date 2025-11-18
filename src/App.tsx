@@ -17,6 +17,7 @@ import { PageBuilder } from './components/PageBuilder'
 import { DynamicBrandingCSS } from './components/BrandingSystem/DynamicBrandingCSS'
 import { DesignConsole } from './components/DesignConsole'
 import { WidgetRenderer } from './components/Widgets/WidgetRenderer'
+import { PrototypeControls } from './components/PrototypeControls'
 import { create } from 'zustand'
 import { type LibraryItem as SpecItem } from './library'
 
@@ -1315,6 +1316,13 @@ export const usePageStore = create<PageState>((set, get) => ({
   mockLiveSiteRoute: '/', // Default to homepage
   previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies', // For theme preview in Design Console
   previewThemeId: 'classic-ux3-theme', // For theme preview in Design Console
+  
+  // Prototype Controls
+  currentPersona: 'publisher' as 'publisher' | 'pb-admin' | 'developer', // Current user persona for prototyping
+  consoleMode: 'multi' as 'multi' | 'single', // Multi-website publisher or single website
+  setCurrentPersona: (persona: 'publisher' | 'pb-admin' | 'developer') => set({ currentPersona: persona }),
+  setConsoleMode: (mode: 'multi' | 'single') => set({ consoleMode: mode }),
+  
   setCurrentView: (view) => set({ currentView: view }),
   setSiteManagerView: (view) => set({ siteManagerView: view }),
   setEditingContext: (context) => set({ editingContext: context }),
@@ -2095,7 +2103,18 @@ function SkinWrap({ skin, children }: { skin: Skin; children: ReactNode }) {
 
 
 export default function App() {
-  const { currentView, mockLiveSiteRoute, setMockLiveSiteRoute, setCurrentView, setEditingContext, currentWebsiteId } = usePageStore()
+  const { 
+    currentView, 
+    mockLiveSiteRoute, 
+    setMockLiveSiteRoute, 
+    setCurrentView, 
+    setEditingContext, 
+    currentWebsiteId,
+    currentPersona,
+    setCurrentPersona,
+    consoleMode,
+    setConsoleMode
+  } = usePageStore()
   
   // Expose usePageStore to window for component access (for prototype only)
   useEffect(() => {
@@ -2123,6 +2142,12 @@ export default function App() {
           <DesignConsole />
         </CanvasThemeProvider>
         <NotificationContainer />
+        <PrototypeControls
+          currentPersona={currentPersona}
+          onPersonaChange={setCurrentPersona}
+          consoleMode={consoleMode}
+          onConsoleModeChange={setConsoleMode}
+        />
       </>
     )
   }
@@ -2141,6 +2166,12 @@ export default function App() {
           />
         </CanvasThemeProvider>
         <NotificationContainer />
+        <PrototypeControls
+          currentPersona={currentPersona}
+          onPersonaChange={setCurrentPersona}
+          consoleMode={consoleMode}
+          onConsoleModeChange={setConsoleMode}
+        />
       </>
     )
   }
@@ -2157,6 +2188,12 @@ export default function App() {
       />
       <NotificationContainer />
       <IssuesSidebar />
+      <PrototypeControls
+        currentPersona={currentPersona}
+        onPersonaChange={setCurrentPersona}
+        consoleMode={consoleMode}
+        onConsoleModeChange={setConsoleMode}
+      />
     </>
   )
 }

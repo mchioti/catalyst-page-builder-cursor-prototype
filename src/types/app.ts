@@ -110,6 +110,9 @@ export type TemplateModification = {
   isExempt: boolean       // True = don't inherit base template updates
 }
 
+export type Persona = 'publisher' | 'pb-admin' | 'developer'
+export type ConsoleMode = 'multi' | 'single'
+
 export type PageState = {
   // Routing
   currentView: AppView
@@ -128,6 +131,12 @@ export type PageState = {
   setMockLiveSiteRoute: (route: MockLiveSiteRoute) => void
   setPreviewBrandMode: (mode: 'wiley' | 'wt' | 'dummies') => void
   setPreviewThemeId: (themeId: string) => void
+  
+  // Prototype Controls (Persona & Console Mode)
+  currentPersona: Persona
+  consoleMode: ConsoleMode
+  setCurrentPersona: (persona: Persona) => void
+  setConsoleMode: (mode: ConsoleMode) => void
   
   // Notifications & Issues
   notifications: Notification[]

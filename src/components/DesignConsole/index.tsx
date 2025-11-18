@@ -35,14 +35,13 @@ const themePreviewImages = {
 }
 
 export function DesignConsole() {
-  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
+  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites, consoleMode, currentPersona } = usePageStore()
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
-  const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['wiley-main'])) // Default expand wiley-main
-  const [consoleMode, setConsoleMode] = useState<'single' | 'multi'>('multi') // Toggle between single/multi-website publisher
+  const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['catalyst-demo-site'])) // Default expand catalyst-demo-site
 
-  // Filter websites based on console mode
+  // Filter websites based on console mode (controlled by PrototypeControls panel)
   const displayedWebsites = consoleMode === 'single' 
-    ? websites.filter(w => w.id === 'journal-of-science') // Single website example
+    ? websites.filter(w => w.id === 'febs-press') // Single website example
     : websites // Show all websites for multi-website publisher
 
   const toggleTheme = (themeId: string) => {
@@ -82,30 +81,7 @@ export function DesignConsole() {
               Back to Page Builder
             </button>
             <h1 className="text-xl font-semibold text-slate-800">Design Console</h1>
-            
-            {/* Console Mode Toggle */}
-            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
-              <button
-                onClick={() => setConsoleMode('multi')}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                  consoleMode === 'multi'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Multi-Website Console
-              </button>
-              <button
-                onClick={() => setConsoleMode('single')}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                  consoleMode === 'single'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Single Website Console
-              </button>
-            </div>
+            {/* Console Mode moved to Prototype Controls panel (bottom) */}
             </div>
           <div className="flex items-center gap-3">
             <button

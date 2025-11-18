@@ -1060,6 +1060,10 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   
   // Lock to libraryType if provided from navigation
   const isLockedToLibrary = Boolean(libraryType)
+  
+  // Get current persona from store (if available)
+  const currentPersona = usePageStore ? usePageStore().currentPersona : 'publisher'
+  const isPBAdmin = currentPersona === 'pb-admin'
 
   // Map theme IDs to display names
   const getThemeName = (themeId?: string): string => {
@@ -1361,6 +1365,11 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {getThemeName(themeId)}
                 </span>
+                {isPBAdmin && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    ⚙️ PB Admin Mode
+                  </span>
+                )}
               </div>
               <p className="text-gray-600 mt-1">
                 {selectedType === 'templates' && 'Data-driven hierarchical pages with inheritance (Journal → Archive → Issue → Article)'}
@@ -1413,15 +1422,18 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                     </button>
                   )}
                   
-                  <button 
-                    onClick={handleCreateTemplate}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {selectedType === 'templates' && 'New Template'}
-                    {selectedType === 'starters' && 'New Stub'}
-                    {selectedType === 'sections' && 'New Section'}
-                  </button>
+                  {/* PB Admin only: Create new templates/stubs/sections */}
+                  {isPBAdmin && (
+                    <button 
+                      onClick={handleCreateTemplate}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {selectedType === 'templates' && 'Create New Template'}
+                      {selectedType === 'starters' && 'Create New Stub'}
+                      {selectedType === 'sections' && 'Create New Section'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
