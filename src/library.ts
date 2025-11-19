@@ -77,8 +77,8 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
         ],
       },
       {
-        id: 'publishing-detail',
-        name: 'Publication Detail',
+        id: 'publishing-details',
+        name: 'Publication Details',
         items: [
           { id: 'publication-details', label: 'Publication Details', type: 'publication-details', description: 'Single publication display with flexible data sources', status: 'supported' },
         ],

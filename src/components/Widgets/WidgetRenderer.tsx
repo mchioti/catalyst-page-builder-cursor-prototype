@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
+import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
 import { useDroppable } from '@dnd-kit/core'
 import { nanoid } from 'nanoid'
 import { Edit, Trash2, Copy } from 'lucide-react'
@@ -1024,51 +1025,50 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   )
 }
 
-// Publication Details Widget Component (journal metadata)
+// Publication Details Widget Component - uses PublicationCard for all rendering
 const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects, sectionContentMode }) => {
   
-  // Get text color based on content mode
-  const getTextColorClasses = () => {
-    if (sectionContentMode === 'dark') {
-      return 'text-white';
-    } else if (sectionContentMode === 'light') {
-      return 'text-gray-900';
+  // DOI lookup function - uses real citation data from our library
+  const fetchPublicationByDOI = (doi: string): any => {
+    // Try to find the DOI in our citation database
+    const citation = getCitationByDOI(doi)
+    
+    if (citation) {
+      // Convert citation to schema.org format
+      return citationToSchemaOrg(citation)
     }
-    // Default: inherit
-    return '';
-  };
-  
-  const textColorClasses = getTextColorClasses();
-  
-  // Get background classes based on content mode (same as PublicationCard)
-  const getBackgroundClasses = () => {
-    if (sectionContentMode === 'dark') {
-      return 'bg-gray-800/50 border-gray-700'; // Dark semi-transparent background
-    } else if (sectionContentMode === 'light') {
-      return 'bg-white border-gray-200'; // White background
+    
+    // Fallback: return a mock publication if DOI not in our database
+    // In production, this would make an API call to CrossRef or similar
+    return {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "headline": `Publication for DOI: ${doi}`,
+      "name": `Publication for DOI: ${doi}`,
+      "doi": doi,
+      "datePublished": new Date().toISOString().split('T')[0],
+      "author": [
+        {
+          "@type": "Person",
+          "name": "Unknown Author"
+        }
+      ],
+      "abstract": `Publication data for DOI ${doi}. This DOI is not in our local database. In production, this would fetch real data from CrossRef API.`,
+      "publisher": {
+        "@type": "Organization",
+        "name": "Unknown Publisher"
+      }
     }
-    // Default: white background
-    return 'bg-white border-gray-200';
-  };
-  
-  const backgroundClasses = getBackgroundClasses();
-  
-  // Helper to safely get identifier from publication data
-  const getIdentifierValue = (pub: any, type: string) => {
-    if (Array.isArray(pub.identifier)) {
-      const found = pub.identifier.find((id: any) => 
-        id.name?.includes(type.toLowerCase()) || id.propertyID === type
-      )
-      return found?.value || found?.identifier || null
-    }
-    return null
   }
 
   // Get publication based on content source
   let publication: any = null
   
   try {
-    if (widget.contentSource === 'schema-objects' && widget.schemaSource?.selectedId) {
+    if (widget.contentSource === 'doi' && widget.doiSource?.doi) {
+      // Fetch publication by DOI (mock implementation)
+      publication = fetchPublicationByDOI(widget.doiSource.doi)
+    } else if (widget.contentSource === 'schema-objects' && widget.schemaSource?.selectedId) {
       // Get single schema object by ID
       const schemaObj = schemaObjects.find(obj => obj.id === widget.schemaSource?.selectedId)
       if (schemaObj) {
@@ -1084,7 +1084,10 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
       try {
         if (widget.aiSource.generatedContent && widget.aiSource.lastGenerated) {
           // Use cached content if it exists and is recent
-          const hoursSinceGeneration = (Date.now() - widget.aiSource.lastGenerated.getTime()) / (1000 * 60 * 60)
+          const lastGenTime = widget.aiSource.lastGenerated instanceof Date 
+            ? widget.aiSource.lastGenerated.getTime()
+            : new Date(widget.aiSource.lastGenerated).getTime()
+          const hoursSinceGeneration = (Date.now() - lastGenTime) / (1000 * 60 * 60)
           if (hoursSinceGeneration < 1) {
             publication = widget.aiSource.generatedContent
           } else {
@@ -1130,64 +1133,25 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
     publication = widget.publication
   }
 
-  // Get alignment class
-  const alignmentClass = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right'
-  }[widget.align || 'left']
-  
-  // For journal layout, show issue/volume info with ISSN and editor
-  if (widget.layout === 'hero' && publication) {
-    const pub = publication
-    const journal = pub.isPartOf?.isPartOf
-    const volume = pub.isPartOf
-    
-    const printISSN = getIdentifierValue(pub, 'print')
-    const onlineISSN = getIdentifierValue(pub, 'online')
-    
+  // If no publication data, show placeholder
+  if (!publication) {
     return (
-      <div className={`max-w-6xl mx-auto border rounded-lg p-6 ${alignmentClass} ${textColorClasses} ${backgroundClasses}`}>
-        <h1 className="text-4xl font-bold mb-2">
-          Volume {String(volume?.volumeNumber || '')} • Issue {String(pub.issueNumber || '')}
-        </h1>
-        <p className="text-lg mb-2">
-          {printISSN && `ISSN (print): ${String(printISSN)}`}
-          {printISSN && onlineISSN && ' • '}
-          {onlineISSN && `ISSN (online): ${String(onlineISSN)}`}
-        </p>
-        <p className="text-sm mb-6">
-          Editor: {String(journal?.editor?.name || 'Unknown Editor')}
-        </p>
+      <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
+        <p>No publication data available</p>
+        <p className="text-sm mt-2">Configure content source in properties panel</p>
       </div>
     )
   }
-  
-  // Default publication details rendering
+
+  // Use PublicationCard for ALL rendering (Articles, Journals, Issues, Books, etc.)
+  // The card config handles display elements based on publication @type
   return (
-    <div className={`border rounded-lg p-6 ${alignmentClass} ${backgroundClasses}`}>
-      <h3 className={`font-semibold ${textColorClasses}`}>
-        {String(publication?.headline || publication?.name || 'Publication')}
-      </h3>
-      {publication?.author && (
-        <p className={`text-sm ${textColorClasses}`}>
-          {Array.isArray(publication.author) 
-            ? publication.author.map((a: any) => {
-                if (typeof a === 'string') return a
-                if (typeof a === 'object' && a !== null) {
-                  return a.name || `${a.givenName || ''} ${a.familyName || ''}`.trim() || 'Unknown Author'
-                }
-                return String(a)
-              }).join(', ')
-            : typeof publication.author === 'string' 
-              ? publication.author
-              : typeof publication.author === 'object' && publication.author !== null
-                ? publication.author.name || `${publication.author.givenName || ''} ${publication.author.familyName || ''}`.trim() || 'Unknown Author'
-                : String(publication.author)
-          }
-        </p>
-      )}
-    </div>
+    <PublicationCard 
+      article={publication}
+      config={widget.cardConfig}
+      align={widget.align}
+      contentMode={sectionContentMode}
+    />
   )
 }
 

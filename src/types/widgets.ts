@@ -120,6 +120,7 @@ export type PublicationListWidget = WidgetBase & {
   // AI generation configuration
   aiSource?: {
     prompt: string // Natural language prompt for AI generation
+    domain?: 'ai-software' | 'chemistry' | '' // Optional domain filter for examples
     lastGenerated?: Date // Timestamp of last generation
     generatedContent?: any[] // Cached generated publications
   }
@@ -143,6 +144,7 @@ export type PublicationDetailsWidget = WidgetBase & {
   // AI generation configuration
   aiSource?: {
     prompt: string // Natural language prompt for AI generation
+    domain?: 'ai-software' | 'chemistry' | '' // Optional domain filter for examples
     lastGenerated?: Date // Timestamp of last generation
     generatedContent?: any // Cached generated publication
   }

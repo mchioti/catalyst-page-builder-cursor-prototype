@@ -27,6 +27,7 @@ import {
   isSection
 } from '../../types'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
+import { getAllDOIs, getDOIsByDomain, getCitationByDOI, type CitationDomain } from '../../utils/citationData'
 import { IconSelector } from '../IconSelector'
 import { getSupportedTabVariants, getTabVariantLabel, type TabVariant } from '../../config/themeTabVariants'
 
@@ -2139,54 +2140,105 @@ export function PropertiesPanel({
           )}
           
           {(widget as PublicationListWidget).contentSource === 'ai-generated' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
-              <textarea
-                value={(widget as PublicationListWidget).aiSource?.prompt || ''}
-                onChange={(e) => updateWidget({ 
-                  aiSource: { 
-                    ...(widget as PublicationListWidget).aiSource,
-                    prompt: e.target.value
-                  }
-                })}
-                placeholder="e.g., generate 6 articles on Organic chemistry with variable length titles written by 1, 2 up to 6 authors"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                rows={3}
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => {
-                    const prompt = (widget as PublicationListWidget).aiSource?.prompt
-                    if (prompt) {
-                      try {
-                        const generatedContent = generateAIContent(prompt)
-                        updateWidget({
-                          aiSource: {
-                            prompt,
-                            lastGenerated: new Date(),
-                            generatedContent
-                          }
-                        })
-                      } catch (error) {
-                        debugLog('error', 'Error generating content:', error)
-                      }
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Domain Filter (Optional)</label>
+                <select
+                  value={(widget as PublicationListWidget).aiSource?.domain || ''}
+                  onChange={(e) => updateWidget({ 
+                    aiSource: { 
+                      prompt: (widget as PublicationListWidget).aiSource?.prompt || '',
+                      ...(widget as PublicationListWidget).aiSource,
+                      domain: e.target.value as CitationDomain | ''
                     }
-                  }}
-                  disabled={!(widget as PublicationListWidget).aiSource?.prompt?.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  🤖 Generate
-                </button>
-                {(widget as PublicationListWidget).aiSource?.lastGenerated && (
-                  <span className="text-xs text-gray-500 self-center">
-                    Last generated: {(widget as PublicationListWidget).aiSource?.lastGenerated?.toLocaleTimeString()}
-                  </span>
-                )}
+                  <option value="">All Domains</option>
+                  <option value="ai-software">🤖 AI & Software Engineering</option>
+                  <option value="chemistry">🧪 Chemistry & Materials</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Filter example DOIs shown below by research domain</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Use "generate X articles", "variable length titles", and "written by 1, 2 up to X authors" for progressive authorship
-              </p>
-            </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Example DOIs from {
+                  (widget as PublicationListWidget).aiSource?.domain === 'ai-software' ? 'AI/Software' :
+                  (widget as PublicationListWidget).aiSource?.domain === 'chemistry' ? 'Chemistry' :
+                  'All Domains'
+                }</label>
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-2 max-h-24 overflow-y-auto">
+                  {((widget as PublicationListWidget).aiSource?.domain 
+                    ? getDOIsByDomain((widget as PublicationListWidget).aiSource?.domain as CitationDomain)
+                    : getAllDOIs()
+                  ).slice(0, 5).map(doi => {
+                    const citation = getCitationByDOI(doi)
+                    return (
+                      <div key={doi} className="text-xs text-gray-600 mb-1">
+                        <strong>{doi}</strong> - {citation?.title.substring(0, 60)}...
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Showing 5 of {
+                    (widget as PublicationListWidget).aiSource?.domain 
+                      ? getDOIsByDomain((widget as PublicationListWidget).aiSource?.domain as CitationDomain).length
+                      : getAllDOIs().length
+                  } available DOIs
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
+                <textarea
+                  value={(widget as PublicationListWidget).aiSource?.prompt || ''}
+                  onChange={(e) => updateWidget({ 
+                    aiSource: { 
+                      ...(widget as PublicationListWidget).aiSource,
+                      prompt: e.target.value
+                    }
+                  })}
+                  placeholder="e.g., generate 6 articles on Organic chemistry with variable length titles written by 1, 2 up to 6 authors"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                  rows={3}
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      const prompt = (widget as PublicationListWidget).aiSource?.prompt
+                      if (prompt) {
+                        try {
+                          const generatedContent = generateAIContent(prompt)
+                          updateWidget({
+                            aiSource: {
+                              ...(widget as PublicationListWidget).aiSource,
+                              prompt,
+                              lastGenerated: new Date(),
+                              generatedContent
+                            }
+                          })
+                        } catch (error) {
+                          debugLog('error', 'Error generating content:', error)
+                        }
+                      }
+                    }}
+                    disabled={!(widget as PublicationListWidget).aiSource?.prompt?.trim()}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    🤖 Generate
+                  </button>
+                  {(widget as PublicationListWidget).aiSource?.lastGenerated && (
+                    <span className="text-xs text-gray-500 self-center">
+                      Last generated: {(widget as PublicationListWidget).aiSource?.lastGenerated?.toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Tip: Use "generate X articles", "variable length titles", and "written by 1, 2 up to X authors" for progressive authorship
+                </p>
+              </div>
+            </>
           )}
           
           <div>
@@ -2303,17 +2355,41 @@ export function PropertiesPanel({
           
           {(widget as PublicationDetailsWidget).contentSource === 'doi' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">DOI</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select DOI</label>
+              <select
                 value={(widget as PublicationDetailsWidget).doiSource?.doi || ''}
                 onChange={(e) => updateWidget({ 
                   doiSource: { doi: e.target.value }
                 })}
-                placeholder="10.1145/3695868"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <p className="text-xs text-gray-500 mt-1">Enter the DOI to fetch publication details</p>
+              >
+                <option value="">-- Select a DOI --</option>
+                <optgroup label="🤖 AI & Software Engineering">
+                  {getDOIsByDomain('ai-software').map(doi => {
+                    const citation = getCitationByDOI(doi)
+                    return (
+                      <option key={doi} value={doi}>
+                        {doi} - {citation?.title.substring(0, 50)}...
+                      </option>
+                    )
+                  })}
+                </optgroup>
+                <optgroup label="🧪 Chemistry & Materials">
+                  {getDOIsByDomain('chemistry').map(doi => {
+                    const citation = getCitationByDOI(doi)
+                    return (
+                      <option key={doi} value={doi}>
+                        {doi} - {citation?.title.substring(0, 50)}...
+                      </option>
+                    )
+                  })}
+                </optgroup>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {(widget as PublicationDetailsWidget).doiSource?.doi 
+                  ? `Selected: ${getCitationByDOI((widget as PublicationDetailsWidget).doiSource!.doi)?.title || 'Unknown'}`
+                  : 'Choose from 34 real publications (14 AI/Software, 20 Chemistry)'}
+              </p>
             </div>
           )}
           
@@ -2352,54 +2428,109 @@ export function PropertiesPanel({
           
           {/* AI Generation Prompt (conditional) */}
           {(widget as PublicationDetailsWidget).contentSource === 'ai-generated' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
-              <textarea
-                value={(widget as PublicationDetailsWidget).aiSource?.prompt || ''}
-                onChange={(e) => updateWidget({ 
-                  aiSource: { 
-                    ...(widget as PublicationDetailsWidget).aiSource,
-                    prompt: e.target.value
-                  }
-                })}
-                placeholder="e.g., generate an article on quantum computing with a long title by 3 Stanford researchers"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                rows={3}
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => {
-                    const prompt = (widget as PublicationDetailsWidget).aiSource?.prompt
-                    if (prompt) {
-                      try {
-                        const generatedContent = generateAISingleContent(prompt)
-                        updateWidget({
-                          aiSource: {
-                            prompt,
-                            lastGenerated: new Date(),
-                            generatedContent
-                          }
-                        })
-                      } catch (error) {
-                        debugLog('error', 'Error generating content:', error)
-                      }
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Domain Filter (Optional)</label>
+                <select
+                  value={(widget as PublicationDetailsWidget).aiSource?.domain || ''}
+                  onChange={(e) => updateWidget({ 
+                    aiSource: { 
+                      prompt: (widget as PublicationDetailsWidget).aiSource?.prompt || '',
+                      ...(widget as PublicationDetailsWidget).aiSource,
+                      domain: e.target.value as CitationDomain | ''
                     }
-                  }}
-                  disabled={!(widget as PublicationDetailsWidget).aiSource?.prompt?.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  🤖 Generate
-                </button>
-                {(widget as PublicationDetailsWidget).aiSource?.lastGenerated && (
-                  <span className="text-xs text-gray-500 self-center">
-                    Last generated: {(widget as PublicationDetailsWidget).aiSource?.lastGenerated?.toLocaleTimeString()}
-                  </span>
-                )}
+                  <option value="">All Domains</option>
+                  <option value="ai-software">🤖 AI & Software Engineering</option>
+                  <option value="chemistry">🧪 Chemistry & Materials</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Filter example DOIs shown below by research domain</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Specify subject, title length ("long title"), and exact author count ("by 3 researchers") for better results
-              </p>
-            </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Example DOIs from {
+                  (widget as PublicationDetailsWidget).aiSource?.domain === 'ai-software' ? 'AI/Software' :
+                  (widget as PublicationDetailsWidget).aiSource?.domain === 'chemistry' ? 'Chemistry' :
+                  'All Domains'
+                }</label>
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-2 max-h-24 overflow-y-auto">
+                  {((widget as PublicationDetailsWidget).aiSource?.domain 
+                    ? getDOIsByDomain((widget as PublicationDetailsWidget).aiSource?.domain as CitationDomain)
+                    : getAllDOIs()
+                  ).slice(0, 5).map(doi => {
+                    const citation = getCitationByDOI(doi)
+                    return (
+                      <div key={doi} className="text-xs text-gray-600 mb-1">
+                        <strong>{doi}</strong> - {citation?.title.substring(0, 60)}...
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Showing 5 of {
+                    (widget as PublicationDetailsWidget).aiSource?.domain 
+                      ? getDOIsByDomain((widget as PublicationDetailsWidget).aiSource?.domain as CitationDomain).length
+                      : getAllDOIs().length
+                  } available DOIs
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">AI Prompt</label>
+                <textarea
+                  value={(widget as PublicationDetailsWidget).aiSource?.prompt || ''}
+                  onChange={(e) => updateWidget({ 
+                    aiSource: { 
+                      ...(widget as PublicationDetailsWidget).aiSource,
+                      prompt: e.target.value
+                    }
+                  })}
+                  placeholder="e.g., generate an article on quantum computing with a long title by 3 Stanford researchers"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                  rows={3}
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      const prompt = (widget as PublicationDetailsWidget).aiSource?.prompt
+                      if (prompt) {
+                        try {
+                          const generatedContent = generateAISingleContent(prompt)
+                          updateWidget({
+                            aiSource: {
+                              ...(widget as PublicationDetailsWidget).aiSource,
+                              prompt,
+                              lastGenerated: new Date(),
+                              generatedContent
+                            }
+                          })
+                        } catch (error) {
+                          debugLog('error', 'Error generating content:', error)
+                        }
+                      }
+                    }}
+                    disabled={!(widget as PublicationDetailsWidget).aiSource?.prompt?.trim()}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    🤖 Generate
+                  </button>
+                  {(widget as PublicationDetailsWidget).aiSource?.lastGenerated && (
+                    <span className="text-xs text-gray-500 self-center">
+                      Last generated: {
+                        (widget as PublicationDetailsWidget).aiSource?.lastGenerated instanceof Date
+                          ? (widget as PublicationDetailsWidget).aiSource?.lastGenerated?.toLocaleTimeString()
+                          : new Date((widget as PublicationDetailsWidget).aiSource?.lastGenerated!).toLocaleTimeString()
+                      }
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Tip: Specify subject, title length ("long title"), and exact author count ("by 3 researchers") for better results
+                </p>
+              </div>
+            </>
           )}
           
           <div>
