@@ -117,6 +117,11 @@ export type PublicationListWidget = WidgetBase & {
     selectedIds?: string[] // Specific schema object IDs
     selectedType?: string // Schema.org type to filter by
   }
+  // DOI list configuration
+  doiSource?: {
+    dois: string[] // Array of selected DOIs
+    domainFilter?: 'ai-software' | 'chemistry' | '' // Optional domain filter
+  }
   // AI generation configuration
   aiSource?: {
     prompt: string // Natural language prompt for AI generation

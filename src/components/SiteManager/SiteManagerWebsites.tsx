@@ -4,6 +4,7 @@ import type { Website, Theme, Modification } from '../../types'
 import { usePageStore } from '../../App'
 import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
 import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
+import { mockStarterPages } from '../../data/mockStarterPages'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file
@@ -118,13 +119,19 @@ export function SiteManagerWebsites() {
       replaceCanvasItems(catalystHomepage)
       debugLog('log', '✅ replaceCanvasItems called')
       debugLog('log', '✅ Canvas should now have Catalyst content')
-    } else if (website.id === 'febs-press' && website.deviationScore === 0) {
-      // FEBS Press uses the clean base template (no modifications yet)
-      debugLog('log', '📄 Loading generic template homepage...')
-      const homepageTemplate = createHomepageTemplate()
-      debugLog('log', '📦 Created template with', homepageTemplate.length, 'sections')
-      replaceCanvasItems(homepageTemplate)
-      debugLog('log', '✅ Generic homepage loaded to canvas')
+    } else if (website.id === 'febs-press') {
+      // FEBS Press uses the FEBS Homepage 2025 starter
+      debugLog('log', '📰 Loading FEBS Homepage 2025 starter...')
+      const febsStarter = mockStarterPages.find(p => p.id === 'febs-homepage-2025')
+      if (febsStarter) {
+        debugLog('log', '📦 Found FEBS starter with', febsStarter.canvasItems.length, 'sections')
+        replaceCanvasItems(febsStarter.canvasItems)
+        debugLog('log', '✅ FEBS Homepage 2025 loaded to canvas')
+      } else {
+        debugLog('warn', '⚠️ FEBS starter not found, loading generic template')
+        const homepageTemplate = createHomepageTemplate()
+        replaceCanvasItems(homepageTemplate)
+      }
     } else {
       debugLog('warn', '⚠️ No content loaded for website:', website.id)
     }

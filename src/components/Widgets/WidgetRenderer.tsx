@@ -1198,6 +1198,22 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
       console.error('Error loading schema objects:', error)
       publications = []
     }
+  } else if (widget.contentSource === 'doi-list' && widget.doiSource?.dois && widget.doiSource.dois.length > 0) {
+    // Fetch publications by DOI from citation database
+    try {
+      publications = widget.doiSource.dois
+        .map(doi => {
+          const citation = getCitationByDOI(doi)
+          if (citation) {
+            return citationToSchemaOrg(citation)
+          }
+          return null
+        })
+        .filter(pub => pub !== null)
+    } catch (error) {
+      console.error('Error loading DOI publications:', error)
+      publications = []
+    }
   } else if (widget.contentSource === 'ai-generated' && widget.aiSource?.prompt) {
     // Generate AI content based on prompt
     try {

@@ -10,6 +10,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **FEBS Press Homepage 2025 Starter**: Complete homepage template for FEBS Press
+  - 4-journal cover showcase (HTML widget with grid layout)
+  - "Highlights from FEBS Press" section with 3 article cards (HTML widgets)
+  - "FEBS Press News" section featuring Milan Declaration (two-column layout)
+  - "Featured Content" section with 3 topic cards
+  - Uses FEBS branding colors (#00B5FF, #E3E3E3, #C25338)
+  - Available in Stub Library for FEBS Press website
+  - **Auto-loads by default**: Navigating to FEBS Press from Design Console now automatically loads this starter instead of generic template
+  - No need to manually load from Stubs - content appears immediately in editor
+- **Real Citation Data Integration (34 Publications from 2 Research Domains)**:
+  - Created `citationData.ts` utility with 34 real publications from elibrary exports
+  - **14 AI/Software Engineering publications** including:
+    - "Vibe Coding in Practice: Building a Driving Simulator Without Expert Programming Skills" (Cursor mention!)
+    - "The Future of AI-Driven Software Engineering"
+    - "Semantic Commit: Helping Users Update Intent Specifications for AI Memory"
+    - Plus 11 more on LLMs, copilots, software testing, and collaborative development
+  - **20 Chemistry & Materials publications** including:
+    - "Calcium-Based Sustainable Chemical Technologies for Total Carbon Recycling"
+    - "Organic Chemistry of Calcium – An Element with Unlimited Possibilities"
+    - "Oxygen-Mediated Surface Photoreactions: Exploring New Pathways"
+    - Plus 17 more on organic chemistry, calcium compounds, and materials science
+  - All publications include: DOI, title, authors, year, journal/proceedings, abstract, keywords, pages
+  - `getCitationByDOI()` returns full publication metadata in schema.org format
+  - `citationToSchemaOrg()` converts citations to JSON-LD for Publication Card rendering
+- **DOI Dropdown Selectors** (replaces text input):
+  - **Publication Details Widget**: Grouped dropdown by research domain
+    - "🤖 AI & Software Engineering" optgroup with 14 DOIs
+    - "🧪 Chemistry & Materials" optgroup with 20 DOIs
+    - Shows DOI + truncated title (50 chars) for each option
+    - Live preview of selected publication title below dropdown
+    - Full publication metadata fetched from citation database
+    - Fallback to mock lookup if DOI not in database (ready for CrossRef API)
+  - **Publication List Widget - DOI List**: Multi-select DOI picker with domain filtering
+    - Optional domain filter dropdown: "All Domains (34)", "AI/Software (14)", "Chemistry (20)"
+    - Checkbox list showing DOI + full title + first 2 authors + year for each publication
+    - Selected items highlighted with blue background
+    - Counter showing "X of Y DOIs selected"
+    - "Clear All" button to deselect all
+    - Fetches full publication metadata from citation database for each selected DOI
+    - Publications rendered using Publication Card system with all configured display elements
+- **Domain Filtering for AI Generation** (both widgets):
+  - Optional "Domain Filter" dropdown in AI generation section
+    - Options: "All Domains", "🤖 AI & Software Engineering", "🧪 Chemistry & Materials"
+    - Filters example DOIs shown in "Example DOIs from [Domain]" panel
+  - Shows 5 example DOIs with full citation info (DOI + title)
+  - Dynamic count: "Showing 5 of 14 available DOIs" (updates by domain)
+  - Helps users understand the citation database scope when generating AI content
+  - `domain` field added to `aiSource` type definitions (optional)
 - **Theme-Aware Color Customization**: Intelligent color controls that adapt based on theme restrictions
   - IBM Carbon theme colors are now locked (brand compliance) - color inputs automatically hidden in ThemeEditor
   - Ant Design theme is now fully flexible - colors can be customized like Classic theme
@@ -38,6 +86,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Loads stub directly into Page Builder editor
   - Confirmation dialog before replacing current content
   - Success notification after loading
+- **Publication Details Widget Major Overhaul**:
+  - **Fixed naming consistency**: "Publication Detail" → "Publication Details" (plural)
+  - **Now uses Publication Card system for ALL rendering** (Articles, Books, Issues, Journals, Chapters)
+  - Leverages existing Publication Card Styles configurator with tabs for each type
+  - Schema.org-based rendering automatically handles different `@type` values
+  - **AI Generation support** with prompt-based content creation and 1-hour cache
+  - **DOI-based display** with mock publication lookup (ready for CrossRef API integration)
+  - **Date serialization fix** for AI-generated content timestamps
+  - Multiple content sources: DOI, AI Generated, Schema Objects, Page Context
+  - All Publication Card display elements now available (metadata, authors, abstract, keywords, etc.)
+  - Consistent styling with Publication List widget
 
 ### Changed
 - **Improved Semantic Icons**: Updated all major navigation icons for better visual clarity and intuitive understanding

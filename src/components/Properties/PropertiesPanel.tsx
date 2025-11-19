@@ -2030,6 +2030,94 @@ export function PropertiesPanel({
             </select>
           </div>
           
+          {/* DOI List Selection (conditional) */}
+          {(widget as PublicationListWidget).contentSource === 'doi-list' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Domain Filter (Optional)</label>
+                <select
+                  value={(widget as PublicationListWidget).doiSource?.domainFilter || ''}
+                  onChange={(e) => updateWidget({ 
+                    doiSource: { 
+                      dois: (widget as PublicationListWidget).doiSource?.dois || [],
+                      domainFilter: e.target.value as CitationDomain | ''
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">All Domains (34 DOIs)</option>
+                  <option value="ai-software">🤖 AI & Software Engineering (14 DOIs)</option>
+                  <option value="chemistry">🧪 Chemistry & Materials (20 DOIs)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Filter available DOIs by research domain</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select DOIs</label>
+                <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
+                  {((widget as PublicationListWidget).doiSource?.domainFilter 
+                    ? getDOIsByDomain((widget as PublicationListWidget).doiSource?.domainFilter as CitationDomain)
+                    : getAllDOIs()
+                  ).map(doi => {
+                    const citation = getCitationByDOI(doi)
+                    const isSelected = (widget as PublicationListWidget).doiSource?.dois?.includes(doi) || false
+                    return (
+                      <label key={doi} className={`flex items-start space-x-2 p-2 rounded cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-100 border border-transparent'}`}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const currentDois = (widget as PublicationListWidget).doiSource?.dois || []
+                            const newDois = e.target.checked
+                              ? [...currentDois, doi]
+                              : currentDois.filter(d => d !== doi)
+                            updateWidget({ 
+                              doiSource: {
+                                dois: newDois,
+                                domainFilter: (widget as PublicationListWidget).doiSource?.domainFilter
+                              }
+                            })
+                          }}
+                          className="mt-1 rounded border-gray-300"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-mono text-blue-600 mb-0.5">{doi}</div>
+                          <div className="text-sm font-medium text-gray-900 leading-tight">{citation?.title}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {citation?.authors.slice(0, 2).join(', ')}
+                            {citation && citation.authors.length > 2 && ` et al.`} ({citation?.year})
+                          </div>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs text-gray-500">
+                    <strong>{(widget as PublicationListWidget).doiSource?.dois?.length || 0}</strong> of {
+                      (widget as PublicationListWidget).doiSource?.domainFilter 
+                        ? getDOIsByDomain((widget as PublicationListWidget).doiSource?.domainFilter as CitationDomain).length
+                        : getAllDOIs().length
+                    } DOIs selected
+                  </p>
+                  {(widget as PublicationListWidget).doiSource?.dois?.length ? (
+                    <button
+                      onClick={() => updateWidget({ 
+                        doiSource: {
+                          dois: [],
+                          domainFilter: (widget as PublicationListWidget).doiSource?.domainFilter
+                        }
+                      })}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Clear All
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          )}
+          
           {(widget as PublicationListWidget).contentSource === 'schema-objects' && (
             <>
               <div>
