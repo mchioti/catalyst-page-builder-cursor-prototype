@@ -470,6 +470,16 @@ h1, h2, h3, h4, h5, h6 {
   text-align: right;
 }
 
+/* ====================================
+   EDITORIAL CARD
+   ==================================== */
+
+/* Editorial Card with Accent Background (Color Block layout) */
+.editorial-card-accent-bg {
+  background: var(--theme-color-accent, #3b82f6);
+  color: white;
+}
+
 ${generateTypographyCSS(theme)}
 
 /* ====================================

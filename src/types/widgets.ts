@@ -257,7 +257,55 @@ export type SpacerWidget = WidgetBase & {
   height: string // e.g., '1rem', '2rem', '50px', '10vh'
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget
+// Editorial Card - SharePoint-inspired marketing/editorial content card
+export type EditorialCardLayout = 'image-overlay' | 'split' | 'color-block'
+
+export type EditorialCardContent = {
+  preheader: {
+    enabled: boolean
+    text: string
+  }
+  headline: {
+    enabled: boolean
+    text: string
+  }
+  description: {
+    enabled: boolean
+    text: string
+  }
+  callToAction: {
+    enabled: boolean
+    text: string
+    url: string
+    type: 'button' | 'link'
+  }
+}
+
+export interface EditorialCardWidget extends WidgetBase {
+  type: 'editorial-card'
+  
+  // Layout structure (determines arrangement, not styling)
+  layout: EditorialCardLayout
+  
+  // Content slots
+  content: EditorialCardContent
+  
+  // Image
+  image: {
+    src: string
+    alt: string
+  }
+  
+  // Configuration (references design tokens, doesn't hardcode values)
+  config: {
+    contentAlignment: 'left' | 'center' | 'right'
+    imagePosition?: 'top' | 'bottom' | 'left' | 'right' // For split/color-block layouts
+    overlayOpacity?: number // For image-overlay (0-100)
+    useAccentColor?: boolean // Use theme accent color for color-block background
+  }
+}
+
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget | EditorialCardWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 

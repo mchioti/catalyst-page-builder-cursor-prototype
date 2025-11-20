@@ -3,7 +3,7 @@ export type LibraryItemStatus = 'supported' | 'planned' | 'deprecated' | 'advanc
 export type LibraryItem = {
   id: string
   label: string
-  type: 'text' | 'image' | 'navbar' | 'menu' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'code-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors'
+  type: 'text' | 'image' | 'navbar' | 'menu' | 'button' | 'link' | 'divider' | 'spacer' | 'table' | 'page-index' | 'tabs' | 'collapse' | 'slideshow' | 'cta' | 'feedback-form' | 'recommend-to-library' | 'heading' | 'html-block' | 'code-block' | 'publication-list' | 'publication-details' | 'saved-searches' | 'cross-publisher-recs' | 'deployment-indicator' | 'locale-changer' | 'saml-errors' | 'editorial-card'
   description?: string
   skin?: 'modern' | 'classic' | 'minimal' | 'accent'
   status: LibraryItemStatus
@@ -38,6 +38,13 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
           { id: 'button', label: 'Button Link', type: 'button', description: 'Links and actions', skin: 'minimal', status: 'supported' },
           { id: 'divider', label: 'Divider', type: 'divider', description: 'Horizontal rule', status: 'supported' },
           { id: 'spacer', label: 'Spacer', type: 'spacer', description: 'Vertical space', status: 'supported' },
+        ],
+      },
+      {
+        id: 'core-content-cards',
+        name: 'Content Cards',
+        items: [
+          { id: 'editorial-card', label: 'Editorial Card', type: 'editorial-card', description: 'Marketing/editorial content card with layouts', status: 'supported' },
         ],
       },
       {

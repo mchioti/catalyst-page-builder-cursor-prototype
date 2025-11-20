@@ -1222,6 +1222,44 @@ function buildWidget(item: SpecItem): Widget {
         height: '2rem' // Default 32px spacing
       } as any; // SpacerWidget
     
+    case 'editorial-card':
+      // SharePoint-inspired editorial/marketing card
+      return {
+        ...baseWidget,
+        type: 'editorial-card',
+        layout: 'image-overlay',
+        content: {
+          preheader: {
+            enabled: true,
+            text: 'ADD SECTION OR CATEGORY NAME'
+          },
+          headline: {
+            enabled: true,
+            text: 'Add a headline'
+          },
+          description: {
+            enabled: true,
+            text: 'Describe what your story is about'
+          },
+          callToAction: {
+            enabled: true,
+            text: 'Learn more',
+            url: '#',
+            type: 'button'
+          }
+        },
+        image: {
+          src: '',
+          alt: 'Editorial card image'
+        },
+        config: {
+          contentAlignment: 'left',
+          imagePosition: 'top',
+          overlayOpacity: 60,
+          useAccentColor: true
+        }
+      } as any; // EditorialCardWidget
+    
     case 'collapse':
       // Start with 2 empty panels so widget is visible
       return {

@@ -3347,6 +3347,293 @@ export function PropertiesPanel({
           </div>
         </div>
       )}
+      
+      {widget.type === 'editorial-card' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
+            <select
+              value={(widget as any).layout || 'image-overlay'}
+              onChange={(e) => updateWidget({ layout: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="image-overlay">Image Overlay</option>
+              <option value="split">Split</option>
+              <option value="color-block">Color Block</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Overlay: Text over image • Split: Image/content separate • Color Block: Image + colored area
+            </p>
+          </div>
+          
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Image</h4>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={(widget as any).image?.src || ''}
+                onChange={(e) => updateWidget({ 
+                  image: { ...(widget as any).image, src: e.target.value } 
+                })}
+                placeholder="https://example.com/image.jpg"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+              <button
+                onClick={() => {
+                  const randomUrl = `https://picsum.photos/800/600?random=${Date.now()}`
+                  updateWidget({ image: { ...(widget as any).image, src: randomUrl } })
+                }}
+                className="px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
+              >
+                🎲 Random
+              </button>
+            </div>
+            
+            <label className="block text-sm font-medium text-gray-700 mb-2 mt-3">Alt Text</label>
+            <input
+              type="text"
+              value={(widget as any).image?.alt || ''}
+              onChange={(e) => updateWidget({ 
+                image: { ...(widget as any).image, alt: e.target.value } 
+              })}
+              placeholder="Image description"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+            
+            {((widget as any).layout === 'split' || (widget as any).layout === 'color-block') && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image Position</label>
+                <select
+                  value={(widget as any).config?.imagePosition || 'top'}
+                  onChange={(e) => updateWidget({ 
+                    config: { ...(widget as any).config, imagePosition: e.target.value } 
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+            )}
+          </div>
+          
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Content</h4>
+            
+            {/* Preheader */}
+            <div className="mb-4">
+              <label className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as any).content?.preheader?.enabled || false}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      preheader: { ...(widget as any).content?.preheader, enabled: e.target.checked }
+                    } 
+                  })}
+                  className="rounded border-gray-300 text-blue-600 mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Preheader</span>
+              </label>
+              {(widget as any).content?.preheader?.enabled && (
+                <input
+                  type="text"
+                  value={(widget as any).content?.preheader?.text || ''}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      preheader: { ...(widget as any).content?.preheader, text: e.target.value }
+                    } 
+                  })}
+                  placeholder="ADD SECTION OR CATEGORY NAME"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              )}
+            </div>
+            
+            {/* Headline */}
+            <div className="mb-4">
+              <label className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as any).content?.headline?.enabled !== false}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      headline: { ...(widget as any).content?.headline, enabled: e.target.checked }
+                    } 
+                  })}
+                  className="rounded border-gray-300 text-blue-600 mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Headline</span>
+              </label>
+              {(widget as any).content?.headline?.enabled !== false && (
+                <input
+                  type="text"
+                  value={(widget as any).content?.headline?.text || ''}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      headline: { ...(widget as any).content?.headline, text: e.target.value }
+                    } 
+                  })}
+                  placeholder="Add a headline"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              )}
+            </div>
+            
+            {/* Description */}
+            <div className="mb-4">
+              <label className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as any).content?.description?.enabled !== false}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      description: { ...(widget as any).content?.description, enabled: e.target.checked }
+                    } 
+                  })}
+                  className="rounded border-gray-300 text-blue-600 mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Description</span>
+              </label>
+              {(widget as any).content?.description?.enabled !== false && (
+                <textarea
+                  value={(widget as any).content?.description?.text || ''}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      description: { ...(widget as any).content?.description, text: e.target.value }
+                    } 
+                  })}
+                  placeholder="Describe what your story is about"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              )}
+            </div>
+            
+            {/* Call to Action */}
+            <div>
+              <label className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  checked={(widget as any).content?.callToAction?.enabled !== false}
+                  onChange={(e) => updateWidget({ 
+                    content: { 
+                      ...(widget as any).content,
+                      callToAction: { ...(widget as any).content?.callToAction, enabled: e.target.checked }
+                    } 
+                  })}
+                  className="rounded border-gray-300 text-blue-600 mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Call to Action</span>
+              </label>
+              {(widget as any).content?.callToAction?.enabled !== false && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={(widget as any).content?.callToAction?.text || ''}
+                    onChange={(e) => updateWidget({ 
+                      content: { 
+                        ...(widget as any).content,
+                        callToAction: { ...(widget as any).content?.callToAction, text: e.target.value }
+                      } 
+                    })}
+                    placeholder="Learn more"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <input
+                    type="url"
+                    value={(widget as any).content?.callToAction?.url || ''}
+                    onChange={(e) => updateWidget({ 
+                      content: { 
+                        ...(widget as any).content,
+                        callToAction: { ...(widget as any).content?.callToAction, url: e.target.value }
+                      } 
+                    })}
+                    placeholder="https://example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <select
+                    value={(widget as any).content?.callToAction?.type || 'button'}
+                    onChange={(e) => updateWidget({ 
+                      content: { 
+                        ...(widget as any).content,
+                        callToAction: { ...(widget as any).content?.callToAction, type: e.target.value }
+                      } 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="button">Button</option>
+                    <option value="link">Link</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Configuration</h4>
+            
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Content Alignment</label>
+              <select
+                value={(widget as any).config?.contentAlignment || 'left'}
+                onChange={(e) => updateWidget({ 
+                  config: { ...(widget as any).config, contentAlignment: e.target.value } 
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+            
+            {(widget as any).layout === 'image-overlay' && (
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Overlay Opacity: {(widget as any).config?.overlayOpacity || 60}%
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={(widget as any).config?.overlayOpacity || 60}
+                  onChange={(e) => updateWidget({ 
+                    config: { ...(widget as any).config, overlayOpacity: parseInt(e.target.value) } 
+                  })}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500 mt-1">Darkness of the image overlay</p>
+              </div>
+            )}
+            
+            {(widget as any).layout === 'color-block' && (
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={(widget as any).config?.useAccentColor !== false}
+                    onChange={(e) => updateWidget({ 
+                      config: { ...(widget as any).config, useAccentColor: e.target.checked } 
+                    })}
+                    className="rounded border-gray-300 text-blue-600 mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Use Accent Color (from theme)</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1">When disabled, uses light gray background</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
         </div>
       )}
     </div>

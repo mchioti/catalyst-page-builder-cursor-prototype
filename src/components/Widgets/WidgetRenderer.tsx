@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel, EditorialCardWidget } from '../../types'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
 import { useDroppable } from '@dnd-kit/core'
 import { nanoid } from 'nanoid'
 import { Edit, Trash2, Copy } from 'lucide-react'
+import { EditorialCardRenderer } from './EditorialCardRenderer'
 
 // Import usePageStore for updating widget state
 declare global {
@@ -2132,6 +2133,9 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       
       case 'collapse':
         return <CollapseWidgetRenderer widget={widget as CollapseWidget} schemaObjects={schemaObjects} journalContext={journalContext} sectionContentMode={sectionContentMode} isLiveMode={isLiveMode} />
+      
+      case 'editorial-card':
+        return <EditorialCardRenderer widget={widget as EditorialCardWidget} isEditMode={!isLiveMode} />
       
       case 'divider': {
         const divider = widget as any // DividerWidget
