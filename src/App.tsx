@@ -2013,6 +2013,32 @@ export const usePageStore = create<PageState>((set, get) => ({
     
     // Configure areas based on layout
     switch (layout) {
+      case 'flexible':
+        // Flexible layout: single content area with flex configuration
+        newSection.areas = [
+          { id: nanoid(), name: 'Flex Items', widgets: [] }
+        ]
+        // Initialize with default flex config (simplified Puck-style)
+        newSection.flexConfig = {
+          direction: 'row',
+          wrap: true,
+          justifyContent: 'flex-start',
+          gap: '1rem'
+        }
+        break
+      case 'grid':
+        // Grid layout: single content area with grid configuration
+        newSection.areas = [
+          { id: nanoid(), name: 'Grid Items', widgets: [] }
+        ]
+        // Initialize with default grid config
+        newSection.gridConfig = {
+          columns: 3,
+          gap: '1rem',
+          alignItems: 'stretch',
+          justifyItems: 'stretch'
+        }
+        break
       case 'one-column':
         newSection.areas = [
           { id: nanoid(), name: 'Content', widgets: [] }
@@ -2041,12 +2067,6 @@ export const usePageStore = create<PageState>((set, get) => ({
         newSection.areas = [
           { id: nanoid(), name: 'Left (2/3)', widgets: [] },
           { id: nanoid(), name: 'Right (1/3)', widgets: [] }
-        ]
-        break
-      case 'vertical':
-        newSection.areas = [
-          { id: nanoid(), name: 'Top', widgets: [] },
-          { id: nanoid(), name: 'Bottom', widgets: [] }
         ]
         break
       default:

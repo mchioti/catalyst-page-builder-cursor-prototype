@@ -299,15 +299,300 @@ export function PropertiesPanel({
         </div>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-            <input
-              type="text"
-              value={section.layout}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
-            />
-          </div>
+          {/* Flex Settings (only show when layout === 'flexible') */}
+          {section.layout === 'flexible' && (
+            <div className="space-y-3 border-t pt-3">
+              <h4 className="text-sm font-medium text-gray-900">Flex Settings</h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        direction: 'row'
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.direction === 'row'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Row
+                  </button>
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        direction: 'column'
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.direction === 'column'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Column
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Justify Content</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        justifyContent: 'flex-start'
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.justifyContent === 'flex-start'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Start
+                  </button>
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        justifyContent: 'center'
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.justifyContent === 'center'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Center
+                  </button>
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        justifyContent: 'flex-end'
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.justifyContent === 'flex-end'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    End
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gap</label>
+                <input
+                  type="text"
+                  value={section.flexConfig?.gap || '1rem'}
+                  onChange={(e) => updateSection({
+                    flexConfig: {
+                      ...section.flexConfig!,
+                      gap: e.target.value
+                    }
+                  })}
+                  placeholder="24"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                />
+                <p className="text-xs text-gray-500 mt-1">Space between items (e.g., 24, 1rem, 20px)</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Wrap</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        wrap: true
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.wrap === true
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    true
+                  </button>
+                  <button
+                    onClick={() => updateSection({
+                      flexConfig: {
+                        ...section.flexConfig!,
+                        wrap: false
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      section.flexConfig?.wrap === false
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    false
+                  </button>
+                </div>
+              </div>
+              
+              {/* Flex Layout Guide */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-purple-800">
+                    <p className="font-medium mb-1">When to Use Flex Layout</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• <strong>Natural flow:</strong> Items arrange based on their content size</li>
+                      <li>• <strong>Mixed widths:</strong> Perfect for toolbars, navigation, tag lists</li>
+                      <li>• <strong>Flex Grow:</strong> Enable on widgets to fill remaining space</li>
+                      <li>• <strong>Auto wrapping:</strong> Items wrap to next line when container is full</li>
+                      <li>• <strong>Direction:</strong> Row (horizontal) or Column (vertical) flow</li>
+                    </ul>
+                    <p className="text-xs mt-2 italic">💡 Use Grid when you need equal-sized items in a structured layout</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Grid Settings (only show when layout === 'grid') */}
+          {section.layout === 'grid' && (
+            <div className="space-y-3 border-t pt-3">
+              <h4 className="text-sm font-medium text-gray-900">Grid Settings</h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Columns</label>
+                <select
+                  value={typeof section.gridConfig?.columns === 'number' ? section.gridConfig.columns : section.gridConfig?.columns || 3}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    updateSection({
+                      gridConfig: {
+                        ...section.gridConfig,
+                        columns: value === 'auto-fit' || value === 'auto-fill' ? value : parseInt(value),
+                        gap: section.gridConfig?.gap || '1rem',
+                        alignItems: section.gridConfig?.alignItems || 'stretch',
+                        justifyItems: section.gridConfig?.justifyItems || 'stretch'
+                      }
+                    })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="1">1 Column</option>
+                  <option value="2">2 Columns</option>
+                  <option value="3">3 Columns</option>
+                  <option value="4">4 Columns</option>
+                  <option value="6">6 Columns</option>
+                  <option value="12">12 Columns</option>
+                  <option value="auto-fit">Auto-fit (Responsive)</option>
+                  <option value="auto-fill">Auto-fill (Responsive)</option>
+                </select>
+              </div>
+              
+              {(section.gridConfig?.columns === 'auto-fit' || section.gridConfig?.columns === 'auto-fill') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Min Column Width</label>
+                  <input
+                    type="text"
+                    value={section.gridConfig?.minColumnWidth || '200px'}
+                    onChange={(e) => updateSection({
+                      gridConfig: {
+                        ...section.gridConfig!,
+                        minColumnWidth: e.target.value
+                      }
+                    })}
+                    placeholder="200px"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Minimum width for each column (e.g., 200px, 250px)</p>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gap</label>
+                <input
+                  type="text"
+                  value={section.gridConfig?.gap || '1rem'}
+                  onChange={(e) => updateSection({
+                    gridConfig: {
+                      ...section.gridConfig!,
+                      gap: e.target.value
+                    }
+                  })}
+                  placeholder="1rem"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                />
+                <p className="text-xs text-gray-500 mt-1">Space between items (e.g., 1rem, 20px, 1.5rem)</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Align Items</label>
+                  <select
+                    value={section.gridConfig?.alignItems || 'stretch'}
+                    onChange={(e) => updateSection({
+                      gridConfig: {
+                        ...section.gridConfig!,
+                        alignItems: e.target.value as 'start' | 'center' | 'end' | 'stretch'
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="stretch">Stretch</option>
+                    <option value="start">Start</option>
+                    <option value="center">Center</option>
+                    <option value="end">End</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Justify Items</label>
+                  <select
+                    value={section.gridConfig?.justifyItems || 'stretch'}
+                    onChange={(e) => updateSection({
+                      gridConfig: {
+                        ...section.gridConfig!,
+                        justifyItems: e.target.value as 'start' | 'center' | 'end' | 'stretch'
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="stretch">Stretch</option>
+                    <option value="start">Start</option>
+                    <option value="center">Center</option>
+                    <option value="end">End</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Grid Layout Guide */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">When to Use Grid Layout</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• <strong>Structured layout:</strong> Rigid column/row structure for consistency</li>
+                      <li>• <strong>Equal sizing:</strong> All items fit into uniform cells (great for galleries)</li>
+                      <li>• <strong>Spanning:</strong> Widgets can span multiple columns/rows for emphasis</li>
+                      <li>• <strong>Auto-responsive:</strong> Use auto-fit/auto-fill for dynamic columns</li>
+                      <li>• <strong>Drop anywhere:</strong> Widgets auto-flow into columns left-to-right</li>
+                    </ul>
+                    <p className="text-xs mt-2 italic">💡 Use Flex when you want natural, flowing content with mixed widths</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Background</h4>
@@ -953,6 +1238,177 @@ export function PropertiesPanel({
         </div>
       </div>
       
+      {/* Flex Properties (only show if parent section has flexible layout) */}
+      {(() => {
+        // Find parent section
+        const parentSection = canvasItems.find((item: CanvasItem): item is WidgetSection => 
+          isSection(item) && item.areas.some(area => area.widgets.some(w => w.id === widget.id))
+        )
+        
+        if (parentSection?.layout === 'flexible') {
+          return (
+            <div className="space-y-3 border border-purple-200 rounded-lg p-3 bg-purple-50/30">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-purple-900">Flex Properties</h4>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">Flex Layout</span>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Flex Grow</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updateWidget({
+                      flexProperties: {
+                        grow: true
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      widget.flexProperties?.grow === true
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    true
+                  </button>
+                  <button
+                    onClick={() => updateWidget({
+                      flexProperties: {
+                        grow: false
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      widget.flexProperties?.grow === false || !widget.flexProperties?.grow
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    false
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Whether this widget grows to fill available space</p>
+              </div>
+              
+              {/* Flex Grow Guide */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-purple-800">
+                    <p className="font-medium mb-1">Understanding Flex Grow</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• <strong>false (default):</strong> Widget takes its natural content size</li>
+                      <li>• <strong>true:</strong> Widget expands to fill remaining horizontal space</li>
+                      <li>• Use for text/buttons that should stretch to fill gaps</li>
+                      <li>• Images with grow enabled maintain aspect ratio (max natural size)</li>
+                      <li>• Multiple widgets with grow share space equally</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
+        return null
+      })()}
+      
+      {/* Grid Placement (only show if parent section has grid layout) */}
+      {(() => {
+        // Find parent section
+        const parentSection = canvasItems.find((item: CanvasItem): item is WidgetSection => 
+          isSection(item) && item.areas.some(area => area.widgets.some(w => w.id === widget.id))
+        )
+        
+        if (parentSection?.layout === 'grid') {
+          return (
+            <div className="space-y-3 border border-blue-200 rounded-lg p-3 bg-blue-50/30">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-blue-900">Grid Placement</h4>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">Grid Layout</span>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Column Span</label>
+                <select
+                  value={widget.gridSpan?.column || 'span 1'}
+                  onChange={(e) => updateWidget({
+                    gridSpan: {
+                      ...widget.gridSpan,
+                      column: e.target.value
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="span 1">Span 1 column</option>
+                  <option value="span 2">Span 2 columns</option>
+                  <option value="span 3">Span 3 columns</option>
+                  <option value="span 4">Span 4 columns</option>
+                  <option value="span 6">Span 6 columns</option>
+                  <option value="1 / -1">Full width (all columns)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">How many columns this widget spans</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Row Span</label>
+                <select
+                  value={widget.gridSpan?.row || 'span 1'}
+                  onChange={(e) => updateWidget({
+                    gridSpan: {
+                      ...widget.gridSpan,
+                      row: e.target.value
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                >
+                  <option value="span 1">Span 1 row</option>
+                  <option value="span 2">Span 2 rows</option>
+                  <option value="span 3">Span 3 rows</option>
+                  <option value="span 4">Span 4 rows</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">How many rows this widget spans</p>
+              </div>
+              
+              <div className="flex gap-2 pt-2 border-t border-blue-200">
+                <button
+                  onClick={() => updateWidget({
+                    gridSpan: { column: 'span 1', row: 'span 1' }
+                  })}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50 transition-colors"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => updateWidget({
+                    gridSpan: { column: '1 / -1', row: 'span 1' }
+                  })}
+                  className="flex-1 px-2 py-1 text-xs border border-blue-300 rounded bg-blue-50 hover:bg-blue-100 transition-colors text-blue-700 font-medium"
+                >
+                  Full Width
+                </button>
+              </div>
+              
+              {/* Grid Spanning Guide */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">Understanding Grid Spanning</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• <strong>Column span:</strong> How many columns wide this widget is</li>
+                      <li>• <strong>Row span:</strong> How many rows tall this widget is</li>
+                      <li>• <strong>Full width:</strong> Quick button to span all columns (great for headers)</li>
+                      <li>• Widgets auto-flow into grid cells left-to-right, top-to-bottom</li>
+                      <li>• Spanning creates visual hierarchy and emphasis</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        return null
+      })()}
+      
       {widget.type === 'text' && (
         <div className="space-y-3">
           <div>
@@ -1167,13 +1623,27 @@ export function PropertiesPanel({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Image Source URL</label>
-            <input
-              type="url"
-              value={(widget as ImageWidget).src}
-              onChange={(e) => updateWidget({ src: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={(widget as ImageWidget).src}
+                onChange={(e) => updateWidget({ src: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+              <button
+                onClick={() => {
+                  // Generate random Picsum URL with timestamp to ensure uniqueness
+                  const randomUrl = `https://picsum.photos/800/600?random=${Date.now()}`
+                  updateWidget({ src: randomUrl })
+                }}
+                className="px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
+                title="Load random image from Picsum"
+              >
+                🎲 Random
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Or click Random to load a placeholder image from Picsum</p>
           </div>
           
           <div>
@@ -1423,16 +1893,16 @@ export function PropertiesPanel({
                 <div className="relative group">
                   <Info className="w-4 h-4 text-gray-400 cursor-help" />
                   <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-64 leading-relaxed">
-                    Share your creation with the community or suggest it for the platform library
+                    Whould you like to share your creation with the community?
                   </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <button className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
-                  Suggest for Library
+                 Nominate for Roadmap
                 </button>
                 <button className="w-full px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors">
-                  Promote to Wiley
+                  Commission Custom Widget
                 </button>
               </div>
             </div>

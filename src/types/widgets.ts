@@ -16,6 +16,10 @@ export type WidgetBase = {
     rounded?: 'none' | 'small' | 'medium' | 'large'
     border?: 'none' | 'light' | 'medium' | 'heavy'
   }
+  // Grid placement (for widgets inside grid layout sections)
+  gridSpan?: WidgetGridSpan
+  // Flex properties (for widgets inside flexible layout sections)
+  flexProperties?: WidgetFlexProperties
 }
 
 export type TextWidget = WidgetBase & { 
@@ -256,7 +260,49 @@ export type SpacerWidget = WidgetBase & {
 export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget
 
 // Layout types for widget sections
-export type ContentBlockLayout = 'flexible' | 'one-column' | 'two-columns' | 'three-columns' | 'one-third-left' | 'one-third-right' | 'vertical' | 'hero-with-buttons' | 'header-plus-grid'
+export type ContentBlockLayout = 
+  | 'flexible' 
+  | 'grid' 
+  | 'one-column' 
+  | 'two-columns' 
+  | 'three-columns' 
+  | 'one-third-left' 
+  | 'one-third-right'
+  // Legacy layouts (kept for backward compatibility with existing prefab sections, not available in Layout Picker)
+  | 'hero-with-buttons' 
+  | 'header-plus-grid'
+
+// Grid layout configuration
+export type GridConfig = {
+  columns: number | 'auto-fit' | 'auto-fill' // 1-12 or auto-responsive
+  minColumnWidth?: string // For auto-fit/fill, e.g., "200px", "250px"
+  gap: string // e.g., "1rem", "20px", "1.5rem"
+  rowGap?: string // Optional separate row gap
+  columnGap?: string // Optional separate column gap
+  autoFlow?: 'row' | 'column' | 'dense' | 'row dense' | 'column dense' // How grid items auto-place
+  alignItems?: 'start' | 'center' | 'end' | 'stretch' // Vertical alignment of items
+  justifyItems?: 'start' | 'center' | 'end' | 'stretch' // Horizontal alignment of items
+}
+
+// Widget grid placement (for widgets inside grid sections)
+export type WidgetGridSpan = {
+  column?: string // e.g., "span 2", "1 / 3", "1 / -1" (full width)
+  row?: string // e.g., "span 2", "2 / 4"
+}
+
+// Flex layout configuration (for flexible layout sections)
+export type FlexConfig = {
+  direction: 'row' | 'column'
+  wrap: boolean
+  justifyContent: 'flex-start' | 'center' | 'flex-end'
+  gap?: string // e.g., "1rem", "20px"
+}
+
+// Widget flex properties (for widgets inside flex layout sections)
+// Simplified to match Puck's approach - just a grow toggle
+export type WidgetFlexProperties = {
+  grow?: boolean // true = flex-grow: 1, false/undefined = flex-grow: 0
+}
 
 export type LayoutArea = {
   id: string
@@ -320,6 +366,12 @@ export type WidgetSection = {
   // Spacing tokens (NEW: Figma DS V2 - semantic spacing)
   padding?: string // e.g., 'semantic.lg', 'base.6', '24px'
   minHeight?: string // e.g., '500px', '60vh'
+  
+  // Grid layout configuration (only for layout === 'grid')
+  gridConfig?: GridConfig
+  
+  // Flex layout configuration (only for layout === 'flexible')
+  flexConfig?: FlexConfig
 }
 
 // Canvas item can be either an individual widget or a section

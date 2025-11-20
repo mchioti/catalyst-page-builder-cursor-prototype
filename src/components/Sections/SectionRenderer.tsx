@@ -164,12 +164,23 @@ export function DraggableWidgetInSection({
       style={{
         // When dragging, hide the original widget (DragOverlay shows the dragging version)
         visibility: widgetDrag.isDragging ? 'hidden' : 'visible',
+        // Apply grid span if widget has gridSpan configuration
+        ...(widget.gridSpan?.column && { gridColumn: widget.gridSpan.column }),
+        ...(widget.gridSpan?.row && { gridRow: widget.gridSpan.row }),
+        // Apply flex properties if widget has flexProperties configuration
+        ...(widget.flexProperties?.grow && { 
+          flexGrow: 1,
+          flexBasis: 0
+        })
       }}
       className={`${!isLiveMode && !widgetDrag.isDragging ? 'cursor-pointer hover:ring-2 hover:ring-blue-300 rounded transition-all' : ''} ${
         !isLiveMode && isSelected && !widgetDrag.isDragging ? 'ring-2 ring-blue-500' : ''
       } ${
         !isLiveMode && widgetDrop.isOver ? 'ring-2 ring-green-500' : ''
-      } group relative`}
+      } ${
+        // For images with flex-grow, constrain child image width
+        widget.flexProperties?.grow && widget.type === 'image' ? '[&_img]:!w-auto [&_img]:!max-w-full' : ''
+      } group relative z-10`}
     >
       {/* Drop indicator - shows where the new widget will be inserted */}
       {!isLiveMode && widgetDrop.isOver && (
@@ -409,6 +420,9 @@ export function SectionRenderer({
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
     switch (layout) {
+      case 'grid':
+        // Grid layout uses inline styles from gridConfig, just return base grid class
+        return ''
       case 'one-column':
         return 'grid-cols-1'
       case 'two-columns':
@@ -419,8 +433,6 @@ export function SectionRenderer({
         return 'grid-cols-3 [&>:first-child]:col-span-1 [&>:last-child]:col-span-2'
       case 'one-third-right':
         return 'grid-cols-3 [&>:first-child]:col-span-2 [&>:last-child]:col-span-1'
-      case 'vertical':
-        return 'grid-cols-1'
       case 'hero-with-buttons':
         return 'grid-cols-1 gap-4'
       case 'header-plus-grid':
@@ -813,146 +825,298 @@ export function SectionRenderer({
         className={contentWrapperConfig.classes}
         style={contentWrapperConfig.styles}
       >
-        <div 
-          className={`grid ${getLayoutClasses(section.layout)}`}
-          style={{
-            ...sidebarHeight,
-            // NEW: Use grid gutter from theme tokens (Wiley DS V2), fallback to Tailwind gap-4
-            gap: getGridGutter() || '1rem'
-          }}
-        >
-        {section.areas.map((area, areaIndex) => {
-          // Make area droppable for library widgets
-          const { isOver, setNodeRef: setDropRef } = useDroppable({
-            id: `drop-${area.id}`,
-            data: {
-              type: 'section-area',
-              sectionId: section.id,
-              areaId: area.id
-            }
-          })
-          
-          // Debug logging for drop zone
-          React.useEffect(() => {
-            if (isOver) {
-              debugLog('log', '🎯 Drop zone active:', area.id, 'in section:', section.id)
-            }
-          }, [isOver, area.id, section.id])
-          
-          // Check if this is a card area in header-plus-grid layout (areas 1, 2, 3)
-          const isCardArea = section.layout === 'header-plus-grid' && areaIndex > 0
-          
-          // Detect theme for card border-radius
-          const cardBorderRadius = React.useMemo(() => {
-            const root = document.documentElement
-            const style = getComputedStyle(root)
-            const radius = style.getPropertyValue('--theme-card-radius').trim()
-            return radius || '0.5rem' // Default to 8px (rounded-lg)
-          }, [])
-          
-          // Determine border color based on section background (lighter for dark backgrounds)
-          const isDarkBackground = section.contentMode === 'dark' || 
-            (section.background?.type === 'color' && section.background?.color === '#000000')
-          const cardBorderClass = isDarkBackground 
-            ? `border border-gray-600 p-8`  // Lighter border for dark backgrounds
-            : `border border-gray-300 p-8`  // Standard border for light backgrounds
-          
-          // Apply border-radius as inline style for cards
-          const cardStyle: React.CSSProperties = isCardArea ? {
-            borderRadius: cardBorderRadius
-          } : {}
-          
-          return (
+        {/* For grid layouts, render simplified structure with widgets as direct children */}
+        {section.layout === 'grid' ? (
+          <>
+            {section.areas.map((area, areaIndex) => {
+              // Make the grid container itself droppable
+              const { isOver, setNodeRef: setDropRef } = useDroppable({
+                id: `drop-${area.id}`,
+                data: {
+                  type: 'section-area',
+                  sectionId: section.id,
+                  areaId: area.id
+                }
+              })
+              
+              return (
+                <div
+                  key={area.id}
+                  ref={setDropRef}
+                  className="relative col-span-full"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 
+                      typeof section.gridConfig?.columns === 'number'
+                        ? `repeat(${section.gridConfig.columns}, 1fr)`
+                        : section.gridConfig?.columns === 'auto-fit'
+                        ? `repeat(auto-fit, minmax(${section.gridConfig.minColumnWidth || '200px'}, 1fr))`
+                        : section.gridConfig?.columns === 'auto-fill'
+                        ? `repeat(auto-fill, minmax(${section.gridConfig.minColumnWidth || '200px'}, 1fr))`
+                        : `repeat(3, 1fr)`,
+                    gap: section.gridConfig?.gap || '1rem',
+                    ...(section.gridConfig?.rowGap && { rowGap: section.gridConfig.rowGap }),
+                    ...(section.gridConfig?.columnGap && { columnGap: section.gridConfig.columnGap }),
+                    ...(section.gridConfig?.autoFlow && { gridAutoFlow: section.gridConfig.autoFlow }),
+                    ...(section.gridConfig?.alignItems && { alignItems: section.gridConfig.alignItems }),
+                    ...(section.gridConfig?.justifyItems && { justifyItems: section.gridConfig.justifyItems }),
+                    ...sidebarHeight
+                  }}
+                >
+                  {/* Grid Column Guides */}
+                  {!isLiveMode && section.gridConfig && typeof section.gridConfig.columns === 'number' && section.gridConfig.columns > 1 && (
+                    <div className="absolute inset-0 pointer-events-none z-0" style={{ display: 'grid', gridTemplateColumns: `repeat(${section.gridConfig.columns}, 1fr)`, gap: section.gridConfig.gap || '1rem' }}>
+                      {Array.from({ length: section.gridConfig.columns }).map((_, colIndex) => (
+                        <div key={colIndex} className="border-2 border-dashed border-purple-300 opacity-40 rounded-sm min-h-20" />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Empty state */}
+                  {area.widgets.length === 0 && !isLiveMode && (
+                    <div 
+                      className="min-h-32 flex items-center justify-center border-2 border-dashed rounded transition-all z-10"
+                      style={{ 
+                        gridColumn: '1 / -1',
+                        backgroundColor: isOver ? 'rgb(239 246 255)' : 'transparent',
+                        borderColor: isOver ? 'rgb(96 165 250)' : 'rgb(196 181 253)'
+                      }}
+                    >
+                      <span className={`text-sm transition-colors ${isOver ? 'text-blue-600 font-medium' : 'text-purple-400'}`}>
+                        {isOver ? 'Drop widget here' : `Drop widgets here (${section.gridConfig?.columns || 3}-column grid)`}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Widgets as direct grid items */}
+                  {area.widgets.map((widget) => (
+                    <DraggableWidgetInSection
+                      key={widget.id}
+                      widget={widget}
+                      sectionId={section.id}
+                      areaId={area.id}
+                      activeSectionToolbar={activeSectionToolbar}
+                      setActiveSectionToolbar={setActiveSectionToolbar}
+                      activeWidgetToolbar={activeWidgetToolbar}
+                      setActiveWidgetToolbar={setActiveWidgetToolbar}
+                      onWidgetClick={onWidgetClick}
+                      usePageStore={usePageStore}
+                      isLiveMode={isLiveMode}
+                      journalContext={journalContext}
+                      sectionContentMode={section.contentMode}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </>
+        ) : section.layout === 'flexible' ? (
+          /* For flexible layouts, render simplified structure with widgets as direct children (like Grid) */
+          <>
+            {section.areas.map((area, areaIndex) => {
+              // Make the flex container itself droppable
+              const { isOver, setNodeRef: setDropRef } = useDroppable({
+                id: `drop-${area.id}`,
+                data: {
+                  type: 'section-area',
+                  sectionId: section.id,
+                  areaId: area.id
+                }
+              })
+              
+              return (
+                <div
+                  key={area.id}
+                  ref={setDropRef}
+                  className="relative flex"
+                  style={{
+                    flexDirection: section.flexConfig?.direction || 'row',
+                    flexWrap: section.flexConfig?.wrap ? 'wrap' : 'nowrap',
+                    justifyContent: section.flexConfig?.justifyContent || 'flex-start',
+                    gap: section.flexConfig?.gap || '1rem',
+                    ...sidebarHeight
+                  }}
+                >
+                  {/* Empty state */}
+                  {area.widgets.length === 0 && !isLiveMode && (
+                    <div 
+                      className="min-h-32 flex items-center justify-center border-2 border-dashed rounded transition-all flex-1"
+                      style={{ 
+                        backgroundColor: isOver ? 'rgb(239 246 255)' : 'transparent',
+                        borderColor: isOver ? 'rgb(96 165 250)' : 'rgb(196 181 253)'
+                      }}
+                    >
+                      <span className={`text-sm transition-colors ${isOver ? 'text-blue-600 font-medium' : 'text-purple-400'}`}>
+                        {isOver ? 'Drop widget here' : `Drop widgets here (Flex ${section.flexConfig?.direction || 'row'})`}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Widgets as direct flex items */}
+                  {area.widgets.map((widget) => (
+                    <DraggableWidgetInSection
+                      key={widget.id}
+                      widget={widget}
+                      sectionId={section.id}
+                      areaId={area.id}
+                      activeSectionToolbar={activeSectionToolbar}
+                      setActiveSectionToolbar={setActiveSectionToolbar}
+                      activeWidgetToolbar={activeWidgetToolbar}
+                      setActiveWidgetToolbar={setActiveWidgetToolbar}
+                      onWidgetClick={onWidgetClick}
+                      usePageStore={usePageStore}
+                      isLiveMode={isLiveMode}
+                      journalContext={journalContext}
+                      sectionContentMode={section.contentMode}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </>
+        ) : (
+          /* For legacy layouts (one-column, two-columns, etc.), use standard structure */
           <div 
-            ref={setDropRef}
-            key={area.id}
-            data-testid={`section-area-${area.id}`}
-            data-droppable-area={area.id}
-            style={cardStyle}
-            className={`relative ${
-              isLiveMode
-                ? isCardArea 
-                  ? cardBorderClass // Card styling in live mode - context-aware border
-                  : '' // No styling for non-card areas in live mode
-                : isSpecialSection 
-                  ? '' 
-                  : area.widgets.length === 0 
-                    ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
-                        (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
-                          ? '' // Transparent for sections with background or hero sections
-                          : 'bg-white' // White background for normal sections
-                      } ${
-                        activeDropZone === `drop-${area.id}` 
-                          ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-200' 
-                          : isOver 
-                          ? 'border-blue-400 bg-blue-50' 
-                          : 'border-purple-300 opacity-60'
-                      }` 
-                    : activeDropZone === `drop-${area.id}` 
-                      ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
-                      : activeDropZone === `drop-${area.id}` 
-                        ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
-                        : isCardArea 
-                          ? cardBorderClass // Card styling in editor mode - context-aware border
-                          : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
-                          ? 'rounded p-4' // Transparent background to show section gradient/color/image or hero styling - MORE padding in edit mode
-                          : 'bg-white rounded p-4' // MORE padding in edit mode for easier drops
-            }`}
+            className={`grid ${getLayoutClasses(section.layout)}`}
+            style={{
+              ...sidebarHeight,
+              gap: getGridGutter() || '1rem'
+            }}
           >
-            {!isLiveMode && !isSpecialSection && area.widgets.length === 0 && (
-              <div className="flex items-center justify-center h-full">
-                <span className={`text-xs transition-colors ${
-                  activeDropZone === `drop-${area.id}` 
-                    ? 'text-green-700 font-bold' 
-                    : isOver 
-                    ? 'text-blue-600 font-medium' 
-                    : 'text-purple-400'
-                }`}>
-                  {activeDropZone === `drop-${area.id}` 
-                    ? 'ACTIVE DROP ZONE' 
-                    : isOver 
-                    ? 'Drop widget here' 
-                    : 'Drop widgets here'}
-                </span>
-              </div>
-            )}
-            
-            {/* Active Drop Zone Indicator for Populated Areas */}
-            {area.widgets.length > 0 && activeDropZone === `drop-${area.id}` && (
-              <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10 shadow-lg">
-                ACTIVE DROP ZONE
-              </div>
-            )}
-            
-            <div className={`${
-              // Special layout for button areas - display buttons side by side
-              area.name === 'Button Row' || area.name === 'Button Area' || (area.widgets.length > 1 && area.widgets.every(w => w.type === 'button'))
-                ? 'flex flex-wrap gap-3 justify-center'
-                : isLiveMode 
-                  ? 'space-y-2'  // Tight spacing in live mode
-                  : 'space-y-4'  // More generous spacing in edit mode for easier drops
-            }`}>
-              {area.widgets.map((widget) => (
-                <DraggableWidgetInSection
-                  key={widget.id}
-                  widget={widget}
-                  sectionId={section.id}
-                  areaId={area.id}
-                  activeSectionToolbar={activeSectionToolbar}
-                  setActiveSectionToolbar={setActiveSectionToolbar}
-                  activeWidgetToolbar={activeWidgetToolbar}
-                  setActiveWidgetToolbar={setActiveWidgetToolbar}
-                  onWidgetClick={onWidgetClick}
-                  usePageStore={usePageStore}
-                  isLiveMode={isLiveMode}
-                  journalContext={journalContext}
-                  sectionContentMode={section.contentMode}
-                />
-              ))}
-            </div>
+            {section.areas.map((area, areaIndex) => {
+              // Make area droppable for library widgets
+              const { isOver, setNodeRef: setDropRef } = useDroppable({
+                id: `drop-${area.id}`,
+                data: {
+                  type: 'section-area',
+                  sectionId: section.id,
+                  areaId: area.id
+                }
+              })
+              
+              // Debug logging for drop zone
+              React.useEffect(() => {
+                if (isOver) {
+                  debugLog('log', '🎯 Drop zone active:', area.id, 'in section:', section.id)
+                }
+              }, [isOver, area.id, section.id])
+              
+              // Check if this is a card area in header-plus-grid layout (areas 1, 2, 3)
+              const isCardArea = section.layout === 'header-plus-grid' && areaIndex > 0
+              
+              // Detect theme for card border-radius
+              const cardBorderRadius = React.useMemo(() => {
+                const root = document.documentElement
+                const style = getComputedStyle(root)
+                const radius = style.getPropertyValue('--theme-card-radius').trim()
+                return radius || '0.5rem' // Default to 8px (rounded-lg)
+              }, [])
+              
+              // Determine border color based on section background (lighter for dark backgrounds)
+              const isDarkBackground = section.contentMode === 'dark' || 
+                (section.background?.type === 'color' && section.background?.color === '#000000')
+              const cardBorderClass = isDarkBackground 
+                ? `border border-gray-600 p-8`  // Lighter border for dark backgrounds
+                : `border border-gray-300 p-8`  // Standard border for light backgrounds
+              
+              // Apply border-radius as inline style for cards
+              const cardStyle: React.CSSProperties = isCardArea ? {
+                borderRadius: cardBorderRadius
+              } : {}
+              
+              return (
+                <div 
+                  ref={setDropRef}
+                  key={area.id}
+                  data-testid={`section-area-${area.id}`}
+                  data-droppable-area={area.id}
+                  style={cardStyle}
+                  className={`relative ${
+                    isLiveMode
+                      ? isCardArea 
+                        ? cardBorderClass // Card styling in live mode - context-aware border
+                        : '' // No styling for non-card areas in live mode
+                      : isSpecialSection 
+                        ? '' 
+                        : area.widgets.length === 0 
+                          ? `min-h-20 border-2 border-dashed rounded p-4 transition-all ${
+                              (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
+                                ? '' // Transparent for sections with background or hero sections
+                                : 'bg-white' // White background for normal sections
+                            } ${
+                              activeDropZone === `drop-${area.id}` 
+                                ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-200' 
+                                : isOver 
+                                ? 'border-blue-400 bg-blue-50' 
+                                : 'border-purple-300 opacity-60'
+                            }` 
+                          : activeDropZone === `drop-${area.id}` 
+                            ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
+                            : activeDropZone === `drop-${area.id}` 
+                              ? 'bg-blue-50 rounded p-4 ring-2 ring-blue-200 border-2 border-blue-300' 
+                              : isCardArea 
+                                ? cardBorderClass // Card styling in editor mode - context-aware border
+                                : (section.background?.type === 'gradient' || section.background?.type === 'color' || section.background?.type === 'image' || section.type === 'hero') 
+                                ? 'rounded p-4' // Transparent background to show section gradient/color/image or hero styling - MORE padding in edit mode
+                                : 'bg-white rounded p-4' // MORE padding in edit mode for easier drops
+                  }`}
+                >
+                  {!isLiveMode && !isSpecialSection && area.widgets.length === 0 && (
+                    <div className="flex items-center justify-center h-full relative z-10">
+                      <span className={`text-xs transition-colors ${
+                        activeDropZone === `drop-${area.id}` 
+                          ? 'text-green-700 font-bold' 
+                          : isOver 
+                          ? 'text-blue-600 font-medium' 
+                          : 'text-purple-400'
+                      }`}>
+                        {activeDropZone === `drop-${area.id}` 
+                          ? 'ACTIVE DROP ZONE' 
+                          : isOver 
+                          ? 'Drop widget here' 
+                          : 'Drop widgets here'}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Active Drop Zone Indicator for Populated Areas */}
+                  {area.widgets.length > 0 && activeDropZone === `drop-${area.id}` && (
+                    <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10 shadow-lg">
+                      ACTIVE DROP ZONE
+                    </div>
+                  )}
+                  
+                  <div className={`${
+                      // Special layout for button areas - display buttons side by side
+                      area.name === 'Button Row' || area.name === 'Button Area' || (area.widgets.length > 1 && area.widgets.every(w => w.type === 'button'))
+                        ? 'flex flex-wrap gap-3 justify-center'
+                        : isLiveMode 
+                          ? 'space-y-2'  // Tight spacing in live mode
+                          : 'space-y-4'  // More generous spacing in edit mode for easier drops
+                    }`}>
+                      {area.widgets.map((widget) => (
+                        <DraggableWidgetInSection
+                          key={widget.id}
+                          widget={widget}
+                          sectionId={section.id}
+                          areaId={area.id}
+                          activeSectionToolbar={activeSectionToolbar}
+                          setActiveSectionToolbar={setActiveSectionToolbar}
+                          activeWidgetToolbar={activeWidgetToolbar}
+                          setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          onWidgetClick={onWidgetClick}
+                          usePageStore={usePageStore}
+                          isLiveMode={isLiveMode}
+                          journalContext={journalContext}
+                          sectionContentMode={section.contentMode}
+                        />
+                      ))}
+                    </div>
+                </div>
+              )
+            })}
           </div>
-        )})}
-        </div>
+        )}
       </div>
       </div>
       
