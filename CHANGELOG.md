@@ -10,6 +10,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- **Editorial Card Widget** (SharePoint-inspired):
+  - New widget type for marketing/editorial content with professional layouts
+  - **Three layout presets**:
+    - **Image Overlay**: Full-bleed image with text overlay and adjustable opacity (0-100%)
+    - **Split**: Image and content in separate areas (top/bottom/left/right positioning)
+    - **Color Block**: Image paired with colored content area (uses theme accent color or gray)
+  - **Four toggleable content slots**:
+    - Preheader (small label/category name)
+    - Headline (main title, H2 styling)
+    - Description (body text, multi-line)
+    - Call to Action (button or link with URL)
+  - **Design-system integration**: All styling pulled from active theme tokens
+    - Typography: Uses theme heading/body fonts
+    - Colors: Uses theme accent/primary/text colors
+    - Spacing: Uses theme spacing scale
+    - Button styles: Uses theme button configuration
+    - Card borders/shadows: Uses theme card settings
+  - **Properties Panel**:
+    - Layout selector (Image Overlay, Split, Color Block)
+    - Image uploader with 🎲 Random Picsum button
+    - Content toggles for each slot (show/hide preheader, headline, description, CTA)
+    - Content alignment (left/center/right)
+    - Image position control (for Split & Color Block layouts)
+    - Overlay opacity slider (for Image Overlay)
+    - "Use Accent Color" toggle (for Color Block background)
+  - **Theme-aware rendering**: Different themes produce different looks automatically
+    - Modernist: Clean typography, minimal shadows
+    - IBM Carbon: Bold type, high contrast
+    - Wiley: Rounded corners, friendly spacing
+  - Appears in Widget Library under new "Content Cards" subcategory
+  - Status: `supported`
 - **FEBS Press Homepage 2025 Starter**: Complete homepage template for FEBS Press
   - 4-journal cover showcase (HTML widget with grid layout)
   - "Highlights from FEBS Press" section with 3 article cards (HTML widgets)
