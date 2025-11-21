@@ -30,6 +30,7 @@ import { generateAIContent, generateAISingleContent } from '../../utils/aiConten
 import { getAllDOIs, getDOIsByDomain, getCitationByDOI, type CitationDomain } from '../../utils/citationData'
 import { IconSelector } from '../IconSelector'
 import { getSupportedTabVariants, getTabVariantLabel, type TabVariant } from '../../config/themeTabVariants'
+import { ListPatternControls } from './ListPatternControls'
 
 // Import the DEFAULT_PUBLICATION_CARD_CONFIG constant
 const DEFAULT_PUBLICATION_CARD_CONFIG = {
@@ -280,6 +281,22 @@ export function PropertiesPanel({
     const section = selectedItem as WidgetSection
     const backgroundType = section.background?.type || 'none'
     
+    // Helper function to get friendly section type name based on layout
+    const getSectionTypeName = (layout: string): string => {
+      const layoutNames: Record<string, string> = {
+        'grid': 'Grid Section',
+        'flexible': 'Flex Section',
+        'one-column': 'One Column Section',
+        'two-columns': 'Two Columns Section',
+        'three-columns': 'Three Columns Section',
+        'one-third-left': 'Sidebar Left Section',
+        'one-third-right': 'Sidebar Right Section',
+        'hero-with-buttons': 'Hero with Buttons Section',
+        'header-plus-grid': 'Header + Grid Section'
+      }
+      return layoutNames[layout] || 'Section'
+    }
+    
     return (
       <div className="p-4 space-y-4">
         <h3 className="font-semibold text-gray-900">Section Properties</h3>
@@ -289,7 +306,7 @@ export function PropertiesPanel({
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
             <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">
-              {section.name}
+              {getSectionTypeName(section.layout)}
             </span>
           </div>
           <div className="mt-2 pt-2 border-t border-gray-200">
@@ -963,6 +980,20 @@ export function PropertiesPanel({
   // Widget properties
   const widget = selectedItem as Widget
   
+  // Find parent section for list-based widgets (needed for pattern controls)
+  let parentSection: WidgetSection | undefined
+  for (const canvasItem of canvasItems) {
+    if (isSection(canvasItem)) {
+      for (const area of canvasItem.areas) {
+        if (area.widgets.some(w => w.id === widget.id)) {
+          parentSection = canvasItem as WidgetSection
+          break
+        }
+      }
+      if (parentSection) break
+    }
+  }
+  
   return (
     <div className="h-full">
       {isEditingMenuItems && widget.type === 'menu' ? (
@@ -1239,7 +1270,14 @@ export function PropertiesPanel({
       </div>
       
       {/* Flex Properties (only show if parent section has flexible layout) */}
+      {/* Note: List-based widgets (Publication List, etc.) use the pattern system instead */}
       {(() => {
+        // Skip for list-based widgets - they use pattern system
+        const isListWidget = widget.type === 'publication-list' // Add more list widget types here later
+        if (isListWidget) {
+          return null
+        }
+        
         // Find parent section
         const parentSection = canvasItems.find((item: CanvasItem): item is WidgetSection => 
           isSection(item) && item.areas.some(area => area.widgets.some(w => w.id === widget.id))
@@ -1312,7 +1350,14 @@ export function PropertiesPanel({
       })()}
       
       {/* Grid Placement (only show if parent section has grid layout) */}
+      {/* Note: List-based widgets (Publication List, etc.) use the pattern system instead */}
       {(() => {
+        // Skip for list-based widgets - they use pattern system
+        const isListWidget = widget.type === 'publication-list' // Add more list widget types here later
+        if (isListWidget) {
+          return null
+        }
+        
         // Find parent section
         const parentSection = canvasItems.find((item: CanvasItem): item is WidgetSection => 
           isSection(item) && item.areas.some(area => area.widgets.some(w => w.id === widget.id))
@@ -2833,8 +2878,8 @@ export function PropertiesPanel({
             </label>
             <input
               type="range"
-              min="1"
-              max="20"
+              min="2"
+              max="8"
               value={(widget as PublicationListWidget).maxItems || 6}
               onChange={(e) => updateWidget({ maxItems: parseInt(e.target.value) })}
               className="w-full"
@@ -2873,6 +2918,13 @@ export function PropertiesPanel({
               → Configure Publication Cards
             </button>
           </div>
+          
+          {/* List Pattern Controls - Grid/Flex spanning patterns */}
+          <ListPatternControls
+            spanningConfig={(widget as PublicationListWidget).spanningConfig}
+            updateWidget={(updates) => updateWidget(updates)}
+            parentSection={parentSection}
+          />
         </div>
       )}
       

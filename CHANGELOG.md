@@ -10,7 +10,154 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
+- **List-Based Widget Pattern System** (Universal Spanning for Grid/Flex Layouts):
+  - **Core Architecture**: New pattern system enables ANY list-based widget to inherit parent Grid/Flex layouts with intelligent spanning
+  - **Universal Application**:
+    - Publication List → Articles/publications with varying emphasis
+    - Keyword List / Tag Cloud → Keywords with frequency-based sizing
+    - Issue Archive → Latest issues bigger than older ones
+    - Article List, Author List, Media Gallery, Citation List → All benefit from patterns
+  - **Six Preset Patterns**:
+    - **Uniform** `[1, 1, 1]` - All items equal size
+    - **Featured First** `[2, 1, 1]` - First item double-wide, repeats cyclically
+    - **Hero First** `[3, 1, 1, 1]` - First item spans 3 columns, then repeats
+    - **Alternating** `[1, 2, 1]` - Middle item emphasized
+    - **Masonry** `[1, 1, 2]` - Staggered emphasis (Pinterest-style)
+    - **Custom** - User-defined pattern (e.g., `2,1,3,1` for complex layouts)
+  - **Pattern System Behavior**:
+    - Patterns repeat automatically for any number of items
+    - Works in both Grid sections (column spans) and Flex sections (flex-grow values)
+    - Only activates when widget is placed inside a Grid/Flex parent section
+    - Pattern preview in Properties Panel shows visual representation
+  - **Publication List Widget** (first implementation):
+    - New "Grid/Flex Pattern" panel appears when placed in Grid/Flex section
+    - Checkbox: "Inherit parent grid/flex layout"
+    - Preset selector dropdown with descriptions
+    - Custom pattern input for advanced users (comma-separated spans)
+    - Live pattern preview showing visual representation
+    - Info box explaining how patterns work
+  - **Properties Panel Integration**:
+    - `ListPatternControls.tsx` - Reusable component for all list-based widgets
+    - Auto-detects parent section layout (Grid or Flex)
+    - Only shows when widget is placed in compatible section
+    - Badge showing "Grid Layout" or "Flex Layout"
+    - Pattern repeats cyclically across all items
+    - **Clean UI**: List-based widgets skip the standard Grid/Flex placement controls entirely (those are for single-item widgets like Image, Text, Button). Pattern system is the ONLY control mechanism for lists.
+  - **Rendering Architecture** (Revolutionary Approach):
+    - **Section-level rendering**: When pattern mode is enabled, `SectionRenderer` detects it and expands the widget into multiple grid/flex items
+    - Uses `flatMap` to transform ONE widget → MULTIPLE publications as direct children of parent Grid/Flex
+    - Each publication gets its own `<div>` with `gridColumn`/`gridRow` (Grid) or `flexGrow`/`flexBasis` (Flex) properties
+    - Pattern properties applied to both `gridSpan` AND `flexProperties` for universal compatibility (works in both Grid and Flex)
+    - Widget wrapper completely bypassed for pattern-mode widgets - publications are rendered directly by the section
+    - Works correctly in both Grid and Flex layouts with appropriate spanning/growing behavior
+  - **Bug Fixes**:
+    - **Custom Pattern Input**: 
+      - Fixed comma input issue - now uses local state and updates `onBlur` instead of `onChange`, allowing users to type commas freely
+      - Added Enter key support to immediately apply pattern without clicking away
+      - Improved pattern update logic with dedicated `applyPattern()` helper function
+      - Better initialization when switching to custom preset
+      - **Fixed React Hooks error**: Moved all hooks before conditional returns to comply with Rules of Hooks (hooks must be called in same order every render)
+    - **Publication List Items**: 
+      - Changed slider range from 1-8 to **2-8 items** (minimum 2 items - use Publication Details widget for single items)
+      - Increased max from 6 to 8 items to match slider range
+      - Added 2 more mock articles ("Edge AI: Bringing Intelligence to IoT Devices", "Multimodal AI: Integrating Vision, Language, and Audio")
+      - Now 8 mock articles total in `MOCK_SCHOLARLY_ARTICLES` to support full slider range
+      - **Removed "Showing X of Y publications" message** - `maxItems` now controls total items to fetch/display, not a subset indicator
+    - **Pattern Mode Widget Selection** (Critical UX Fix):
+      - Fixed inability to select pattern-mode widgets after clicking elsewhere
+      - Added "Pattern Widget Control" panel that appears above publications in edit mode
+      - Control panel shows widget type, item count, and provides Edit/Delete buttons
+      - Panel is clickable to select widget and access properties
+      - Spans full width in Grid layouts (`col-span-full`) and Flex layouts (`flex-basis: 100%`)
+      - Only visible in edit mode (hidden in live/preview mode)
+      - Visual indicator with purple theme matching pattern system colors
+    - **Section Type Display** (UX Improvement):
+      - Section properties now show friendly layout-based type names instead of generic "SECTION"
+      - Display names: "Grid Section", "Flex Section", "One Column Section", "Two Columns Section", "Three Columns Section", "Sidebar Left Section", "Sidebar Right Section", etc.
+      - Makes it immediately clear what type of section is selected
+      - Helpful when working with multiple sections of different layouts
+    - **Unified Pattern Mode Control Panel** (UX Improvement):
+      - Pattern mode widgets now have improved control toolbar
+      - **Added Duplicate button** (previously missing)
+      - **Current toolbar**: Duplicate → Edit → Delete
+      - **Beautiful unified design**: Purple-themed panel with better padding, hover states, and visual hierarchy
+      - Controls are always visible (not conditional) for better discoverability
+      - Icon sizes increased to 3.5h/w for better touch targets
+      - Consistent behavior across Grid and Flex layouts
+      - **Note**: Drag handler not available in pattern mode due to React Hooks limitations (can't call hooks conditionally inside map/flatMap)
+      - **Workaround for moving pattern widgets**: Duplicate widget in new location, or temporarily disable pattern mode to access standard drag controls
+    - **Publication Card Width Constraints in Flex Layouts** (Critical Fix):
+      - **Problem**: Publication cards had no width constraints, causing them to stretch excessively in Flex layouts with flex-grow
+      - **Intelligent Solution**: Pattern-aware width constraints that respect featured vs uniform cards:
+        - **Featured cards** (`grow: true`, span > 1):
+          - `flex-basis: 400px` - Start larger
+          - `min-width: 280px` - Reasonable minimum
+          - **No max-width** - Can expand beyond 600px to be prominent
+        - **Uniform cards** (`grow: false`, span = 1):
+          - `flex-basis: 300px` - Standard size
+          - `min-width: 280px` - Reasonable minimum
+          - `max-width: 400px` - Constrained for consistency
+        - **All cards**: `flex-shrink: 1` - Responsive on smaller screens
+      - **Result**: 
+        - Featured/hero cards stand out with larger size (respecting the pattern intent)
+        - Uniform cards maintain consistent, professional sizing
+        - Beautiful responsive card grid that wraps naturally in Flex layouts
+      - **Applies to**: Both standard pattern mode (WidgetRenderer) and section-level pattern mode (SectionRenderer)
+      - Works beautifully across all pattern presets: uniform, featured-first, hero-first, alternating, masonry, custom
+    - **Equal Height Publication Cards** (UX Polish):
+      - **Problem**: Publication cards had variable heights due to different content lengths (titles, abstracts, metadata), creating messy, uneven grids
+      - **Should it be fixed?** YES - Equal heights provide:
+        - Professional, polished appearance
+        - Easier content scanning (eyes follow horizontal rows)
+        - Industry standard (Google Scholar, PubMed, IEEE Xplore all use consistent heights)
+        - Better visual hierarchy and grid integrity
+      - **Solution**: Three-part fix for equal height cards:
+        1. **PublicationCard component**: Added `h-full flex flex-col` to card wrapper - stretches to fill available height
+        2. **Flex layouts**: Added `alignItems: 'stretch'` to flex containers - cards in same row have equal height
+        3. **Grid layouts**: Already have `alignItems: 'stretch'` by default - equal heights per row
+      - **Result**: Beautiful, consistent card heights across all layouts (Grid, Flex, Column)
+      - Cards maintain equal heights within each row while respecting pattern sizing (featured cards larger than uniform)
+      - Especially noticeable improvement when mixing long/short titles or showing/hiding abstracts
+    - **Glass Morphism Effect for Dark Mode Publication Cards** (Visual Enhancement):
+      - **Restored missing feature**: Glass-like effect for publication cards when section content mode is "Dark"
+      - **Perfect for**: Hero sections with image/color backgrounds where white cards would clash
+      - **Glass morphism styling** (works on BOTH solid colors AND images):
+        - **Gradient overlay**: `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)`
+          - Creates **tint effect** on solid color backgrounds (15% → 5% white gradient)
+          - Adds subtle light-to-dark wash for depth
+        - `backdrop-blur-md` - Blurs background images behind card (12px blur)
+        - `border border-white/30` - Bright white border glow (30% opacity) for definition
+        - `shadow-2xl` - Strong elevated shadow for depth
+        - `rounded-lg p-6` - Rounded corners and consistent padding
+      - **Why gradient overlay?** 
+        - `backdrop-blur` only works on textured backgrounds (images, patterns)
+        - Solid colors have nothing to blur, so gradient provides visual tint/separation
+        - Diagonal gradient (135deg) creates premium, dynamic look
+      - **Light mode unchanged**: Clean white cards with subtle shadows
+      - **Applies to**: Publication List and Publication Details widgets
+      - **Industry standard**: Similar to modern UI libraries (iOS, Fluent Design, Material 3)
+      - Creates stunning visual hierarchy on dark backgrounds (solid OR image) while maintaining excellent text readability
+  - **Type System**:
+    - `ListBasedWidget` interface for pattern inheritance
+    - `SpanningPreset` type for pattern selection
+    - `ListItemSpanningConfig` for pattern configuration
+    - `SPANNING_PATTERNS` constant with preset definitions
+    - `PATTERN_DESCRIPTIONS` for UI labels
+  - **Rendering Logic**:
+    - `applyListPattern()` utility applies patterns to item arrays
+    - Converts pattern to `gridSpan` for Grid layouts
+    - Converts pattern to `flexProperties` for Flex layouts
+    - Publications render with individual grid/flex properties
+  - **Future-Ready**:
+    - Pattern system designed as core widget capability
+    - Any widget displaying a collection can adopt this pattern
+    - Later widgets (keywords, issues, galleries) get this for free by extending `ListBasedWidget`
+  - **Use Cases Enabled**:
+    - Tag clouds with staggered sizes (Masonry pattern)
+    - Issue archives with latest issue as hero (Hero First pattern)
+    - Article lists with featured first item (Featured First pattern)
+    - Flexible emphasis for any list content
+  - Status: `supported` for Publication List Widget
 - **Editorial Card Widget** (SharePoint-inspired):
   - New widget type for marketing/editorial content with professional layouts
   - **Three layout presets**:

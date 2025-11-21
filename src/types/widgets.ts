@@ -115,6 +115,11 @@ export type PublicationListWidget = WidgetBase & {
   layout: 'list' | 'grid' | 'featured'
   maxItems?: number
   align?: 'left' | 'center' | 'right'
+  
+  // List-based widget pattern system (NEW)
+  spanningConfig?: ListItemSpanningConfig  // Pattern system for Grid/Flex layouts
+  internalGridColumns?: number             // Number of columns when layout is 'grid'
+  
   // Schema objects source configuration
   schemaSource?: {
     selectionType: 'by-id' | 'by-type'
@@ -255,6 +260,66 @@ export type DividerWidget = WidgetBase & {
 export type SpacerWidget = WidgetBase & {
   type: 'spacer'
   height: string // e.g., '1rem', '2rem', '50px', '10vh'
+}
+
+// ====================================
+// CORE: List-Based Widget Pattern System
+// ====================================
+
+/**
+ * Spanning patterns for list-based widgets in Grid/Flex layouts
+ * Patterns repeat cyclically across all items
+ */
+export type SpanningPreset = 
+  | 'uniform'          // [1, 1, 1] - All equal
+  | 'featured-first'   // [2, 1, 1] - First item emphasized
+  | 'hero-first'       // [3, 1, 1, 1] - First item spans 3 columns
+  | 'alternating'      // [1, 2, 1] - Middle item emphasized
+  | 'masonry'          // [1, 1, 2] - Staggered emphasis
+  | 'custom'           // User-defined pattern
+
+export type ListItemSpanningConfig = {
+  enabled: boolean                    // Inherit parent Grid/Flex layout
+  preset: SpanningPreset              // Preset pattern
+  customPattern?: number[]            // For 'custom' preset: [2, 1, 1]
+}
+
+/**
+ * Core interface for all list-based widgets
+ * Enables pattern-based spanning in Grid/Flex sections
+ */
+export interface ListBasedWidget {
+  // Standard list layout (when NOT in Grid/Flex)
+  layout: 'list' | 'grid' | 'flex-row'
+  
+  // Pattern system (when parent is Grid/Flex)
+  spanningConfig?: ListItemSpanningConfig
+  
+  // Grid settings (when widget's internal layout is 'grid')
+  internalGridColumns?: number  // e.g., 3
+  
+  // Number of items to display
+  maxItems?: number
+}
+
+// Pattern presets with their column span arrays
+export const SPANNING_PATTERNS: Record<SpanningPreset, number[]> = {
+  'uniform': [1, 1, 1],
+  'featured-first': [2, 1, 1],
+  'hero-first': [3, 1, 1, 1],
+  'alternating': [1, 2, 1],
+  'masonry': [1, 1, 2],
+  'custom': [] // Defined by user
+}
+
+// Pattern descriptions for UI
+export const PATTERN_DESCRIPTIONS: Record<SpanningPreset, string> = {
+  'uniform': 'All items equal size',
+  'featured-first': 'First item double-wide, then repeats',
+  'hero-first': 'First item spans 3 columns, then repeats',
+  'alternating': 'Alternate emphasis (middle item wider)',
+  'masonry': 'Staggered emphasis (Pinterest-style)',
+  'custom': 'Define your own repeating pattern'
 }
 
 // Editorial Card - SharePoint-inspired marketing/editorial content card

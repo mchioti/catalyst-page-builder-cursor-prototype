@@ -199,18 +199,38 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
   // Get background classes based on content mode
   const getBackgroundClasses = () => {
     if (contentMode === 'dark') {
-      return 'bg-gray-800/50 border-gray-700'; // Dark semi-transparent background
+      // Glass morphism effect for dark mode:
+      // - backdrop-blur-md: Blurs background (works on images)
+      // - border-white/30: Bright border glow for definition
+      // - shadow-2xl: Strong shadow for depth
+      return 'backdrop-blur-md border border-white/30 shadow-2xl';
     } else if (contentMode === 'light') {
-      return 'bg-white border-gray-200'; // White background
+      return 'bg-white border border-gray-200 shadow-sm'; // White background
     }
     // Default: white background
-    return 'bg-white border-gray-200';
+    return 'bg-white border border-gray-200 shadow-sm';
+  };
+  
+  // Get background style (gradient overlay for dark mode)
+  const getBackgroundStyle = () => {
+    if (contentMode === 'dark') {
+      // Gradient overlay: lighter at top, darker at bottom
+      // Creates tint effect on solid colors + works on images
+      return {
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)'
+      };
+    }
+    return {};
   };
   
   const backgroundClasses = getBackgroundClasses();
+  const backgroundStyle = getBackgroundStyle();
 
   return (
-    <div className={`publication-card ${alignmentClass} ${backgroundClasses}`}>
+    <div 
+      className={`publication-card h-full flex flex-col rounded-lg p-6 ${alignmentClass} ${backgroundClasses}`}
+      style={backgroundStyle}
+    >
       {/* Header with type label and access status */}
       <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
         <div className="flex items-center gap-2">

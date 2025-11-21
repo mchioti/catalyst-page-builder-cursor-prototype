@@ -13,6 +13,8 @@ import {
 import WidgetRenderer from '../Widgets/WidgetRenderer'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { createDebugLogger } from '../../utils/logger'
+import { applyListPattern } from '../../utils/listPatternRenderer'
+import { PublicationCard } from '../Publications/PublicationCard'
 
 // Control logging for this file
 const DEBUG = false
@@ -889,23 +891,153 @@ export function SectionRenderer({
                   )}
                   
                   {/* Widgets as direct grid items */}
-                  {area.widgets.map((widget) => (
-                    <DraggableWidgetInSection
-                      key={widget.id}
-                      widget={widget}
-                      sectionId={section.id}
-                      areaId={area.id}
-                      activeSectionToolbar={activeSectionToolbar}
-                      setActiveSectionToolbar={setActiveSectionToolbar}
-                      activeWidgetToolbar={activeWidgetToolbar}
-                      setActiveWidgetToolbar={setActiveWidgetToolbar}
-                      onWidgetClick={onWidgetClick}
-                      usePageStore={usePageStore}
-                      isLiveMode={isLiveMode}
-                      journalContext={journalContext}
-                      sectionContentMode={section.contentMode}
-                    />
-                  ))}
+                  {/* Pattern-mode widgets are expanded into multiple grid items */}
+                  {area.widgets.flatMap((widget) => {
+                    // Check if this widget is in pattern mode
+                    const isPatternMode = widget.type === 'publication-list' && 
+                      (widget as any).spanningConfig?.enabled
+                    
+                    if (!isPatternMode) {
+                      // Normal widget rendering
+                      return (
+                        <DraggableWidgetInSection
+                          key={widget.id}
+                          widget={widget}
+                          sectionId={section.id}
+                          areaId={area.id}
+                          activeSectionToolbar={activeSectionToolbar}
+                          setActiveSectionToolbar={setActiveSectionToolbar}
+                          activeWidgetToolbar={activeWidgetToolbar}
+                          setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          onWidgetClick={onWidgetClick}
+                          usePageStore={usePageStore}
+                          isLiveMode={isLiveMode}
+                          journalContext={journalContext}
+                          sectionContentMode={section.contentMode}
+                        />
+                      )
+                    }
+                    
+                    // Pattern mode: Expand publications into separate grid items
+                    const pubWidget = widget as any
+                    let publications = pubWidget.publications || []
+                    
+                    // Apply max items
+                    if (pubWidget.maxItems) {
+                      publications = publications.slice(0, pubWidget.maxItems)
+                    }
+                    
+                    // Apply pattern
+                    const publicationsWithPattern = applyListPattern(
+                      publications,
+                      pubWidget.spanningConfig,
+                      'grid'
+                    )
+                    
+                    // Render pattern control + publications
+                    return [
+                      // Pattern widget control (spans full width, allows widget selection)
+                      !isLiveMode && (
+                        <div
+                          key={`${widget.id}-control`}
+                          className={`col-span-full border-2 border-dashed rounded-lg p-2.5 mb-2 cursor-pointer transition-all ${
+                            activeWidgetToolbar === widget.id 
+                              ? 'border-purple-500 bg-purple-50/80' 
+                              : 'border-purple-300 bg-purple-50/50 hover:border-purple-400 hover:bg-purple-100/70'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (activeSectionToolbar !== widget.sectionId) {
+                              setActiveSectionToolbar?.(null)
+                            }
+                            setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+                            onWidgetClick(widget.id, e)
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-purple-700">
+                                📊 Publication List (Pattern Mode)
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 font-medium">
+                                {publicationsWithPattern.length} items
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // Duplicate widget logic
+                                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                                  const duplicatedWidget = { ...widget, id: nanoid() }
+                                  
+                                  const updatedCanvasItems = canvasItems.map((canvasItem: any) => {
+                                    if (isSection(canvasItem)) {
+                                      return {
+                                        ...canvasItem,
+                                        areas: canvasItem.areas.map(a => 
+                                          a.widgets.some(w => w.id === widget.id)
+                                            ? { ...a, widgets: [...a.widgets, duplicatedWidget] }
+                                            : a
+                                        )
+                                      }
+                                    }
+                                    return canvasItem
+                                  })
+                                  replaceCanvasItems(updatedCanvasItems)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-200 transition-colors"
+                                title="Duplicate widget"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onWidgetClick(widget.id, e)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-200 transition-colors"
+                                title="Edit Properties"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  const { deleteWidget } = usePageStore.getState()
+                                  deleteWidget(widget.id)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                                title="Delete widget"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ),
+                      // Render each publication as a separate grid item
+                      ...publicationsWithPattern.map((article: any, index: number) => (
+                        <div
+                          key={`${widget.id}-pub-${index}`}
+                          style={{
+                            gridColumn: article.gridSpan?.column,
+                            gridRow: article.gridSpan?.row,
+                            // Add min-width for better sizing in grid (grid columns control max size)
+                            minWidth: '280px'
+                          }}
+                        >
+                          <PublicationCard
+                            article={article}
+                            config={pubWidget.cardConfig}
+                            align={pubWidget.align}
+                            contentMode={section.contentMode}
+                          />
+                        </div>
+                      ))
+                    ]
+                  })}
                 </div>
               )
             })}
@@ -933,6 +1065,7 @@ export function SectionRenderer({
                     flexDirection: section.flexConfig?.direction || 'row',
                     flexWrap: section.flexConfig?.wrap ? 'wrap' : 'nowrap',
                     justifyContent: section.flexConfig?.justifyContent || 'flex-start',
+                    alignItems: 'stretch', // ✨ Equal height cards in each row
                     gap: section.flexConfig?.gap || '1rem',
                     ...sidebarHeight
                   }}
@@ -953,23 +1086,157 @@ export function SectionRenderer({
                   )}
                   
                   {/* Widgets as direct flex items */}
-                  {area.widgets.map((widget) => (
-                    <DraggableWidgetInSection
-                      key={widget.id}
-                      widget={widget}
-                      sectionId={section.id}
-                      areaId={area.id}
-                      activeSectionToolbar={activeSectionToolbar}
-                      setActiveSectionToolbar={setActiveSectionToolbar}
-                      activeWidgetToolbar={activeWidgetToolbar}
-                      setActiveWidgetToolbar={setActiveWidgetToolbar}
-                      onWidgetClick={onWidgetClick}
-                      usePageStore={usePageStore}
-                      isLiveMode={isLiveMode}
-                      journalContext={journalContext}
-                      sectionContentMode={section.contentMode}
-                    />
-                  ))}
+                  {/* Pattern-mode widgets are expanded into multiple flex items */}
+                  {area.widgets.flatMap((widget) => {
+                    // Check if this widget is in pattern mode
+                    const isPatternMode = widget.type === 'publication-list' && 
+                      (widget as any).spanningConfig?.enabled
+                    
+                    if (!isPatternMode) {
+                      // Normal widget rendering
+                      return (
+                        <DraggableWidgetInSection
+                          key={widget.id}
+                          widget={widget}
+                          sectionId={section.id}
+                          areaId={area.id}
+                          activeSectionToolbar={activeSectionToolbar}
+                          setActiveSectionToolbar={setActiveSectionToolbar}
+                          activeWidgetToolbar={activeWidgetToolbar}
+                          setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          onWidgetClick={onWidgetClick}
+                          usePageStore={usePageStore}
+                          isLiveMode={isLiveMode}
+                          journalContext={journalContext}
+                          sectionContentMode={section.contentMode}
+                        />
+                      )
+                    }
+                    
+                    // Pattern mode: Expand publications into separate flex items
+                    const pubWidget = widget as any
+                    let publications = pubWidget.publications || []
+                    
+                    // Apply max items
+                    if (pubWidget.maxItems) {
+                      publications = publications.slice(0, pubWidget.maxItems)
+                    }
+                    
+                    // Apply pattern
+                    const publicationsWithPattern = applyListPattern(
+                      publications,
+                      pubWidget.spanningConfig,
+                      'flexible'
+                    )
+                    
+                    // Render pattern control + publications
+                    return [
+                      // Pattern widget control (allows widget selection)
+                      !isLiveMode && (
+                        <div
+                          key={`${widget.id}-control`}
+                          className={`w-full border-2 border-dashed rounded-lg p-2.5 mb-2 cursor-pointer transition-all ${
+                            activeWidgetToolbar === widget.id 
+                              ? 'border-purple-500 bg-purple-50/80' 
+                              : 'border-purple-300 bg-purple-50/50 hover:border-purple-400 hover:bg-purple-100/70'
+                          }`}
+                          style={{ flexBasis: '100%' }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (activeSectionToolbar !== widget.sectionId) {
+                              setActiveSectionToolbar?.(null)
+                            }
+                            setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
+                            onWidgetClick(widget.id, e)
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-purple-700">
+                                📊 Publication List (Pattern Mode)
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 font-medium">
+                                {publicationsWithPattern.length} items
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // Duplicate widget logic
+                                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                                  const duplicatedWidget = { ...widget, id: nanoid() }
+                                  
+                                  const updatedCanvasItems = canvasItems.map((canvasItem: any) => {
+                                    if (isSection(canvasItem)) {
+                                      return {
+                                        ...canvasItem,
+                                        areas: canvasItem.areas.map(a => 
+                                          a.widgets.some(w => w.id === widget.id)
+                                            ? { ...a, widgets: [...a.widgets, duplicatedWidget] }
+                                            : a
+                                        )
+                                      }
+                                    }
+                                    return canvasItem
+                                  })
+                                  replaceCanvasItems(updatedCanvasItems)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-200 transition-colors"
+                                title="Duplicate widget"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onWidgetClick(widget.id, e)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-200 transition-colors"
+                                title="Edit Properties"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  const { deleteWidget } = usePageStore.getState()
+                                  deleteWidget(widget.id)
+                                }}
+                                className="p-1.5 text-purple-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                                title="Delete widget"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ),
+                      // Render each publication as a separate flex item
+                      ...publicationsWithPattern.map((article: any, index: number) => (
+                        <div
+                          key={`${widget.id}-pub-${index}`}
+                          style={{
+                            flexGrow: article.flexProperties?.grow ? 1 : 0,
+                            flexShrink: 1, // Allow shrinking
+                            flexBasis: article.flexProperties?.grow ? '400px' : '300px', // Featured cards start larger
+                            minWidth: '280px', // Prevent cards from getting too narrow
+                            // Only constrain max-width for non-growing cards (uniform items)
+                            // Featured/hero cards (grow=true) can expand beyond 600px
+                            ...(article.flexProperties?.grow ? {} : { maxWidth: '400px' })
+                          }}
+                        >
+                          <PublicationCard
+                            article={article}
+                            config={pubWidget.cardConfig}
+                            align={pubWidget.align}
+                            contentMode={section.contentMode}
+                          />
+                        </div>
+                      ))
+                    ]
+                  })}
                 </div>
               )
             })}

@@ -1126,7 +1126,13 @@ function buildWidget(item: SpecItem): Widget {
           prompt: '',
           lastGenerated: undefined,
           generatedContent: undefined
-        }
+        },
+        // List pattern system defaults
+        spanningConfig: {
+          enabled: false,
+          preset: 'uniform'
+        },
+        internalGridColumns: 3 // Default for grid layout
       } as PublicationListWidget;
     
     case 'publication-details':

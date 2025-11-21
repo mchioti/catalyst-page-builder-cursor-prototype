@@ -7,6 +7,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { nanoid } from 'nanoid'
 import { Edit, Trash2, Copy } from 'lucide-react'
 import { EditorialCardRenderer } from './EditorialCardRenderer'
+import { applyListPattern } from '../../utils/listPatternRenderer'
 
 // Import usePageStore for updating widget state
 declare global {
@@ -1266,10 +1267,65 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
     publications = widget.publications || []
   }
   
-  const displayedPublications = widget.maxItems 
+  let displayedPublications = widget.maxItems 
     ? publications.slice(0, widget.maxItems)
     : publications
+  
+  // Check if pattern mode is enabled
+  const patternModeEnabled = widget.spanningConfig?.enabled && widget.spanningConfig?.preset
+  
+  // Apply list pattern if spanning config is enabled
+  // Pattern applies BOTH grid and flex properties, so it works in either parent layout
+  if (patternModeEnabled) {
+    displayedPublications = applyListPattern(
+      displayedPublications,
+      widget.spanningConfig!,
+      'grid' // Parameter kept for API compatibility, but now applies both grid and flex
+    )
+  }
 
+  // Pattern Mode: Render publications in a transparent container
+  // They will flow directly into parent Grid/Flex layout
+  if (patternModeEnabled) {
+    return (
+      <>
+        {displayedPublications.map((article: any, index: number) => {
+          // Extract grid/flex properties from patterned article
+          const gridSpan = article.gridSpan
+          const flexProps = article.flexProperties
+          
+          return (
+            <div
+              key={`${widget.id}-${index}`}
+              style={{
+                // Grid properties
+                gridColumn: gridSpan?.column,
+                gridRow: gridSpan?.row,
+                // Flex properties with intelligent width constraints
+                flexGrow: flexProps?.grow ? 1 : 0,
+                flexShrink: 1, // Allow shrinking
+                flexBasis: flexProps?.grow ? '400px' : '300px', // Featured cards start larger
+                minWidth: '280px', // Prevent cards from getting too narrow
+                // Only constrain max-width for non-growing cards (uniform items)
+                // Featured/hero cards (grow=true) can expand beyond 600px
+                ...(flexProps?.grow ? {} : { maxWidth: '400px' })
+              }}
+            >
+              <PublicationCard
+                article={article}
+                config={widget.cardConfig}
+                align={widget.align}
+                contentMode={sectionContentMode}
+              />
+            </div>
+          )
+        })}
+        
+      </>
+    )
+  }
+
+  // Standard Mode: Render with widget's own layout
   return (
     <div className="space-y-6">
       {/* Publication list */}
@@ -1289,14 +1345,6 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
         ))}
       </div>
 
-      {/* Show more indicator if there are more articles */}
-      {widget.maxItems && publications.length > widget.maxItems && (
-        <div className="text-center pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-500">
-            Showing {widget.maxItems} of {publications.length} publications
-          </p>
-        </div>
-      )}
       
       {/* Show message if no publications from schema objects */}
       {widget.contentSource === 'schema-objects' && publications.length === 0 && (
