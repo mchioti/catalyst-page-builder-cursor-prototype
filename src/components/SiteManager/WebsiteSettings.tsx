@@ -1,5 +1,5 @@
 import type { Website } from '../../types'
-import { usePageStore } from '../../App'
+import { usePageStore } from '../../AppV1'
 
 export function WebsiteSettings({ websiteId }: { websiteId: string }) {
   const { websites, updateWebsite } = usePageStore()

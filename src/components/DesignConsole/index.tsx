@@ -13,7 +13,7 @@ import {
   Cog
 } from 'lucide-react'
 import type { DesignConsoleView } from '../../types'
-import { usePageStore } from '../../App'
+import { usePageStore } from '../../AppV1'
 import { SiteManagerTemplates } from '../SiteManager/SiteManagerTemplates'
 import { PublicationCards } from '../SiteManager/PublicationCards'
 import { ThemeEditor } from '../SiteManager/ThemeEditor'

@@ -1,6 +1,6 @@
 import { Palette } from 'lucide-react'
 import type { DesignConsoleView } from '../../types'
-import { usePageStore } from '../../App'
+import { usePageStore } from '../../AppV1'
 
 function AllDesigns() {
   const { themes, setSiteManagerView } = usePageStore()

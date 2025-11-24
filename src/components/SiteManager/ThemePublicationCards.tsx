@@ -1,5 +1,5 @@
 import type { Theme } from '../../types'
-import { usePageStore } from '../../App'
+import { usePageStore } from '../../AppV1'
 
 export function ThemePublicationCards({ themeId }: { themeId: string }) {
   // Mock cover images for realistic display

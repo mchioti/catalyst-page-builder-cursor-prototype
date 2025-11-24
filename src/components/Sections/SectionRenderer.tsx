@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { GripVertical, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
+import { GripVertical, Copy, Edit, Trash2, BookOpen, ArrowUp, ArrowDown } from 'lucide-react'
 import { 
   type Widget,
   type WidgetSection, 
@@ -768,6 +768,56 @@ export function SectionRenderer({
               >
                 <GripVertical className="w-3 h-3" />
               </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                  if (currentIndex > 0) {
+                    const newCanvasItems = [...canvasItems]
+                    const temp = newCanvasItems[currentIndex]
+                    newCanvasItems[currentIndex] = newCanvasItems[currentIndex - 1]
+                    newCanvasItems[currentIndex - 1] = temp
+                    replaceCanvasItems(newCanvasItems)
+                  }
+                }}
+                className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Move section up"
+                type="button"
+                disabled={(() => {
+                  const { canvasItems } = usePageStore.getState()
+                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                  return currentIndex === 0
+                })()}
+              >
+                <ArrowUp className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                  if (currentIndex < canvasItems.length - 1) {
+                    const newCanvasItems = [...canvasItems]
+                    const temp = newCanvasItems[currentIndex]
+                    newCanvasItems[currentIndex] = newCanvasItems[currentIndex + 1]
+                    newCanvasItems[currentIndex + 1] = temp
+                    replaceCanvasItems(newCanvasItems)
+                  }
+                }}
+                className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Move section down"
+                type="button"
+                disabled={(() => {
+                  const { canvasItems } = usePageStore.getState()
+                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                  return currentIndex === canvasItems.length - 1
+                })()}
+              >
+                <ArrowDown className="w-3 h-3" />
+              </button>
               <button
                 onClick={(e) => {
                   e.preventDefault()

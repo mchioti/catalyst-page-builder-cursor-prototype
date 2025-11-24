@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { Website, Theme, Modification } from '../../types'
-import { usePageStore } from '../../App'
+import { usePageStore } from '../../AppV1'
 import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
 import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
 import { mockStarterPages } from '../../data/mockStarterPages'
