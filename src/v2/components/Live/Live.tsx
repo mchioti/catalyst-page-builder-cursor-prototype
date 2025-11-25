@@ -47,8 +47,16 @@ export function Live() {
     )
   }
   
-  // Resolve the page composition to actual sections
-  const resolvedSections = resolvePageById(currentPage, sharedSections)
+  // Get journal context if this is a journal page
+  const journal = currentPage.journalId 
+    ? website.journals?.find(j => j.id === currentPage.journalId)
+    : undefined
+  
+  // Resolve the page composition to actual sections with context
+  const resolvedSections = resolvePageById(currentPage, sharedSections, {
+    journal,
+    website
+  })
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,24 +81,38 @@ export function Live() {
             
             <div className="h-6 w-px bg-green-300" />
             
-            {/* Page Navigation */}
+            {/* Page Navigation - Journal-aware */}
             <div className="flex items-center gap-2">
-              {website.pages.map(page => (
-                <Link
-                  key={page.id}
-                  to={`/v2/live?site=${websiteId}&page=${page.id}`}
-                  className={`px-3 py-1 rounded text-sm transition-colors ${
-                    page.id === currentPage.id
-                      ? 'bg-green-600 text-white font-medium'
-                      : 'text-green-700 hover:bg-green-100'
-                  }`}
-                >
-                  {page.name}
-                  {page.status === 'draft' && (
-                    <span className="ml-1 text-xs opacity-70">(Draft)</span>
-                  )}
-                </Link>
-              ))}
+              {currentPage.journalId ? (
+                // Journal platform: Show current journal + page
+                <>
+                  <span className="text-xs text-green-700">
+                    {website.journals?.find(j => j.id === currentPage.journalId)?.name || 'Journal'}
+                  </span>
+                  <span className="text-green-500">→</span>
+                  <span className="px-3 py-1 rounded text-sm bg-green-600 text-white font-medium">
+                    {currentPage.name}
+                  </span>
+                </>
+              ) : (
+                // Regular website: Show all pages
+                website.pages.slice(0, 5).map(page => (
+                  <Link
+                    key={page.id}
+                    to={`/v2/live?site=${websiteId}&page=${page.id}`}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                      page.id === currentPage.id
+                        ? 'bg-green-600 text-white font-medium'
+                        : 'text-green-700 hover:bg-green-100'
+                    }`}
+                  >
+                    {page.name}
+                    {page.status === 'draft' && (
+                      <span className="ml-1 text-xs opacity-70">(Draft)</span>
+                    )}
+                  </Link>
+                ))
+              )}
             </div>
           </div>
           

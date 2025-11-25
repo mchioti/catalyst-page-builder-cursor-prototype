@@ -17,7 +17,7 @@ export function WebsiteDetail() {
   const updatePageComposition = useWebsiteStore(state => state.updatePageComposition)
   const sharedSections = useSharedSectionsStore(state => state.sections)
   const addSection = useSharedSectionsStore(state => state.addSection)
-  const [activeTab, setActiveTab] = useState<'pages' | 'sections'>('pages')
+  const [activeTab, setActiveTab] = useState<'pages' | 'sections' | 'journals'>('pages')
   
   const website = websites.find(w => w.id === websiteId)
   
@@ -206,6 +206,18 @@ export function WebsiteDetail() {
               >
                 Header & Footer ({headers.length + footers.length})
               </button>
+              {website.journals && website.journals.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('journals')}
+                  className={`pb-4 px-2 font-medium border-b-2 transition-colors ${
+                    activeTab === 'journals'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Journals ({website.journals.length})
+                </button>
+              )}
             </div>
             {activeTab === 'pages' && (
               <button className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
@@ -215,56 +227,139 @@ export function WebsiteDetail() {
             )}
           </div>
           
-          {/* Pages Tab */}
+          {/* Pages Tab - Hierarchical Sitemap */}
           {activeTab === 'pages' && (
-            <div className="divide-y divide-gray-200">
-              {website.pages.map(page => (
-                <div 
-                  key={page.id}
-                  className="p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="text-lg font-medium text-gray-900">{page.name}</h4>
-                        <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                          page.status === 'published' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {page.status}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span>/{page.slug}</span>
-                        <span className="mx-2">•</span>
-                        <span>{page.composition.length} sections</span>
-                        <span className="mx-2">•</span>
-                        <span>Updated {page.updatedAt.toLocaleDateString()}</span>
-                      </div>
+            <div className="p-6 space-y-6">
+              {/* Platform Pages (no journal) */}
+              {(() => {
+                const platformPages = website.pages.filter(p => !p.journalId)
+                if (platformPages.length === 0) return null
+                
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Layers className="w-5 h-5 text-gray-600" />
+                      <h4 className="text-lg font-semibold text-gray-900">Platform Pages</h4>
+                      <span className="text-sm text-gray-500">({platformPages.length})</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/v2/live?site=${website.id}&page=${page.id}`}
-                        className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center gap-1"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View
-                      </Link>
-                      <Link
-                        to={`/v2/editor?site=${website.id}&page=${page.id}`}
-                        className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-1"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Edit
-                      </Link>
-                      <button className="px-3 py-2 text-sm text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="space-y-2 ml-7">
+                      {platformPages.map(page => (
+                        <div 
+                          key={page.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h5 className="font-medium text-gray-900">{page.name}</h5>
+                              <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                                page.status === 'published' 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {page.status}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              /{page.slug} • {page.composition.length} sections
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/v2/live?site=${website.id}&page=${page.id}`}
+                              className="px-2 py-1 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </Link>
+                            <Link
+                              to={`/v2/editor?site=${website.id}&page=${page.id}`}
+                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                            >
+                              <Edit className="w-3 h-3" />
+                              Edit
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                )
+              })()}
+              
+              {/* Journal Pages (grouped by journal) */}
+              {website.journals && website.journals.map(journal => {
+                const journalPages = website.pages.filter(p => p.journalId === journal.id)
+                if (journalPages.length === 0) return null
+                
+                return (
+                  <div key={journal.id}>
+                    <div 
+                      className="flex items-center gap-2 mb-4 pb-2 border-b-2"
+                      style={{ borderColor: journal.branding?.primaryColor || '#6b7280' }}
+                    >
+                      <Globe className="w-5 h-5" style={{ color: journal.branding?.primaryColor || '#6b7280' }} />
+                      <h4 className="text-lg font-semibold text-gray-900">{journal.name}</h4>
+                      {journal.acronym && (
+                        <span className="text-xs text-gray-500 font-mono">({journal.acronym})</span>
+                      )}
+                      <span className="text-sm text-gray-500">({journalPages.length} pages)</span>
+                      {journal.isOpenAccess && (
+                        <span className="text-xs">🔓</span>
+                      )}
+                      {journal.isDiscontinued && (
+                        <span className="text-xs">⚠️</span>
+                      )}
+                    </div>
+                    <div className="space-y-2 ml-7">
+                      {journalPages.map(page => (
+                        <div 
+                          key={page.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h5 className="font-medium text-gray-900">{page.name}</h5>
+                              <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                                page.status === 'published' 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {page.status}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              /{page.slug} • {page.composition.length} sections
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/v2/live?site=${website.id}&page=${page.id}`}
+                              className="px-2 py-1 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </Link>
+                            <Link
+                              to={`/v2/editor?site=${website.id}&page=${page.id}`}
+                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                            >
+                              <Edit className="w-3 h-3" />
+                              Edit
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+              
+              {website.pages.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <Layers className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p>No pages created yet.</p>
                 </div>
-              ))}
+              )}
             </div>
           )}
           
@@ -421,6 +516,114 @@ export function WebsiteDetail() {
                   <p>No headers or footers used on this website's pages yet.</p>
                 </div>
               )}
+            </div>
+          )}
+          
+          {/* Journals Tab */}
+          {activeTab === 'journals' && website.journals && (
+            <div className="p-6 space-y-4">
+              {website.journals.map(journal => {
+                const journalPages = website.pages.filter(p => p.journalId === journal.id)
+                
+                return (
+                  <div 
+                    key={journal.id}
+                    className="border border-gray-200 rounded-lg p-5 hover:border-blue-300 transition-colors"
+                    style={{ borderLeft: `4px solid ${journal.branding?.primaryColor || '#0073e6'}` }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Link
+                            to={`/v2/websites/${website.id}/journals/${journal.id}`}
+                            className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors"
+                          >
+                            {journal.name}
+                          </Link>
+                          {journal.acronym && (
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded font-mono">
+                              {journal.acronym}
+                            </span>
+                          )}
+                          {journal.isOpenAccess && (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                              🔓 Open Access
+                            </span>
+                          )}
+                          {journal.isDiscontinued && (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-medium">
+                              ⚠️ Discontinued
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{journal.description}</p>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          {journal.issn && (
+                            <div>
+                              <div className="text-gray-500">ISSN</div>
+                              <div className="font-mono text-gray-900">
+                                {journal.issn.print || journal.issn.online}
+                              </div>
+                            </div>
+                          )}
+                          {journal.impactFactor && (
+                            <div>
+                              <div className="text-gray-500">Impact Factor</div>
+                              <div className="font-semibold text-gray-900">{journal.impactFactor}</div>
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-gray-500">Pages</div>
+                            <div className="font-semibold text-gray-900">{journalPages.length}</div>
+                          </div>
+                          {journal.branding?.primaryColor && (
+                            <div>
+                              <div className="text-gray-500">Brand Color</div>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-4 h-4 rounded border border-gray-300"
+                                  style={{ backgroundColor: journal.branding.primaryColor }}
+                                />
+                                <span className="font-mono text-xs text-gray-900">
+                                  {journal.branding.primaryColor}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {journalPages.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="text-xs text-gray-500 mb-2">Pages:</div>
+                            <div className="flex flex-wrap gap-2">
+                              {journalPages.map(page => (
+                                <Link
+                                  key={page.id}
+                                  to={`/v2/live?site=${website.id}&page=${page.id}`}
+                                  className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded hover:bg-blue-100 transition-colors"
+                                >
+                                  {page.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="ml-4">
+                        <Link
+                          to={`/v2/websites/${website.id}/journals/${journal.id}`}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Manage
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

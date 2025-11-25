@@ -124,6 +124,7 @@ export type Page = {
   name: string
   slug: string
   websiteId: string
+  journalId?: string  // Optional: if this page belongs to a journal
   
   // Page is just a composition of sections
   composition: SectionCompositionItem[]
@@ -133,6 +134,41 @@ export type Page = {
   createdAt: Date
   updatedAt: Date
   publishedAt?: Date
+}
+
+// ============================================================================
+// JOURNALS (Within Websites)
+// ============================================================================
+
+export type Journal = {
+  id: string
+  name: string
+  acronym?: string
+  description?: string
+  
+  // Journal metadata
+  issn?: {
+    print?: string
+    online?: string
+  }
+  impactFactor?: number
+  isOpenAccess?: boolean
+  isDiscontinued?: boolean
+  discontinuedDate?: Date
+  
+  // Branding (overrides website branding)
+  branding?: {
+    primaryColor?: string
+    secondaryColor?: string
+    logoUrl?: string
+  }
+  
+  // Status
+  status: 'active' | 'discontinued' | 'coming-soon'
+  
+  // Metadata
+  createdAt: Date
+  updatedAt: Date
 }
 
 // ============================================================================
@@ -148,7 +184,10 @@ export type Website = {
   // Website-specific shared sections (override theme sections)
   sharedSections: SharedSection[]
   
-  // Pages
+  // Journals (for publishing platforms)
+  journals?: Journal[]
+  
+  // Pages (can belong to website or to a journal)
   pages: Page[]
   
   // Branding overrides

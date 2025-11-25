@@ -287,11 +287,468 @@ export const febsPressSite: Website = {
 }
 
 // ============================================================================
+// WILEY PUBLISHING PLATFORM (Multi-Journal Website)
+// ============================================================================
+
+// Define journals
+const journalOfScience = {
+  id: 'jas',
+  name: 'Journal of Advanced Science',
+  acronym: 'JAS',
+  description: 'Publishing groundbreaking research in all fields of science since 1985',
+  issn: {
+    print: '1234-5678',
+    online: '8765-4321'
+  },
+  impactFactor: 12.5,
+  isOpenAccess: false,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#1e40af',
+    secondaryColor: '#3b82f6'
+  },
+  status: 'active' as const,
+  createdAt: new Date('1985-01-01'),
+  updatedAt: new Date('2024-11-25')
+}
+
+const openAccessBiology = {
+  id: 'oab',
+  name: 'Open Access Biology',
+  acronym: 'OAB',
+  description: 'Freely accessible research in biological sciences',
+  issn: {
+    online: '2234-5678'
+  },
+  impactFactor: 8.3,
+  isOpenAccess: true,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#059669',
+    secondaryColor: '#10b981'
+  },
+  status: 'active' as const,
+  createdAt: new Date('2010-01-01'),
+  updatedAt: new Date('2024-11-25')
+}
+
+const historicalChemistry = {
+  id: 'hcq',
+  name: 'Historical Chemistry Quarterly',
+  acronym: 'HCQ',
+  description: 'Archive of chemical research from 1920-2020',
+  issn: {
+    print: '0001-2345'
+  },
+  isOpenAccess: false,
+  isDiscontinued: true,
+  discontinuedDate: new Date('2020-12-31'),
+  branding: {
+    primaryColor: '#78716c',
+    secondaryColor: '#a8a29e'
+  },
+  status: 'discontinued' as const,
+  createdAt: new Date('1920-01-01'),
+  updatedAt: new Date('2024-11-25')
+}
+
+// Journal of Advanced Science Pages
+const journalScienceHome: Page = {
+  id: 'jas-home',
+  name: 'Journal Home',
+  slug: 'jas/home',
+  websiteId: 'wiley-platform',
+  journalId: 'jas',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'full',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'grid',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalScienceArchive: Page = {
+  id: 'jas-archive',
+  name: 'Issue Archive',
+  slug: 'jas/archive',
+  websiteId: 'wiley-platform',
+  journalId: 'jas',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'archive',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalScienceIssue: Page = {
+  id: 'jas-issue',
+  name: 'Current Issue',
+  slug: 'jas/issue/current',
+  websiteId: 'wiley-platform',
+  journalId: 'jas',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'issue',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'two-column',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalScienceArticle: Page = {
+  id: 'jas-article',
+  name: 'Article View',
+  slug: 'jas/article/12345',
+  websiteId: 'wiley-platform',
+  journalId: 'jas',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'minimal',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+// Open Access Biology Pages
+const journalBiologyHome: Page = {
+  id: 'oab-home',
+  name: 'Journal Home',
+  slug: 'oab/home',
+  websiteId: 'wiley-platform',
+  journalId: 'oab',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'full',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'grid',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-02-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalBiologyArchive: Page = {
+  id: 'oab-archive',
+  name: 'Issue Archive',
+  slug: 'oab/archive',
+  websiteId: 'wiley-platform',
+  journalId: 'oab',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'archive',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-02-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+// Historical Chemistry Pages
+const journalChemistryHome: Page = {
+  id: 'hc-home',
+  name: 'Journal Home',
+  slug: 'hcq/home',
+  websiteId: 'wiley-platform',
+  journalId: 'hcq',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'full',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-03-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalChemistryArchive: Page = {
+  id: 'hc-archive',
+  name: 'Issue Archive',
+  slug: 'hcq/archive',
+  websiteId: 'wiley-platform',
+  journalId: 'hcq',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'platform-header',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'archive',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-03-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+// Create Wiley Publishing Platform Website
+export const wileyPublishingPlatform: Website = {
+  id: 'wiley-platform',
+  name: 'Wiley Online Library',
+  domain: 'onlinelibrary.wiley.com',
+  themeId: 'foundation-theme-v1',
+  status: 'active',
+  
+  sharedSections: [], // Journal-specific banners are in the global store with websiteId
+  
+  // Journals within this website
+  journals: [
+    journalOfScience,
+    openAccessBiology,
+    historicalChemistry
+  ],
+  
+  // All pages (journal pages + platform pages)
+  pages: [
+    journalScienceHome, journalScienceArchive, journalScienceIssue, journalScienceArticle,
+    journalBiologyHome, journalBiologyArchive,
+    journalChemistryHome, journalChemistryArchive
+  ],
+  
+  branding: {
+    primaryColor: '#0073e6',
+    secondaryColor: '#005bb5',
+    logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
+    fontFamily: 'Inter'
+  },
+  
+  createdAt: new Date('2000-01-01'),
+  updatedAt: new Date('2024-11-25')
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
 export const mockWebsites: Website[] = [
   catalystDemoSite,
-  febsPressSite
+  febsPressSite,
+  wileyPublishingPlatform
 ]
 

@@ -7,6 +7,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { V2Navigation } from './v2/components/Shared/V2Navigation'
 import { Websites } from './v2/components/Websites/Websites'
 import { WebsiteDetail } from './v2/components/Websites/WebsiteDetail'
+import { JournalDetail } from './v2/components/Journals/JournalDetail'
 import { DesignConsole } from './v2/components/DesignConsole/DesignConsole'
 import { SectionEditor } from './v2/components/DesignConsole/SectionEditor'
 import { Editor } from './v2/components/Editor/Editor'
@@ -30,6 +31,7 @@ function AppV2() {
         <Route path="/" element={<Websites />} />
         <Route path="/websites" element={<Websites />} />
         <Route path="/websites/:websiteId" element={<WebsiteDetail />} />
+        <Route path="/websites/:websiteId/journals/:journalId" element={<JournalDetail />} />
         <Route path="/design" element={<DesignConsole />} />
         <Route path="/design/section/:sectionId/:variationKey" element={<SectionEditor />} />
         <Route path="/editor" element={<Editor />} />

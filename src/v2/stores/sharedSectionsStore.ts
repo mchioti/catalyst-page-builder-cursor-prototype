@@ -24,6 +24,7 @@ interface SharedSectionsState {
   getSectionsByCategory: (category: string) => SharedSection[]
   getSectionsForWebsite: (websiteId: string) => SharedSection[]
   getSectionsForTheme: (themeId: string) => SharedSection[]
+  getVariation: (sectionId: string, variationKey: string) => SectionVariation | undefined
 }
 
 export const useSharedSectionsStore = create<SharedSectionsState>((set, get) => ({
@@ -108,6 +109,11 @@ export const useSharedSectionsStore = create<SharedSectionsState>((set, get) => 
   
   getSectionsForTheme: (themeId) => {
     return get().sections.filter(section => section.themeId === themeId)
+  },
+  
+  getVariation: (sectionId, variationKey) => {
+    const section = get().getSectionById(sectionId)
+    return section?.variations[variationKey]
   }
 }))
 

@@ -10,6 +10,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **🛠️ Enhanced Section Editor (Full Structural Control)**:
+  - **Widget Library**: Drag-free widget palette with 6 widget types (Heading, Text, Image, Menu, Spacer, Divider)
+  - **Add Widgets**: Click any widget in the library to add to the section
+  - **Remove Widgets**: Delete button on each widget
+  - **Reorder Widgets**: Move Up/Down buttons for changing widget order
+  - **Variation Inheritance Support**: 
+    - Editor now resolves inherited widgets from parent variations
+    - Shows purple "Inherits from X" badge for inherited variations
+    - Displays inherited widget count (e.g., "starts with 5 widgets from base")
+    - Archive/Issue/Minimal variations now show their inherited widgets
+    - Customizing an inherited variation preserves inheritance link while allowing full control
+  - **Empty State**: Clear UI when section has no widgets
+  - **Layout**: 3-column layout (Widget Library | Editor | Affected Pages)
+  - **Benefits**:
+    - ✅ Add custom widgets to journal-specific sections
+    - ✅ Remove unwanted widgets (e.g., remove metadata from minimal banners)
+    - ✅ Reorder widgets for different visual hierarchies
+    - ✅ Customize inherited variations (Archive, Issue, Minimal)
+    - ✅ Full structural customization without code
+  - **Files**:
+    - `WidgetLibrary.tsx` - Reusable widget palette component
+    - `SectionEditor.tsx` - Enhanced with add/remove/reorder + inheritance resolution
+
+- **🏗️ Journal-Level Section Forking (Structural Customization)**:
+  - **Problem Solved**: Journals needed ability to customize section structure (add/remove widgets, change layouts) independent of content
+  - **Solution**: Journal-level forking system allows structural changes while keeping data-driven content
+  - **Architecture**:
+    - `JournalDetail.tsx` - New management page for individual journals with 3 tabs:
+      - **Sections Tab**: Shows all sections used by journal with "Modify for This Journal" button
+      - **Pages Tab**: Lists all pages belonging to the journal
+      - **Metadata Tab**: Displays journal information (ISSN, impact factor, branding, etc.)
+    - **Routing**: `/v2/websites/:websiteId/journals/:journalId`
+    - **Fork Workflow**:
+      1. Click "Modify for This Journal" on any global section (e.g., Journal Banner)
+      2. System clones section with ID pattern: `{sectionId}-{journalId}`
+      3. Updates all journal pages to reference the forked section
+      4. Navigates to section editor for structural customization
+    - **Visual Indicators**:
+      - Global sections: Blue "Global" badge
+      - Journal-specific sections: Purple "Journal-Specific" badge
+      - Website-specific sections: Orange "Website-Specific" badge
+  - **Benefits**:
+    - ✅ Content changes: Edit Journal entity (CMS-managed)
+    - ✅ Structural changes: Fork section and modify in Page Builder
+    - ✅ Clear separation of concerns: Data vs. Structure
+    - ✅ Scales to any number of journals
+  - **Example Use Cases**:
+    - Add custom "Discontinued" notice widget to Historical Chemistry Quarterly banner
+    - Remove metadata widget from Open Access Biology banner
+    - Add custom CTAs or badges per journal
+    - Rearrange widget order for specific journals
+  - **WebsiteStore Updates**:
+    - New actions: `addJournal`, `updateJournal`, `deleteJournal`
+    - New queries: `getJournalById`, `getPagesForJournal`
+  - **WebsiteDetail Updates**:
+    - Journal names now clickable (navigate to JournalDetail)
+    - Added "Manage" button for each journal
+
+- **🎯 Dynamic Shared Sections (Template Variables)**:
+  - **Problem Solved**: Managing 50+ journals with hardcoded content was unmaintainable
+  - **Solution**: Template variable system enables data-driven shared sections
+  - **Syntax**: `{journal.name}`, `{journal.description}`, `{journal.issn.print}`, `{journal.impactFactor}`, `{journal.isOpenAccess}`
+  - **Architecture**:
+    - `templateVariables.ts` - Resolver utility for replacing template variables with actual data
+    - `compositionResolver.ts` - Updated to pass journal/website context when resolving pages
+    - `SectionRenderer.tsx` - Resolves template variables in widget content before rendering
+    - `Live.tsx` - Passes journal and website context to composition resolver
+  - **Benefits**:
+    - ✅ 1 journal banner section for ALL journals (was 3+ forked sections)
+    - ✅ Update metadata in ONE place (Journal entity) → updates all pages automatically
+    - ✅ No duplication, no manual edits across multiple pages
+    - ✅ Scales to 50, 500, or 5000 journals effortlessly
+  - **Removed Redundant Sections**:
+    - Deleted `oabJournalBanner` (Open Access Biology fork)
+    - Deleted `hcqJournalBanner` (Historical Chemistry fork)
+    - All journal pages now use base `journal-banner` section with dynamic content
+  - **Supported Contexts**:
+    - `{journal.*}` - Journal properties (name, description, ISSN, impact factor, etc.)
+    - `{journal.branding.primaryColor}` - Journal brand color (e.g., `#059669` for Open Access Biology)
+    - `{website.*}` - Website properties (name, domain, branding, etc.)
+    - `{page.*}` - Page properties (title, slug, etc.)
+  - **Works in Multiple Contexts**:
+    - Widget text fields (headings, descriptions, labels, menu items)
+    - Section properties (background colors, gradient values)
+  - **Example**: Each journal now has its own brand color:
+    - Journal of Advanced Science → Blue (`#1e40af`)
+    - Open Access Biology → Green (`#059669`)
+    - Historical Chemistry Quarterly → Stone/Gray (`#78716c`)
+  - **Future-Proof**: Easy to add conditional rendering, date formatting, and custom functions
+
+### Changed
+- **Journal Banner Base Template**: Updated to use template variables instead of hardcoded or placeholder content
+  - Title: `{journal.name}` (dynamically pulls from Journal entity)
+  - Description: `{journal.description}`
+  - Metadata: `{journal.issn.print}`, `{journal.issn.online}`, `{journal.impactFactor}`, `{journal.isOpenAccess}`
+  - Makes it clearer this is a data-driven template, not a manual fork-and-edit section
+- **Platform Header**: Changed background from white to black (#000000) for better logo visibility
+- **Live View Navigation**: Made status bar journal-aware, showing only pages within current journal context
+- **Platform Header Simplification**: Removed non-functional "Browse Journals" dropdown, keeping only logo and search
+
+### Removed
+- **Journal-Specific Forked Banner Sections**: Deleted `oabJournalBanner` and `hcqJournalBanner` (replaced by single data-driven template)
+
+### Added (Previous Features)
 - **List-Based Widget Pattern System** (Universal Spanning for Grid/Flex Layouts):
   - **Core Architecture**: New pattern system enables ANY list-based widget to inherit parent Grid/Flex layouts with intelligent spanning
   - **Universal Application**:

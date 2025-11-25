@@ -3,9 +3,11 @@
  * Resolves page composition (section references) into actual renderable widgets
  */
 
-import type { Page, SectionCompositionItem, SharedSection } from '../types/core'
+import type { Page, SectionCompositionItem, SharedSection, Journal, Website } from '../types/core'
 import type { Widget } from '../../types/widgets'
 import { resolveVariationWidgets, getParentVariation } from './variationResolver'
+import type { TemplateContext } from './templateVariables'
+import { resolveTemplateVariables } from './templateVariables'
 
 export type ResolvedSection = {
   id: string // Instance ID from composition
@@ -26,6 +28,7 @@ export type ResolvedSection = {
   gridConfig?: any
   inheritFromTheme: boolean
   divergenceCount: number
+  templateContext?: TemplateContext // NEW: Context for resolving template variables
 }
 
 /**
@@ -33,7 +36,8 @@ export type ResolvedSection = {
  */
 export function resolvePageComposition(
   composition: SectionCompositionItem[],
-  sharedSections: SharedSection[]
+  sharedSections: SharedSection[],
+  templateContext?: TemplateContext
 ): ResolvedSection[] {
   return composition.map(item => {
     const sharedSection = sharedSections.find(s => s.id === item.sharedSectionId)
@@ -62,6 +66,15 @@ export function resolvePageComposition(
       resolvedWidgets = applyWidgetOverrides(resolvedWidgets, item.overrides.widgets)
     }
     
+    // Resolve template variables in background color if present
+    let resolvedBackground = variation.background
+    if (templateContext && resolvedBackground?.color) {
+      resolvedBackground = {
+        ...resolvedBackground,
+        color: resolveTemplateVariables(resolvedBackground.color, templateContext)
+      }
+    }
+    
     return {
       id: item.id,
       sharedSectionId: item.sharedSectionId,
@@ -70,12 +83,13 @@ export function resolvePageComposition(
       variationName: variation.name,
       layout: variation.layout,
       widgets: resolvedWidgets,
-      background: variation.background,
+      background: resolvedBackground,
       contentMode: variation.contentMode,
       flexConfig: variation.flexConfig,
       gridConfig: variation.gridConfig,
       inheritFromTheme: item.inheritFromTheme,
-      divergenceCount: item.divergenceCount
+      divergenceCount: item.divergenceCount,
+      templateContext // Pass through template context
     }
   }).filter(Boolean) as ResolvedSection[]
 }
@@ -110,8 +124,23 @@ function applyWidgetOverrides(
  */
 export function resolvePageById(
   page: Page,
-  sharedSections: SharedSection[]
+  sharedSections: SharedSection[],
+  options?: {
+    journal?: Journal
+    website?: Website
+  }
 ): ResolvedSection[] {
-  return resolvePageComposition(page.composition, sharedSections)
+  // Build template context
+  const templateContext: TemplateContext = {
+    page: {
+      id: page.id,
+      title: page.title,
+      slug: page.slug
+    },
+    journal: options?.journal,
+    website: options?.website
+  }
+  
+  return resolvePageComposition(page.composition, sharedSections, templateContext)
 }
 

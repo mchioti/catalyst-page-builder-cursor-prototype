@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand'
-import type { Website, Page, SectionCompositionItem } from '../types/core'
+import type { Website, Page, SectionCompositionItem, Journal } from '../types/core'
 
 interface WebsiteState {
   // Data
@@ -24,11 +24,18 @@ interface WebsiteState {
   deletePage: (websiteId: string, pageId: string) => void
   publishPage: (websiteId: string, pageId: string) => void
   
+  // Actions - Journals
+  addJournal: (websiteId: string, journal: Journal) => void
+  updateJournal: (websiteId: string, journalId: string, updates: Partial<Journal>) => void
+  deleteJournal: (websiteId: string, journalId: string) => void
+  
   // Queries
   getWebsiteById: (id: string) => Website | undefined
   getCurrentWebsite: () => Website | undefined
   getPageById: (websiteId: string, pageId: string) => Page | undefined
   getPagesForWebsite: (websiteId: string) => Page[]
+  getJournalById: (websiteId: string, journalId: string) => Journal | undefined
+  getPagesForJournal: (websiteId: string, journalId: string) => Page[]
 }
 
 export const useWebsiteStore = create<WebsiteState>((set, get) => ({
@@ -134,6 +141,51 @@ export const useWebsiteStore = create<WebsiteState>((set, get) => ({
   getPagesForWebsite: (websiteId) => {
     const website = get().getWebsiteById(websiteId)
     return website?.pages || []
+  },
+  
+  // Journal actions
+  addJournal: (websiteId, journal) => set((state) => ({
+    websites: state.websites.map(website =>
+      website.id === websiteId && website.journals
+        ? { ...website, journals: [...website.journals, journal], updatedAt: new Date() }
+        : website
+    )
+  })),
+  
+  updateJournal: (websiteId, journalId, updates) => set((state) => ({
+    websites: state.websites.map(website =>
+      website.id === websiteId && website.journals
+        ? {
+            ...website,
+            journals: website.journals.map(journal =>
+              journal.id === journalId ? { ...journal, ...updates, updatedAt: new Date() } : journal
+            ),
+            updatedAt: new Date()
+          }
+        : website
+    )
+  })),
+  
+  deleteJournal: (websiteId, journalId) => set((state) => ({
+    websites: state.websites.map(website =>
+      website.id === websiteId && website.journals
+        ? {
+            ...website,
+            journals: website.journals.filter(journal => journal.id !== journalId),
+            updatedAt: new Date()
+          }
+        : website
+    )
+  })),
+  
+  getJournalById: (websiteId, journalId) => {
+    const website = get().getWebsiteById(websiteId)
+    return website?.journals?.find(journal => journal.id === journalId)
+  },
+  
+  getPagesForJournal: (websiteId, journalId) => {
+    const website = get().getWebsiteById(websiteId)
+    return website?.pages.filter(page => page.journalId === journalId) || []
   }
 }))
 

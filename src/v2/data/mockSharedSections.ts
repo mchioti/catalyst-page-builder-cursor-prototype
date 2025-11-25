@@ -574,11 +574,276 @@ export const mockContentSection: SharedSection = {
   }
 }
 
+// ============================================================================
+// JOURNAL BANNER (Publication-specific header)
+// ============================================================================
+
+export const mockJournalBannerSection: SharedSection = {
+  id: 'journal-banner',
+  name: 'Journal Banner',
+  category: 'hero',
+  description: 'Base template for journal banners (fork and customize per journal)',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-25'),
+  
+  variations: {
+    full: {
+      id: 'journal-banner-full',
+      name: 'Full (Journal Home)',
+      description: 'Complete banner with title, description, metadata, and navigation (template)',
+      layout: 'flexible',
+      
+      widgets: [
+        {
+          id: 'journal-banner-title',
+          type: 'heading',
+          skin: 'minimal',
+          text: '{journal.name}',
+          level: 1,
+          align: 'left',
+          style: 'hero',
+          color: 'default',
+          size: 'auto'
+        },
+        {
+          id: 'journal-banner-description',
+          type: 'text',
+          skin: 'minimal',
+          text: '{journal.description}',
+          align: 'left'
+        },
+        {
+          id: 'journal-banner-metadata',
+          type: 'text',
+          skin: 'minimal',
+          text: '<strong>ISSN:</strong> {journal.issn.print} (Print) | {journal.issn.online} (Online)<br><strong>Impact Factor:</strong> {journal.impactFactor} | <strong>Open Access:</strong> {journal.isOpenAccess}',
+          align: 'left'
+        },
+        {
+          id: 'journal-banner-menu',
+          type: 'menu',
+          skin: 'minimal',
+          menuType: 'global',
+          style: 'horizontal',
+          align: 'left',
+          items: [
+            { id: nanoid(), label: 'Home', url: '/journal/home', target: '_self', displayCondition: 'always', order: 0 },
+            { id: nanoid(), label: 'Archive', url: '/journal/archive', target: '_self', displayCondition: 'always', order: 1 },
+            { id: nanoid(), label: 'Submit', url: '/journal/submit', target: '_self', displayCondition: 'always', order: 2 },
+            { id: nanoid(), label: 'About', url: '/journal/about', target: '_self', displayCondition: 'always', order: 3 }
+          ]
+        },
+        {
+          id: 'journal-banner-spacer',
+          type: 'spacer',
+          skin: 'minimal',
+          height: '2rem'
+        }
+      ],
+      
+      flexConfig: {
+        direction: 'column',
+        wrap: false,
+        justifyContent: 'flex-start',
+        gap: '1rem'
+      },
+      
+      background: {
+        type: 'color',
+        color: '{journal.branding.primaryColor}'
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-25')
+    },
+    
+    archive: {
+      id: 'journal-banner-archive',
+      name: 'Archive View',
+      description: 'Simplified banner for archive pages',
+      layout: 'flexible',
+      
+      inheritsFrom: 'full',
+      hiddenWidgetIds: ['journal-banner-description', 'journal-banner-metadata', 'journal-banner-spacer'],
+      
+      widgets: [],
+      
+      flexConfig: {
+        direction: 'column',
+        wrap: false,
+        justifyContent: 'flex-start',
+        gap: '0.5rem'
+      },
+      
+      background: {
+        type: 'color',
+        color: '{journal.branding.primaryColor}'
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-25')
+    },
+    
+    issue: {
+      id: 'journal-banner-issue',
+      name: 'Issue View',
+      description: 'Banner showing issue-specific metadata',
+      layout: 'flexible',
+      
+      inheritsFrom: 'full',
+      hiddenWidgetIds: ['journal-banner-spacer'],
+      
+      // Override description and metadata for issue-specific content
+      widgetOverrides: [
+        {
+          widgetId: 'journal-banner-description',
+          properties: {
+            text: 'Volume 45, Issue 12 - December 2024. Special Issue on Quantum Computing and AI.'
+          }
+        },
+        {
+          widgetId: 'journal-banner-metadata',
+          properties: {
+            text: '<strong>Published:</strong> December 1, 2024 | <strong>Articles:</strong> 24 | <strong>Pages:</strong> 450-720'
+          }
+        }
+      ],
+      
+      widgets: [],
+      
+      background: {
+        type: 'color',
+        color: '{journal.branding.primaryColor}'
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-25')
+    },
+    
+    minimal: {
+      id: 'journal-banner-minimal',
+      name: 'Minimal (Article)',
+      description: 'Compact banner for article pages',
+      layout: 'flexible',
+      
+      inheritsFrom: 'full',
+      hiddenWidgetIds: ['journal-banner-description', 'journal-banner-metadata', 'journal-banner-spacer'],
+      
+      // Override title to be smaller
+      widgetOverrides: [
+        {
+          widgetId: 'journal-banner-title',
+          properties: {
+            level: 3,
+            style: 'default'
+          }
+        }
+      ],
+      
+      widgets: [],
+      
+      flexConfig: {
+        direction: 'row',
+        wrap: false,
+        justifyContent: 'space-between',
+        gap: '1rem'
+      },
+      
+      background: {
+        type: 'color',
+        color: '{journal.branding.primaryColor}'
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-25')
+    }
+  }
+}
+
+// ============================================================================
+// JOURNAL-SPECIFIC BANNERS (Forks for each journal)
+// ============================================================================
+
+// ============================================================================
+// PLATFORM HEADER (For Multi-Journal Publishing Platforms)
+// ============================================================================
+
+export const platformHeaderSection: SharedSection = {
+  id: 'platform-header',
+  name: 'Platform Header',
+  category: 'header',
+  description: 'Simple header with logo and search for multi-journal platforms',
+  isGlobal: false,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  websiteId: 'wiley-platform',
+  createdAt: new Date('2024-11-25'),
+  updatedAt: new Date('2024-11-25'),
+  
+  variations: {
+    minimal: {
+      id: 'platform-header-minimal',
+      name: 'Minimal Platform Header',
+      description: 'Logo + Search',
+      layout: 'flexible',
+      
+      widgets: [
+        {
+          id: 'platform-logo',
+          type: 'image',
+          skin: 'minimal',
+          src: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
+          alt: 'Wiley Online Library',
+          ratio: 'auto',
+          alignment: 'left',
+          width: 'auto',
+          objectFit: 'contain'
+        },
+        {
+          id: 'platform-search',
+          type: 'text',
+          skin: 'minimal',
+          text: '🔍 Search',
+          align: 'right'
+        }
+      ],
+      
+      flexConfig: {
+        direction: 'row',
+        wrap: false,
+        justifyContent: 'space-between',
+        gap: '2rem'
+      },
+      
+      background: {
+        type: 'color',
+        color: '#000000'
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-11-25'),
+      updatedAt: new Date('2024-11-25')
+    }
+  }
+}
+
 // Export all mock sections
 export const mockSharedSections: SharedSection[] = [
   mockHeaderSection,
   mockFooterSection,
   mockHeroSection,
-  mockContentSection
+  mockContentSection,
+  mockJournalBannerSection,
+  platformHeaderSection
 ]
 

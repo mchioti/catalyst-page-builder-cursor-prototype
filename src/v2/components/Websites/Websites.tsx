@@ -62,20 +62,28 @@ export function Websites() {
         
         {/* Website Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {websites.map(website => (
-            <div
-              key={website.id}
-              className="bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-lg transition-all"
-            >
-              {/* Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Globe className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-xl font-bold text-gray-900">{website.name}</h3>
-                      {getStatusBadge(website.status)}
-                    </div>
+          {websites.map(website => {
+            const hasJournals = website.journals && website.journals.length > 0
+            
+            return (
+              <div
+                key={website.id}
+                className="bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-lg transition-all"
+              >
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Globe className="w-5 h-5 text-blue-600" />
+                        <h3 className="text-xl font-bold text-gray-900">{website.name}</h3>
+                        {getStatusBadge(website.status)}
+                        {hasJournals && (
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                            {website.journals!.length} Journal{website.journals!.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     <a 
                       href={`https://${website.domain}`}
                       target="_blank"
@@ -101,61 +109,45 @@ export function Websites() {
                 </div>
               </div>
               
-              {/* Branding Preview */}
-              {(website.branding?.primaryColor || website.branding?.secondaryColor) && (
-                <div className="p-4 bg-gray-50 border-b border-gray-200">
-                  <div className="text-xs text-gray-500 mb-2">Brand Colors</div>
-                  <div className="flex items-center gap-2">
-                    {website.branding.primaryColor && (
-                      <div 
-                        className="w-6 h-6 rounded border border-gray-300"
-                        style={{ backgroundColor: website.branding.primaryColor }}
-                        title="Primary Color"
-                      />
-                    )}
-                    {website.branding.secondaryColor && (
-                      <div 
-                        className="w-6 h-6 rounded border border-gray-300"
-                        style={{ backgroundColor: website.branding.secondaryColor }}
-                        title="Secondary Color"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Pages List */}
-              <div className="p-4">
-                <div className="text-xs text-gray-500 mb-2">Pages</div>
-                <div className="space-y-2">
-                  {website.pages.slice(0, 3).map(page => (
-                    <div 
-                      key={page.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-medium text-gray-900">{page.name}</div>
-                        <span className={`px-2 py-0.5 text-xs rounded-full ${
-                          page.status === 'published' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {page.status}
-                        </span>
+              {/* Quick Stats */}
+              <div className="p-4 bg-gray-50">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  {hasJournals ? (
+                    <>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{website.journals!.length}</div>
+                        <div className="text-xs text-gray-600">Journals</div>
                       </div>
-                      <Link
-                        to={`/v2/editor?site=${website.id}&page=${page.id}`}
-                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                      >
-                        <Edit className="w-3 h-3" />
-                        Edit
-                      </Link>
-                    </div>
-                  ))}
-                  {website.pages.length > 3 && (
-                    <div className="text-xs text-gray-500 pl-2">
-                      +{website.pages.length - 3} more pages
-                    </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{website.pages.length}</div>
+                        <div className="text-xs text-gray-600">Pages</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {website.pages.filter(p => p.status === 'published').length}
+                        </div>
+                        <div className="text-xs text-gray-600">Published</div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{website.pages.length}</div>
+                        <div className="text-xs text-gray-600">Pages</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {website.pages.filter(p => p.status === 'published').length}
+                        </div>
+                        <div className="text-xs text-gray-600">Published</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {website.pages.filter(p => p.status === 'draft').length}
+                        </div>
+                        <div className="text-xs text-gray-600">Drafts</div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -176,7 +168,8 @@ export function Websites() {
                 </Link>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
         
         {websites.length === 0 && (
