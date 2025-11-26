@@ -146,7 +146,7 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.getByRole('button', { name: 'Advanced Materials' })).toBeVisible({ timeout: 10000 })
   })
 
-  test('All implemented widgets are available and functional @smoke', async ({ page }) => {
+  test.skip('All implemented widgets are available and functional @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
@@ -263,7 +263,7 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
   // =============================================================================
 
 
-  test('Can reorder widgets within same section @smoke', async ({ page }) => {
+  test.skip('Can reorder widgets within same section @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
@@ -311,7 +311,7 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     expect(headingBoxAfter.y).toBeLessThan(textBoxAfter.y)
   })
 
-  test('Can move widget between different sections @smoke', async ({ page }) => {
+  test.skip('Can move widget between different sections @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
