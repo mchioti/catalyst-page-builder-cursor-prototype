@@ -190,8 +190,7 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
       { testId: 'library-widget-code-block', name: 'Code Block', isDIY: true, expectedContent: 'Code Block' },
       { testId: 'library-widget-tabs', name: 'Tabs', expectedContent: 'Tab 1' },
       { testId: 'library-widget-collapse', name: 'Collapse', expectedContent: 'Panel 1' },
-      { testId: 'library-widget-editorial-card', name: 'Editorial Card', expectedContent: 'Add a headline' },
-    ]
+      { testId: 'library-widget-editorial-card', name: 'Editorial Card', expectedContent: 'Add a headline' }
     ]
     
     // Test each widget
