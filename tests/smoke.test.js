@@ -26,12 +26,15 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Find and expand Catalyst Demo website in left sidebar
     const catalystWebsite = page.locator('button:has-text("Catalyst Demo")').first()
     await catalystWebsite.click()
-    await page.waitForTimeout(1000) // Wait for submenu to fully expand
+    
+    // Wait for submenu to appear (wait for "Website Settings" button to become visible)
+    const settingsButton = page.locator('button:has-text("Website Settings")').first()
+    await settingsButton.waitFor({ state: 'visible', timeout: 5000 })
     
     // Test all website sub-navigation links (now visible under Catalyst Demo)
     
     // 1. Website Settings
-    await page.locator('button:has-text("Website Settings")').first().click()
+    await settingsButton.click()
     await expect(page.locator('h2')).toContainText('Catalyst Demo')
     
     // 2. Branding Configuration
@@ -63,12 +66,15 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Find and expand Classic design (one of 4: Classic, Wiley, IBM (carbon), Ant Design)
     const classicDesign = page.locator('button:has-text("Classic")').first()
     await classicDesign.click()
-    await page.waitForTimeout(1000) // Wait for submenu to fully expand
+    
+    // Wait for submenu to appear (wait for "Design Settings" button to become visible)
+    const designSettingsButton = page.locator('button:has-text("Design Settings")').first()
+    await designSettingsButton.waitFor({ state: 'visible', timeout: 5000 })
     
     // Test all design sub-navigation links (now visible under Classic)
     
     // 1. Design Settings (colors, typography, spacing)
-    await page.locator('button:has-text("Design Settings")').first().click()
+    await designSettingsButton.click()
     await expect(page.locator('h2')).toContainText('Classic')
     
     // 2. Publication Cards (theme-level cards)
