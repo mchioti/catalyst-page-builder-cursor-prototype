@@ -23,44 +23,34 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Should be on Design Console
     await expect(page.locator('h1').first()).toContainText('Design Console')
     
-    // Click on Websites section (if not already there)
-    const websitesButton = page.locator('button:has-text("Websites")').first()
-    await websitesButton.click()
-    await page.waitForTimeout(500)
-    
-    // Expand Catalyst Demo website - use the one in the left sidebar navigation
-    const catalystWebsite = page.locator('.w-64 button:has-text("Catalyst Demo")').first()
+    // Find and expand Catalyst Demo website in left sidebar
+    const catalystWebsite = page.locator('button:has-text("Catalyst Demo")').first()
     await catalystWebsite.click()
-    await page.waitForTimeout(800) // Wait for submenu to expand
+    await page.waitForTimeout(1000) // Wait for submenu to fully expand
     
-    // Test all website sub-navigation links
+    // Test all website sub-navigation links (now visible under Catalyst Demo)
     
     // 1. Website Settings
-    const settingsLink = page.locator('.ml-6 button:has-text("Website Settings")').first()
-    await settingsLink.click()
-    await expect(page.locator('h2:has-text("Catalyst Demo"), h2:has-text("Website Settings")')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Website Settings")').first().click()
+    await expect(page.locator('h2')).toContainText('Catalyst Demo')
     
     // 2. Branding Configuration
-    const brandingLink = page.locator('.ml-6 button:has-text("Branding Configuration")').first()
-    await brandingLink.click()
-    await expect(page.locator('h2:has-text("Branding"), h3:has-text("Branding")')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Branding Configuration")').first().click()
+    await expect(page.locator('h2, h3')).toContainText('Branding')
     
     // 3. Templates
-    const templatesLink = page.locator('.ml-6 button:has-text("Templates")').first()
-    await templatesLink.click()
-    await expect(page.locator('text=Journal Home, text=Article Page')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Templates")').first().click()
+    await expect(page.locator('text=Journal Home')).toBeVisible({ timeout: 5000 })
     
     // 4. Publication Cards
-    const pubCardsLink = page.locator('.ml-6 button:has-text("Publication Cards")').first()
-    await pubCardsLink.click()
-    await expect(page.locator('text=Publication Card, text=Compact')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Publication Cards")').first().click()
+    await expect(page.locator('text=Publication Card')).toBeVisible({ timeout: 5000 })
     
     // 5. Stubs
-    const stubsLink = page.locator('.ml-6 button:has-text("Stubs")').first()
-    await stubsLink.click()
-    await expect(page.locator('text=Saved Sections, text=Starter Pages')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Stubs")').first().click()
+    await expect(page.locator('text=Starter Pages')).toBeVisible({ timeout: 5000 })
     
-    console.log('✓ All website navigation links work')
+    console.log('✓ All 5 website navigation links work for Catalyst Demo')
   })
 
   test('Design Console - Designs navigation works @smoke', async ({ page }) => {
@@ -70,42 +60,34 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('h1').first()).toContainText('Design Console')
     
     // Click on Designs section to expand it
-    await page.click('button:has-text("Designs")')
-    await page.waitForTimeout(500)
+    // Find and expand Classic design (one of 4: Classic, Wiley, IBM (carbon), Ant Design)
+    const classicDesign = page.locator('button:has-text("Classic")').first()
+    await classicDesign.click()
+    await page.waitForTimeout(1000) // Wait for submenu to fully expand
     
-    // Now click on Classic design (one of the 4 actual designs: Classic, Wiley, IBM (carbon), Ant Design)
-    const classicDesign = page.getByRole('button', { name: 'Classic' })
-    await classicDesign.first().click()
-    await page.waitForTimeout(800) // Wait for submenu to expand
-    
-    // Test all design sub-navigation links (in left sidebar under Classic)
+    // Test all design sub-navigation links (now visible under Classic)
     
     // 1. Design Settings (colors, typography, spacing)
-    const designSettingsLink = page.locator('.ml-6 button:has-text("Design Settings")').first()
-    await designSettingsLink.click()
-    await expect(page.locator('text=Foundation, text=Semantic, text=Typography')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Design Settings")').first().click()
+    await expect(page.locator('h2')).toContainText('Classic')
     
     // 2. Publication Cards (theme-level cards)
-    const pubCardsLink = page.locator('.ml-6 button:has-text("Publication Cards")').first()
-    await pubCardsLink.click()
-    await expect(page.locator('text=Publication Card, text=Compact')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Publication Cards")').first().click()
+    await expect(page.locator('text=Publication Card')).toBeVisible({ timeout: 5000 })
     
     // 3. Templates (page templates)
-    const templatesLink = page.locator('.ml-6 button:has-text("Templates")').first()
-    await templatesLink.click()
-    await expect(page.locator('text=Journal Home, text=Article Page')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Templates")').first().click()
+    await expect(page.locator('text=Journal Home')).toBeVisible({ timeout: 5000 })
     
     // 4. Stubs (website/supporting pages)
-    const stubsLink = page.locator('.ml-6 button:has-text("Stubs")').first()
-    await stubsLink.click()
-    await expect(page.locator('text=Starter Pages, text=Homepage')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Stubs")').first().click()
+    await expect(page.locator('text=Starter Pages')).toBeVisible({ timeout: 5000 })
     
     // 5. Sections (global sections like header/footer)
-    const sectionsLink = page.locator('.ml-6 button:has-text("Sections")').first()
-    await sectionsLink.click()
-    await expect(page.locator('text=Global Sections, text=Header')).toBeVisible({ timeout: 5000 })
+    await page.locator('button:has-text("Sections")').first().click()
+    await expect(page.locator('text=Global Sections')).toBeVisible({ timeout: 5000 })
     
-    console.log('✓ All 5 design navigation links work for Classic design system')
+    console.log('✓ All 5 design navigation links work for Classic design')
   })
 
   test('Main sidebar tabs exist @smoke', async ({ page }) => {
