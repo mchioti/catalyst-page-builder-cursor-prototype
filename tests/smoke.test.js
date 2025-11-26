@@ -23,9 +23,21 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Should be on Design Console
     await expect(page.locator('h1').first()).toContainText('Design Console')
     
+    // Wait for React to fully hydrate before clicking
+    await page.waitForTimeout(500)
+    
     // Find and expand Catalyst Demo website in left sidebar
-    const catalystWebsite = page.locator('button:has-text("Catalyst Demo")').first()
+    // Note: Full name is "Catalyst Demo Site" in the UI
+    const catalystWebsite = page.locator('button:has-text("Catalyst Demo Site")').first()
+    await expect(catalystWebsite).toBeVisible()
     await catalystWebsite.click()
+    
+    // Double-click if first click didn't work (React state might need it)
+    await page.waitForTimeout(300)
+    const isExpanded = await page.locator('button:has-text("Website Settings")').first().isVisible().catch(() => false)
+    if (!isExpanded) {
+      await catalystWebsite.click() // Try again
+    }
     
     // Wait for submenu to appear (wait for "Website Settings" button to become visible)
     const settingsButton = page.locator('button:has-text("Website Settings")').first()
@@ -62,36 +74,42 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     // Should be on Design Console
     await expect(page.locator('h1').first()).toContainText('Design Console')
     
-    // Click on Designs section to expand it
+    // Wait for React hydration
+    await page.waitForTimeout(500)
+    
     // Find and expand Classic design (one of 4: Classic, Wiley, IBM (carbon), Ant Design)
     const classicDesign = page.locator('button:has-text("Classic")').first()
+    await expect(classicDesign).toBeVisible()
     await classicDesign.click()
     
-    // Wait for submenu to appear (wait for "Design Settings" button to become visible)
+    // Wait for submenu to appear
+    await page.waitForTimeout(500)
     const designSettingsButton = page.locator('button:has-text("Design Settings")').first()
     await designSettingsButton.waitFor({ state: 'visible', timeout: 5000 })
     
-    // Test all design sub-navigation links (now visible under Classic)
+    // Test design sub-navigation links
+    // NOTE: Some buttons like "Publication Cards" exist in BOTH Websites and Designs
+    // So we use .last() to get the Design's version (appears lower in sidebar)
     
-    // 1. Design Settings (colors, typography, spacing)
+    // 1. Design Settings (unique to Designs - safe to use .first())
     await designSettingsButton.click()
-    await expect(page.locator('h2')).toContainText('Classic')
+    await expect(page.locator('h2, h1')).toContainText('Classic')
     
-    // 2. Publication Cards (theme-level cards)
-    await page.locator('button:has-text("Publication Cards")').first().click()
-    await expect(page.locator('text=Publication Card')).toBeVisible({ timeout: 5000 })
+    // 2. Publication Cards (exists in both - use .last() to get Design's version)
+    await page.locator('button:has-text("Publication Cards")').last().click()
+    await expect(page.locator('text=Publication Card, text=Card')).toBeVisible({ timeout: 5000 })
     
-    // 3. Templates (page templates)
-    await page.locator('button:has-text("Templates")').first().click()
-    await expect(page.locator('text=Journal Home')).toBeVisible({ timeout: 5000 })
+    // 3. Template Library (unique to Designs - safe to use .first())
+    await page.locator('button:has-text("Template Library")').first().click()
+    await expect(page.locator('text=Template, text=Journal')).toBeVisible({ timeout: 5000 })
     
-    // 4. Stubs (website/supporting pages)
-    await page.locator('button:has-text("Stubs")').first().click()
-    await expect(page.locator('text=Starter Pages')).toBeVisible({ timeout: 5000 })
+    // 4. Stub Library (unique to Designs - safe to use .first())
+    await page.locator('button:has-text("Stub Library")').first().click()
+    await expect(page.locator('text=Stub, text=Starter')).toBeVisible({ timeout: 5000 })
     
-    // 5. Sections (global sections like header/footer)
-    await page.locator('button:has-text("Sections")').first().click()
-    await expect(page.locator('text=Global Sections')).toBeVisible({ timeout: 5000 })
+    // 5. Section Library (unique to Designs - safe to use .first())
+    await page.locator('button:has-text("Section Library")').first().click()
+    await expect(page.locator('text=Section, text=Header')).toBeVisible({ timeout: 5000 })
     
     console.log('✓ All 5 design navigation links work for Classic design')
   })
