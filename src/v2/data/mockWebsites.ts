@@ -3,7 +3,7 @@
  */
 
 import { nanoid } from 'nanoid'
-import type { Website, Page, SectionCompositionItem } from '../types/core'
+import type { Website, Page } from '../types/core'
 
 // ============================================================================
 // CATALYST DEMO SITE
@@ -107,70 +107,6 @@ const catalystAbout: Page = {
   createdAt: new Date('2024-11-01'),
   updatedAt: new Date('2024-11-24'),
   publishedAt: new Date('2024-11-24')
-}
-
-const catalystArticles: Page = {
-  id: 'catalyst-articles',
-  name: 'Articles',
-  slug: 'articles',
-  websiteId: 'catalyst-demo',
-  status: 'draft',  // Not published yet
-  
-  composition: [
-    {
-      id: nanoid(),
-      sharedSectionId: 'header-main',
-      variationKey: 'full',
-      inheritFromTheme: true,
-      divergenceCount: 0
-    },
-    {
-      id: nanoid(),
-      sharedSectionId: 'hero-main',
-      variationKey: 'minimal',
-      inheritFromTheme: true,
-      divergenceCount: 0
-    },
-    {
-      id: nanoid(),
-      sharedSectionId: 'content-blocks',
-      variationKey: 'text-only',
-      inheritFromTheme: true,
-      divergenceCount: 0
-    },
-    {
-      id: nanoid(),
-      sharedSectionId: 'footer-main',
-      variationKey: 'full',
-      inheritFromTheme: true,
-      divergenceCount: 0
-    }
-  ],
-  
-  createdAt: new Date('2024-11-20'),
-  updatedAt: new Date('2024-11-24')
-}
-
-export const catalystDemoSite: Website = {
-  id: 'catalyst-demo',
-  name: 'Catalyst Demo Site',
-  domain: 'catalyst-demo.local',
-  themeId: 'foundation-theme-v1',
-  status: 'active',
-  
-  sharedSections: [],  // No custom sections, using all from theme
-  
-  pages: [catalystHomepage, catalystAbout, catalystArticles],
-  
-  branding: {
-    primaryColor: '#667eea',
-    secondaryColor: '#764ba2',
-    logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
-    fontFamily: 'Inter'
-  },
-  
-  createdAt: new Date('2024-11-01'),
-  updatedAt: new Date('2024-11-24')
 }
 
 // ============================================================================
@@ -357,14 +293,14 @@ const journalScienceHome: Page = {
   id: 'jas-home',
   name: 'Journal Home',
   slug: 'jas/home',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'jas',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -401,14 +337,14 @@ const journalScienceArchive: Page = {
   id: 'jas-archive',
   name: 'Issue Archive',
   slug: 'jas/archive',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'jas',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -445,14 +381,14 @@ const journalScienceIssue: Page = {
   id: 'jas-issue',
   name: 'Current Issue',
   slug: 'jas/issue/current',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'jas',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -489,14 +425,14 @@ const journalScienceArticle: Page = {
   id: 'jas-article',
   name: 'Article View',
   slug: 'jas/article/12345',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'jas',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -534,14 +470,14 @@ const journalBiologyHome: Page = {
   id: 'oab-home',
   name: 'Journal Home',
   slug: 'oab/home',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'oab',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -578,14 +514,14 @@ const journalBiologyArchive: Page = {
   id: 'oab-archive',
   name: 'Issue Archive',
   slug: 'oab/archive',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'oab',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -618,19 +554,107 @@ const journalBiologyArchive: Page = {
   publishedAt: new Date('2024-11-25')
 }
 
+const journalBiologyIssue: Page = {
+  id: 'oab-issue',
+  name: 'Current Issue',
+  slug: 'oab/issue/current',
+  websiteId: 'catalyst-demo',
+  journalId: 'oab',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'header-main',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'issue',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'two-column',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-02-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalBiologyArticle: Page = {
+  id: 'oab-article',
+  name: 'Article View',
+  slug: 'oab/article/67890',
+  websiteId: 'catalyst-demo',
+  journalId: 'oab',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'header-main',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'minimal',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-02-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
 // Historical Chemistry Pages
 const journalChemistryHome: Page = {
   id: 'hc-home',
   name: 'Journal Home',
   slug: 'hcq/home',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'hcq',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -667,14 +691,14 @@ const journalChemistryArchive: Page = {
   id: 'hc-archive',
   name: 'Issue Archive',
   slug: 'hcq/archive',
-  websiteId: 'wiley-platform',
+  websiteId: 'catalyst-demo',
   journalId: 'hcq',
   status: 'published',
   
   composition: [
     {
       id: nanoid(),
-      sharedSectionId: 'platform-header',
+      sharedSectionId: 'header-main',
       variationKey: 'minimal',
       inheritFromTheme: false,
       divergenceCount: 0
@@ -707,15 +731,106 @@ const journalChemistryArchive: Page = {
   publishedAt: new Date('2024-11-25')
 }
 
-// Create Wiley Publishing Platform Website
-export const wileyPublishingPlatform: Website = {
-  id: 'wiley-platform',
-  name: 'Wiley Online Library',
-  domain: 'onlinelibrary.wiley.com',
+const journalChemistryIssue: Page = {
+  id: 'hc-issue',
+  name: 'Current Issue',
+  slug: 'hcq/issue/current',
+  websiteId: 'catalyst-demo',
+  journalId: 'hcq',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'header-main',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'issue',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'two-column',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-03-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+const journalChemistryArticle: Page = {
+  id: 'hc-article',
+  name: 'Article View',
+  slug: 'hcq/article/54321',
+  websiteId: 'catalyst-demo',
+  journalId: 'hcq',
+  status: 'published',
+  
+  composition: [
+    {
+      id: nanoid(),
+      sharedSectionId: 'header-main',
+      variationKey: 'minimal',
+      inheritFromTheme: false,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'journal-banner',
+      variationKey: 'minimal',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'content-blocks',
+      variationKey: 'text-only',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    },
+    {
+      id: nanoid(),
+      sharedSectionId: 'footer-main',
+      variationKey: 'compact',
+      inheritFromTheme: true,
+      divergenceCount: 0
+    }
+  ],
+  
+  createdAt: new Date('2024-03-01'),
+  updatedAt: new Date('2024-11-25'),
+  publishedAt: new Date('2024-11-25')
+}
+
+// ============================================================================
+// CATALYST DEMO SITE (with journals)
+// ============================================================================
+
+export const catalystDemoSite: Website = {
+  id: 'catalyst-demo',
+  name: 'Catalyst Demo Site',
+  domain: 'catalyst-demo.local',
   themeId: 'foundation-theme-v1',
   status: 'active',
   
-  sharedSections: [], // Journal-specific banners are in the global store with websiteId
+  sharedSections: [],  // No custom sections, using all from theme
   
   // Journals within this website
   journals: [
@@ -724,22 +839,25 @@ export const wileyPublishingPlatform: Website = {
     historicalChemistry
   ],
   
-  // All pages (journal pages + platform pages)
+  // All pages (main pages + journal pages)
   pages: [
+    catalystHomepage, 
+    catalystAbout,
+    // Journal pages
     journalScienceHome, journalScienceArchive, journalScienceIssue, journalScienceArticle,
-    journalBiologyHome, journalBiologyArchive,
-    journalChemistryHome, journalChemistryArchive
+    journalBiologyHome, journalBiologyArchive, journalBiologyIssue, journalBiologyArticle,
+    journalChemistryHome, journalChemistryArchive, journalChemistryIssue, journalChemistryArticle
   ],
   
   branding: {
-    primaryColor: '#0073e6',
-    secondaryColor: '#005bb5',
+    primaryColor: '#667eea',
+    secondaryColor: '#764ba2',
     logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
     fontFamily: 'Inter'
   },
   
-  createdAt: new Date('2000-01-01'),
-  updatedAt: new Date('2024-11-25')
+  createdAt: new Date('2024-11-01'),
+  updatedAt: new Date('2024-11-24')
 }
 
 // ============================================================================
@@ -748,7 +866,6 @@ export const wileyPublishingPlatform: Website = {
 
 export const mockWebsites: Website[] = [
   catalystDemoSite,
-  febsPressSite,
-  wileyPublishingPlatform
+  febsPressSite
 ]
 

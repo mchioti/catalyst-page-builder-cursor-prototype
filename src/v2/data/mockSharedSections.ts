@@ -773,77 +773,12 @@ export const mockJournalBannerSection: SharedSection = {
 // JOURNAL-SPECIFIC BANNERS (Forks for each journal)
 // ============================================================================
 
-// ============================================================================
-// PLATFORM HEADER (For Multi-Journal Publishing Platforms)
-// ============================================================================
-
-export const platformHeaderSection: SharedSection = {
-  id: 'platform-header',
-  name: 'Platform Header',
-  category: 'header',
-  description: 'Simple header with logo and search for multi-journal platforms',
-  isGlobal: false,
-  allowOverrides: true,
-  lockLevel: 'unlocked',
-  usedBy: [],
-  websiteId: 'wiley-platform',
-  createdAt: new Date('2024-11-25'),
-  updatedAt: new Date('2024-11-25'),
-  
-  variations: {
-    minimal: {
-      id: 'platform-header-minimal',
-      name: 'Minimal Platform Header',
-      description: 'Logo + Search',
-      layout: 'flexible',
-      
-      widgets: [
-        {
-          id: 'platform-logo',
-          type: 'image',
-          skin: 'minimal',
-          src: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
-          alt: 'Wiley Online Library',
-          ratio: 'auto',
-          alignment: 'left',
-          width: 'auto',
-          objectFit: 'contain'
-        },
-        {
-          id: 'platform-search',
-          type: 'text',
-          skin: 'minimal',
-          text: '🔍 Search',
-          align: 'right'
-        }
-      ],
-      
-      flexConfig: {
-        direction: 'row',
-        wrap: false,
-        justifyContent: 'space-between',
-        gap: '2rem'
-      },
-      
-      background: {
-        type: 'color',
-        color: '#000000'
-      },
-      contentMode: 'dark',
-      
-      createdAt: new Date('2024-11-25'),
-      updatedAt: new Date('2024-11-25')
-    }
-  }
-}
-
 // Export all mock sections
 export const mockSharedSections: SharedSection[] = [
   mockHeaderSection,
   mockFooterSection,
   mockHeroSection,
   mockContentSection,
-  mockJournalBannerSection,
-  platformHeaderSection
+  mockJournalBannerSection
 ]
 
