@@ -47,11 +47,11 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     
     // 1. Website Settings
     await settingsButton.click()
-    await expect(page.locator('h2')).toContainText('Catalyst Demo')
+    await expect(page.locator('h2').first()).toContainText('Catalyst Demo')
     
     // 2. Branding Configuration
     await page.locator('button:has-text("Branding Configuration")').first().click()
-    await expect(page.locator('h2, h3')).toContainText('Branding')
+    await expect(page.locator('h2').first()).toContainText('Branding')
     
     // 3. Templates
     await page.locator('button:has-text("Templates")').first().click()
@@ -59,11 +59,13 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     
     // 4. Publication Cards
     await page.locator('button:has-text("Publication Cards")').first().click()
-    await expect(page.locator('text=Publication Card')).toBeVisible({ timeout: 5000 })
+    // Check for "Publication Card Styles" heading (unique to this page)
+    await expect(page.locator('h2').filter({ hasText: 'Publication Card Styles' })).toBeVisible({ timeout: 5000 })
     
     // 5. Stubs
     await page.locator('button:has-text("Stubs")').first().click()
-    await expect(page.locator('text=Starter Pages')).toBeVisible({ timeout: 5000 })
+    // Check for "Saved Stubs" tab button (use .first() to avoid strict mode)
+    await expect(page.locator('text=Saved Stubs').first()).toBeVisible({ timeout: 5000 })
     
     console.log('✓ All 5 website navigation links work for Catalyst Demo')
   })
@@ -93,23 +95,24 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     
     // 1. Design Settings (unique to Designs - safe to use .first())
     await designSettingsButton.click()
-    await expect(page.locator('h2, h1')).toContainText('Classic')
+    // Check that main content heading contains "Classic"
+    await expect(page.locator('h2').first()).toContainText('Classic')
     
     // 2. Publication Cards (exists in both - use .last() to get Design's version)
     await page.locator('button:has-text("Publication Cards")').last().click()
-    await expect(page.locator('text=Publication Card, text=Card')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=Reference Cards')).toBeVisible({ timeout: 5000 })
     
     // 3. Template Library (unique to Designs - safe to use .first())
     await page.locator('button:has-text("Template Library")').first().click()
-    await expect(page.locator('text=Template, text=Journal')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h2').first()).toContainText('Template')
     
     // 4. Stub Library (unique to Designs - safe to use .first())
     await page.locator('button:has-text("Stub Library")').first().click()
-    await expect(page.locator('text=Stub, text=Starter')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h2').first()).toContainText('Stub')
     
     // 5. Section Library (unique to Designs - safe to use .first())
     await page.locator('button:has-text("Section Library")').first().click()
-    await expect(page.locator('text=Section, text=Header')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h2').first()).toContainText('Section')
     
     console.log('✓ All 5 design navigation links work for Classic design')
   })
