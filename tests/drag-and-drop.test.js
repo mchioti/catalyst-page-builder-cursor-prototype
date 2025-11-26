@@ -19,6 +19,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
   
   test('Can drag widget from library to empty canvas (creates section)', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Count sections before
     const canvasArea = page.locator('main').first()
@@ -41,11 +42,12 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
     expect(sectionsAfterCount).toBe(sectionsBeforeCount + 1)
     
     // Widget should be visible in canvas
-    await expect(page.locator('text=Enter your text content').first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=Sample text content').first()).toBeVisible({ timeout: 5000 })
   })
 
   test('Can drag widget from library into existing section area', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add first widget to create a section
     await page.getByTestId('library-widget-text').click()
@@ -72,12 +74,13 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
     expect(widgetsAfterCount).toBe(widgetsBeforeCount + 1)
     
     // Both widgets should be visible
-    await expect(page.locator('text=Enter your text content').first()).toBeVisible()
+    await expect(page.locator('text=Sample text content').first()).toBeVisible()
     await expect(page.locator('text=Your Heading Text').first()).toBeVisible()
   })
 
   test('Can click widget in library to auto-create section', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     const canvasArea = page.locator('main').first()
     const sectionsBeforeCount = await canvasArea.locator('[data-section-id]').count()
@@ -91,7 +94,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
     expect(sectionsAfterCount).toBe(sectionsBeforeCount + 1)
     
     // Button should be visible
-    await expect(page.locator('text=Click Here').first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('text=Button Text').first()).toBeVisible({ timeout: 5000 })
   })
 
   // =============================================================================
@@ -100,6 +103,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can reorder 2 widgets within same area (bottom to top)', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add two widgets
     await page.getByTestId('library-widget-text').click()
@@ -131,6 +135,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can insert widget in middle position (3 widgets: move last to middle)', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add three widgets
     await page.getByTestId('library-widget-text').click()
@@ -171,6 +176,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can move widget between columns in two-column section', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Navigate to Sections tab and add a two-column section
     await page.click('text=Sections')
@@ -216,6 +222,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can move widget between different sections', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add two sections with widgets
     await page.getByTestId('library-widget-text').click()
@@ -252,6 +259,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can move Publication List widget between sections (regression test)', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add two sections
     await page.getByTestId('library-widget-text').click()
@@ -294,6 +302,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can add multiple widgets in sequence without interference', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add 5 widgets rapidly by clicking
     await page.getByTestId('library-widget-text').click()
@@ -318,6 +327,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can drag widget into empty area of multi-area section', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add a three-column section
     await page.click('text=Sections')
@@ -351,6 +361,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Drag visual feedback is present during drag operation', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Add a section with a widget
     await page.getByTestId('library-widget-text').click()
@@ -383,6 +394,7 @@ test.describe('Drag & Drop - Comprehensive Coverage', () => {
 
   test('Can add widgets to prefab Hero section', async ({ page }) => {
     await page.goto('/')
+    await page.click('text=Back to Page Builder') // Navigate from Design Console
     
     // Navigate to Sections and add Hero section
     await page.click('text=Sections')

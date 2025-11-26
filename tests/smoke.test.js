@@ -364,95 +364,120 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
   // =============================================================================
 
 
-  test.skip('Can reorder widgets within same section @smoke', async ({ page }) => {
+  test('Can drag widget from library into section @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
-    // Wait for homepage to load
+    // Wait for page to load
     await page.waitForTimeout(1000)
-    const sectionsBeforeCount = await page.locator('[data-section-id]').count()
     
-    // Add first widget (Text)
+    // First, add a Text widget to create a section
     await page.getByTestId('library-widget-text').click()
-    await page.waitForTimeout(1500) // Longer wait
+    await page.waitForTimeout(500)
     
-    // Add second widget (Heading) - should go in same section
-    await page.getByTestId('library-widget-heading').click()
-    await page.waitForTimeout(1500) // Longer wait
-    
-    // Get the LAST section (the one we just created with our widgets)
+    // Get the section we just created
     const section = page.locator('[data-section-id]').last()
+    await section.scrollIntoViewIfNeeded()
     
-    // Verify both widgets are present in our new section
-    await expect(section.locator('text=Enter your text content')).toBeVisible()
-    await expect(section.locator('text=Your Heading Text')).toBeVisible()
+    // Verify we have the Text widget
+    await expect(section.locator('text=Sample text content').first()).toBeVisible({ timeout: 5000 })
     
-    // Get initial positions
-    const textWidget = section.locator('text=Enter your text content').first()
-    const headingWidget = section.locator('text=Your Heading Text').first()
+    // Get the drop area in this section
+    const dropArea = section.locator('[data-droppable-area]').first()
+    const areaBox = await dropArea.boundingBox()
     
-    const textBox = await textWidget.boundingBox()
+    // Drag a Heading widget INTO this section using proper dnd-kit mouse events
+    const headingWidget = page.getByTestId('library-widget-heading')
     const headingBox = await headingWidget.boundingBox()
     
-    // Initially, text should be above heading (smaller Y coordinate)
-    expect(textBox.y).toBeLessThan(headingBox.y)
-    
-    // Drag heading widget to top (above text)
-    await headingWidget.hover()
+    // Start drag from center of library widget
+    await page.mouse.move(headingBox.x + headingBox.width / 2, headingBox.y + headingBox.height / 2)
     await page.mouse.down()
-    await textWidget.hover()
+    
+    // Move slowly (dnd-kit needs to detect the drag) - minimum 3px
+    await page.mouse.move(headingBox.x + headingBox.width / 2 + 10, headingBox.y + headingBox.height / 2 + 10, { steps: 5 })
+    await page.waitForTimeout(100)
+    
+    // Move to drop target
+    await page.mouse.move(areaBox.x + areaBox.width / 2, areaBox.y + areaBox.height / 2, { steps: 10 })
+    await page.waitForTimeout(100)
+    
+    // Drop
     await page.mouse.up()
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(500)
     
-    // Get new positions
-    const textBoxAfter = await textWidget.boundingBox()
-    const headingBoxAfter = await headingWidget.boundingBox()
+    // Verify the Heading widget was added to the same section
+    // (should now have both Text and Heading)
+    await expect(section.locator('text=Sample text content').first()).toBeVisible({ timeout: 5000 })
+    await expect(section.locator('text=Your Heading Text').first()).toBeVisible({ timeout: 5000 })
     
-    // After drag, heading should be above text
-    expect(headingBoxAfter.y).toBeLessThan(textBoxAfter.y)
+    console.log('✓ Widget dragged from library into existing section')
   })
 
-  test.skip('Can move widget between different sections @smoke', async ({ page }) => {
+  test('Can move widget between different sections @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
-    // Wait for homepage to load
+    // Wait for page to load
     await page.waitForTimeout(1000)
     const initialSectionsCount = await page.locator('[data-section-id]').count()
     
     // Add first section with Text widget
     await page.getByTestId('library-widget-text').click()
-    await page.waitForTimeout(1500) // Longer wait
+    await page.waitForTimeout(500)
     
     // Add second section with Heading widget
     await page.getByTestId('library-widget-heading').click()
-    await page.waitForTimeout(1500) // Longer wait
+    await page.waitForTimeout(500)
     
     // Get the sections - we should have initial + 2 new ones
     const sections = page.locator('[data-section-id]')
     const totalSections = await sections.count()
     expect(totalSections).toBe(initialSectionsCount + 2)
     
-    // Get our TWO newly created sections (second-to-last and last)
-    const section1 = sections.nth(totalSections - 2) // Second-to-last (Text widget)
-    const section2 = sections.nth(totalSections - 1) // Last (Heading widget)
+    // Find sections by their content (order may vary)
+    const textSection = page.locator('[data-section-id]:has([data-widget-type="text"])')
+    const headingSection = page.locator('[data-section-id]:has([data-widget-type="heading"])')
     
-    // Verify initial state: Text in section 1, Heading in section 2
-    await expect(section1.locator('text=Enter your text content')).toBeVisible()
-    await expect(section2.locator('text=Your Heading Text')).toBeVisible()
+    // Verify initial state - each widget is in its own section
+    await expect(textSection.locator('text=Sample text content').first()).toBeVisible({ timeout: 5000 })
+    await expect(headingSection.locator('text=Your Heading Text').first()).toBeVisible({ timeout: 5000 })
     
-    // Drag Heading widget from section 2 to section 1
-    const headingWidget = section2.locator('text=Your Heading Text').first()
-    const targetArea = section1.locator('[data-droppable-area]').first()
+    // First, click the Heading widget to show its toolbar
+    const headingWidget = headingSection.locator('[data-widget-type="heading"]').first()
+    await headingWidget.click()
+    await page.waitForTimeout(300)
     
-    await headingWidget.hover()
+    // Find the drag handle (GripVertical icon in the toolbar)
+    // The drag handle has title="Drag to reorder or move widget"
+    const dragHandle = headingSection.locator('[title="Drag to reorder or move widget"]').first()
+    await expect(dragHandle).toBeVisible({ timeout: 2000 })
+    
+    // Get coordinates
+    const handleBox = await dragHandle.boundingBox()
+    const targetArea = textSection.locator('[data-droppable-area]').first()
+    const targetBox = await targetArea.boundingBox()
+    
+    // Drag from the handle to the target section
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
     await page.mouse.down()
-    await targetArea.hover()
+    
+    // Move a bit to activate drag (dnd-kit needs 3px minimum)
+    await page.mouse.move(handleBox.x + handleBox.width / 2 + 10, handleBox.y + handleBox.height / 2, { steps: 5 })
+    await page.waitForTimeout(100)
+    
+    // Move to target drop area
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
+    await page.waitForTimeout(100)
+    
+    // Drop
     await page.mouse.up()
     await page.waitForTimeout(500)
     
-    // After drag, section 1 should have both widgets
-    await expect(section1.locator('text=Enter your text content')).toBeVisible()
-    await expect(section1.locator('text=Your Heading Text')).toBeVisible()
+    // After drag, the Text section should have both widgets
+    await expect(textSection.locator('text=Sample text content').first()).toBeVisible({ timeout: 5000 })
+    await expect(textSection.locator('text=Your Heading Text').first()).toBeVisible({ timeout: 5000 })
+    
+    console.log('✓ Widget moved between sections')
   })
 })
