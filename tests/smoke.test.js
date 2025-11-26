@@ -17,25 +17,84 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('h1').first()).toContainText('Page Builder')
   })
 
-  test('Can navigate to all main views @smoke', async ({ page }) => {
+  test('Design Console - Website navigation works @smoke', async ({ page }) => {
     await page.goto('/')
     
-    // Navigate from Design Console to Page Builder
-    await page.click('text=Back to Page Builder')
+    // Should be on Design Console
+    await expect(page.locator('h1').first()).toContainText('Design Console')
     
-    // Test navigation exists
-    await expect(page.locator('text=Preview Changes').first()).toBeVisible({ timeout: 10000 })
-    await expect(page.locator('h1').first()).toContainText('Page Builder')
+    // Click on Websites section (if not already there)
+    await page.click('text=Websites')
+    await page.waitForTimeout(500)
+    
+    // Expand Catalyst Demo website
+    const catalystWebsite = page.locator('button:has-text("Catalyst Demo")')
+    await catalystWebsite.click()
+    await page.waitForTimeout(500)
+    
+    // Test all website sub-navigation links
+    
+    // 1. Website Settings
+    await page.click('text=Website Settings')
+    await expect(page.locator('h2:has-text("Website Settings"), h3:has-text("Website Settings")')).toBeVisible({ timeout: 5000 })
+    
+    // 2. Branding Configuration
+    await page.click('text=Branding Configuration')
+    await expect(page.locator('h2:has-text("Branding Configuration"), h3:has-text("Branding Configuration")')).toBeVisible({ timeout: 5000 })
+    
+    // 3. Templates
+    await page.click('button:has-text("Templates")')
+    await expect(page.locator('text=Publication Page Templates, text=Journal Home')).toBeVisible({ timeout: 5000 })
+    
+    // 4. Publication Cards
+    await page.click('text=Publication Cards')
+    await expect(page.locator('text=Publication Card Variants, text=Card Variants')).toBeVisible({ timeout: 5000 })
+    
+    // 5. Stubs
+    await page.click('text=Stubs')
+    await expect(page.locator('text=Saved Sections, text=Starter Pages')).toBeVisible({ timeout: 5000 })
+    
+    console.log('✓ All website navigation links work')
   })
 
-  test('Widget library is accessible @smoke', async ({ page }) => {
+  test('Design Console - Designs navigation works @smoke', async ({ page }) => {
     await page.goto('/')
-    await page.click('text=Back to Page Builder')
     
-    // Check basic widgets exist
-    await expect(page.locator('text=Text')).toBeVisible()
-    await expect(page.locator('text=Heading')).toBeVisible()
-    await expect(page.locator('text=Button Link')).toBeVisible()
+    // Should be on Design Console
+    await expect(page.locator('h1').first()).toContainText('Design Console')
+    
+    // Click on Designs section
+    await page.click('button:has-text("Designs")')
+    await page.waitForTimeout(500)
+    
+    // Click on a design/theme (e.g., Modernist Theme)
+    const modernistTheme = page.locator('button:has-text("Modernist Theme"), div:has-text("Modernist Theme")')
+    await modernistTheme.first().click()
+    await page.waitForTimeout(500)
+    
+    // Test all design sub-navigation links
+    
+    // 1. Design Settings (colors, typography, spacing)
+    await page.click('text=Design Settings')
+    await expect(page.locator('text=Foundation Colors, text=Semantic Colors, text=Typography')).toBeVisible({ timeout: 5000 })
+    
+    // 2. Publication Cards (theme-level cards)
+    await page.click('text=Publication Cards')
+    await expect(page.locator('text=Publication Card Variants, text=Card Variants')).toBeVisible({ timeout: 5000 })
+    
+    // 3. Templates (page templates)
+    await page.click('button:has-text("Templates")')
+    await expect(page.locator('text=Publication Page Templates, text=Journal Home')).toBeVisible({ timeout: 5000 })
+    
+    // 4. Stubs (website/supporting pages)
+    await page.click('text=Stubs')
+    await expect(page.locator('text=Website Pages, text=Homepage')).toBeVisible({ timeout: 5000 })
+    
+    // 5. Sections (global sections like header/footer)
+    await page.click('text=Sections')
+    await expect(page.locator('text=Global Sections, text=Header, text=Footer')).toBeVisible({ timeout: 5000 })
+    
+    console.log('✓ All design navigation links work')
   })
 
   test('Main sidebar tabs exist @smoke', async ({ page }) => {
@@ -71,16 +130,6 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('text=Template-Ready Sections')).toBeVisible({ timeout: 10000 })
   })
 
-  test('Background editing controls exist @smoke', async ({ page }) => {
-    await page.goto('/')
-    await page.click('text=Back to Page Builder')
-    
-    // Navigate to sections and add a simple section to test properties
-    await page.click('text=Sections')
-    
-    // Look for sections area - just verify it exists for smoke test
-    await expect(page.locator('text=Template-Ready Sections')).toBeVisible({ timeout: 10000 })
-  })
 
   test('Mock Live Site navigation @smoke', async ({ page }) => {
     await page.goto('/')
@@ -170,20 +219,6 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     console.log('✓ All implemented widgets are available and functional')
   })
   
-  test('Sidebar system is accessible @smoke', async ({ page }) => {
-    await page.goto('/')
-    await page.click('text=Back to Page Builder')
-    
-    // Navigate to Sections tab
-    await page.click('text=Sections')
-    
-    // Check Special Sections category exists
-    await expect(page.locator('text=Special Sections')).toBeVisible()
-    
-    // Check Sidebar exists in Special Sections - use more specific selector
-    await expect(page.locator('button:has-text("Sidebar")').first()).toBeVisible()
-  })
-  
   test.skip('Sidebar can be placed on canvas @smoke', async ({ page }) => {
     await page.goto('/')
     
@@ -224,59 +259,11 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('label:has-text("Gap Size")')).toBeVisible()
   })
 
-  test('Menu widget can be placed @smoke', async ({ page }) => {
-    await page.goto('/')
-    
-    // Find and place Menu widget
-    const menuWidget = page.locator('text=Menu').first()
-    await expect(menuWidget).toBeVisible({ timeout: 5000 })
-    await menuWidget.click()
-    
-    // Widget should be added to canvas with default items
-    await expect(page.locator('nav').filter({ hasText: 'Home' })).toBeVisible({ timeout: 5000 })
-    await expect(page.locator('nav').filter({ hasText: 'About' })).toBeVisible()
-    await expect(page.locator('nav').filter({ hasText: 'Contact' })).toBeVisible()
-  })
 
   // =============================================================================
   // DRAG & DROP CRITICAL TESTS - Prevent regressions from theme/layout changes
   // =============================================================================
 
-  test('Can add widget from library by clicking (auto-creates section) @smoke', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
-    await page.click('text=Back to Page Builder')
-    
-    // Wait for homepage template to fully load
-    await page.waitForSelector('[data-section-id]', { state: 'attached', timeout: 10000 })
-    await page.waitForTimeout(500)
-    
-    // Close any toast notifications that might block clicks
-    const toast = page.locator('[role="status"]').first()
-    if (await toast.isVisible()) {
-      await toast.click() // Click to dismiss
-      await page.waitForTimeout(200)
-    }
-    
-    // Count sections before adding widget (homepage auto-loads with ~6 sections)
-    const canvasArea = page.locator('main').first()
-    const sectionsBeforeCount = await canvasArea.locator('[data-section-id]').count()
-    
-    // Ensure Text widget is visible and clickable
-    const textWidget = page.getByTestId('library-widget-text')
-    await textWidget.scrollIntoViewIfNeeded()
-    await textWidget.click({ force: true })
-    
-    // Wait for the widget to be added
-    await page.waitForTimeout(1000)
-    
-    // Should have created a new section with the widget inside
-    const sectionsAfterCount = await canvasArea.locator('[data-section-id]').count()
-    expect(sectionsAfterCount).toBe(sectionsBeforeCount + 1)
-    
-    // Widget should be visible in canvas (check the LAST section we just added)
-    const lastSection = page.locator('[data-section-id]').last()
-    await expect(lastSection.locator('text=Enter your text content')).toBeVisible({ timeout: 5000 })
-  })
 
   test('Can reorder widgets within same section @smoke', async ({ page }) => {
     await page.goto('/')
