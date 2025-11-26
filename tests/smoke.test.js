@@ -104,13 +104,70 @@ test.describe('Smoke Tests - Critical Functionality @smoke', () => {
     await expect(page.locator('text=Advanced Materials')).toBeVisible({ timeout: 10000 })
   })
 
-  test('Widget transparency and section styling @smoke', async ({ page }) => {
+  test('All implemented widgets are available and functional @smoke', async ({ page }) => {
     await page.goto('/')
     await page.click('text=Back to Page Builder')
     
-    // Basic check that widgets section exists
-    await expect(page.locator('text=Text')).toBeVisible({ timeout: 10000 })
-    await expect(page.locator('text=Heading')).toBeVisible({ timeout: 10000 })
+    // List of all implemented widgets that should be in the library
+    const implementedWidgets = [
+      { testId: 'library-widget-text', name: 'Text', expectedContent: 'Enter your text content' },
+      { testId: 'library-widget-heading', name: 'Heading', expectedContent: 'Your Heading Text' },
+      { testId: 'library-widget-button', name: 'Button', expectedContent: 'Click Me' },
+      { testId: 'library-widget-image', name: 'Image', expectedElement: 'img' },
+      { testId: 'library-widget-menu', name: 'Menu', expectedElement: 'nav' },
+      { testId: 'library-widget-divider', name: 'Divider', expectedElement: 'hr' },
+      { testId: 'library-widget-spacer', name: 'Spacer', expectedElement: '[data-widget-type="spacer"]' },
+      { testId: 'library-widget-html', name: 'HTML Block', isDIY: true },
+      { testId: 'library-widget-code', name: 'Code Block', isDIY: true },
+      { testId: 'library-widget-tabs', name: 'Tabs', expectedElement: '[role="tablist"]' },
+      { testId: 'library-widget-collapse', name: 'Collapse', expectedContent: 'Click to expand' },
+      { testId: 'library-widget-editorial-card', name: 'Editorial Card', expectedContent: 'Card Title' },
+      { testId: 'library-widget-publication-list', name: 'Publication List', expectedElement: '.publication-card' },
+      { testId: 'library-widget-publication-details', name: 'Publication Details', expectedContent: 'Abstract' }
+    ]
+    
+    // Test each widget
+    for (const widget of implementedWidgets) {
+      console.log(`Testing widget: ${widget.name}`)
+      
+      // If it's a DIY widget, navigate to DIY tab first
+      if (widget.isDIY) {
+        await page.click('text=DIY')
+      } else {
+        // Make sure we're on Library tab
+        await page.click('text=Library')
+      }
+      
+      // Check widget exists in library
+      const widgetButton = page.getByTestId(widget.testId)
+      await expect(widgetButton).toBeVisible({ timeout: 5000 })
+      
+      // Count sections before adding
+      const sectionsBeforeCount = await page.locator('[data-section-id]').count()
+      
+      // Click to add widget (auto-creates section)
+      await widgetButton.click()
+      await page.waitForTimeout(500)
+      
+      // Verify section was created
+      const sectionsAfterCount = await page.locator('[data-section-id]').count()
+      expect(sectionsAfterCount).toBe(sectionsBeforeCount + 1)
+      
+      // Get the newly created section
+      const newSection = page.locator('[data-section-id]').last()
+      
+      // Verify widget appears in the section with expected content/element
+      if (widget.expectedContent) {
+        await expect(newSection.locator(`text=${widget.expectedContent}`)).toBeVisible({ timeout: 3000 })
+      } else if (widget.expectedElement) {
+        await expect(newSection.locator(widget.expectedElement)).toBeVisible({ timeout: 3000 })
+      }
+      
+      console.log(`✓ ${widget.name} widget is functional`)
+    }
+    
+    // All widgets tested successfully
+    console.log('✓ All implemented widgets are available and functional')
   })
   
   test('Sidebar system is accessible @smoke', async ({ page }) => {
