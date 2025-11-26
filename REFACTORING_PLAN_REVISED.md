@@ -74,6 +74,84 @@ Both serve the same purpose (reusable sections library), but V2's is better:
 
 ---
 
+## 🔄 **CRITICAL: V1 Templates vs V2 Compositions - BOTH STAY!**
+
+### **Why V1's Publication Page Templates MUST Stay:**
+
+**V1 Templates handle HIERARCHICAL INHERITANCE:**
+```
+Global Template (Base) - "Journal Home Template"
+  ↓ inherits structure, can customize
+Journal-Level ("JAS Journal Home") - Custom branding/widgets
+  ↓ inherits from journal, can customize  
+Page-Level ("JAS Vol 5 Issue 3") - Specific content
+```
+
+**Stored in:**
+- `globalTemplateCanvas[]` - Base template (all journals)
+- `journalTemplateCanvas[journalCode]` - Journal-specific (e.g., 'JAS')
+- `routeCanvasItems[route]` - Page-specific (e.g., '/jas/issue/5-3')
+
+**Features:**
+- **Divergence tracking** - Know exactly what changed at each level
+- **Promotion system** - "Promote to Journal", "Promote to Base", "Reset to Base"
+- **Update propagation** - Change base → affects all journals (unless overridden)
+- **Complex publishing workflows** - Proven for publication pages
+
+**Use Cases:**
+- Journal Home (different per journal, inherits structure)
+- Article Page (varies per article, inherits journal branding)
+- Table of Contents (varies per issue, inherits journal structure)
+- Search Results (customized per site)
+
+---
+
+### **V2's Page Compositions - NEW, COMPLEMENTARY:**
+
+**V2 Compositions handle FLAT SECTION ASSEMBLY:**
+```
+Page {
+  composition: [
+    { sharedSectionId: 'header-main', variationKey: 'full' },
+    { sharedSectionId: 'hero-banner', variationKey: 'homepage' },
+    { sharedSectionId: 'footer', variationKey: 'default' }
+  ]
+}
+```
+
+**Features:**
+- **Section reuse** - Mix and match SharedSections
+- **Template variables** - Dynamic content (`{journal.name}`)
+- **No hierarchy** - Flat composition model
+- **Flexibility** - Easy to swap sections
+
+**Use Cases:**
+- Marketing pages (Homepage, About, Contact)
+- Landing pages (mix and match sections)
+- Simple pages (no inheritance needed)
+
+---
+
+### **Coexistence Strategy - Use BOTH:**
+
+| Page Type | System | Why |
+|-----------|--------|-----|
+| **Journal Home** | V1 Templates | Hierarchical (Global → Journal → Page) |
+| **Article Page** | V1 Templates | Complex inheritance, branding |
+| **TOC / Issue** | V1 Templates | Data-driven, inherits structure |
+| **Homepage** | V2 Compositions | Simple composition, no hierarchy |
+| **About Page** | V2 Compositions | One-off page, section-based |
+| **Landing Pages** | V2 Compositions | Flexible, mix-match sections |
+
+**Shared by BOTH:**
+- ✅ **SharedSections** (headers, footers) - Reusable components
+- ✅ **Template Variables** (`{journal.name}`) - Dynamic content
+- ✅ **V1 Canvas & Properties** - Visual editing
+
+**Result:** Best of both worlds! Use the right tool for each job.
+
+---
+
 ## 📊 **THE COMPLETE MERGED DATA MODEL**
 
 ```typescript
@@ -85,10 +163,18 @@ export const usePageStore = create<PageState>((set, get) => ({
   // ========================================================================
   themes: Theme[]  // V1's themes with foundation/semantic colors
   
-  // Theme-level templates
-  // Templates = Publication page templates (Journal Home, Article, TOC, Search)
-  // These define HIERARCHICAL publishing pages with data inheritance
-  templates: Template[]  // KEEP - V1's publication page templates
+  // KEEP: V1's Hierarchical Publication Page Templates
+  // These handle complex inheritance: Global → Journal → Page
+  // Example: publication-pages → journal-pages → journal-home
+  templates: Template[]  // Publication page templates (Journal Home, Article, TOC)
+  globalTemplateCanvas: []  // Base template level
+  journalTemplateCanvas: {}  // Journal-specific customizations
+  routeCanvasItems: {}  // Page-specific customizations
+  
+  // Templates track hierarchical modifications and allow promotion:
+  // - Individual page can "reset to journal" or "promote to journal"
+  // - Journal template can "reset to base" or "promote to base"
+  templateModifications: TemplateModification[]  // Divergence tracking
   
   // Theme-level publication cards
   publicationCardVariants: PublicationCardVariant[]  // KEEP - V1's card system
