@@ -264,35 +264,140 @@ export const usePageStore = create<PageState>((set, get) => ({
 
 ### **Phase 2: Update V1's Section Library UI** (1 hour)
 
-**Goal:** Make V1's Design Console → Section Library show SharedSections
+**Goal:** Make V1's Design Console → Section Library show SharedSections with variations
 
 **File:** `src/components/SiteManager/SiteManagerTemplates.tsx`
 
-**Current:** Shows `customSections` from localStorage
-**New:** Show `sharedSections` with variations
+**Current State:**
+- Shows `customSections` (flat list from localStorage)
+- No variations support
+- Simple "Load" button
 
-**Changes:**
+**New State:**
+- Shows `sharedSections` (with variations)
+- Category badges (Header, Footer, Hero, Content)
+- Usage tracking ("Used by X pages")
+- Variation selector
+- Edit/Preview buttons per variation
+
+**UI Changes:**
 ```typescript
-// In "Section Library" view:
+// Replace line that gets customSections:
+// OLD: const { customSections } = usePageStore()
+// NEW: const { sharedSections } = usePageStore()
 
-const { sharedSections, addSharedSection } = usePageStore()
+// Filter sections by category for the current view
+const filteredSections = sharedSections.filter(section => {
+  if (selectedCategory === 'global') {
+    return section.category === 'header' || section.category === 'footer'
+  }
+  if (selectedCategory === 'section') {
+    return section.category === 'hero' || section.category === 'content'
+  }
+  return false
+})
 
-// Show sections grouped by category
-const headerSections = sharedSections.filter(s => s.category === 'header')
-const footerSections = sharedSections.filter(s => s.category === 'footer')
-const contentSections = sharedSections.filter(s => s.category === 'content')
-
-// For each section, show variations
-<div className="section-card">
-  <h3>{section.name}</h3>
-  <div className="variations">
+// Enhanced section card UI:
+<div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition">
+  {/* Header */}
+  <div className="flex items-start justify-between mb-4">
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900">{section.name}</h3>
+      <div className="flex items-center gap-2 mt-2">
+        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
+          {section.category}
+        </span>
+        {section.usedBy.length > 0 && (
+          <span className="text-xs text-gray-500">
+            Used by {section.usedBy.length} pages
+          </span>
+        )}
+      </div>
+    </div>
+  </div>
+  
+  {/* Variations */}
+  <div className="space-y-2">
+    <div className="text-sm font-medium text-gray-700 mb-2">
+      Variations ({Object.keys(section.variations).length})
+    </div>
     {Object.entries(section.variations).map(([key, variation]) => (
-      <button onClick={() => loadVariationIntoCanvas(section.id, key)}>
-        {variation.name} ({variation.widgets.length} widgets)
-      </button>
+      <div key={key} className="flex items-center justify-between bg-gray-50 rounded p-3">
+        <div>
+          <div className="font-medium text-gray-900">{variation.name}</div>
+          <div className="text-xs text-gray-500">
+            {variation.widgets.length} widgets • {variation.layout}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => handleEditVariation(section.id, key)}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Edit
+          </button>
+          <button 
+            onClick={() => handlePreviewVariation(section.id, key)}
+            className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+          >
+            Preview
+          </button>
+        </div>
+      </div>
     ))}
   </div>
+  
+  {/* Actions */}
+  <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+    <button 
+      onClick={() => handleAddVariation(section.id)}
+      className="text-sm text-blue-600 hover:underline"
+    >
+      + Add Variation
+    </button>
+    <button 
+      onClick={() => handleDeleteSection(section.id)}
+      className="ml-auto text-sm text-red-600 hover:underline"
+    >
+      Delete Section
+    </button>
+  </div>
 </div>
+```
+
+**New Handler Functions:**
+```typescript
+const handleEditVariation = (sectionId: string, variationKey: string) => {
+  // Option 1: Load into V1 canvas
+  const section = sharedSections.find(s => s.id === sectionId)
+  const variation = section?.variations[variationKey]
+  if (variation) {
+    // Convert variation widgets to canvas section
+    const sectionItem = createSectionFromVariation(section, variation)
+    replaceCanvasItems([sectionItem])
+    setCurrentView('page-builder')
+  }
+  
+  // Option 2 (later): Navigate to V2's rebuilt section editor
+  // navigate(`/v2/design/section/${sectionId}/${variationKey}`)
+}
+
+const handleAddVariation = (sectionId: string) => {
+  const newVariationName = prompt('Variation name:')
+  if (!newVariationName) return
+  
+  const section = sharedSections.find(s => s.id === sectionId)
+  const baseVariation = Object.values(section.variations)[0]
+  
+  addVariation(sectionId, {
+    id: nanoid(),
+    name: newVariationName,
+    widgets: [...baseVariation.widgets], // Clone base
+    layout: baseVariation.layout,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })
+}
 ```
 
 ---
@@ -727,6 +832,100 @@ import { resolvePageComposition } from '../v2/utils/compositionResolver'
 
 ---
 
+## 🎨 **UI/UX: WHAT STAYS vs WHAT CHANGES**
+
+### **V1 Design Console (KEEP - It's Complete!)**
+
+**Navigation Structure:**
+```
+Left Sidebar:
+├── [+ Add Website]
+├── Websites (overview)
+│   ├── 📍 Catalyst Demo
+│   │   ├── Settings
+│   │   ├── Branding Configuration  
+│   │   ├── Templates (Journal Home, Article, etc.)
+│   │   ├── Publication Cards
+│   │   └── Stubs (custom saved pages)
+│   └── 📍 FEBS Press
+│       └── (same structure)
+│
+└── Designs (themes)
+    ├── 🎨 Modernist Theme
+    │   ├── Design Settings (colors, typography)
+    │   ├── Publication Cards (theme-level)
+    │   ├── Templates (page templates)
+    │   ├── Stubs (website pages)
+    │   └── Sections (reusable components)  ← THIS IS KEY!
+    └── 🎨 Other Themes
+```
+
+**✅ KEEP THIS ENTIRE UI** - It's well-designed and functional!
+
+---
+
+### **V2 Design Console (DELETE - It's Incomplete)**
+
+**V2's Structure (INCOMPLETE):**
+```
+Top Level:
+├── Websites → Card-based view (nice but redundant with V1)
+└── Design → Only shows SharedSections list (missing themes, templates)
+```
+
+**❌ DELETE:**
+- `src/v2/components/DesignConsole/DesignConsole.tsx` - Only 15 lines, shows SharedSections
+- `src/v2/components/Websites/Websites.tsx` - Card-based view (redundant with V1)
+- `src/v2/components/Websites/WebsiteDetail.tsx` - MAYBE keep for inspiration
+
+**Why delete?** V1's is complete; V2's is a prototype
+
+---
+
+### **What Changes in V1 Design Console**
+
+**Only ONE change needed in V1's UI:**
+
+**Designs → [Theme] → Sections tab**
+
+**Before (Current V1):**
+```typescript
+// Shows: customSections (from localStorage)
+// Structure: Flat list of saved sections
+
+[Section Card]
+  Name: "Homepage Hero"
+  Widgets: 5
+  [Load into Canvas]
+  [Delete]
+```
+
+**After (Enhanced):**
+```typescript
+// Shows: sharedSections (with variations)
+// Structure: Sections with variation dropdown
+
+[Section Card]
+  Name: "Main Header"
+  Category: Header
+  Used by: 12 pages across 2 websites
+  
+  Variations:
+    ├── Full (8 widgets) → [Edit] [Preview]
+    └── Minimal (3 widgets) → [Edit] [Preview]
+  
+  [+ Add Variation]
+  [Delete Section]
+```
+
+**File to update:** `src/components/SiteManager/SiteManagerTemplates.tsx`
+- Currently shows `customSections`
+- Will show `sharedSections` instead
+- Add UI for variations (dropdown/tabs)
+- Add "Used by" count
+
+---
+
 ## 🗂️ **WHAT STAYS vs WHAT CHANGES**
 
 ### **KEEP FROM V1 (Don't Touch):**
@@ -740,7 +939,7 @@ import { resolvePageComposition } from '../v2/utils/compositionResolver'
 ✅ Templates (Publication page templates) - Journal Home, Article, etc.
 ✅ Stubs (customStarterPages) - Full-page templates
 ✅ Publication Cards - Card variants system
-✅ Design Console UI - Websites/Designs navigation
+✅ **Design Console UI** - Entire left sidebar navigation + all views (Settings, Branding, Templates, etc.)
 
 ### **REPLACE IN V1:**
 ❌ `customSections` → `sharedSections` (V2's model)
@@ -758,10 +957,16 @@ import { resolvePageComposition } from '../v2/utils/compositionResolver'
 🔄 MockLiveSite (use composition resolver)
 🔄 Website type (add pages, journals fields)
 
-### **DELETE:**
-🗑️ V2's incomplete editor components
-🗑️ Duplicate section definitions
-🗑️ Old customSections localStorage code
+### **DELETE FROM V2:**
+🗑️ `src/v2/components/DesignConsole/DesignConsole.tsx` - Incomplete, only shows sections list
+🗑️ `src/v2/components/DesignConsole/SharedSectionsList.tsx` - Replaced by V1's section library
+🗑️ `src/v2/components/DesignConsole/SectionEditor.tsx` - Will be rebuilt to use V1 canvas
+🗑️ `src/v2/components/Websites/Websites.tsx` - Redundant with V1's website manager
+🗑️ Possibly: `src/v2/components/Websites/WebsiteDetail.tsx` - Depends on if we need it
+
+### **DELETE FROM V1:**
+🗑️ `customSections` state and localStorage code - Replaced by SharedSections
+🗑️ Old section loading logic - Replaced by composition resolver
 
 ---
 
