@@ -20,6 +20,18 @@ export { TabsEditor } from './TabsEditor'
 export { EditorialCardEditor } from './EditorialCardEditor'
 export { MenuEditor, MenuItemForm } from './MenuEditor'
 
+// Content Engine Components (reusable across publication widgets and future content widgets)
+export {
+  ContentSourceSelector,
+  DomainFilter,
+  DOIMultiSelect,
+  DOISingleSelect,
+  SchemaObjectsSelector,
+  AIGenerationPrompt,
+  type ContentSourceType,
+  type CitationDomain
+} from './ContentSourceEditor'
+
 // Export type for editor props
 export interface PropertyEditorProps {
   widget: Widget
