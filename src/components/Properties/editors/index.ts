@@ -15,6 +15,8 @@ export { DividerEditor, SpacerEditor } from './CoreElementsEditor'
 export { TextEditor } from './TextEditor'
 export { HeadingEditor } from './HeadingEditor'
 export { ImageEditor } from './ImageEditor'
+export { CollapseEditor } from './InteractiveEditor'
+export { EditorialCardEditor } from './EditorialCardEditor'
 
 // Export type for editor props
 export interface PropertyEditorProps {
@@ -29,6 +31,8 @@ import { DividerEditor, SpacerEditor } from './CoreElementsEditor'
 import { TextEditor } from './TextEditor'
 import { HeadingEditor } from './HeadingEditor'
 import { ImageEditor } from './ImageEditor'
+import { CollapseEditor } from './InteractiveEditor'
+import { EditorialCardEditor } from './EditorialCardEditor'
 
 // Registry maps widget types to their property editor components
 export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditorProps>> = {
@@ -40,15 +44,15 @@ export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditor
   'divider': DividerEditor,
   'spacer': SpacerEditor,
   
-  // Content Cards
-  // 'editorial-card': EditorialCardEditor,  // TODO: Complex
+  // Content Cards ✅
+  'editorial-card': EditorialCardEditor,
   
   // Navigation
   // 'menu': MenuEditor,  // TODO: Most complex - has inline item editor
   
-  // Interactive
+  // Interactive (partial) ✅
   // 'tabs': TabsEditor,        // TODO: Complex - nested widgets
-  // 'collapse': CollapseEditor,  // TODO: Complex - nested panels
+  'collapse': CollapseEditor,
   
   // Publishing
   // 'publication-list': PublicationListEditor,    // TODO: Complex - card config
