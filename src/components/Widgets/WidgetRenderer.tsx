@@ -9,6 +9,10 @@ import { Edit, Trash2, Copy } from 'lucide-react'
 import { EditorialCardRenderer } from './EditorialCardRenderer'
 import { applyListPattern } from '../../utils/listPatternRenderer'
 
+// Extracted components
+import { SkinWrap } from './SkinWrap'
+import { WidgetLayoutWrapper } from './WidgetLayoutWrapper'
+
 // Import usePageStore for updating widget state
 declare global {
   interface Window {
@@ -16,135 +20,6 @@ declare global {
   }
 }
 const usePageStore = window.usePageStore
-
-// Widget skin wrapper component
-const SkinWrap: React.FC<{ skin: string; children: React.ReactNode }> = ({ skin, children }) => {
-  const skinClasses = {
-    minimal: '', // Changed from 'bg-white' to transparent for gradient visibility
-    modern: 'bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4',
-    classic: 'bg-gray-50 border border-gray-200 rounded p-4',
-    accent: 'bg-accent-50 border border-accent-200 rounded p-4',
-    hero: 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 px-6',
-    journal: 'py-12 px-6', // Transparent background, inherits from section, keeps padding and text styling
-    dark: 'bg-black text-white py-2 px-6',
-    muted: 'text-gray-600 text-sm',
-    center: 'text-center',
-    footer: 'bg-gray-900 text-white py-8 px-6',
-    compact: 'space-y-4',
-    raw: '', // No styling for raw HTML
-    transparent: '' // Explicit transparent option
-  }
-  
-  return (
-    <div className={skinClasses[skin as keyof typeof skinClasses] || ''}>
-      {children}
-    </div>
-  )
-}
-
-// Widget Layout Wrapper Component - Applies layout styling to widgets
-const WidgetLayoutWrapper: React.FC<{ widget: Widget; children: React.ReactNode }> = ({ widget, children }) => {
-  if (!widget.layout || widget.layout.variant === 'default') {
-    return <>{children}</>
-  }
-
-  const getLayoutClasses = () => {
-    const layout = widget.layout!
-    const classes = []
-
-    // Variant classes
-    switch (layout.variant) {
-      case 'card':
-        classes.push('bg-white rounded-lg shadow-md border border-gray-200')
-        break
-      case 'bordered':
-        classes.push('border-2 border-gray-300 rounded-md')
-        break
-      case 'elevated':
-        classes.push('bg-white shadow-lg rounded-xl border border-gray-100')
-        break
-    }
-
-    // Padding classes
-    switch (layout.padding) {
-      case 'none':
-        classes.push('p-0')
-        break
-      case 'small':
-        classes.push('p-3')
-        break
-      case 'medium':
-        classes.push('p-4')
-        break
-      case 'large':
-        classes.push('p-6')
-        break
-      default:
-        if (layout.variant === 'card' || layout.variant === 'elevated') {
-          classes.push('p-4') // Default padding for cards
-        }
-    }
-
-    // Margin classes
-    switch (layout.margin) {
-      case 'none':
-        classes.push('m-0')
-        break
-      case 'small':
-        classes.push('m-2')
-        break
-      case 'medium':
-        classes.push('m-4')
-        break
-      case 'large':
-        classes.push('m-6')
-        break
-    }
-
-    // Background classes (override card defaults if specified)
-    if (layout.background && layout.background !== 'transparent') {
-      classes.push(`bg-${layout.background}`)
-    }
-
-    // Shadow classes (override card defaults if specified)
-    if (layout.shadow && layout.shadow !== 'none') {
-      const shadowMap = {
-        small: 'shadow-sm',
-        medium: 'shadow-md', 
-        large: 'shadow-lg'
-      }
-      classes.push(shadowMap[layout.shadow])
-    }
-
-    // Rounded classes (override card defaults if specified)
-    if (layout.rounded && layout.rounded !== 'none') {
-      const roundedMap = {
-        small: 'rounded',
-        medium: 'rounded-md',
-        large: 'rounded-lg'
-      }
-      classes.push(roundedMap[layout.rounded])
-    }
-
-    // Border classes
-    if (layout.border && layout.border !== 'none') {
-      const borderMap = {
-        light: 'border border-gray-200',
-        medium: 'border-2 border-gray-300',
-        heavy: 'border-4 border-gray-400'
-      }
-      classes.push(borderMap[layout.border])
-    }
-
-    return classes.join(' ')
-  }
-
-  return (
-    <div className={getLayoutClasses()}>
-      {children}
-    </div>
-  )
-}
 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
