@@ -5,44 +5,51 @@
  * Editors are organized by library categories.
  */
 
-// NOTE: Individual editors will be added as they're extracted from PropertiesPanel.tsx
-// See REFACTORING_NOTES.md for the full plan.
+import type React from 'react'
+import type { Widget } from '../../../types'
+
+// Export individual editors
+export { DIYEditor, HTMLBlockEditor, CodeBlockEditor } from './DIYEditor'
+export { ButtonEditor } from './ButtonEditor'
+export { DividerEditor, SpacerEditor } from './CoreElementsEditor'
 
 // Export type for editor props
 export interface PropertyEditorProps {
-  widget: any
-  updateWidget: (updates: any) => void
-  // Additional props as needed
+  widget: Widget
+  updateWidget: (updates: Partial<Widget>) => void
 }
 
-// Registry will be populated as editors are extracted
+// Import editors
+import { HTMLBlockEditor, CodeBlockEditor } from './DIYEditor'
+import { ButtonEditor } from './ButtonEditor'
+import { DividerEditor, SpacerEditor } from './CoreElementsEditor'
+
+// Registry maps widget types to their property editor components
 export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditorProps>> = {
-  // Core Page Elements
-  // 'text': TextEditor,
-  // 'heading': HeadingEditor,
-  // 'image': ImageEditor,
-  // 'button': ButtonEditor,
-  // 'divider': DividerEditor,
-  // 'spacer': SpacerEditor,
+  // Core Page Elements ✅
+  // 'text': TextEditor,        // TODO: Complex, has rich text features
+  // 'heading': HeadingEditor,  // TODO: Complex, has level/alignment
+  // 'image': ImageEditor,      // TODO: Complex, has upload/cropping
+  'button': ButtonEditor,
+  'divider': DividerEditor,
+  'spacer': SpacerEditor,
   
   // Content Cards
-  // 'editorial-card': EditorialCardEditor,
+  // 'editorial-card': EditorialCardEditor,  // TODO: Complex
   
   // Navigation
-  // 'menu': MenuEditor,
+  // 'menu': MenuEditor,  // TODO: Most complex - has inline item editor
   
   // Interactive
-  // 'tabs': TabsEditor,
-  // 'collapse': CollapseEditor,
+  // 'tabs': TabsEditor,        // TODO: Complex - nested widgets
+  // 'collapse': CollapseEditor,  // TODO: Complex - nested panels
   
   // Publishing
-  // 'publication-list': PublicationListEditor,
-  // 'publication-details': PublicationDetailsEditor,
+  // 'publication-list': PublicationListEditor,    // TODO: Complex - card config
+  // 'publication-details': PublicationDetailsEditor,  // TODO: Complex - card config
   
-  // DIY
-  // 'html': HTMLEditor,
-  // 'code': CodeEditor,
+  // DIY ✅
+  'html': HTMLBlockEditor,
+  'code': CodeBlockEditor,
 }
-
-import type React from 'react'
 
