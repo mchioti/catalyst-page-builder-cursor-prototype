@@ -16,6 +16,7 @@ export { TextEditor } from './TextEditor'
 export { HeadingEditor } from './HeadingEditor'
 export { ImageEditor } from './ImageEditor'
 export { CollapseEditor } from './InteractiveEditor'
+export { TabsEditor } from './TabsEditor'
 export { EditorialCardEditor } from './EditorialCardEditor'
 
 // Export type for editor props
@@ -32,6 +33,7 @@ import { TextEditor } from './TextEditor'
 import { HeadingEditor } from './HeadingEditor'
 import { ImageEditor } from './ImageEditor'
 import { CollapseEditor } from './InteractiveEditor'
+import { TabsEditor } from './TabsEditor'
 import { EditorialCardEditor } from './EditorialCardEditor'
 
 // Registry maps widget types to their property editor components
@@ -50,8 +52,8 @@ export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditor
   // Navigation
   // 'menu': MenuEditor,  // TODO: Most complex - has inline item editor
   
-  // Interactive (partial) ✅
-  // 'tabs': TabsEditor,        // TODO: Complex - nested widgets
+  // Interactive ✅
+  'tabs': TabsEditor,
   'collapse': CollapseEditor,
   
   // Publishing
