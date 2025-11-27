@@ -12,6 +12,9 @@ import type { Widget } from '../../../types'
 export { DIYEditor, HTMLBlockEditor, CodeBlockEditor } from './DIYEditor'
 export { ButtonEditor } from './ButtonEditor'
 export { DividerEditor, SpacerEditor } from './CoreElementsEditor'
+export { TextEditor } from './TextEditor'
+export { HeadingEditor } from './HeadingEditor'
+export { ImageEditor } from './ImageEditor'
 
 // Export type for editor props
 export interface PropertyEditorProps {
@@ -23,13 +26,16 @@ export interface PropertyEditorProps {
 import { HTMLBlockEditor, CodeBlockEditor } from './DIYEditor'
 import { ButtonEditor } from './ButtonEditor'
 import { DividerEditor, SpacerEditor } from './CoreElementsEditor'
+import { TextEditor } from './TextEditor'
+import { HeadingEditor } from './HeadingEditor'
+import { ImageEditor } from './ImageEditor'
 
 // Registry maps widget types to their property editor components
 export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditorProps>> = {
   // Core Page Elements ✅
-  // 'text': TextEditor,        // TODO: Complex, has rich text features
-  // 'heading': HeadingEditor,  // TODO: Complex, has level/alignment
-  // 'image': ImageEditor,      // TODO: Complex, has upload/cropping
+  'text': TextEditor,
+  'heading': HeadingEditor,
+  'image': ImageEditor,
   'button': ButtonEditor,
   'divider': DividerEditor,
   'spacer': SpacerEditor,
