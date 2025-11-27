@@ -7,7 +7,7 @@
 import React from 'react'
 import type { ButtonWidget, Widget } from '../../../types'
 import { usePageStore } from '../../../stores'
-import { IconSelector } from '../IconSelector'
+import { IconSelector } from '../../IconSelector'
 
 interface ButtonEditorProps {
   widget: Widget

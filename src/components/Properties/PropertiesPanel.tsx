@@ -31,6 +31,7 @@ import { getAllDOIs, getDOIsByDomain, getCitationByDOI, type CitationDomain } fr
 import { IconSelector } from '../IconSelector'
 import { getSupportedTabVariants, getTabVariantLabel, type TabVariant } from '../../config/themeTabVariants'
 import { ListPatternControls } from './ListPatternControls'
+import { PROPERTY_EDITORS } from './editors'
 
 // Import the DEFAULT_PUBLICATION_CARD_CONFIG constant
 const DEFAULT_PUBLICATION_CARD_CONFIG = {
@@ -1454,7 +1455,21 @@ export function PropertiesPanel({
         return null
       })()}
       
-      {widget.type === 'text' && (
+      {/* === REGISTRY-BASED WIDGET EDITORS === */}
+      {/* Use extracted editors for widgets in the registry */}
+      {(() => {
+        const WidgetEditor = PROPERTY_EDITORS[widget.type]
+        if (WidgetEditor) {
+          return <WidgetEditor widget={widget} updateWidget={updateWidget} />
+        }
+        return null
+      })()}
+      
+      {/* === LEGACY WIDGET EDITORS (not yet in registry) === */}
+      {/* These will be removed as widgets are migrated to the registry */}
+      
+      {/* Text widget - NOW IN REGISTRY, keeping as fallback */}
+      {!PROPERTY_EDITORS['text'] && widget.type === 'text' && (
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
@@ -1555,7 +1570,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'heading' && (
+      {!PROPERTY_EDITORS['heading'] && widget.type === 'heading' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Heading Text</label>
@@ -1664,7 +1679,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'image' && (
+      {!PROPERTY_EDITORS['image'] && widget.type === 'image' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Image Source URL</label>
@@ -1803,7 +1818,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'html' && (
+      {!PROPERTY_EDITORS['html'] && widget.type === 'html' && (
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content</label>
@@ -1955,7 +1970,7 @@ export function PropertiesPanel({
         </div>
       )}
 
-      {widget.type === 'code' && (
+      {!PROPERTY_EDITORS['code'] && widget.type === 'code' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Widget Title</label>
@@ -2042,7 +2057,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'button' && (
+      {!PROPERTY_EDITORS['button'] && widget.type === 'button' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
@@ -2196,7 +2211,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'menu' && (
+      {!PROPERTY_EDITORS['menu'] && widget.type === 'menu' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Menu Type</label>
@@ -2345,7 +2360,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'tabs' && (
+      {!PROPERTY_EDITORS['tabs'] && widget.type === 'tabs' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tab Style</label>
@@ -3206,7 +3221,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'divider' && (
+      {!PROPERTY_EDITORS['divider'] && widget.type === 'divider' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
@@ -3278,7 +3293,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'spacer' && (
+      {!PROPERTY_EDITORS['spacer'] && widget.type === 'spacer' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Height</label>
@@ -3308,7 +3323,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'collapse' && (
+      {!PROPERTY_EDITORS['collapse'] && widget.type === 'collapse' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Accordion Behavior</label>
@@ -3400,7 +3415,7 @@ export function PropertiesPanel({
         </div>
       )}
       
-      {widget.type === 'editorial-card' && (
+      {!PROPERTY_EDITORS['editorial-card'] && widget.type === 'editorial-card' && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>

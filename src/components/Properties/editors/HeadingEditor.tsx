@@ -10,7 +10,7 @@
 import React from 'react'
 import { Info } from 'lucide-react'
 import type { HeadingWidget, Widget } from '../../../types'
-import { IconSelector } from '../IconSelector'
+import { IconSelector } from '../../IconSelector'
 
 interface HeadingEditorProps {
   widget: Widget
