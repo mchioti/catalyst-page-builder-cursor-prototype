@@ -68,6 +68,15 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const location = useLocation()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
+  const setCurrentWebsiteId = usePageStore(state => state.setCurrentWebsiteId)
+  
+  // Sync the store's currentWebsiteId with the URL's websiteId
+  // This ensures the CanvasThemeProvider can find the correct theme
+  useEffect(() => {
+    if (websiteId) {
+      setCurrentWebsiteId(websiteId)
+    }
+  }, [websiteId, setCurrentWebsiteId])
   
   const basePath = `/live/${websiteId}`
   
