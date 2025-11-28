@@ -19,9 +19,17 @@ import { EditingScopeButton } from './EditingScopeButton'
 import { CanvasRenderer } from './CanvasRenderer'
 import { useWebsiteStore } from '../../v2/stores/websiteStore'
 import { usePageStore } from '../../stores'
-import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
-import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
 import { mockWebsites } from '../../v2/data/mockWebsites'
+import { 
+  createHomepageStub,
+  createJournalsBrowseStub,
+  createAboutStub,
+  createSearchStub,
+  createJournalHomeTemplate,
+  createIssueArchiveTemplate,
+  createIssueTocTemplate,
+  createArticleTemplate
+} from '../PageBuilder/pageStubs'
 import { 
   getIssuesByJournal, 
   getIssue, 
@@ -163,92 +171,26 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
 
 function HomePage() {
   const websiteId = useWebsiteId()
-  const websites = useWebsiteStore(state => state.websites)
-  const website = websites.find(w => w.id === websiteId)
   
   // Check for stored canvas data from the Page Builder
   const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'home'))
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
   
-  // Auto-initialize canvas data if not present (so Live Site always shows canvas content)
+  // Auto-initialize canvas data if not present
   useEffect(() => {
     if (!pageCanvas || pageCanvas.length === 0) {
-      // Initialize with V1 homepage template
-      if (websiteId === 'catalyst-demo') {
-        setPageCanvas(websiteId, 'home', createCatalystHomepage())
-      } else {
-        setPageCanvas(websiteId, 'home', createHomepageTemplate())
-      }
+      setPageCanvas(websiteId, 'home', createHomepageStub())
     }
   }, [websiteId, pageCanvas, setPageCanvas])
   
-  // If we have stored canvas data, render it
+  // Render canvas content
   if (pageCanvas && pageCanvas.length > 0) {
     return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
   }
   
-  // Loading state while initializing
   return (
     <div className="flex items-center justify-center min-h-[400px]">
       <div className="text-gray-500">Loading homepage...</div>
-    </div>
-  )
-}
-
-// Keep the old V2 JSX homepage as a reference (not used, but preserved)
-function HomePage_V2_Reference() {
-  const websiteId = useWebsiteId()
-  const websites = useWebsiteStore(state => state.websites)
-  const website = websites.find(w => w.id === websiteId)
-  const journals = website?.journals || []
-  
-  return (
-    <div>
-      {/* Hero Section */}
-      <section 
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-20 px-6"
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-6">{website?.name}</h1>
-          <p className="text-xl text-indigo-100 mb-8">
-            Discover groundbreaking research across {journals.length} peer-reviewed journals
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link 
-              to={`/live/${websiteId}/journals`}
-              className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-            >
-              Browse Journals
-            </Link>
-            <Link 
-              to={`/live/${websiteId}/search`}
-              className="px-6 py-3 border-2 border-white text-white rounded-lg font-medium hover:bg-white/10 transition-colors"
-            >
-              Search Articles
-            </Link>
-          </div>
-        </div>
-      </section>
-      
-      {/* Featured Journals */}
-      <section className="py-16 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Journals</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {journals.map(journal => (
-              <JournalCard key={journal.id} journal={journal} />
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Latest Articles */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Latest Articles</h2>
-          <LatestArticlesList />
-        </div>
-      </section>
     </div>
   )
 }
@@ -263,6 +205,23 @@ function JournalsBrowsePage() {
   const website = websites.find(w => w.id === websiteId)
   const journals = website?.journals || []
   
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'journals'))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, 'journals', createJournalsBrowseStub())
+    }
+  }, [websiteId, pageCanvas, setPageCanvas])
+  
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+  }
+  
+  // Fallback while initializing
   return (
     <div className="py-12 px-6">
       <div className="max-w-6xl mx-auto">
@@ -292,57 +251,57 @@ function JournalHomePage() {
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
+  // Page ID includes journalId for uniqueness
+  const pageId = `journal-${journalId}`
+  
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, pageId, createJournalHomeTemplate())
+    }
+  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    // Create template context with journal data
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description || '',
+        brandColor: journal.branding?.primaryColor || '#1e40af',
+        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+      }
+    }
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+  }
+  
+  // Fallback while initializing
   const currentIssue = getCurrentIssue(journalId!)
   const issues = getIssuesByJournal(journalId!)
   const latestArticles = currentIssue ? getArticlesForIssue(currentIssue.id).slice(0, 5) : []
   
   return (
     <div>
-      {/* Journal Banner */}
       <JournalBanner journal={journal} variant="full" />
-      
-      {/* Journal Navigation */}
       <JournalNav journalId={journalId!} />
-      
-      {/* Main Content */}
       <div className="py-12 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
-          {/* Main Content Area */}
           <div className="lg:col-span-2">
-            {/* About Journal */}
             <section className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">About {journal.name}</h2>
               <p className="text-gray-600 mb-4">{journal.description}</p>
-              {journal.isOpenAccess && (
-                <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                  🔓 Open Access
-                </span>
-              )}
-              {journal.isDiscontinued && (
-                <span className="inline-block ml-2 px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
-                  📚 Archived (Discontinued {journal.discontinuedDate?.getFullYear()})
-                </span>
-              )}
             </section>
-            
-            {/* Latest Articles */}
             <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Latest Articles</h2>
-                {currentIssue && (
-                  <Link 
-                    to={`/live/journal/${journalId}/toc/${currentIssue.volume}/${currentIssue.issue}`}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    View Current Issue →
-                  </Link>
-                )}
-              </div>
-              
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Latest Articles</h2>
               {latestArticles.length > 0 ? (
                 <div className="space-y-6">
                   {latestArticles.map(article => (
@@ -354,33 +313,16 @@ function JournalHomePage() {
               )}
             </section>
           </div>
-          
-          {/* Sidebar */}
           <div className="lg:col-span-1">
-            {/* Current Issue */}
             {currentIssue && (
               <div className="bg-gray-50 rounded-lg p-6 mb-6">
                 <h3 className="font-bold text-gray-900 mb-4">Current Issue</h3>
-                <Link to={`/live/journal/${journalId}/toc/${currentIssue.volume}/${currentIssue.issue}`}>
-                  {currentIssue.coverImageUrl && (
-                    <img 
-                      src={currentIssue.coverImageUrl} 
-                      alt={`${formatVolumeIssue(currentIssue)} cover`}
-                      className="w-full h-48 object-cover rounded-lg mb-3"
-                    />
-                  )}
-                  <p className="text-center font-medium text-gray-900">
-                    {formatVolumeIssue(currentIssue)}
-                  </p>
-                  <p className="text-center text-sm text-gray-500">
-                    {formatIssueDate(currentIssue)}
-                  </p>
+                <Link to={`/live/${websiteId}/journal/${journalId}/toc/${currentIssue.volume}/${currentIssue.issue}`}>
+                  <p className="text-center font-medium text-gray-900">{formatVolumeIssue(currentIssue)}</p>
                 </Link>
               </div>
             )}
-            
-            {/* Journal Metrics */}
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+            <div className="bg-gray-50 rounded-lg p-6">
               <h3 className="font-bold text-gray-900 mb-4">Journal Metrics</h3>
               <div className="space-y-3 text-sm">
                 {journal.impactFactor && (
@@ -393,31 +335,6 @@ function JournalHomePage() {
                   <span className="text-gray-600">Total Issues</span>
                   <span className="font-semibold">{issues.length}</span>
                 </div>
-                {journal.issn?.print && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">ISSN (Print)</span>
-                    <span className="font-mono text-xs">{journal.issn.print}</span>
-                  </div>
-                )}
-                {journal.issn?.online && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">ISSN (Online)</span>
-                    <span className="font-mono text-xs">{journal.issn.online}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Quick Links */}
-            <div className="bg-white border rounded-lg p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Quick Links</h3>
-              <div className="space-y-2 text-sm">
-                <Link to={`/live/journal/${journalId}/loi`} className="block text-blue-600 hover:underline">
-                  All Issues
-                </Link>
-                <a href="#" className="block text-blue-600 hover:underline">Submit Article</a>
-                <a href="#" className="block text-blue-600 hover:underline">Author Guidelines</a>
-                <a href="#" className="block text-blue-600 hover:underline">Editorial Board</a>
               </div>
             </div>
           </div>
@@ -438,13 +355,41 @@ function IssueArchivePage() {
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
+  // Page ID includes journalId for uniqueness
+  const pageId = `journal-${journalId}-loi`
+  
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, pageId, createIssueArchiveTemplate())
+    }
+  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
   const issues = getIssuesByJournal(journalId!)
   
-  // Group issues by volume
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description || '',
+        brandColor: journal.branding?.primaryColor || '#1e40af',
+        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+      }
+    }
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+  }
+  
+  // Fallback: Group issues by volume
   const issuesByVolume = issues.reduce((acc, issue) => {
     const vol = issue.volume
     if (!acc[vol]) acc[vol] = []
@@ -452,42 +397,28 @@ function IssueArchivePage() {
     return acc
   }, {} as Record<number, Issue[]>)
   
-  // Sort volumes descending (newest first)
-  const sortedVolumes = Object.keys(issuesByVolume)
-    .map(Number)
-    .sort((a, b) => b - a)
+  const sortedVolumes = Object.keys(issuesByVolume).map(Number).sort((a, b) => b - a)
   
   return (
     <div>
-      {/* Journal Banner */}
       <JournalBanner journal={journal} variant="archive" />
-      
-      {/* Journal Navigation */}
       <JournalNav journalId={journalId!} activeTab="archive" />
-      
-      {/* Issues List */}
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">All Issues</h1>
-          
           {sortedVolumes.map(volume => (
             <div key={volume} className="mb-10">
               <h2 className="text-xl font-bold text-gray-900 mb-4 pb-2 border-b">
                 Volume {volume} ({issuesByVolume[volume][0].year})
               </h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {issuesByVolume[volume]
-                  .sort((a, b) => b.issue - a.issue)
-                  .map(issue => (
-                    <IssueCard key={issue.id} issue={issue} journalId={journalId!} />
-                  ))}
+                {issuesByVolume[volume].sort((a, b) => b.issue - a.issue).map(issue => (
+                  <IssueCard key={issue.id} issue={issue} journalId={journalId!} />
+                ))}
               </div>
             </div>
           ))}
-          
-          {issues.length === 0 && (
-            <p className="text-gray-500 text-center py-12">No issues available.</p>
-          )}
+          {issues.length === 0 && <p className="text-gray-500 text-center py-12">No issues available.</p>}
         </div>
       </div>
     </div>
@@ -505,16 +436,32 @@ function IssueTocPage() {
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
-  if (!journal) {
-    return <NotFoundPage message={`Journal "${journalId}" not found`} />
-  }
-  
-  // Handle 'current' as special case (vol is undefined when using /toc/current route)
+  // Handle 'current' as special case
   let issue: Issue | undefined
   if (!vol || vol === 'current') {
     issue = getCurrentIssue(journalId!)
   } else {
     issue = getIssue(journalId!, parseInt(vol!), parseInt(issueNum!))
+  }
+  
+  // Page ID includes journalId and issue info
+  const pageId = vol === 'current' || !vol 
+    ? `journal-${journalId}-toc-current`
+    : `journal-${journalId}-toc-${vol}-${issueNum}`
+  
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, pageId, createIssueTocTemplate())
+    }
+  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  
+  if (!journal) {
+    return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
   if (!issue) {
@@ -523,68 +470,57 @@ function IssueTocPage() {
   
   const articles = getArticlesForIssue(issue.id)
   const allIssues = getIssuesByJournal(journalId!)
-  
-  // Find previous and next issues
   const currentIndex = allIssues.findIndex(i => i.id === issue!.id)
   const prevIssue = currentIndex > 0 ? allIssues[currentIndex - 1] : null
   const nextIssue = currentIndex < allIssues.length - 1 ? allIssues[currentIndex + 1] : null
   
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description || '',
+        brandColor: journal.branding?.primaryColor || '#1e40af',
+        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+      },
+      issue: {
+        id: issue.id,
+        name: formatVolumeIssue(issue),
+        description: issue.title || `Published ${formatIssueDate(issue)}`
+      }
+    }
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+  }
+  
+  // Fallback
   return (
     <div>
-      {/* Journal Banner */}
       <JournalBanner journal={journal} variant="issue" issue={issue} />
-      
-      {/* Journal Navigation */}
       <JournalNav journalId={journalId!} activeTab="toc" />
-      
-      {/* Issue Navigation */}
       <div className="bg-gray-100 py-3 px-6 border-b">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="text-sm">
             <span className="font-medium">{formatVolumeIssue(issue)}</span>
             <span className="text-gray-500 ml-2">• {formatIssueDate(issue)}</span>
-            {issue.isCurrentIssue && (
-              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Current</span>
-            )}
-            {issue.isSpecialIssue && (
-              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded-full">Special Issue</span>
-            )}
           </div>
           <div className="flex items-center gap-4 text-sm">
             {prevIssue && (
-              <Link 
-                to={`/live/journal/${journalId}/toc/${prevIssue.volume}/${prevIssue.issue}`}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                ← Previous Issue
+              <Link to={`/live/${websiteId}/journal/${journalId}/toc/${prevIssue.volume}/${prevIssue.issue}`} className="text-blue-600 hover:text-blue-700">
+                ← Previous
               </Link>
             )}
             {nextIssue && (
-              <Link 
-                to={`/live/journal/${journalId}/toc/${nextIssue.volume}/${nextIssue.issue}`}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                Next Issue →
+              <Link to={`/live/${websiteId}/journal/${journalId}/toc/${nextIssue.volume}/${nextIssue.issue}`} className="text-blue-600 hover:text-blue-700">
+                Next →
               </Link>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Articles List */}
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
-          {issue.title && (
-            <div className="mb-8 p-4 bg-purple-50 rounded-lg">
-              <span className="text-sm text-purple-600 font-medium">Special Issue</span>
-              <h2 className="text-xl font-bold text-gray-900">{issue.title}</h2>
-            </div>
-          )}
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Articles ({articles.length})
-          </h2>
-          
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Articles ({articles.length})</h2>
           {articles.length > 0 ? (
             <div className="space-y-6">
               {articles.map(article => (
@@ -611,31 +547,60 @@ function ArticlePage() {
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
-  if (!journal) {
-    return <NotFoundPage message={`Journal "${journalId}" not found`} />
-  }
-  
-  // Decode DOI from URL (it might be encoded)
+  // Decode DOI from URL
   const decodedDoi = decodeURIComponent(doi || '')
   const article = getArticleByDOI(decodedDoi)
   const citation = getCitationByDOI(decodedDoi)
+  
+  // Page ID - use a sanitized version of DOI
+  const pageId = `article-${decodedDoi.replace(/[/.]/g, '-')}`
+  
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, pageId, createArticleTemplate())
+    }
+  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  
+  if (!journal) {
+    return <NotFoundPage message={`Journal "${journalId}" not found`} />
+  }
   
   if (!article) {
     return <NotFoundPage message={`Article with DOI "${decodedDoi}" not found`} />
   }
   
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        brandColor: journal.branding?.primaryColor || '#1e40af'
+      },
+      article: {
+        title: article.title,
+        authors: article.authors.join(', '),
+        doi: article.doi,
+        abstract: article.abstract || citation?.abstract || 'Abstract not available.',
+        keywords: citation?.keywords?.join(', ') || '',
+        contentType: article.isOpenAccess ? 'Open Access' : 'Research Article'
+      }
+    }
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+  }
+  
+  // Fallback
   return (
     <div>
-      {/* Journal Banner */}
       <JournalBanner journal={journal} variant="minimal" />
-      
-      {/* Journal Navigation */}
       <JournalNav journalId={journalId!} />
-      
-      {/* Article Content */}
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Article Header */}
           <article>
             <header className="mb-8">
               {article.isOpenAccess && (
@@ -643,76 +608,16 @@ function ArticlePage() {
                   🔓 Open Access
                 </span>
               )}
-              
-              <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
-                {article.title}
-              </h1>
-              
-              <div className="text-gray-600 mb-4">
-                {article.authors.join(', ')}
-              </div>
-              
-              <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                <span>
-                  <strong>DOI:</strong>{' '}
-                  <a href={`https://doi.org/${article.doi}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                    {article.doi}
-                  </a>
-                </span>
-                {article.pageRange && (
-                  <span><strong>Pages:</strong> {article.pageRange}</span>
-                )}
-                <span><strong>Published:</strong> {article.publishedAt.toLocaleDateString()}</span>
-              </div>
-              
-              {/* Metrics */}
-              <div className="flex gap-6 mt-4 text-sm">
-                <span className="text-gray-600">📊 {article.citations} citations</span>
-                <span className="text-gray-600">📥 {article.downloads} downloads</span>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{article.title}</h1>
+              <div className="text-gray-600 mb-4">{article.authors.join(', ')}</div>
+              <div className="text-sm text-gray-500">
+                <strong>DOI:</strong>{' '}
+                <a href={`https://doi.org/${article.doi}`} className="text-blue-600 hover:underline">{article.doi}</a>
               </div>
             </header>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-8 pb-8 border-b">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                📄 Download PDF
-              </button>
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                📎 Cite
-              </button>
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                🔗 Share
-              </button>
-            </div>
-            
-            {/* Abstract */}
             <section className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Abstract</h2>
-              <p className="text-gray-700 leading-relaxed">
-                {article.abstract || citation?.abstract || 'Abstract not available.'}
-              </p>
-            </section>
-            
-            {/* Keywords */}
-            {citation?.keywords && citation.keywords.length > 0 && (
-              <section className="mb-8">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">Keywords</h3>
-                <div className="flex flex-wrap gap-2">
-                  {citation.keywords.map((keyword, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-            
-            {/* Full Text Note */}
-            <section className="bg-blue-50 rounded-lg p-6">
-              <h3 className="font-bold text-blue-900 mb-2">Full Text</h3>
-              <p className="text-blue-700 text-sm">
-                This is a demo page. In a real system, the full article text would be displayed here.
-              </p>
+              <p className="text-gray-700 leading-relaxed">{article.abstract || citation?.abstract || 'Abstract not available.'}</p>
             </section>
           </article>
         </div>
@@ -730,41 +635,28 @@ function AboutPage() {
   const websites = useWebsiteStore(state => state.websites)
   const website = websites.find(w => w.id === websiteId)
   
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'about'))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, 'about', createAboutStub())
+    }
+  }, [websiteId, pageCanvas, setPageCanvas])
+  
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+  }
+  
+  // Fallback while initializing
   return (
     <div className="py-12 px-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">About {website?.name}</h1>
-        
-        <div className="prose prose-lg max-w-none">
-          <p className="text-lg text-gray-600 mb-6">
-            {website?.name} is a leading platform for academic research and scholarly communication
-            across multiple scientific disciplines.
-          </p>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Our Mission</h2>
-          <p className="text-gray-600 mb-4">
-            To advance scientific knowledge through rigorous peer review and open access publishing,
-            making research accessible to readers worldwide.
-          </p>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Our Journals</h2>
-          <p className="text-gray-600 mb-4">
-            We publish {website?.journals?.length || 0} peer-reviewed journals covering:
-          </p>
-          <ul className="list-disc pl-6 text-gray-600 space-y-2">
-            <li>Advanced Science & Technology</li>
-            <li>Biology & Life Sciences</li>
-            <li>Chemistry & Materials</li>
-          </ul>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Contact</h2>
-          <p className="text-gray-600">
-            For inquiries, please contact us at{' '}
-            <a href="mailto:info@catalyst.demo" className="text-blue-600 hover:underline">
-              info@catalyst.demo
-            </a>
-          </p>
-        </div>
+        <p className="text-gray-500">Loading...</p>
       </div>
     </div>
   )
@@ -775,43 +667,30 @@ function AboutPage() {
 // ============================================================================
 
 function SearchPage() {
-  // Get some sample articles for search results
-  const jasArticles = getArticlesForIssue('jas-vol24-issue4')
-  const oabArticles = getArticlesForIssue('oab-vol12-issue3')
-  const allArticles = [...jasArticles, ...oabArticles].slice(0, 10)
+  const websiteId = useWebsiteId()
   
+  // Check for stored canvas data
+  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'search'))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      setPageCanvas(websiteId, 'search', createSearchStub())
+    }
+  }, [websiteId, pageCanvas, setPageCanvas])
+  
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+  }
+  
+  // Fallback while initializing
   return (
     <div className="py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Search</h1>
-        <p className="text-gray-600 mb-8">Find articles across all our journals</p>
-        
-        {/* Search Input */}
-        <div className="mb-8">
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Search for articles, authors, keywords..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Search
-            </button>
-          </div>
-        </div>
-        
-        {/* Sample Results */}
-        <div className="border-t pt-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Recent Articles ({allArticles.length} results)
-          </h2>
-          
-          <div className="space-y-6">
-            {allArticles.map(article => (
-              <ArticleCard key={article.doi} article={article} journalId={article.journalId} showAbstract />
-            ))}
-          </div>
-        </div>
+        <p className="text-gray-500">Loading...</p>
       </div>
     </div>
   )
@@ -1010,20 +889,6 @@ function ArticleCard({ article, journalId, showAbstract }: { article: Article; j
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function LatestArticlesList() {
-  const jasArticles = getArticlesForIssue('jas-vol24-issue4')
-  const oabArticles = getArticlesForIssue('oab-vol12-issue3')
-  const allArticles = [...jasArticles.slice(0, 3), ...oabArticles.slice(0, 2)]
-  
-  return (
-    <div className="space-y-6">
-      {allArticles.map(article => (
-        <ArticleCard key={article.doi} article={article} journalId={article.journalId} />
-      ))}
     </div>
   )
 }

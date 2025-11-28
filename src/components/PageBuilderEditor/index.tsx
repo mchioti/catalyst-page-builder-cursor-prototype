@@ -17,8 +17,18 @@ import { TemplateCanvas } from '../Templates/TemplateCanvas'
 import { InteractiveWidgetRenderer } from '../PageBuilder/InteractiveWidgetRenderer'
 import { buildWidget } from '../../utils/widgetBuilder'
 import { isSection } from '../../types'
-import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
-import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
+import { 
+  createHomepageStub,
+  createJournalsBrowseStub,
+  createAboutStub,
+  createSearchStub,
+  createJournalHomeTemplate,
+  createIssueArchiveTemplate,
+  createIssueTocTemplate,
+  createArticleTemplate,
+  getPageStub,
+  type PageType
+} from '../PageBuilder/pageStubs'
 
 export function PageBuilderEditor() {
   const navigate = useNavigate()
@@ -58,6 +68,19 @@ export function PageBuilderEditor() {
     setEditingContext('page')
   }, [websiteId, setCurrentWebsiteId, setCurrentView, setEditingContext])
   
+  // Determine page type from route
+  const getPageType = (route: string): PageType => {
+    if (!route || route === '' || route === 'home') return 'home'
+    if (route === 'journals') return 'journals'
+    if (route === 'about') return 'about'
+    if (route === 'search') return 'search'
+    if (route.startsWith('journal/') && route.includes('/loi')) return 'issue-archive'
+    if (route.startsWith('journal/') && route.includes('/toc/')) return 'issue-toc'
+    if (route.startsWith('journal/') && route.includes('/article/')) return 'article'
+    if (route.startsWith('journal/')) return 'journal-home'
+    return 'home' // Default
+  }
+  
   // Load page content on mount
   useEffect(() => {
     const pageKey = `${websiteId}:${pageName}`
@@ -79,23 +102,13 @@ export function PageBuilderEditor() {
     }
     
     // No saved data - load default content based on page type
-    const isHomePage = !pageName || pageName === '' || pageName === 'home' || pageName.startsWith('home')
+    const pageType = getPageType(pageName)
+    const defaultContent = getPageStub(pageType)
     
-    if (isHomePage && websiteId === 'catalyst-demo') {
-      // Load Catalyst-specific homepage as default
-      const defaultContent = createCatalystHomepage()
-      replaceCanvasItems(defaultContent)
-      setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state
-      setIsEditingLoadedWebsite(true)
-      loadedPageRef.current = pageKey
-    } else if (isHomePage) {
-      // Load base homepage template for other websites
-      const defaultContent = createHomepageTemplate()
-      replaceCanvasItems(defaultContent)
-      setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state
-      setIsEditingLoadedWebsite(true)
-      loadedPageRef.current = pageKey
-    }
+    replaceCanvasItems(defaultContent)
+    setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state
+    setIsEditingLoadedWebsite(true)
+    loadedPageRef.current = pageKey
   }, [websiteId, pageName, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas])
   
   // Auto-save canvas changes to pageCanvasData
