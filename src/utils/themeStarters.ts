@@ -4,6 +4,12 @@
  * Factory functions that return arrays of prefab sections for theme-specific
  * starter homepages. Used during website creation to populate initial content
  * instead of starting with a blank canvas.
+ * 
+ * NOTE: For known designs (Wiley, FEBS, Catalyst), we now use the centralized
+ * stubs from pageStubs.ts to ensure consistency between:
+ * - Website Creation Wizard (Design Console)
+ * - Live Site homepage
+ * - Page Builder Editor
  */
 
 import { nanoid } from 'nanoid'
@@ -15,6 +21,11 @@ import {
   createWileyDSV2HeroPrefab,
   createWileyDSV2CardGridPrefab
 } from '../components/PageBuilder/prefabSections'
+import {
+  createWileyHomepageStub,
+  createCatalystHomepageStub,
+  createFebsHomepageStub
+} from '../components/PageBuilder/pageStubs'
 
 /**
  * Creates IBM Carbon DS starter homepage
@@ -760,16 +771,27 @@ export const createAntDesignStarterTemplate = (): CanvasItem[] => {
  * Usage:
  * ```typescript
  * const starterSections = getStarterTemplateForTheme('wiley-figma-ds-v2')
- * // Returns: [hero, card grid, about wiley, shop today]
+ * // Returns: Wiley-branded homepage stub
  * ```
+ * 
+ * NOTE: For known designs (Wiley, FEBS), we use centralized stubs from pageStubs.ts
+ * to ensure consistency between Website Creation, Live Site, and Page Builder.
  */
 export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
+  // Normalize the theme ID for matching
+  const normalizedId = themeId.toLowerCase()
+  
+  // Wiley-based themes use the Wiley homepage stub
+  if (normalizedId.includes('wiley')) {
+    return createWileyHomepageStub() as CanvasItem[]
+  }
+  
+  // FEBS-based themes
+  if (normalizedId.includes('febs')) {
+    return createFebsHomepageStub() as CanvasItem[]
+  }
+  
   switch (themeId) {
-    case 'wiley-figma-ds-v2':
-      // DS V2: Complete 3-layer architecture (Foundation → Semantic → Overrides)
-      // Comprehensive MCP extraction: 88 core colors, 159 semantic colors, 5-color button system
-      return createWileyDSV2StarterTemplate()
-    
     case 'ibm-carbon-ds':
       // IBM Carbon: Enterprise design with Carbon-specific styling
       return createCarbonDSStarterTemplate()
@@ -777,6 +799,10 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
     case 'ant-design':
       // Ant Design: Enterprise-class UI with refined experience
       return createAntDesignStarterTemplate()
+    
+    case 'classic-ux3-theme':
+      // Classic theme - uses Catalyst homepage stub
+      return createCatalystHomepageStub() as CanvasItem[]
     
     case 'academic-classic':
     case 'academic-review':
