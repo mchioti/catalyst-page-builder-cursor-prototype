@@ -66,6 +66,19 @@ export const DynamicBrandingCSS: React.FC<{
     const currentWebsite = websites.find((w: any) => w.id === websiteId);
     const currentTheme = currentWebsite ? themes.find((t: any) => t.id === currentWebsite.themeId) : null;
     
+    // DEBUG: Log website/theme lookup
+    console.log('💄 [DynamicBrandingCSS] Website/Theme lookup:', {
+      websiteIdProp: websiteId,
+      storeCurrentWebsiteId: currentWebsiteId,
+      websiteFound: !!currentWebsite,
+      websiteName: currentWebsite?.name,
+      websiteThemeId: currentWebsite?.themeId,
+      themeFound: !!currentTheme,
+      themeName: currentTheme?.name,
+      themeId: currentTheme?.id,
+      allWebsiteIds: websites.map((w: any) => w.id)
+    })
+    
     // Generate CSS for all journals
     // Journals inherit typography and button styling from theme, but keep their own colors
     const cssRules: string[] = [];

@@ -200,6 +200,17 @@ function HomePage() {
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
+  // DEBUG: Log website lookup
+  console.log('🏠 [HomePage] Website lookup:', {
+    websiteId,
+    websiteFound: !!website,
+    websiteName: website?.name,
+    websiteThemeId: website?.themeId,
+    websiteBrandMode: website?.brandMode,
+    totalWebsites: websites.length,
+    allWebsiteIds: websites.map(w => ({ id: w.id, name: w.name, themeId: w.themeId }))
+  })
+  
   // Check for stored canvas data from the Page Builder
   const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'home'))
   const setPageCanvas = usePageStore(state => state.setPageCanvas)

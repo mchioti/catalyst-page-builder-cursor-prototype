@@ -77,6 +77,28 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
     ? previewThemeId 
     : (propThemeId || currentWebsite?.themeId || 'classic-ux3-theme')
   
+  // DEBUG: Prominent logging to trace theme resolution
+  console.log('🔍 [CanvasThemeProvider] THEME RESOLUTION:', {
+    // Props received
+    propWebsiteId,
+    propThemeId,
+    propBrandMode,
+    // Store values
+    storeWebsiteId,
+    storeWebsiteCount: websites?.length,
+    // Resolution
+    currentWebsiteId,
+    currentWebsiteName: currentWebsite?.name,
+    currentWebsiteThemeId: currentWebsite?.themeId,
+    // Final values
+    themeIdToUse,
+    brandMode,
+    // Debug flags
+    isDesignConsolePreview,
+    scopeCSS,
+    timestamp: new Date().toISOString()
+  })
+  
   debugLog('log', '🎨 CanvasThemeProvider RENDER:', {
     currentView,
     websiteId: currentWebsiteId,
@@ -390,7 +412,21 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   useEffect(() => {
     debugLog('log', '🚀 useEffect RUNNING! Dependencies:', { themeId: currentTheme?.id, brandMode, scopeCSS, websiteId: currentWebsiteId })
     
-    const styleId = `theme-styles-${currentTheme.id}-${scopeCSS ? 'scoped' : 'global'}`
+    // Include websiteId in styleId to ensure each website gets its own styles
+    const styleId = `theme-styles-${currentTheme.id}-${currentWebsiteId}-${scopeCSS ? 'scoped' : 'global'}`
+    
+    // DEBUG: Log exactly what's being injected
+    console.log('💉 [CanvasThemeProvider] INJECTING STYLES:', {
+      styleId,
+      themeId: currentTheme.id,
+      themeName: currentTheme.name,
+      websiteId: currentWebsiteId,
+      propWebsiteId,
+      propThemeId,
+      primaryColor: currentTheme.colors?.primary,
+      scopeCSS,
+      timestamp: new Date().toISOString()
+    })
     
     debugLog('log', '🧹 Removing ALL old theme styles')
     // Remove ALL old theme styles (not just this theme)
