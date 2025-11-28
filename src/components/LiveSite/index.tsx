@@ -1030,6 +1030,7 @@ function LiveSiteRoutes({ websiteId }: { websiteId: string }) {
     <WebsiteContext.Provider value={websiteId}>
       <Routes>
         <Route path="/" element={<LiveSiteLayout websiteId={websiteId}><HomePage /></LiveSiteLayout>} />
+        <Route path="/home" element={<LiveSiteLayout websiteId={websiteId}><HomePage /></LiveSiteLayout>} />
         <Route path="/about" element={<LiveSiteLayout websiteId={websiteId}><AboutPage /></LiveSiteLayout>} />
         <Route path="/search" element={<LiveSiteLayout websiteId={websiteId}><SearchPage /></LiveSiteLayout>} />
         <Route path="/journals" element={<LiveSiteLayout websiteId={websiteId}><JournalsBrowsePage /></LiveSiteLayout>} />
