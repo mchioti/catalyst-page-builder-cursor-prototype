@@ -9,7 +9,6 @@ import { useEffect, useRef } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { PageBuilder } from '../PageBuilder'
 import { DynamicBrandingCSS } from '../BrandingSystem/DynamicBrandingCSS'
-import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { NotificationContainer, IssuesSidebar } from '../Notifications'
 import { PrototypeControls } from '../PrototypeControls'
 import { usePageStore } from '../../stores'
@@ -131,55 +130,56 @@ export function PageBuilderEditor() {
   
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* DynamicBrandingCSS injects journal/subject branding - NOT the global theme */}
       <DynamicBrandingCSS websiteId={websiteId || 'catalyst-demo'} usePageStore={usePageStore} />
-      <CanvasThemeProvider usePageStore={usePageStore}>
-        {/* Editor Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(`/live/${websiteId}${pageName === 'home' ? '' : '/' + pageName}`)}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-            >
-              ← Back to Live Site
-            </button>
-            <div className="h-6 w-px bg-gray-300" />
-            <div>
-              <h1 className="text-sm font-semibold text-gray-900">{website?.name || websiteId}</h1>
-              <p className="text-xs text-gray-500">{getEditingLabel()}</p>
-            </div>
+      
+      {/* Editor Header - NOT wrapped in CanvasThemeProvider to avoid theme font leaking */}
+      <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(`/live/${websiteId}${pageName === 'home' ? '' : '/' + pageName}`)}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+          >
+            ← Back to Live Site
+          </button>
+          <div className="h-6 w-px bg-gray-300" />
+          <div>
+            <h1 className="text-sm font-semibold text-gray-900">{website?.name || websiteId}</h1>
+            <p className="text-xs text-gray-500">{getEditingLabel()}</p>
           </div>
-          <div className="flex items-center gap-2">
-            {scope !== 'individual' && (
-              <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded">
-                {scope === 'global' ? '🌐 Template Mode' : scope === 'journal' ? '📚 Journal Mode' : '📄 Issue Type Mode'}
-              </span>
-            )}
-            <button
-              onClick={() => navigate('/v1')}
-              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded transition-colors"
-            >
-              Design Console
-            </button>
-          </div>
-        </header>
-        
-        {/* Page Builder */}
-        <PageBuilder 
-          usePageStore={usePageStore}
-          buildWidget={buildWidget}
-          TemplateCanvas={TemplateCanvas}
-          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-          isSection={isSection}
-        />
-        
-        {/* Prototype Controls */}
-        <PrototypeControls
-          currentPersona={currentPersona}
-          onPersonaChange={setCurrentPersona}
-          consoleMode={consoleMode}
-          onConsoleModeChange={setConsoleMode}
-        />
-      </CanvasThemeProvider>
+        </div>
+        <div className="flex items-center gap-2">
+          {scope !== 'individual' && (
+            <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded">
+              {scope === 'global' ? '🌐 Template Mode' : scope === 'journal' ? '📚 Journal Mode' : '📄 Issue Type Mode'}
+            </span>
+          )}
+          <button
+            onClick={() => navigate('/v1')}
+            className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded transition-colors"
+          >
+            Design Console
+          </button>
+        </div>
+      </header>
+      
+      {/* Page Builder - has its own internal CanvasThemeProvider for the canvas only */}
+      <PageBuilder 
+        usePageStore={usePageStore}
+        buildWidget={buildWidget}
+        TemplateCanvas={TemplateCanvas}
+        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+        isSection={isSection}
+      />
+      
+      {/* Prototype Controls - NOT wrapped in theme provider */}
+      <PrototypeControls
+        currentPersona={currentPersona}
+        onPersonaChange={setCurrentPersona}
+        consoleMode={consoleMode}
+        onConsoleModeChange={setConsoleMode}
+      />
+      
       <NotificationContainer />
       <IssuesSidebar />
     </div>

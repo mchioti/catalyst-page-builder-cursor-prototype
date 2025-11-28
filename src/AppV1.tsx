@@ -93,13 +93,10 @@ export default function App() {
   if (currentView === 'design-console') {
     return (
       <>
+        {/* NOTE: CanvasThemeProvider removed from here - it should only wrap specific preview areas
+            inside DesignConsole, not the entire console UI. Theme CSS is injected separately. */}
         <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
-        <CanvasThemeProvider 
-          usePageStore={usePageStore} 
-          scopeCSS={true}
-        >
-          <DesignConsole />
-        </CanvasThemeProvider>
+        <DesignConsole />
         <NotificationContainer />
         <PrototypeControls
           currentPersona={currentPersona}
