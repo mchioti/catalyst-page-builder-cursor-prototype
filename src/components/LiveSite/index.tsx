@@ -19,6 +19,8 @@ import { EditingScopeButton } from './EditingScopeButton'
 import { CanvasRenderer } from './CanvasRenderer'
 import { useWebsiteStore } from '../../v2/stores/websiteStore'
 import { usePageStore } from '../../stores'
+import { createCatalystHomepage } from '../PageBuilder/catalystHomepage'
+import { createHomepageTemplate } from '../PageBuilder/homepageTemplate'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { 
   getIssuesByJournal, 
@@ -173,10 +175,8 @@ function HomePage() {
     if (!pageCanvas || pageCanvas.length === 0) {
       // Initialize with V1 homepage template
       if (websiteId === 'catalyst-demo') {
-        const { createCatalystHomepage } = require('../PageBuilder/catalystHomepage')
         setPageCanvas(websiteId, 'home', createCatalystHomepage())
       } else {
-        const { createHomepageTemplate } = require('../PageBuilder/homepageTemplate')
         setPageCanvas(websiteId, 'home', createHomepageTemplate())
       }
     }
