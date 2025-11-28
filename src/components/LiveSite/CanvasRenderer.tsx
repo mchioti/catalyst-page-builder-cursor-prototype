@@ -103,15 +103,6 @@ interface CanvasRendererProps {
 
 // Main Canvas Renderer - Uses V1's actual renderers for proper theming
 export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, brandMode, templateContext }: CanvasRendererProps) {
-  // DEBUG: Log what props we're receiving
-  console.log('🎨 [CanvasRenderer] Rendering with:', {
-    websiteId,
-    themeId,
-    brandMode,
-    hasItems: items?.length || 0,
-    timestamp: new Date().toISOString()
-  })
-  
   if (!items || items.length === 0) {
     return null
   }

@@ -85,39 +85,6 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
         ? previewThemeId 
         : (currentWebsite?.themeId || 'classic-ux3-theme'))
   
-  // DEBUG: Log the decision making process
-  console.log('🧠 [CanvasThemeProvider] THEME DECISION:', {
-    propThemeId,
-    isDesignConsolePreview,
-    currentView,
-    previewThemeId,
-    currentWebsiteThemeId: currentWebsite?.themeId,
-    FINAL_themeIdToUse: themeIdToUse,
-    decision: propThemeId ? 'USING PROP' : (isDesignConsolePreview ? 'USING PREVIEW' : 'USING WEBSITE/FALLBACK')
-  })
-  
-  // DEBUG: Prominent logging to trace theme resolution
-  console.log('🔍 [CanvasThemeProvider] THEME RESOLUTION:', {
-    // Props received
-    propWebsiteId,
-    propThemeId,
-    propBrandMode,
-    // Store values
-    storeWebsiteId,
-    storeWebsiteCount: websites?.length,
-    // Resolution
-    currentWebsiteId,
-    currentWebsiteName: currentWebsite?.name,
-    currentWebsiteThemeId: currentWebsite?.themeId,
-    // Final values
-    themeIdToUse,
-    brandMode,
-    // Debug flags
-    isDesignConsolePreview,
-    scopeCSS,
-    timestamp: new Date().toISOString()
-  })
-  
   debugLog('log', '🎨 CanvasThemeProvider RENDER:', {
     currentView,
     websiteId: currentWebsiteId,
@@ -134,16 +101,6 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   
   // Find the theme
   const rawTheme = themes.find((t: any) => t.id === themeIdToUse) || themes.find((t: any) => t.id === 'classic-ux3-theme')
-  
-  // DEBUG: Log theme lookup result
-  console.log('🔎 [CanvasThemeProvider] THEME LOOKUP:', {
-    themeIdToUse,
-    themeFound: !!themes.find((t: any) => t.id === themeIdToUse),
-    rawThemeId: rawTheme?.id,
-    rawThemeName: rawTheme?.name,
-    availableThemeIds: themes.map((t: any) => t.id),
-    themesCount: themes.length
-  })
   
   // Resolve token references based on brand mode
   let currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
@@ -443,19 +400,6 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
     
     // Include websiteId in styleId to ensure each website gets its own styles
     const styleId = `theme-styles-${currentTheme.id}-${currentWebsiteId}-${scopeCSS ? 'scoped' : 'global'}`
-    
-    // DEBUG: Log exactly what's being injected
-    console.log('💉 [CanvasThemeProvider] INJECTING STYLES:', {
-      styleId,
-      themeId: currentTheme.id,
-      themeName: currentTheme.name,
-      websiteId: currentWebsiteId,
-      propWebsiteId,
-      propThemeId,
-      primaryColor: currentTheme.colors?.primary,
-      scopeCSS,
-      timestamp: new Date().toISOString()
-    })
     
     debugLog('log', '🧹 Removing ALL old theme styles')
     // Remove ALL old theme styles (not just this theme)
