@@ -163,17 +163,45 @@ function HomePage() {
   const websiteId = useWebsiteId()
   const websites = useWebsiteStore(state => state.websites)
   const website = websites.find(w => w.id === websiteId)
-  const journals = website?.journals || []
   
   // Check for stored canvas data from the Page Builder
   const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'home'))
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Auto-initialize canvas data if not present (so Live Site always shows canvas content)
+  useEffect(() => {
+    if (!pageCanvas || pageCanvas.length === 0) {
+      // Initialize with V1 homepage template
+      if (websiteId === 'catalyst-demo') {
+        const { createCatalystHomepage } = require('../PageBuilder/catalystHomepage')
+        setPageCanvas(websiteId, 'home', createCatalystHomepage())
+      } else {
+        const { createHomepageTemplate } = require('../PageBuilder/homepageTemplate')
+        setPageCanvas(websiteId, 'home', createHomepageTemplate())
+      }
+    }
+  }, [websiteId, pageCanvas, setPageCanvas])
   
   // If we have stored canvas data, render it
   if (pageCanvas && pageCanvas.length > 0) {
-    return <CanvasRenderer items={pageCanvas} />
+    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
   }
   
-  // Fallback: Render default homepage (for websites without canvas data)
+  // Loading state while initializing
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-gray-500">Loading homepage...</div>
+    </div>
+  )
+}
+
+// Keep the old V2 JSX homepage as a reference (not used, but preserved)
+function HomePage_V2_Reference() {
+  const websiteId = useWebsiteId()
+  const websites = useWebsiteStore(state => state.websites)
+  const website = websites.find(w => w.id === websiteId)
+  const journals = website?.journals || []
+  
   return (
     <div>
       {/* Hero Section */}
