@@ -113,7 +113,7 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', templateCon
   return (
     <>
       <DynamicBrandingCSS websiteId={websiteId} usePageStore={usePageStore} />
-      <CanvasThemeProvider usePageStore={usePageStore}>
+      <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId}>
         <div className="canvas-renderer-live">
           {processedItems.map((item, idx) => {
             if (isSection(item)) {

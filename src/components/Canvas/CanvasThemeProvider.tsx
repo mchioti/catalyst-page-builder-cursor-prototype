@@ -44,20 +44,23 @@ interface CanvasThemeProviderProps {
   children: React.ReactNode
   usePageStore: any // TODO: Type this properly when extracting store
   scopeCSS?: boolean // If true, CSS will be scoped to .theme-preview only (for Design Console). Also uses previewBrandMode and previewThemeId from store.
+  websiteId?: string // Optional: Override the website ID from props (for Live Site viewing different websites)
 }
 
-export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false }: CanvasThemeProviderProps) {
+export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, websiteId: propWebsiteId }: CanvasThemeProviderProps) {
   // Use selector to explicitly track brand mode changes
-  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
+  const storeWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
+  
+  // Use prop websiteId if provided (for Live Site), otherwise fall back to store
+  const currentWebsiteId = propWebsiteId || storeWebsiteId
   const currentView = usePageStore((state: any) => state.currentView)
   const themes = usePageStore((state: any) => state.themes)
-  const currentWebsite = usePageStore((state: any) => 
-    state.websites?.find((w: any) => w.id === state.currentWebsiteId)
-  )
-  const storeBrandMode: BrandMode = usePageStore((state: any) => {
-    const website = state.websites?.find((w: any) => w.id === state.currentWebsiteId)
-    return website?.brandMode || 'wiley'
-  })
+  const websites = usePageStore((state: any) => state.websites)
+  
+  // Find website using the resolved currentWebsiteId (prop or store)
+  const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
+  
+  const storeBrandMode: BrandMode = currentWebsite?.brandMode || 'wiley'
   
   // Preview mode is ONLY for Design Console, not for Page Builder editor
   const isDesignConsolePreview = currentView === 'design-console'
