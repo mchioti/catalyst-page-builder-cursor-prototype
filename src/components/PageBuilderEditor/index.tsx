@@ -80,6 +80,9 @@ export function PageBuilderEditor() {
     return 'home' // Default
   }
   
+  // Get current website to determine design ID
+  const currentWebsite = websites.find(w => w.id === websiteId)
+  
   // Load page content on mount
   useEffect(() => {
     const pageKey = `${websiteId}:${pageName}`
@@ -101,14 +104,16 @@ export function PageBuilderEditor() {
     }
     
     // No saved data - load default content based on page type and website
+    // Pass the website's themeId/designId to determine which design stub to use
     const pageType = getPageType(pageName)
-    const defaultContent = getPageStub(pageType, websiteId!)
+    const designId = currentWebsite?.themeId || currentWebsite?.designId || currentWebsite?.name
+    const defaultContent = getPageStub(pageType, websiteId!, designId)
     
     replaceCanvasItems(defaultContent)
     setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state
     setIsEditingLoadedWebsite(true)
     loadedPageRef.current = pageKey
-  }, [websiteId, pageName, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas])
+  }, [websiteId, pageName, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas, currentWebsite])
   
   // Auto-save canvas changes to pageCanvasData
   useEffect(() => {

@@ -188,17 +188,21 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
 
 function HomePage() {
   const websiteId = useWebsiteId()
+  const websites = useAllWebsites()
+  const website = websites.find(w => w.id === websiteId)
   
   // Check for stored canvas data from the Page Builder
   const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'home'))
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
   
   // Auto-initialize canvas data if not present
+  // Pass the website's themeId to determine which design stub to use
   useEffect(() => {
     if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, 'home', getHomepageStubForWebsite(websiteId))
+      const designId = website?.themeId || website?.designId || website?.name
+      setPageCanvas(websiteId, 'home', getHomepageStubForWebsite(websiteId, designId))
     }
-  }, [websiteId, pageCanvas, setPageCanvas])
+  }, [websiteId, pageCanvas, setPageCanvas, website])
   
   // Render canvas content
   if (pageCanvas && pageCanvas.length > 0) {
