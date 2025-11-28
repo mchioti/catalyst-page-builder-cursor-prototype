@@ -12,14 +12,31 @@
  * /live/journal/:journalId/article/:doi    → Article page
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Routes, Route, useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { EditingScopeButton } from './EditingScopeButton'
 import { CanvasRenderer } from './CanvasRenderer'
-import { useWebsiteStore } from '../../v2/stores/websiteStore'
 import { usePageStore } from '../../stores'
 import { mockWebsites } from '../../v2/data/mockWebsites'
+
+// Helper hook to get all websites from V1 store (includes user-created websites)
+function useAllWebsites() {
+  const v1Websites = usePageStore(state => state.websites)
+  
+  // Merge V1 websites with V2 mock websites, V1 takes precedence
+  return useMemo(() => {
+    const websiteMap = new Map<string, any>()
+    
+    // Add mock websites first
+    mockWebsites.forEach(w => websiteMap.set(w.id, w))
+    
+    // Override with V1 websites (includes user-created ones)
+    v1Websites.forEach(w => websiteMap.set(w.id, w))
+    
+    return Array.from(websiteMap.values())
+  }, [v1Websites])
+}
 import { 
   getHomepageStubForWebsite,
   createJournalsBrowseStub,
@@ -49,7 +66,7 @@ import type { Journal, Issue, Article } from '../../v2/types/core'
 function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; websiteId: string }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
   const basePath = `/live/${websiteId}`
@@ -201,7 +218,7 @@ function HomePage() {
 
 function JournalsBrowsePage() {
   const websiteId = useWebsiteId()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const journals = website?.journals || []
   
@@ -247,7 +264,7 @@ function JournalsBrowsePage() {
 function JournalHomePage() {
   const websiteId = useWebsiteId()
   const { journalId } = useParams<{ journalId: string }>()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
@@ -351,7 +368,7 @@ function JournalHomePage() {
 function IssueArchivePage() {
   const websiteId = useWebsiteId()
   const { journalId } = useParams<{ journalId: string }>()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
@@ -432,7 +449,7 @@ function IssueArchivePage() {
 function IssueTocPage() {
   const websiteId = useWebsiteId()
   const { journalId, vol, issue: issueNum } = useParams<{ journalId: string; vol: string; issue: string }>()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
@@ -543,7 +560,7 @@ function IssueTocPage() {
 function ArticlePage() {
   const websiteId = useWebsiteId()
   const { journalId, doi } = useParams<{ journalId: string; doi: string }>()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find(j => j.id === journalId)
   
@@ -632,7 +649,7 @@ function ArticlePage() {
 
 function AboutPage() {
   const websiteId = useWebsiteId()
-  const websites = useWebsiteStore(state => state.websites)
+  const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
   // Check for stored canvas data
@@ -940,16 +957,8 @@ function LiveSiteRoutes({ websiteId }: { websiteId: string }) {
 
 export function LiveSite() {
   const { websiteId } = useParams<{ websiteId: string }>()
-  const websites = useWebsiteStore(state => state.websites)
-  const addWebsite = useWebsiteStore(state => state.addWebsite)
+  const websites = useAllWebsites()
   const navigate = useNavigate()
-  
-  // Initialize the V2 store with mock data if empty
-  useEffect(() => {
-    if (websites.length === 0) {
-      mockWebsites.forEach(website => addWebsite(website))
-    }
-  }, [websites.length, addWebsite])
   
   // Validate websiteId
   const resolvedWebsiteId = websiteId || 'catalyst-demo'
