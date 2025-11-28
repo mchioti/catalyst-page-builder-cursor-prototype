@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { X } from 'lucide-react'
 import type { Website, Theme, Modification } from '../../types'
 import { usePageStore } from '../../AppV1'
@@ -110,7 +111,7 @@ export function SiteManagerWebsites() {
     debugLog('log', '✅ isEditingLoadedWebsite set to: true')
     
     // Load appropriate homepage content based on website
-    if (website.id === 'catalyst-demo-site') {
+    if (website.id === 'catalyst-demo') {
       // Catalyst has a modified homepage (diverged from base template)
       debugLog('log', '✏️ Loading Catalyst modified homepage...')
       const catalystHomepage = createCatalystHomepage()
@@ -177,12 +178,13 @@ export function SiteManagerWebsites() {
                   <tr key={website.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6">
                       <div>
-                        <button
-                          onClick={() => handleEditWebsiteHomepage(website)}
+                        <Link
+                          to={`/live/${website.id}`}
                           className="font-semibold text-blue-600 hover:text-blue-800 hover:underline text-left"
+                          title={`View ${website.name} live site`}
                         >
                           {website.name}
-                        </button>
+                        </Link>
                         <div className="text-sm text-gray-600">{website.domain}</div>
                       </div>
                     </td>

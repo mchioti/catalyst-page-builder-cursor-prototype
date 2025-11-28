@@ -570,6 +570,378 @@ export const mockContentSection: SharedSection = {
       
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-11-24')
+    },
+    
+    // NEW: Journal browse page variations
+    'featured-journals': {
+      id: 'content-featured-journals',
+      name: 'Featured Journals',
+      description: 'Highlighted journals for homepage',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Featured Journals',
+          level: 2,
+          align: 'center',
+          style: 'default'
+        },
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: 'Explore our leading publications in science, medicine, and technology.',
+          align: 'center'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'journals-grid': {
+      id: 'content-journals-grid',
+      name: 'Journals Grid',
+      description: 'Grid of all journals with cards',
+      layout: 'grid',
+      gridConfig: {
+        columns: 3,
+        gap: '2rem'
+      },
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: '📚 {website.journals.length} journals available. Click any journal to explore.',
+          align: 'center'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#f8fafc'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'issues-list': {
+      id: 'content-issues-list',
+      name: 'Issues List',
+      description: 'Archive of journal issues by volume',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'All Issues',
+          level: 2,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: 'Browse all volumes and issues of {journal.name}.',
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'articles-list': {
+      id: 'content-articles-list',
+      name: 'Articles List',
+      description: 'List of articles with publication cards',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Articles in this Issue',
+          level: 2,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: 'articles-publication-list',
+          type: 'publication-list',
+          skin: 'minimal',
+          contentSource: 'doi-list',
+          publications: [],
+          cardConfig: {
+            showContentTypeLabel: true,
+            showTitle: true,
+            showSubtitle: false,
+            showThumbnail: false,
+            thumbnailPosition: 'left',
+            showPublicationTitle: false,
+            showVolumeIssue: false,
+            showBookSeriesTitle: false,
+            showChapterPages: false,
+            showNumberOfIssues: false,
+            showPublicationDate: true,
+            showDOI: true,
+            showISSN: false,
+            showISBN: false,
+            showAuthors: true,
+            authorStyle: 'full',
+            showAffiliations: false,
+            showAbstract: true,
+            abstractLength: 'short',
+            showKeywords: false,
+            showAccessStatus: true,
+            showViewDownloadOptions: true,
+            showUsageMetrics: false,
+            titleStyle: 'medium'
+          },
+          layout: 'list',
+          maxItems: 10,
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'latest-articles': {
+      id: 'content-latest-articles',
+      name: 'Latest Articles',
+      description: 'Most recent publications',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Latest Articles',
+          level: 2,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: 'latest-publication-list',
+          type: 'publication-list',
+          skin: 'minimal',
+          contentSource: 'doi-list',
+          publications: [],
+          cardConfig: {
+            showContentTypeLabel: false,
+            showTitle: true,
+            showSubtitle: false,
+            showThumbnail: false,
+            thumbnailPosition: 'left',
+            showPublicationTitle: false,
+            showVolumeIssue: false,
+            showBookSeriesTitle: false,
+            showChapterPages: false,
+            showNumberOfIssues: false,
+            showPublicationDate: true,
+            showDOI: false,
+            showISSN: false,
+            showISBN: false,
+            showAuthors: true,
+            authorStyle: 'initials',
+            showAffiliations: false,
+            showAbstract: false,
+            abstractLength: 'short',
+            showKeywords: false,
+            showAccessStatus: false,
+            showViewDownloadOptions: false,
+            showUsageMetrics: false,
+            titleStyle: 'medium'
+          },
+          layout: 'list',
+          maxItems: 5,
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'search-results': {
+      id: 'content-search-results',
+      name: 'Search Results',
+      description: 'Search results with filters',
+      layout: 'two-columns',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Filter Results',
+          level: 3,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: '🔽 Publication Type\n🔽 Year\n🔽 Access Type\n🔽 Journal',
+          align: 'left'
+        },
+        {
+          id: 'search-publication-list',
+          type: 'publication-list',
+          skin: 'minimal',
+          contentSource: 'dynamic-query',
+          publications: [],
+          cardConfig: {
+            showContentTypeLabel: true,
+            showTitle: true,
+            showSubtitle: false,
+            showThumbnail: false,
+            thumbnailPosition: 'left',
+            showPublicationTitle: true,
+            showVolumeIssue: true,
+            showBookSeriesTitle: false,
+            showChapterPages: false,
+            showNumberOfIssues: false,
+            showPublicationDate: true,
+            showDOI: true,
+            showISSN: false,
+            showISBN: false,
+            showAuthors: true,
+            authorStyle: 'full',
+            showAffiliations: false,
+            showAbstract: true,
+            abstractLength: 'medium',
+            showKeywords: true,
+            showAccessStatus: true,
+            showViewDownloadOptions: true,
+            showUsageMetrics: false,
+            titleStyle: 'large'
+          },
+          layout: 'list',
+          maxItems: 20,
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    },
+    
+    'journal-sidebar': {
+      id: 'content-journal-sidebar',
+      name: 'Journal Sidebar',
+      description: 'Sidebar with current issue and metrics',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Current Issue',
+          level: 3,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: nanoid(),
+          type: 'image',
+          skin: 'minimal',
+          src: '{issue.coverImageUrl}',
+          alt: 'Current issue cover',
+          ratio: '3:4',
+          alignment: 'center',
+          width: 'full',
+          objectFit: 'cover'
+        },
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: 'Volume {issue.volume}, Issue {issue.issue}\n{issue.month} {issue.year}',
+          align: 'center'
+        },
+        {
+          id: nanoid(),
+          type: 'divider',
+          skin: 'minimal',
+          style: 'solid',
+          thickness: '1px',
+          color: '#e5e7eb',
+          marginTop: '1rem',
+          marginBottom: '1rem'
+        },
+        {
+          id: nanoid(),
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Journal Metrics',
+          level: 4,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: nanoid(),
+          type: 'text',
+          skin: 'minimal',
+          text: '📊 Impact Factor: {journal.impactFactor}\n📈 CiteScore: --\n📥 Downloads: --',
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#f8fafc'
+      },
+      contentMode: 'light',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
     }
   }
 }
@@ -770,15 +1142,442 @@ export const mockJournalBannerSection: SharedSection = {
 }
 
 // ============================================================================
-// JOURNAL-SPECIFIC BANNERS (Forks for each journal)
+// JOURNAL NAVIGATION (Context-Aware)
 // ============================================================================
 
-// Export all mock sections
+export const mockJournalNavSection: SharedSection = {
+  id: 'journal-nav',
+  name: 'Journal Navigation',
+  category: 'navigation',
+  description: 'Context-aware navigation for journal pages',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'journal-nav-default',
+      name: 'Default Journal Nav',
+      description: 'Horizontal journal navigation with contextual links',
+      layout: 'flexible',
+      
+      widgets: [
+        {
+          id: 'journal-nav-menu',
+          type: 'menu',
+          skin: 'minimal',
+          menuType: 'context-aware',
+          contextSource: 'journal',
+          style: 'horizontal',
+          align: 'left',
+          items: [
+            { id: nanoid(), label: 'Journal Home', url: '/journal/{journal.id}', target: '_self', displayCondition: 'always', order: 0 },
+            { id: nanoid(), label: 'Current Issue', url: '/journal/{journal.id}/toc/current', target: '_self', displayCondition: 'if-issue-exists', order: 1 },
+            { id: nanoid(), label: 'All Issues', url: '/journal/{journal.id}/loi', target: '_self', displayCondition: 'if-has-archive', order: 2 },
+            { id: nanoid(), label: 'Submit', url: '/journal/{journal.id}/submit', target: '_self', displayCondition: 'always', order: 3 },
+            { id: nanoid(), label: 'About', url: '/journal/{journal.id}/about', target: '_self', displayCondition: 'always', order: 4 }
+          ]
+        }
+      ],
+      
+      flexConfig: {
+        direction: 'row',
+        wrap: false,
+        justifyContent: 'flex-start',
+        gap: '0'
+      },
+      
+      background: {
+        type: 'color',
+        color: '#1e3a5f'  // Dark blue
+      },
+      contentMode: 'dark',
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+// ============================================================================
+// SEARCH HEADER
+// ============================================================================
+
+export const mockSearchHeaderSection: SharedSection = {
+  id: 'search-header',
+  name: 'Search Header',
+  category: 'hero',
+  description: 'Search page header with search input and filters',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'search-header-default',
+      name: 'Default Search Header',
+      description: 'Search input with result count',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: 'search-title',
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Search Results',
+          level: 1,
+          align: 'left'
+        },
+        {
+          id: 'search-query-display',
+          type: 'text',
+          skin: 'minimal',
+          text: 'Showing results for "{search.query}"',
+          align: 'left'
+        },
+        {
+          id: 'search-results-count',
+          type: 'text',
+          skin: 'minimal',
+          text: '{search.totalResults} results found',
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#f8fafc'
+      },
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+// ============================================================================
+// ISSUE NAVIGATION (Prev/Next)
+// ============================================================================
+
+export const mockIssueNavigationSection: SharedSection = {
+  id: 'issue-navigation',
+  name: 'Issue Navigation',
+  category: 'navigation',
+  description: 'Navigation between issues with section filters',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'issue-nav-default',
+      name: 'Default Issue Navigation',
+      description: 'Prev/Next issue links and section jump',
+      layout: 'flexible',
+      
+      widgets: [
+        {
+          id: 'issue-nav-info',
+          type: 'text',
+          skin: 'minimal',
+          text: '<strong>Volume {issue.volume}, Issue {issue.issue}</strong> • {issue.month} {issue.year}',
+          align: 'left'
+        },
+        {
+          id: 'issue-nav-spacer',
+          type: 'spacer',
+          skin: 'minimal',
+          height: '1rem',
+          flexProperties: { grow: true }
+        },
+        {
+          id: 'issue-nav-prev-next',
+          type: 'menu',
+          skin: 'minimal',
+          menuType: 'custom',
+          style: 'horizontal',
+          align: 'right',
+          items: [
+            { id: nanoid(), label: '← Previous Issue', url: '/journal/{journal.id}/toc/{issue.prevVol}/{issue.prevIssue}', target: '_self', displayCondition: 'always', order: 0 },
+            { id: nanoid(), label: 'Next Issue →', url: '/journal/{journal.id}/toc/{issue.nextVol}/{issue.nextIssue}', target: '_self', displayCondition: 'always', order: 1 }
+          ]
+        }
+      ],
+      
+      flexConfig: {
+        direction: 'row',
+        wrap: false,
+        justifyContent: 'space-between',
+        gap: '1rem'
+      },
+      
+      background: {
+        type: 'color',
+        color: '#f1f5f9'
+      },
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+// ============================================================================
+// ARTICLE SECTIONS
+// ============================================================================
+
+export const mockArticleHeaderSection: SharedSection = {
+  id: 'article-header',
+  name: 'Article Header',
+  category: 'hero',
+  description: 'Article title, authors, and metadata',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'article-header-default',
+      name: 'Default Article Header',
+      description: 'Full article header with all metadata',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: 'article-title',
+          type: 'heading',
+          skin: 'minimal',
+          text: '{article.title}',
+          level: 1,
+          align: 'left',
+          style: 'default'
+        },
+        {
+          id: 'article-authors',
+          type: 'text',
+          skin: 'minimal',
+          text: '{article.authors}',
+          align: 'left'
+        },
+        {
+          id: 'article-meta',
+          type: 'text',
+          skin: 'minimal',
+          text: '<strong>DOI:</strong> {article.doi} | <strong>Published:</strong> {article.publishedAt} | <strong>Pages:</strong> {article.pageRange}',
+          align: 'left'
+        },
+        {
+          id: 'article-metrics',
+          type: 'text',
+          skin: 'minimal',
+          text: '📊 {article.citations} citations • 📥 {article.downloads} downloads',
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+export const mockArticleContentSection: SharedSection = {
+  id: 'article-content',
+  name: 'Article Content',
+  category: 'content',
+  description: 'Article abstract and full text',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'article-content-default',
+      name: 'Default Article Content',
+      description: 'Abstract and publication details',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: 'article-abstract-heading',
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Abstract',
+          level: 2,
+          align: 'left'
+        },
+        {
+          id: 'article-abstract',
+          type: 'text',
+          skin: 'minimal',
+          text: '{article.abstract}',
+          align: 'left'
+        },
+        {
+          id: 'article-divider',
+          type: 'divider',
+          skin: 'minimal',
+          style: 'solid',
+          thickness: '1px',
+          color: '#e5e7eb',
+          marginTop: '2rem',
+          marginBottom: '2rem'
+        },
+        {
+          id: 'article-access-note',
+          type: 'text',
+          skin: 'minimal',
+          text: '{article.isOpenAccess:This article is Open Access and freely available.|Access options available below.}',
+          align: 'left'
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#ffffff'
+      },
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+export const mockArticleSidebarSection: SharedSection = {
+  id: 'article-sidebar',
+  name: 'Article Sidebar',
+  category: 'content',
+  description: 'Article download options and related articles',
+  isGlobal: true,
+  allowOverrides: true,
+  lockLevel: 'unlocked',
+  usedBy: [],
+  themeId: 'foundation-theme-v1',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-11-28'),
+  
+  variations: {
+    default: {
+      id: 'article-sidebar-default',
+      name: 'Default Article Sidebar',
+      description: 'Download buttons and related content',
+      layout: 'one-column',
+      
+      widgets: [
+        {
+          id: 'sidebar-download-heading',
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Access Options',
+          level: 3,
+          align: 'left'
+        },
+        {
+          id: 'sidebar-pdf-button',
+          type: 'button',
+          skin: 'primary',
+          text: '📄 Download PDF',
+          href: '{article.pdfUrl}',
+          style: 'solid',
+          color: 'color1',
+          size: 'medium',
+          align: 'left'
+        },
+        {
+          id: 'sidebar-cite-button',
+          type: 'button',
+          skin: 'minimal',
+          text: '📎 Cite This Article',
+          href: '#cite',
+          style: 'outline',
+          color: 'color2',
+          size: 'small',
+          align: 'left'
+        },
+        {
+          id: 'sidebar-divider',
+          type: 'divider',
+          skin: 'minimal',
+          style: 'solid',
+          thickness: '1px',
+          color: '#e5e7eb',
+          marginTop: '1rem',
+          marginBottom: '1rem'
+        },
+        {
+          id: 'sidebar-share-heading',
+          type: 'heading',
+          skin: 'minimal',
+          text: 'Share',
+          level: 4,
+          align: 'left'
+        },
+        {
+          id: 'sidebar-share-menu',
+          type: 'menu',
+          skin: 'minimal',
+          menuType: 'custom',
+          style: 'vertical',
+          align: 'left',
+          items: [
+            { id: nanoid(), label: '🐦 Twitter', url: 'https://twitter.com/share?url={article.doi}', target: '_blank', displayCondition: 'always', order: 0 },
+            { id: nanoid(), label: '💼 LinkedIn', url: 'https://linkedin.com/share?url={article.doi}', target: '_blank', displayCondition: 'always', order: 1 },
+            { id: nanoid(), label: '📧 Email', url: 'mailto:?subject={article.title}&body={article.doi}', target: '_self', displayCondition: 'always', order: 2 }
+          ]
+        }
+      ],
+      
+      background: {
+        type: 'color',
+        color: '#f8fafc'
+      },
+      
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-11-28')
+    }
+  }
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
 export const mockSharedSections: SharedSection[] = [
   mockHeaderSection,
   mockFooterSection,
   mockHeroSection,
   mockContentSection,
-  mockJournalBannerSection
+  mockJournalBannerSection,
+  mockJournalNavSection,
+  mockSearchHeaderSection,
+  mockIssueNavigationSection,
+  mockArticleHeaderSection,
+  mockArticleContentSection,
+  mockArticleSidebarSection
 ]
 

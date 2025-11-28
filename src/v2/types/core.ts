@@ -172,6 +172,64 @@ export type Journal = {
 }
 
 // ============================================================================
+// ISSUES (Within Journals)
+// ============================================================================
+
+export type Issue = {
+  id: string
+  journalId: string
+  
+  // Issue identification
+  volume: number
+  issue: number
+  year: number
+  month?: number  // 1-12
+  
+  // Display info
+  title?: string  // Optional special issue title
+  coverImageUrl?: string
+  
+  // Content
+  articleDois: string[]  // DOIs of articles in this issue
+  
+  // Status
+  isCurrentIssue: boolean
+  isSpecialIssue: boolean
+  publishedAt: Date
+  
+  // Metadata
+  createdAt: Date
+  updatedAt: Date
+}
+
+// ============================================================================
+// ARTICLES (Simplified - content from DOI)
+// ============================================================================
+
+export type Article = {
+  doi: string  // Primary identifier
+  journalId: string
+  issueId?: string  // Optional: which issue this belongs to
+  
+  // Basic metadata (would be fetched from CrossRef in real system)
+  title: string
+  authors: string[]
+  abstract?: string
+  
+  // Publication info
+  publishedAt: Date
+  pageRange?: string  // e.g., "123-145"
+  
+  // Access
+  isOpenAccess: boolean
+  pdfUrl?: string
+  
+  // Metrics (mock)
+  citations?: number
+  downloads?: number
+}
+
+// ============================================================================
 // WEBSITES
 // ============================================================================
 

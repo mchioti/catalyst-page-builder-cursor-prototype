@@ -12,7 +12,7 @@ const ctaSection: CustomSection = {
   name: 'Call to Action',
   description: 'Simple CTA section with heading and button',
   source: 'mock',
-  websiteId: 'catalyst-demo-site',
+  websiteId: 'catalyst-demo',
   websiteName: 'Catalyst Demo Site',
   createdAt: new Date('2024-01-01'),
   widgets: [], // Legacy field
@@ -65,7 +65,7 @@ const footerSection: CustomSection = {
   name: 'Simple Footer',
   description: 'Basic footer with copyright and links',
   source: 'mock',
-  websiteId: 'catalyst-demo-site',
+  websiteId: 'catalyst-demo',
   websiteName: 'Catalyst Demo Site',
   createdAt: new Date('2024-01-01'),
   widgets: [],

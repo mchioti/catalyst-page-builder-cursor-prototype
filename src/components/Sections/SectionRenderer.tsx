@@ -357,7 +357,7 @@ export function SectionRenderer({
   usePageStore,
   isLiveMode = false,
   journalContext,
-  websiteId = 'catalyst-demo-site', // Default website ID
+  websiteId = 'catalyst-demo', // Default website ID
   sidebarHeight,
   isInSidebarGroup = false
 }: SectionRendererProps) {

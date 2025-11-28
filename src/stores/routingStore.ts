@@ -60,7 +60,7 @@ export const useRoutingStore = create<RoutingState>((set) => ({
   siteManagerView: 'websites',
   editingContext: 'page',
   templateEditingContext: null,
-  currentWebsiteId: 'catalyst-demo-site',
+  currentWebsiteId: 'catalyst-demo',
   mockLiveSiteRoute: '/',
   
   // Theme Preview

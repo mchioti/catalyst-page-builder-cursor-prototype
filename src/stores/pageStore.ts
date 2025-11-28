@@ -102,7 +102,7 @@ export const usePageStore = create<PageState>((set, get) => ({
   siteManagerView: 'websites', 
   editingContext: 'page',
   templateEditingContext: null,
-  currentWebsiteId: 'catalyst-demo-site',
+  currentWebsiteId: 'catalyst-demo',
   mockLiveSiteRoute: '/',
   previewBrandMode: 'wiley' as 'wiley' | 'wt' | 'dummies',
   previewThemeId: 'classic-ux3-theme',
@@ -257,6 +257,10 @@ export const usePageStore = create<PageState>((set, get) => ({
   routeCanvasItems: {},
   globalTemplateCanvas: [],
   journalTemplateCanvas: {},
+  
+  // Per-website, per-page canvas storage (for Live Site integration)
+  // Key format: "websiteId:pageId" -> CanvasItem[]
+  pageCanvasData: {} as Record<string, CanvasItem[]>,
   customSections: initializeCustomSections(),
   customStarterPages: initializeCustomStarterPages(),
   templates: [],
@@ -324,6 +328,24 @@ export const usePageStore = create<PageState>((set, get) => ({
     const newRouteCanvasItems = { ...state.routeCanvasItems }
     delete newRouteCanvasItems[route]
     return { routeCanvasItems: newRouteCanvasItems }
+  }),
+  
+  // Per-website, per-page canvas management (for Live Site integration)
+  getPageCanvas: (websiteId: string, pageId: string) => {
+    const state = get()
+    const key = `${websiteId}:${pageId}`
+    return state.pageCanvasData[key] || null
+  },
+  setPageCanvas: (websiteId: string, pageId: string, items: CanvasItem[]) => set((state) => ({
+    pageCanvasData: {
+      ...state.pageCanvasData,
+      [`${websiteId}:${pageId}`]: items
+    }
+  })),
+  clearPageCanvas: (websiteId: string, pageId: string) => set((state) => {
+    const newPageCanvasData = { ...state.pageCanvasData }
+    delete newPageCanvasData[`${websiteId}:${pageId}`]
+    return { pageCanvasData: newPageCanvasData }
   }),
   
   // Global template management

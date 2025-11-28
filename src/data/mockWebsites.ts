@@ -2,7 +2,7 @@ import type { Website } from '../types/templates'
 
 export const mockWebsites: Website[] = [
   {
-    id: 'catalyst-demo-site',
+    id: 'catalyst-demo',
     name: 'Catalyst Demo Site',
     domain: 'https://demo.catalyst-pb.com/',
     themeId: 'classic-ux3-theme',

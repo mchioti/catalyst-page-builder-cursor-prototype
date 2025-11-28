@@ -34,11 +34,11 @@ export type DesignConsoleView =
   | 'ant-design-starter-library'
   | 'ant-design-section-library'
   // Website-level views (per-website customization)
-  | 'catalyst-demo-site-settings'
-  | 'catalyst-demo-site-branding'
-  | 'catalyst-demo-site-templates'
-  | 'catalyst-demo-site-publication-cards'
-  | 'catalyst-demo-site-custom-templates'
+  | 'catalyst-demo-settings'
+  | 'catalyst-demo-branding'
+  | 'catalyst-demo-templates'
+  | 'catalyst-demo-publication-cards'
+  | 'catalyst-demo-custom-templates'
   | 'febs-press-settings'
   | 'febs-press-branding'
   | 'febs-press-templates'
@@ -163,6 +163,7 @@ export type PageState = {
   routeCanvasItems: Record<string, CanvasItem[]> // Route-specific canvas storage
   globalTemplateCanvas: CanvasItem[] // Global template changes that apply to all TOC routes
   journalTemplateCanvas: Record<string, CanvasItem[]> // Journal-specific template storage (journalCode -> template)
+  pageCanvasData: Record<string, CanvasItem[]> // Per-website, per-page canvas storage (key: "websiteId:pageId")
   customSections: CustomSection[]
   customStarterPages: CustomStarterPage[]
   publicationCardVariants: PublicationCardVariant[]
@@ -192,6 +193,11 @@ export type PageState = {
   getCanvasItemsForRoute: (route: string) => CanvasItem[]
   setCanvasItemsForRoute: (route: string, items: CanvasItem[]) => void
   clearCanvasItemsForRoute: (route: string) => void
+  
+  // Per-website, per-page canvas management (for Live Site integration)
+  getPageCanvas: (websiteId: string, pageId: string) => CanvasItem[] | null
+  setPageCanvas: (websiteId: string, pageId: string, items: CanvasItem[]) => void
+  clearPageCanvas: (websiteId: string, pageId: string) => void
   
   // Global template management
   setGlobalTemplateCanvas: (items: CanvasItem[]) => void

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { 
   Settings, 
   Palette, 
@@ -36,9 +37,9 @@ const themePreviewImages = {
 }
 
 export function DesignConsole() {
-  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites, consoleMode, currentPersona } = usePageStore()
+  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites, consoleMode } = usePageStore()
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
-  const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['catalyst-demo-site'])) // Default expand catalyst-demo-site
+  const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['catalyst-demo'])) // Default expand catalyst-demo
 
   // Filter websites based on console mode (controlled by PrototypeControls panel)
   const displayedWebsites = consoleMode === 'single' 
@@ -85,13 +86,13 @@ export function DesignConsole() {
             {/* Console Mode moved to Prototype Controls panel (bottom) */}
             </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCurrentView('mock-live-site')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            <Link
+              to="/v1/mock"
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-md hover:bg-amber-200 text-sm font-medium"
+              title="View old Mock Live Site (ADVMA/EMBO) for reference"
             >
-              <Globe className="w-4 h-4" />
-              View Live Site
-            </button>
+              📦 Legacy Preview
+            </Link>
           </div>
                   </div>
                 </div>
@@ -129,7 +130,7 @@ export function DesignConsole() {
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4" />
                       <span className="font-medium">{website.name}</span>
-                        </div>
+                    </div>
                     <ChevronDown className={`w-4 h-4 transition-transform ${
                       isWebsiteExpanded(website.id) ? 'transform rotate-180' : ''
                     }`} />

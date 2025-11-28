@@ -755,7 +755,7 @@ export function MockLiveSite({
   const editingContext = usePageStore((state: any) => state.editingContext)
   const templateEditingContext = usePageStore((state: any) => state.templateEditingContext)
   const schemaObjects = usePageStore((state: any) => state.schemaObjects) || []
-  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'catalyst-demo-site'
+  const currentWebsiteId = usePageStore((state: any) => state.currentWebsiteId) || 'catalyst-demo'
   const journalCode = getJournalCode(mockLiveSiteRoute)
   
   debugLog('log', '📊 MockLiveSite State:', {

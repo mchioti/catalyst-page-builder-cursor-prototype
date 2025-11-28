@@ -12,7 +12,7 @@ const catalystGenericHomepage: CustomStarterPage = {
   name: 'Classic Homepage Template',
   description: 'Generic homepage template provided by Classic theme',
   source: 'mock',
-  websiteId: 'catalyst-demo-site',
+  websiteId: 'catalyst-demo',
   websiteName: 'Catalyst Demo Site',
   createdAt: new Date('2024-01-01'),
   canvasItems: [

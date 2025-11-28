@@ -213,43 +213,50 @@ export function PageBuilder({
   
   // Homepage template auto-loading
   // Load a starter canvas with one section when Page Builder opens with empty canvas
+  // BUT skip if content was already loaded externally (isEditingLoadedWebsite)
   useEffect(() => {
-    if (editingContext === 'page' && canvasItems.length === 0) {
-      debugLog('log', '📄 Empty canvas detected - loading starter section')
-      
-      // Create a simple one-column section as a starting point
-      const starterSection = {
-        id: nanoid(),
-        name: 'Section',
-        type: 'content-block' as const,
-        layout: 'one-column' as const,
-        areas: [
-          {
-            id: nanoid(),
-            name: 'Content',
-            widgets: []
+    // Give time for external content to load first
+    const timer = setTimeout(() => {
+      const currentState = usePageStore.getState()
+      if (editingContext === 'page' && currentState.canvasItems.length === 0 && !currentState.isEditingLoadedWebsite) {
+        debugLog('log', '📄 Empty canvas detected - loading starter section')
+        
+        // Create a simple one-column section as a starting point
+        const starterSection = {
+          id: nanoid(),
+          name: 'Section',
+          type: 'content-block' as const,
+          layout: 'one-column' as const,
+          areas: [
+            {
+              id: nanoid(),
+              name: 'Content',
+              widgets: []
+            }
+          ],
+          styling: {
+            paddingTop: 'medium' as const,
+            paddingBottom: 'medium' as const,
+            paddingLeft: 'medium' as const,
+            paddingRight: 'medium' as const,
+            gap: 'medium' as const,
+            variant: 'full-width' as const,
+            textColor: 'default' as const
+          },
+          background: {
+            type: 'color' as const,
+            color: '#ffffff',
+            opacity: 1
           }
-        ],
-        styling: {
-          paddingTop: 'medium' as const,
-          paddingBottom: 'medium' as const,
-          paddingLeft: 'medium' as const,
-          paddingRight: 'medium' as const,
-          gap: 'medium' as const,
-          variant: 'full-width' as const,
-          textColor: 'default' as const
-        },
-        background: {
-          type: 'color' as const,
-          color: '#ffffff',
-          opacity: 1
         }
+        
+        replaceCanvasItems([starterSection])
+        setIsEditingLoadedWebsite(false) // Mark as blank canvas (not a loaded website)
+        showToast('Starter section loaded - drag widgets from the library to begin', 'success')
       }
-      
-      replaceCanvasItems([starterSection])
-      setIsEditingLoadedWebsite(false) // Mark as blank canvas (not a loaded website)
-      showToast('Starter section loaded - drag widgets from the library to begin', 'success')
-    }
+    }, 100) // Small delay to let external content load first
+    
+    return () => clearTimeout(timer)
   }, []) // Only run once on mount
   
   // Route-specific canvas saving for individual issue edits
