@@ -141,12 +141,27 @@ const generateThemeCSSInternal = (theme: any): string => {
   box-sizing: border-box;
 }
 
-/* Global Typography - Apply theme fonts */
-body, p, div, span, li, td, th, label, input, textarea, select {
+/* Global Typography - Apply theme fonts ONLY within .theme-canvas */
+.theme-canvas,
+.theme-canvas p,
+.theme-canvas div,
+.theme-canvas span,
+.theme-canvas li,
+.theme-canvas td,
+.theme-canvas th,
+.theme-canvas label,
+.theme-canvas input,
+.theme-canvas textarea,
+.theme-canvas select {
   font-family: var(--theme-body-font, system-ui, -apple-system, sans-serif);
 }
 
-h1, h2, h3, h4, h5, h6 {
+.theme-canvas h1,
+.theme-canvas h2,
+.theme-canvas h3,
+.theme-canvas h4,
+.theme-canvas h5,
+.theme-canvas h6 {
   font-family: var(--theme-heading-font, system-ui, -apple-system, sans-serif);
 }
 
