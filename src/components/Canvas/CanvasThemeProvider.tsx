@@ -71,11 +71,30 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   const previewThemeId: string = usePageStore((state: any) => state.previewThemeId)
   
   // Use preview IDs ONLY in Design Console, otherwise use current website's IDs
-  // Priority: propThemeId > currentWebsite?.themeId > fallback
-  const brandMode: BrandMode = isDesignConsolePreview ? previewBrandMode : storeBrandMode
-  const themeIdToUse = isDesignConsolePreview 
-    ? previewThemeId 
-    : (propThemeId || currentWebsite?.themeId || 'classic-ux3-theme')
+  // Priority: props > preview (if in Design Console) > website > fallback
+  // BUG FIX: When props are explicitly passed (from Live Site), always use them
+  const brandMode: BrandMode = propBrandMode 
+    ? propBrandMode 
+    : (isDesignConsolePreview ? previewBrandMode : storeBrandMode)
+  
+  // BUG FIX: When props are explicitly passed (from Live Site), always use them regardless of currentView
+  // The old logic would use previewThemeId when isDesignConsolePreview was true, even when props were passed
+  const themeIdToUse = propThemeId 
+    ? propThemeId  // If prop is passed, use it (from Live Site CanvasRenderer)
+    : (isDesignConsolePreview 
+        ? previewThemeId 
+        : (currentWebsite?.themeId || 'classic-ux3-theme'))
+  
+  // DEBUG: Log the decision making process
+  console.log('🧠 [CanvasThemeProvider] THEME DECISION:', {
+    propThemeId,
+    isDesignConsolePreview,
+    currentView,
+    previewThemeId,
+    currentWebsiteThemeId: currentWebsite?.themeId,
+    FINAL_themeIdToUse: themeIdToUse,
+    decision: propThemeId ? 'USING PROP' : (isDesignConsolePreview ? 'USING PREVIEW' : 'USING WEBSITE/FALLBACK')
+  })
   
   // DEBUG: Prominent logging to trace theme resolution
   console.log('🔍 [CanvasThemeProvider] THEME RESOLUTION:', {
