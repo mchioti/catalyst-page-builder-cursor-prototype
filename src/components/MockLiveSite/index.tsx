@@ -874,10 +874,10 @@ export function MockLiveSite({
   } else {
     // Non-TOC routes: use global canvas, with fallback for homepage
     if (mockLiveSiteRoute === '/' && canvasItems.length === 0) {
-      // Fallback: Use the ORIGINAL plain homepage template (legacy reference)
-      const legacyHomepage = mockStarterPages.find(p => p.id === 'catalyst-generic-homepage')
+      // Fallback: Use the ORIGINAL blue hero homepage (legacy reference)
+      const legacyHomepage = mockStarterPages.find(p => p.id === 'legacy-mock-homepage')
       effectiveCanvasItems = legacyHomepage?.canvasItems || []
-      canvasSource = `Legacy homepage template (${effectiveCanvasItems.length} items)`
+      canvasSource = `Legacy mock homepage (${effectiveCanvasItems.length} items)`
     } else {
       effectiveCanvasItems = canvasItems
       canvasSource = `Global canvas (${canvasItems.length} items)`

@@ -299,8 +299,369 @@ const febsHomepage2025: CustomStarterPage = {
   ]
 }
 
+// Legacy Mock Site Homepage - The original blue hero homepage for /v1/mock reference
+const legacyMockHomepage: CustomStarterPage = {
+  id: 'legacy-mock-homepage',
+  name: 'Legacy Mock Homepage',
+  description: 'Original homepage with blue hero for legacy mock site reference',
+  source: 'mock',
+  websiteId: 'catalyst-demo',
+  websiteName: 'Catalyst Demo Site',
+  createdAt: new Date('2024-01-01'),
+  canvasItems: [
+    {
+      id: "Fi7MxPp8l99GeERG3i2jn",
+      name: "Section",
+      type: "content-block",
+      layout: "flexible",
+      areas: [
+        {
+          id: "8cq2UlSG0ZnSHAmDB04_u",
+          name: "Flex Items",
+          widgets: [
+            {
+              id: "RZbfNNxqnYPGnt7xKM4Pv",
+              skin: "minimal",
+              type: "image",
+              src: "https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png",
+              alt: "Image description",
+              ratio: "auto",
+              caption: "",
+              link: "",
+              alignment: "center",
+              width: "full",
+              objectFit: "cover",
+              sectionId: "Fi7MxPp8l99GeERG3i2jn"
+            },
+            {
+              id: "b24FkFVm_7rqyR2PojjYA",
+              skin: "minimal",
+              type: "spacer",
+              height: "2rem",
+              sectionId: "Fi7MxPp8l99GeERG3i2jn",
+              flexProperties: {
+                grow: true
+              }
+            },
+            {
+              id: "AjnlphTHl0aeubF7CfseM",
+              skin: "minimal",
+              type: "button",
+              text: "Search",
+              variant: "primary",
+              size: "medium",
+              href: "#",
+              sectionId: "Fi7MxPp8l99GeERG3i2jn",
+              style: "link"
+            },
+            {
+              id: "V2ZtiucPb1giqvHI6nqB1",
+              skin: "minimal",
+              type: "button",
+              text: "Advanced Search",
+              variant: "primary",
+              size: "medium",
+              href: "#",
+              sectionId: "Fi7MxPp8l99GeERG3i2jn",
+              style: "link"
+            }
+          ]
+        }
+      ],
+      flexConfig: {
+        direction: "row",
+        wrap: true,
+        justifyContent: "flex-start",
+        gap: "1rem"
+      },
+      background: {
+        type: "color",
+        color: "#000000"
+      },
+      contentMode: "light"
+    },
+    {
+      id: "kiemJ6oV3wXszZ8J-absq",
+      name: "Section",
+      type: "content-block",
+      layout: "flexible",
+      areas: [
+        {
+          id: "1v93yPzrKb6vHN3HBuCmq",
+          name: "Flex Items",
+          widgets: [
+            {
+              id: "btiuDbT6i6DZzC06nMJAo",
+              skin: "minimal",
+              type: "text",
+              text: "brought to you by Atypon",
+              align: "left",
+              sectionId: "kiemJ6oV3wXszZ8J-absq"
+            },
+            {
+              id: "qbzrHKEhRqYXHLq9y2hrv",
+              skin: "minimal",
+              type: "menu",
+              menuType: "global",
+              style: "horizontal",
+              items: [
+                {
+                  id: "CQVyEJ3RC_QL3U64UaG9L",
+                  label: "Journals",
+                  url: "#",
+                  target: "_self",
+                  displayCondition: "always",
+                  order: 0
+                },
+                {
+                  id: "cVDdVG3OgQCZ5DCpBZUcH",
+                  label: "Books",
+                  url: "#",
+                  target: "_self",
+                  displayCondition: "always",
+                  order: 1
+                },
+                {
+                  id: "fsJ4evoEUzFJZ1L_EW03A",
+                  label: "Processings",
+                  url: "#",
+                  target: "_self",
+                  displayCondition: "always",
+                  order: 2
+                },
+                {
+                  id: "gvXdhKHzQH65NAcWg-CGb",
+                  label: "Blogs",
+                  url: "#",
+                  target: "_self",
+                  displayCondition: "always",
+                  order: 3,
+                  isContextGenerated: false
+                }
+              ],
+              sectionId: "kiemJ6oV3wXszZ8J-absq",
+              flexProperties: {
+                grow: true
+              },
+              align: "right"
+            }
+          ]
+        }
+      ],
+      flexConfig: {
+        direction: "row",
+        wrap: true,
+        justifyContent: "flex-start",
+        gap: "1rem"
+      },
+      background: {
+        type: "color",
+        color: "#ffffff"
+      }
+    },
+    {
+      id: "g8SEFXd4amHMYPiY_VZhl",
+      name: "Hero Section",
+      type: "hero",
+      layout: "hero-with-buttons",
+      areas: [
+        {
+          id: "sTCuYIwAViego7x7SG18Z",
+          name: "Hero Content",
+          widgets: [
+            {
+              id: "TkgFoj1-rfS1Ny3xVN3CS",
+              type: "heading",
+              sectionId: "g8SEFXd4amHMYPiY_VZhl",
+              skin: "minimal",
+              text: "Catalyst demo site",
+              level: 1,
+              align: "center",
+              style: "hero",
+              color: "primary",
+              size: "auto",
+              icon: {
+                enabled: false,
+                position: "left",
+                emoji: "🚀"
+              }
+            },
+            {
+              id: "OAUnpiK-ZYb5zSc8CNg30",
+              type: "text",
+              sectionId: "g8SEFXd4amHMYPiY_VZhl",
+              skin: "minimal",
+              text: "Catalyst is the name of the PB4 POVie. this prototype. This is a Hero prefab section that comes as part of the default imaginary Classic-themed Homepage template design.",
+              align: "center"
+            }
+          ]
+        },
+        {
+          id: "3TY8nmvzDL8v5fdR97ZG3",
+          name: "Button Row",
+          widgets: [
+            {
+              id: "NnnXI_a4kbrZdeDAFlicp",
+              type: "button",
+              sectionId: "g8SEFXd4amHMYPiY_VZhl",
+              skin: "minimal",
+              text: "Get Started",
+              href: "#",
+              variant: "primary",
+              size: "large"
+            },
+            {
+              id: "DtBy-BQR4wX4t2VaTYv5q",
+              type: "button",
+              sectionId: "g8SEFXd4amHMYPiY_VZhl",
+              skin: "minimal",
+              text: "Learn More",
+              href: "#",
+              variant: "secondary",
+              size: "large"
+            }
+          ]
+        }
+      ],
+      background: {
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          direction: "to bottom",
+          stops: [
+            {
+              color: "#1e40af",
+              position: "0%"
+            },
+            {
+              color: "#3b82f6",
+              position: "100%"
+            }
+          ]
+        },
+        opacity: 1
+      },
+      styling: {
+        paddingTop: "large",
+        paddingBottom: "large",
+        paddingLeft: "medium",
+        paddingRight: "medium",
+        gap: "medium",
+        variant: "full-width",
+        textColor: "white"
+      }
+    },
+    {
+      id: "iYNYwK2h7mNDSwqE3O1Rb",
+      name: "Featured Research Section",
+      type: "content-block",
+      layout: "header-plus-grid",
+      areas: [
+        {
+          id: "3wW8HnnGAVDm53nUv1jfa",
+          name: "Header",
+          widgets: [
+            {
+              id: "1cMneRTh9j627w6hQDTGF",
+              type: "heading",
+              sectionId: "iYNYwK2h7mNDSwqE3O1Rb",
+              skin: "minimal",
+              text: "Featured Content",
+              level: 2,
+              align: "center",
+              style: "default",
+              color: "default",
+              size: "large",
+              icon: {
+                enabled: false,
+                position: "left",
+                emoji: "📚"
+              }
+            }
+          ]
+        },
+        {
+          id: "oJvvUBwefhdCUiafUVtWx",
+          name: "Left Card",
+          widgets: [
+            {
+              id: "0cXOoK3bRI_Mi1_SQ8fcu",
+              type: "text",
+              sectionId: "iYNYwK2h7mNDSwqE3O1Rb",
+              skin: "minimal",
+              text: "Latest in AI & Machine Learning\n\nCutting-edge research in artificial intelligence, neural networks, and computational learning theory.\n\nExplore Articles →",
+              align: "left",
+              layout: {
+                variant: "card",
+                padding: "large",
+                shadow: "medium",
+                rounded: "medium"
+              }
+            }
+          ]
+        },
+        {
+          id: "SnOZ69iP8wz3rEzpsDmMM",
+          name: "Center Card",
+          widgets: [
+            {
+              id: "OTuqsdxVkZBkZmjN3YnAY",
+              type: "text",
+              sectionId: "iYNYwK2h7mNDSwqE3O1Rb",
+              skin: "minimal",
+              text: "Computer Systems & Architecture\n\nBreakthrough discoveries in distributed systems, cloud computing, and hardware optimization.\n\nRead More →",
+              align: "left",
+              layout: {
+                variant: "card",
+                padding: "large",
+                shadow: "medium",
+                rounded: "medium"
+              }
+            }
+          ]
+        },
+        {
+          id: "6_qEURW8Zr5lGAnP0W0WW",
+          name: "Right Card",
+          widgets: [
+            {
+              id: "6FT8uwXMfloRQkmjUWfVL",
+              type: "text",
+              sectionId: "iYNYwK2h7mNDSwqE3O1Rb",
+              skin: "minimal",
+              text: "Software Engineering Advances\n\nRevolutionary approaches to software development, testing, and quality assurance methodologies.\n\nView Research →",
+              align: "left",
+              layout: {
+                variant: "card",
+                padding: "large",
+                shadow: "medium",
+                rounded: "medium"
+              }
+            }
+          ]
+        }
+      ],
+      background: {
+        type: "color",
+        color: "#f8fafc",
+        opacity: 1
+      },
+      styling: {
+        paddingTop: "large",
+        paddingBottom: "large",
+        paddingLeft: "medium",
+        paddingRight: "medium",
+        gap: "medium",
+        variant: "full-width",
+        textColor: "default"
+      }
+    }
+  ]
+}
+
 export const mockStarterPages: CustomStarterPage[] = [
   catalystGenericHomepage,
-  febsHomepage2025
+  febsHomepage2025,
+  legacyMockHomepage
 ]
 
