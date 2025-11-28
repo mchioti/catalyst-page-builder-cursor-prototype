@@ -8,7 +8,7 @@ import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { createDebugLogger } from '../../utils/logger'
-import { createCatalystHomepageStub } from '../PageBuilder/pageStubs'
+import { mockStarterPages } from '../../data/mockStarterPages'
 import '../../styles/journal-themes.css'
 
 // Control logging for this file
@@ -874,9 +874,10 @@ export function MockLiveSite({
   } else {
     // Non-TOC routes: use global canvas, with fallback for homepage
     if (mockLiveSiteRoute === '/' && canvasItems.length === 0) {
-      // Fallback: Use the styled Catalyst homepage (same as new Live Site)
-      effectiveCanvasItems = createCatalystHomepageStub() as CanvasItem[]
-      canvasSource = `Catalyst homepage stub (${effectiveCanvasItems.length} items)`
+      // Fallback: Use the ORIGINAL plain homepage template (legacy reference)
+      const legacyHomepage = mockStarterPages.find(p => p.id === 'catalyst-generic-homepage')
+      effectiveCanvasItems = legacyHomepage?.canvasItems || []
+      canvasSource = `Legacy homepage template (${effectiveCanvasItems.length} items)`
     } else {
       effectiveCanvasItems = canvasItems
       canvasSource = `Global canvas (${canvasItems.length} items)`
