@@ -100,9 +100,9 @@ export function PageBuilderEditor() {
       return
     }
     
-    // No saved data - load default content based on page type
+    // No saved data - load default content based on page type and website
     const pageType = getPageType(pageName)
-    const defaultContent = getPageStub(pageType)
+    const defaultContent = getPageStub(pageType, websiteId!)
     
     replaceCanvasItems(defaultContent)
     setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state

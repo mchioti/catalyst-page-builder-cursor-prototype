@@ -21,7 +21,7 @@ import { useWebsiteStore } from '../../v2/stores/websiteStore'
 import { usePageStore } from '../../stores'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { 
-  createHomepageStub,
+  getHomepageStubForWebsite,
   createJournalsBrowseStub,
   createAboutStub,
   createSearchStub,
@@ -179,7 +179,7 @@ function HomePage() {
   // Auto-initialize canvas data if not present
   useEffect(() => {
     if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, 'home', createHomepageStub())
+      setPageCanvas(websiteId, 'home', getHomepageStubForWebsite(websiteId))
     }
   }, [websiteId, pageCanvas, setPageCanvas])
   
