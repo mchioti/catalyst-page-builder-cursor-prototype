@@ -49,10 +49,522 @@ export function getHomepageStubForWebsite(websiteId: string, designId?: string):
     if (normalizedDesignId.includes('febs')) {
       return createFebsHomepageStub()
     }
+    if (normalizedDesignId.includes('carbon')) {
+      return createCarbonHomepageStub()
+    }
   }
   
   // Default to Catalyst
   return createCatalystHomepageStub()
+}
+
+/**
+ * IBM Carbon Design Homepage Stub
+ * Uses the same modern layout as Wiley with Carbon-appropriate styling
+ */
+export function createCarbonHomepageStub(): CanvasItemStub[] {
+  return [
+    // Hero Section - Two columns with image
+    {
+      id: nanoid(),
+      name: 'Hero Section',
+      type: 'content-block',
+      layout: 'two-columns',
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Left Column',
+          widgets: [
+            {
+              id: nanoid(),
+              skin: 'minimal',
+              type: 'spacer',
+              height: '6rem',
+              sectionId: ''
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Where ideas ignite and impact endures',
+              level: 1,
+              align: 'left',
+              style: 'hero',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Wiley brings together research, learning, and technology to spark breakthroughs and power progress across industries and society.',
+              align: 'left'
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Right Column',
+          widgets: [
+            {
+              id: nanoid(),
+              skin: 'minimal',
+              type: 'image',
+              src: 'https://cf-images.us-east-1.prod.boltdns.net/v1/static/1922092229001/104bb4ae-0d11-4f70-b1ee-4ec6f6669214/9dcf96de-5752-4dee-9225-3e229fffd5d1/640x360/match/image.jpg',
+              alt: 'Image description',
+              ratio: '16:9',
+              caption: '',
+              link: '',
+              alignment: 'center',
+              width: 'full',
+              objectFit: 'cover',
+              sectionId: ''
+            }
+          ]
+        }
+      ],
+      padding: 'semantic.3xl',
+      minHeight: '500px',
+      styling: {
+        gap: 'large',
+        variant: 'full-width',
+        textColor: 'white'
+      },
+      background: {
+        type: 'image',
+        image: {
+          url: 'https://www.wiley.com/content/dam/wiley-com/en/images/Photography/brand-and-hero/homepage/homepage-only-energy-burst-visual.jpg',
+          position: 'center',
+          repeat: 'no-repeat',
+          size: 'cover'
+        },
+        opacity: 1
+      },
+      contentMode: 'dark'
+    },
+    // About Section
+    {
+      id: nanoid(),
+      name: 'About Wiley + Partners',
+      type: 'content-block',
+      layout: 'one-column',
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Content',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'ABOUT WILEY',
+              align: 'center',
+              inlineStyles: 'font-size: 12px; font-weight: 600; letter-spacing: 2px; opacity: 0.6; margin-bottom: 16px;'
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Transforming knowledge into impact',
+              level: 2,
+              align: 'center',
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'We transform knowledge into actionable intelligence – accelerating scientific breakthroughs, supporting learning, and driving innovation that redefines fields and improves lives. Through access to trusted research, data, and AI-powered platforms, we\'re your partner in a world driven by curiosity and continuous discovery.',
+              align: 'center',
+              inlineStyles: 'font-size: 18px; line-height: 1.7; max-width: 900px; margin: 0 auto 32px auto;'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'LEARN MORE →',
+              style: 'solid',
+              color: 'color3',
+              size: 'large',
+              href: '#',
+              target: '_self',
+              align: 'center',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: '<div style="margin-top: 64px; padding-top: 48px; border-top: 1px solid #D6D6D6;"><div style="display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; opacity: 0.6;"><img src="/theme-assets/wiley-figma-ds-v2/logo-ebay.svg" alt="eBay" style="height: 32px; filter: grayscale(100%);"><img src="/theme-assets/wiley-figma-ds-v2/logo-cnn.svg" alt="CNN" style="height: 32px; filter: grayscale(100%);"><img src="/theme-assets/wiley-figma-ds-v2/logo-google.svg" alt="Google" style="height: 32px; filter: grayscale(100%);"><img src="/theme-assets/wiley-figma-ds-v2/logo-cisco.svg" alt="Cisco" style="height: 32px; filter: grayscale(100%);"><img src="/theme-assets/wiley-figma-ds-v2/logo-airbnb.svg" alt="Airbnb" style="height: 32px; filter: grayscale(100%);"><img src="/theme-assets/wiley-figma-ds-v2/logo-uber.svg" alt="UBER" style="height: 32px; filter: grayscale(100%);"></div></div>',
+              align: 'center'
+            }
+          ]
+        }
+      ],
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        paddingLeft: '80px',
+        paddingRight: '80px',
+        gap: 'large',
+        variant: 'full-width',
+        textColor: 'default',
+        maxWidth: '2xl'
+      },
+      background: {
+        type: 'color',
+        color: '#F8F8F5',
+        opacity: 1
+      },
+      contentMode: 'light'
+    },
+    // Our Focus Card Grid
+    {
+      id: nanoid(),
+      name: 'Card Grid',
+      type: 'content-block',
+      layout: 'header-plus-grid',
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Header',
+          widgets: [
+            {
+              id: nanoid(),
+              skin: 'minimal',
+              type: 'heading',
+              text: 'Our Focus',
+              level: 2,
+              align: 'center',
+              style: 'hero',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '🎯' },
+              sectionId: ''
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Left Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'AI in Research',
+              level: 3,
+              align: 'left',
+              style: 'hero',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Explore how artificial intelligence is transforming research methodologies and accelerating discovery.',
+              align: 'left'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Learn More',
+              href: '#',
+              style: 'solid',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Center Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Open Access',
+              level: 3,
+              align: 'left',
+              style: 'hero',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Making research freely available to accelerate knowledge sharing and global collaboration.',
+              align: 'left'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Explore OA',
+              href: '#',
+              style: 'solid',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Right Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Future of Learning',
+              level: 3,
+              align: 'left',
+              style: 'hero',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Discover innovative approaches to education that prepare learners for tomorrow\'s challenges.',
+              align: 'left'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Read More',
+              href: '#',
+              style: 'solid',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        }
+      ],
+      padding: 'semantic.3xl',
+      styling: {
+        gap: 'large',
+        variant: 'full-width',
+        textColor: 'white'
+      },
+      background: {
+        type: 'color',
+        color: '#003b44',
+        opacity: 1
+      },
+      contentMode: 'dark'
+    },
+    // Shop Today Section
+    {
+      id: nanoid(),
+      name: 'Shop Today',
+      type: 'content-block',
+      layout: 'header-plus-grid',
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Header',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Shop today',
+              level: 2,
+              align: 'left',
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'A one-stop shop for textbooks, learning tools, and everyday books that power your success.',
+              align: 'left',
+              inlineStyles: 'margin-bottom: 32px; color: #5A5A5A;'
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Left Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Books',
+              level: 3,
+              align: 'left',
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Learn, lead, grow, and succeed as a professional with our career and professional development titles, written by the most trusted and reputable authors in their fields.',
+              align: 'left',
+              inlineStyles: 'margin-top: 16px; margin-bottom: 24px; line-height: 1.6; color: #5A5A5A;'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'SHOP NOW →',
+              href: '#',
+              style: 'outline',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Center Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Textbooks',
+              level: 3,
+              align: 'left',
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Open possibilities for your career with certifications in finance and business, accounting, and data science and analytics.',
+              align: 'left',
+              inlineStyles: 'margin-top: 16px; margin-bottom: 24px; line-height: 1.6; color: #5A5A5A;'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'SHOP NOW →',
+              href: '#',
+              style: 'outline',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Right Card',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'heading',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Courseware',
+              level: 3,
+              align: 'left',
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '' }
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'Take self-paced courses to advance your career and your salary.',
+              align: 'left',
+              inlineStyles: 'margin-top: 16px; margin-bottom: 24px; line-height: 1.6; color: #5A5A5A;'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              sectionId: '',
+              skin: 'minimal',
+              text: 'SHOP NOW →',
+              href: '#',
+              style: 'outline',
+              color: 'color1',
+              size: 'medium',
+              align: 'left',
+              icon: { enabled: false, position: 'right', emoji: '' }
+            }
+          ]
+        }
+      ],
+      background: {
+        type: 'color',
+        color: '#F8F8F5',
+        opacity: 1
+      },
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        paddingLeft: '80px',
+        paddingRight: '80px',
+        gap: 'large',
+        variant: 'full-width',
+        textColor: 'default'
+      },
+      contentMode: 'light'
+    }
+  ]
 }
 
 /**

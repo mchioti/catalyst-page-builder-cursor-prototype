@@ -24,7 +24,8 @@ import {
 import {
   createWileyHomepageStub,
   createCatalystHomepageStub,
-  createFebsHomepageStub
+  createFebsHomepageStub,
+  createCarbonHomepageStub
 } from '../components/PageBuilder/pageStubs'
 
 /**
@@ -791,10 +792,15 @@ export const getStarterTemplateForTheme = (themeId: string): CanvasItem[] => {
     return createFebsHomepageStub() as CanvasItem[]
   }
   
+  // Carbon-based themes
+  if (normalizedId.includes('carbon')) {
+    return createCarbonHomepageStub() as CanvasItem[]
+  }
+  
   switch (themeId) {
     case 'ibm-carbon-ds':
-      // IBM Carbon: Enterprise design with Carbon-specific styling
-      return createCarbonDSStarterTemplate()
+      // IBM Carbon: Enterprise design - use centralized stub
+      return createCarbonHomepageStub() as CanvasItem[]
     
     case 'ant-design':
       // Ant Design: Enterprise-class UI with refined experience
