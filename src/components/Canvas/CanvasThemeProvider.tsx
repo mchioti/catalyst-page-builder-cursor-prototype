@@ -116,6 +116,16 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   // Find the theme
   const rawTheme = themes.find((t: any) => t.id === themeIdToUse) || themes.find((t: any) => t.id === 'classic-ux3-theme')
   
+  // DEBUG: Log theme lookup result
+  console.log('🔎 [CanvasThemeProvider] THEME LOOKUP:', {
+    themeIdToUse,
+    themeFound: !!themes.find((t: any) => t.id === themeIdToUse),
+    rawThemeId: rawTheme?.id,
+    rawThemeName: rawTheme?.name,
+    availableThemeIds: themes.map((t: any) => t.id),
+    themesCount: themes.length
+  })
+  
   // Resolve token references based on brand mode
   let currentTheme = rawTheme ? resolveThemeColors(rawTheme, brandMode) : rawTheme
   
