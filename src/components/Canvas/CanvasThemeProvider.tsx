@@ -45,9 +45,11 @@ interface CanvasThemeProviderProps {
   usePageStore: any // TODO: Type this properly when extracting store
   scopeCSS?: boolean // If true, CSS will be scoped to .theme-preview only (for Design Console). Also uses previewBrandMode and previewThemeId from store.
   websiteId?: string // Optional: Override the website ID from props (for Live Site viewing different websites)
+  themeId?: string // Optional: Override the theme ID directly (for Live Site with correct theme)
+  brandMode?: BrandMode // Optional: Override the brand mode directly
 }
 
-export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, websiteId: propWebsiteId }: CanvasThemeProviderProps) {
+export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, websiteId: propWebsiteId, themeId: propThemeId, brandMode: propBrandMode }: CanvasThemeProviderProps) {
   // Use selector to explicitly track brand mode changes
   const storeWebsiteId = usePageStore((state: any) => state.currentWebsiteId)
   
@@ -60,7 +62,8 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   // Find website using the resolved currentWebsiteId (prop or store)
   const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
   
-  const storeBrandMode: BrandMode = currentWebsite?.brandMode || 'wiley'
+  // Use prop brand mode if provided, otherwise look up from website or default
+  const storeBrandMode: BrandMode = propBrandMode || currentWebsite?.brandMode || 'wiley'
   
   // Preview mode is ONLY for Design Console, not for Page Builder editor
   const isDesignConsolePreview = currentView === 'design-console'
@@ -68,10 +71,11 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
   const previewThemeId: string = usePageStore((state: any) => state.previewThemeId)
   
   // Use preview IDs ONLY in Design Console, otherwise use current website's IDs
+  // Priority: propThemeId > currentWebsite?.themeId > fallback
   const brandMode: BrandMode = isDesignConsolePreview ? previewBrandMode : storeBrandMode
   const themeIdToUse = isDesignConsolePreview 
     ? previewThemeId 
-    : (currentWebsite?.themeId || 'classic-ux3-theme')
+    : (propThemeId || currentWebsite?.themeId || 'classic-ux3-theme')
   
   debugLog('log', '🎨 CanvasThemeProvider RENDER:', {
     currentView,

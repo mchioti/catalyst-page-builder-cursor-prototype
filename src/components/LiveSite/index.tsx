@@ -213,9 +213,16 @@ function HomePage() {
     }
   }, [websiteId, pageCanvas, setPageCanvas, website])
   
-  // Render canvas content
+  // Render canvas content - pass website's themeId and brandMode for correct theming
   if (pageCanvas && pageCanvas.length > 0) {
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+      />
+    )
   }
   
   return (
@@ -246,9 +253,16 @@ function JournalsBrowsePage() {
     }
   }, [websiteId, pageCanvas, setPageCanvas])
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+      />
+    )
   }
   
   // Fallback while initializing
@@ -311,7 +325,15 @@ function JournalHomePage() {
         brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
       }
     }
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext} 
+      />
+    )
   }
   
   // Fallback while initializing
@@ -405,7 +427,7 @@ function IssueArchivePage() {
   
   const issues = getIssuesByJournal(journalId!)
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
     const templateContext = {
       journal: {
@@ -416,7 +438,15 @@ function IssueArchivePage() {
         brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
       }
     }
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext} 
+      />
+    )
   }
   
   // Fallback: Group issues by volume
@@ -504,7 +534,7 @@ function IssueTocPage() {
   const prevIssue = currentIndex > 0 ? allIssues[currentIndex - 1] : null
   const nextIssue = currentIndex < allIssues.length - 1 ? allIssues[currentIndex + 1] : null
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
     const templateContext = {
       journal: {
@@ -520,7 +550,15 @@ function IssueTocPage() {
         description: issue.title || `Published ${formatIssueDate(issue)}`
       }
     }
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext} 
+      />
+    )
   }
   
   // Fallback
@@ -604,7 +642,7 @@ function ArticlePage() {
     return <NotFoundPage message={`Article with DOI "${decodedDoi}" not found`} />
   }
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
     const templateContext = {
       journal: {
@@ -621,7 +659,15 @@ function ArticlePage() {
         contentType: article.isOpenAccess ? 'Open Access' : 'Research Article'
       }
     }
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} templateContext={templateContext} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext} 
+      />
+    )
   }
   
   // Fallback
@@ -676,9 +722,16 @@ function AboutPage() {
     }
   }, [websiteId, pageCanvas, setPageCanvas])
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+      />
+    )
   }
   
   // Fallback while initializing
@@ -698,6 +751,8 @@ function AboutPage() {
 
 function SearchPage() {
   const websiteId = useWebsiteId()
+  const websites = useAllWebsites()
+  const website = websites.find(w => w.id === websiteId)
   
   // Check for stored canvas data
   const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'search'))
@@ -710,9 +765,16 @@ function SearchPage() {
     }
   }, [websiteId, pageCanvas, setPageCanvas])
   
-  // Render canvas content if available
+  // Render canvas content if available - pass website's themeId and brandMode
   if (pageCanvas && pageCanvas.length > 0) {
-    return <CanvasRenderer items={pageCanvas} websiteId={websiteId} />
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+      />
+    )
   }
   
   // Fallback while initializing

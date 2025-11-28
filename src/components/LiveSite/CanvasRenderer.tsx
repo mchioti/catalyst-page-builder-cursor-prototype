@@ -96,11 +96,13 @@ function processItemsWithContext(items: CanvasItem[], context: TemplateContext):
 interface CanvasRendererProps {
   items: CanvasItem[]
   websiteId?: string
+  themeId?: string // Optional: Pass the website's theme ID directly
+  brandMode?: 'wiley' | 'wt' | 'dummies' // Optional: Pass the website's brand mode directly
   templateContext?: TemplateContext
 }
 
 // Main Canvas Renderer - Uses V1's actual renderers for proper theming
-export function CanvasRenderer({ items, websiteId = 'catalyst-demo', templateContext }: CanvasRendererProps) {
+export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, brandMode, templateContext }: CanvasRendererProps) {
   if (!items || items.length === 0) {
     return null
   }
@@ -113,7 +115,7 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', templateCon
   return (
     <>
       <DynamicBrandingCSS websiteId={websiteId} usePageStore={usePageStore} />
-      <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId}>
+      <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId} themeId={themeId} brandMode={brandMode}>
         <div className="canvas-renderer-live">
           {processedItems.map((item, idx) => {
             if (isSection(item)) {
