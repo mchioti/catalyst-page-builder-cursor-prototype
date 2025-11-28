@@ -8,6 +8,7 @@ import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { createDebugLogger } from '../../utils/logger'
+import { mockStarterPages } from '../../data/mockStarterPages'
 import '../../styles/journal-themes.css'
 
 // Control logging for this file
@@ -871,9 +872,16 @@ export function MockLiveSite({
       canvasSource = `Static content (0 items)`
     }
   } else {
-    // Non-TOC routes: use global canvas
-    effectiveCanvasItems = canvasItems
-    canvasSource = `Global canvas (${canvasItems.length} items)`
+    // Non-TOC routes: use global canvas, with fallback for homepage
+    if (mockLiveSiteRoute === '/' && canvasItems.length === 0) {
+      // Fallback: Use default homepage content for empty legacy homepage
+      const defaultHomepage = mockStarterPages.find(p => p.id === 'catalyst-generic-homepage')
+      effectiveCanvasItems = defaultHomepage?.canvasItems || []
+      canvasSource = `Default homepage template (${effectiveCanvasItems.length} items)`
+    } else {
+      effectiveCanvasItems = canvasItems
+      canvasSource = `Global canvas (${canvasItems.length} items)`
+    }
   }
   
   debugLog('log', `📊 Canvas Selection for ${mockLiveSiteRoute}:`, {
