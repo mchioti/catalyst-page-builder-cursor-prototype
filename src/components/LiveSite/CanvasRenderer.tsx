@@ -25,14 +25,18 @@ function WidgetDisplay({ widget }: { widget: Widget }) {
       )
     
     case 'heading':
-      const HeadingTag = (widget.level || 'h2') as keyof JSX.IntrinsicElements
+      // Handle both numeric (1, 2, 3) and string ('h1', 'h2', 'h3') level formats
+      const levelNum = typeof widget.level === 'number' ? widget.level : 
+                       typeof widget.level === 'string' && widget.level.startsWith('h') ? parseInt(widget.level.slice(1)) :
+                       2
+      const HeadingTag = `h${levelNum}` as keyof JSX.IntrinsicElements
       return (
         <HeadingTag 
           className={`font-bold ${
-            widget.level === 'h1' ? 'text-4xl' : 
-            widget.level === 'h2' ? 'text-3xl' : 
-            widget.level === 'h3' ? 'text-2xl' : 
-            widget.level === 'h4' ? 'text-xl' : 'text-lg'
+            levelNum === 1 ? 'text-4xl' : 
+            levelNum === 2 ? 'text-3xl' : 
+            levelNum === 3 ? 'text-2xl' : 
+            levelNum === 4 ? 'text-xl' : 'text-lg'
           }`}
           style={{ textAlign: widget.align || 'left' }}
         >
