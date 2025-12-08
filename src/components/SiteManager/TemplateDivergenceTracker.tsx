@@ -1,5 +1,5 @@
 /**
- * Template Divergence Tracker
+ * Page Divergence Tracker
  * 
  * Shows which journals/pages have modified a template
  * Provides actions: View Diff, Reset, Promote, Exempt
@@ -250,7 +250,7 @@ function CustomizationItem({
         promoteToJournalTemplate?.(modification.route, modification.journalCode, templateId)
         addNotification?.({
           type: 'success',
-          title: 'Promoted to Journal Template',
+          title: 'Promoted to Journal Page',
           message: `All ${modification.journalName} issues will now inherit these changes`
         })
       }

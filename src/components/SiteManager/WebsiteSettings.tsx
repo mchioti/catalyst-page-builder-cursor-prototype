@@ -1,4 +1,3 @@
-import type { Website } from '../../types'
 import { usePageStore } from '../../AppV1'
 
 export function WebsiteSettings({ websiteId }: { websiteId: string }) {
@@ -234,6 +233,95 @@ export function WebsiteSettings({ websiteId }: { websiteId: string }) {
           <div>
             <span className="font-medium text-blue-800">Last Updated:</span>
             <span className="text-blue-700 ml-2">{website.updatedAt.toLocaleDateString()}</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Site Layout Settings */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Site Layout</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Configure global header and footer that appear on all pages. Individual pages can override these settings.
+        </p>
+        
+        <div className="space-y-4">
+          {/* Header Settings */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-900">Global Header</h4>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={(website as any)?.siteLayout?.headerEnabled !== false}
+                  onChange={(e) => {
+                    const siteLayout = (website as any)?.siteLayout || {}
+                    updateWebsite(website.id, {
+                      ...website,
+                      siteLayout: { ...siteLayout, headerEnabled: e.target.checked },
+                      updatedAt: new Date()
+                    })
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-gray-700">Enable header</span>
+              </label>
+            </div>
+            <div className="text-sm text-gray-600">
+              {(website as any)?.siteLayout?.header?.length > 0 ? (
+                <span className="text-green-600">✓ Custom header configured ({(website as any).siteLayout.header.length} section{(website as any).siteLayout.header.length > 1 ? 's' : ''})</span>
+              ) : (
+                <span className="text-gray-500">Using default header</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              To customize: Add a Header section in the Page Builder, then save it to this website's Site Layout.
+            </p>
+          </div>
+          
+          {/* Footer Settings */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-900">Global Footer</h4>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={(website as any)?.siteLayout?.footerEnabled !== false}
+                  onChange={(e) => {
+                    const siteLayout = (website as any)?.siteLayout || {}
+                    updateWebsite(website.id, {
+                      ...website,
+                      siteLayout: { ...siteLayout, footerEnabled: e.target.checked },
+                      updatedAt: new Date()
+                    })
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-gray-700">Enable footer</span>
+              </label>
+            </div>
+            <div className="text-sm text-gray-600">
+              {(website as any)?.siteLayout?.footer?.length > 0 ? (
+                <span className="text-green-600">✓ Custom footer configured ({(website as any).siteLayout.footer.length} section{(website as any).siteLayout.footer.length > 1 ? 's' : ''})</span>
+              ) : (
+                <span className="text-gray-500">Using default footer</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              To customize: Add a Footer section in the Page Builder, then save it to this website's Site Layout.
+            </p>
+          </div>
+          
+          {/* Page Overrides Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-2">Page-Level Overrides</h4>
+            <p className="text-sm text-blue-800">
+              Individual pages can override the global header/footer:
+            </p>
+            <ul className="text-sm text-blue-700 mt-2 space-y-1 list-disc list-inside">
+              <li><strong>Inherit</strong> - Use the global header/footer (default)</li>
+              <li><strong>Hide</strong> - Hide the header/footer on specific pages</li>
+              <li><strong>Custom</strong> - Use a different header/footer for specific pages</li>
+            </ul>
           </div>
         </div>
       </div>

@@ -350,10 +350,11 @@ export function PageBuilder({
     setActiveSectionToolbar(value)
   }
   
-  // Show toast notification
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000) // Auto-hide after 3 seconds
+  // Show toast notification - DISABLED for cleaner prototype experience
+  const showToast = (_message: string, _type: 'success' | 'error') => {
+    // Toast notifications disabled - uncomment below to re-enable
+    // setToast({ message: _message, type: _type })
+    // setTimeout(() => setToast(null), 3000)
   }
   
   const sensors = useSensors(
@@ -1694,7 +1695,14 @@ export function PageBuilder({
                     Preview Changes
                   </button>
                   <button
-                    onClick={() => setCurrentView('design-console')}
+                    onClick={() => {
+                      // Check if we're in a routed context (URL-based editing) or V1 internal
+                      if (window.location.pathname.startsWith('/edit/')) {
+                        window.location.href = '/v1'
+                      } else {
+                        setCurrentView('design-console')
+                      }
+                    }}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
                   <Settings className="w-4 h-4" />
@@ -1778,15 +1786,6 @@ export function PageBuilder({
                     return currentWebsite ? `${currentWebsite.name} Homepage` : 'Homepage'
                   })()}</strong>
                 </div>
-                <button
-                  onClick={() => {
-                    const { setEditingContext } = usePageStore.getState()
-                    setEditingContext('template')
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
-                >
-                  Switch to Template Mode
-                </button>
                 <button
                   onClick={() => {
                     const currentWebsiteId = usePageStore.getState().currentWebsiteId
@@ -1910,9 +1909,7 @@ export function PageBuilder({
         <div 
           className="flex-1 overflow-y-auto" 
           style={{ 
-            scrollBehavior: 'auto',
-            contain: 'layout style',
-            isolation: 'isolate'
+            scrollBehavior: 'auto'
           }}
         >
           <PropertiesPanel 
@@ -2459,15 +2456,34 @@ function SectionsContent({ showToast, usePageStore }: {
   const addPrefabSection = (type: string) => {
     let section: CanvasItem
     
-    if (type === 'hero') {
+    // Global Sections
+    if (type === 'standardHeader') {
+      section = PREFAB_SECTIONS.standardHeader()
+    } else if (type === 'standardFooter') {
+      section = PREFAB_SECTIONS.standardFooter()
+    } else if (type === 'copyrightBar') {
+      section = PREFAB_SECTIONS.copyrightBar()
+    } else if (type === 'globalHeader') {
+      section = PREFAB_SECTIONS.globalHeader()
+    } else if (type === 'mainNavigation') {
+      section = PREFAB_SECTIONS.mainNavigation()
+    }
+    // Utility Sections
+    else if (type === 'notificationBanner') {
+      section = PREFAB_SECTIONS.notificationBanner()
+    } else if (type === 'cookieConsent') {
+      section = PREFAB_SECTIONS.cookieConsent()
+    }
+    // Content Sections
+    else if (type === 'hero') {
       section = PREFAB_SECTIONS.hero()
     } else if (type === 'features') {
       section = PREFAB_SECTIONS.featuredResearch()
-    } else if (type === 'globalHeader') {
-      section = PREFAB_SECTIONS.globalHeader()
     } else if (type === 'journalBanner') {
       section = PREFAB_SECTIONS.journalBanner()
-    } else if (type === 'wileyFigmaCardGrid') {
+    }
+    // Wiley Theme Sections
+    else if (type === 'wileyFigmaCardGrid') {
       section = PREFAB_SECTIONS.wileyFigmaCardGrid()
     } else if (type === 'wileyFigmaFeaturedContent') {
       section = PREFAB_SECTIONS.wileyFigmaFeaturedContent()
@@ -2485,8 +2501,23 @@ function SectionsContent({ showToast, usePageStore }: {
       return // Invalid type
     }
 
-    replaceCanvasItems([...canvasItems, section])
-    showToast(`${(section as WidgetSection).name} added with template content!`, 'success')
+    // Smart insertion: headers go to top, footers go to bottom, others append
+    const isHeader = type === 'standardHeader' || type === 'globalHeader'
+    const isFooter = type === 'standardFooter' || type === 'copyrightBar'
+    
+    if (isHeader) {
+      // Insert header at the very top
+      replaceCanvasItems([section, ...canvasItems])
+      showToast(`${(section as WidgetSection).name} added at top of page!`, 'success')
+    } else if (isFooter) {
+      // Insert footer at the very bottom
+      replaceCanvasItems([...canvasItems, section])
+      showToast(`${(section as WidgetSection).name} added at bottom of page!`, 'success')
+    } else {
+      // Default: append to end (before footer if one exists)
+      replaceCanvasItems([...canvasItems, section])
+      showToast(`${(section as WidgetSection).name} added with template content!`, 'success')
+    }
   }
 
   return (
@@ -2557,34 +2588,100 @@ function SectionsContent({ showToast, usePageStore }: {
           {/* Default Sections (for non-Wiley themes) */}
           {!isWileyTheme && (
             <>
-              {/* Special Sections */}
+              {/* Global Sections - Site-wide components */}
               <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-3 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" />
-                Special Sections
+                <Lightbulb className="w-4 h-4 text-purple-600" />
+                Global Sections
               </h4>
               <div className="space-y-3">
                 <button
-                  onClick={() => addPrefabSection('sidebar')}
-                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                  onClick={() => addPrefabSection('standardHeader')}
+                  className="w-full p-3 text-left border-2 border-purple-200 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors flex flex-col gap-3"
                 >
+                  <div className="relative w-full h-12 bg-gray-800 rounded overflow-hidden flex items-center justify-between px-4">
+                    <span className="text-white text-xs font-medium">🏛️ Publisher</span>
+                    <span className="text-white text-xs">Home • Journals • About</span>
+                  </div>
                   <div>
-                    <div className="font-medium text-sm text-gray-900">Sidebar</div>
-                    <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
+                    <div className="font-medium text-sm text-gray-900">Standard Header</div>
+                    <div className="text-xs text-gray-700">Logo + navigation menu on dark background</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('standardFooter')}
+                  className="w-full p-3 text-left border-2 border-purple-200 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors flex flex-col gap-3"
+                >
+                  <div className="relative w-full h-16 bg-gray-800 rounded overflow-hidden p-2">
+                    <div className="flex justify-between text-white text-[8px]">
+                      <div>About<br/>• About Us<br/>• Terms</div>
+                      <div>Journals<br/>• Browse<br/>• Submit</div>
+                      <div>Connect<br/>• Contact<br/>• Twitter</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Standard Footer</div>
+                    <div className="text-xs text-gray-700">3-column footer with link groups</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('copyrightBar')}
+                  className="w-full p-3 text-left border-2 border-purple-200 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors flex flex-col gap-3"
+                >
+                  <div className="relative w-full h-8 bg-gray-900 rounded overflow-hidden flex items-center justify-center">
+                    <span className="text-gray-400 text-[8px]">© 2024 Publisher • Powered by Catalyst</span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Copyright Bar</div>
+                    <div className="text-xs text-gray-700">Simple copyright notice bar</div>
                   </div>
                 </button>
               </div>
               
-              {/* Full Width Sections with Preview Images */}
+              {/* Overlay Sections - Banners & overlays */}
               <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-6 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" />
-                Full Width Sections
+                <Lightbulb className="w-4 h-4 text-amber-600" />
+                Overlay Sections
+              </h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => addPrefabSection('notificationBanner')}
+                  className="w-full p-3 text-left border-2 border-amber-200 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors flex flex-col gap-3"
+                >
+                  <div className="relative w-full h-8 bg-amber-100 rounded overflow-hidden flex items-center justify-center">
+                    <span className="text-amber-800 text-[8px]">📢 Important announcement message here →</span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Notification Banner</div>
+                    <div className="text-xs text-gray-700">Amber announcement bar</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => addPrefabSection('cookieConsent')}
+                  className="w-full p-3 text-left border-2 border-amber-200 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors flex flex-col gap-3"
+                >
+                  <div className="relative w-full h-8 bg-gray-800 rounded overflow-hidden flex items-center justify-center">
+                    <span className="text-white text-[8px]">🍪 We use cookies. Learn more →</span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Cookie Consent</div>
+                    <div className="text-xs text-gray-700">GDPR cookie consent bar</div>
+                  </div>
+                </button>
+              </div>
+              
+              {/* Content Sections */}
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-6 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-blue-600" />
+                Content Sections
               </h4>
               <div className="space-y-3">
                 <button
                   onClick={() => addPrefabSection('hero')}
-                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                  className="w-full p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex flex-col gap-3"
                 >
-                  {/* Preview Image */}
                   <div className="relative w-full h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded overflow-hidden">
                     <img src="/layout-previews/hero.png" alt="Hero preview" className="w-full h-full object-cover" onError={(e) => {
                       e.currentTarget.style.display = 'none'
@@ -2598,9 +2695,8 @@ function SectionsContent({ showToast, usePageStore }: {
                 
                 <button
                   onClick={() => addPrefabSection('features')}
-                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                  className="w-full p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex flex-col gap-3"
                 >
-                  {/* Preview Image */}
                   <div className="relative w-full h-20 bg-gray-100 rounded overflow-hidden">
                     <img src="/layout-previews/featuredResearch.png" alt="Featured Research preview" className="w-full h-full object-cover" onError={(e) => {
                       e.currentTarget.style.display = 'none'
@@ -2614,9 +2710,8 @@ function SectionsContent({ showToast, usePageStore }: {
                 
                 <button
                   onClick={() => addPrefabSection('journalBanner')}
-                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                  className="w-full p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex flex-col gap-3"
                 >
-                  {/* Preview Image */}
                   <div className="relative w-full h-20 bg-gradient-to-r from-gray-800 to-gray-900 rounded overflow-hidden">
                     <img src="/layout-previews/journalBanner.png" alt="Journal Banner preview" className="w-full h-full object-cover" onError={(e) => {
                       e.currentTarget.style.display = 'none'
@@ -2625,6 +2720,23 @@ function SectionsContent({ showToast, usePageStore }: {
                   <div>
                     <div className="font-medium text-sm text-gray-900">Journal Banner</div>
                     <div className="text-xs text-gray-700">Dark gradient banner with publication details</div>
+                  </div>
+                </button>
+              </div>
+              
+              {/* Special Sections */}
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-6 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                Special Sections
+              </h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => addPrefabSection('sidebar')}
+                  className="w-full p-3 text-left border-2 border-gray-200 bg-white rounded-md hover:bg-gray-50 transition-colors flex flex-col gap-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">Sidebar</div>
+                    <div className="text-xs text-gray-700">Vertical sidebar that can span multiple sections</div>
                   </div>
                 </button>
               </div>

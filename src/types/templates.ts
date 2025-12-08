@@ -78,6 +78,34 @@ export type Website = {
     components?: Partial<Theme['components']>
   }
   
+  // Site Layout - Global header/footer for all pages
+  siteLayout?: {
+    header?: CanvasItem[]       // Global header sections
+    footer?: CanvasItem[]       // Global footer sections
+    headerEnabled?: boolean     // Toggle header visibility site-wide (default: true)
+    footerEnabled?: boolean     // Toggle footer visibility site-wide (default: true)
+  }
+  
+  // Page/Template override settings for header/footer
+  pageLayoutOverrides?: {
+    [pageId: string]: {
+      header?: 'inherit' | 'hide' | 'custom'  // inherit = use global, hide = no header, custom = use customHeader
+      footer?: 'inherit' | 'hide' | 'custom'
+      customHeader?: CanvasItem[]
+      customFooter?: CanvasItem[]
+    }
+  }
+  
+  // Template-level overrides (applies to all pages using that template)
+  templateLayoutOverrides?: {
+    [templateId: string]: {
+      header?: 'inherit' | 'hide' | 'custom'
+      footer?: 'inherit' | 'hide' | 'custom'
+      customHeader?: CanvasItem[]
+      customFooter?: CanvasItem[]
+    }
+  }
+  
   // Website purpose configuration
   purpose?: {
     contentTypes: string[]

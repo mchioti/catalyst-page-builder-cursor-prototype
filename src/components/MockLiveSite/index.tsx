@@ -736,6 +736,7 @@ interface MockLiveSiteProps {
   setCurrentView: (view: 'page-builder' | 'design-console' | 'mock-live-site') => void
   setEditingContext: (context: EditingContext) => void
   usePageStore: any // Store hook passed from parent
+  showNavigation?: boolean // Show the dark navigation header (default: true for legacy, false for new)
 }
 
 export function MockLiveSite({
@@ -743,7 +744,8 @@ export function MockLiveSite({
   setMockLiveSiteRoute,
   setCurrentView,
   setEditingContext,
-  usePageStore
+  usePageStore,
+  showNavigation = true // Default to true to preserve legacy behavior
 }: MockLiveSiteProps) {
   
   debugLog('log', '🚀 MockLiveSite RENDER START:', { mockLiveSiteRoute })
@@ -1014,12 +1016,6 @@ export function MockLiveSite({
       setEditingContext('page')
       setCurrentView('page-builder')
       
-      addNotification({
-        type: 'success',
-        title: 'Homepage Editor Loaded!',
-        message: `Edit your homepage content and layout. Changes will be visible immediately.`
-      })
-      
     } else if (scope === 'individual' && journalCode) {
       // Individual Issue Editing: Load from route-specific storage or template
       const existingRouteCanvas = getCanvasItemsForRoute(mockLiveSiteRoute)
@@ -1044,11 +1040,11 @@ export function MockLiveSite({
       const issueLabel = issueType === 'current' 
         ? 'Current Issue' 
         : volumeInfo || 'this Issue'
+      const hasExistingEdits = existingRouteCanvas.length > 0
       
       setEditingContext('page')
       setCurrentView('page-builder')
       
-      const hasExistingEdits = existingRouteCanvas.length > 0
       addNotification({
         type: 'success',
         title: hasExistingEdits ? 'Edits Restored!' : 'Template Inherited!',
@@ -1339,72 +1335,75 @@ export function MockLiveSite({
     <CanvasThemeProvider usePageStore={usePageStore}>
       <>
         <div className={`min-h-screen bg-white${journalCode !== 'default' ? ` journal-${journalCode}` : ''}`}>
-        {/* Mock Live Site Navigation */}
-        <div className="bg-gray-900 text-white px-6 py-3">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center space-x-6">
-              <div className="text-lg font-bold">Mock Live Site</div>
-              <nav className="flex space-x-4 text-sm">
-                <button
-                  onClick={() => setMockLiveSiteRoute('/')}
-                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/' ? 'text-blue-300' : ''}`}
+        
+        {/* Navigation Header - Only shown for Legacy Preview */}
+        {showNavigation && (
+          <div className="bg-gray-900 text-white px-6 py-3">
+            <div className="flex items-center justify-between max-w-6xl mx-auto">
+              <div className="flex items-center space-x-6">
+                <div className="text-lg font-bold">Mock Live Site</div>
+                <nav className="flex space-x-4 text-sm">
+                  <button
+                    onClick={() => setMockLiveSiteRoute('/')}
+                    className={`hover:text-blue-300 ${mockLiveSiteRoute === '/' ? 'text-blue-300' : ''}`}
+                  >
+                    Home
+                  </button>
+                  <button
+                    onClick={() => setMockLiveSiteRoute('/journal/advma')}
+                    className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
+                  >
+                    Advanced Materials
+                  </button>
+                  <button
+                    onClick={() => setMockLiveSiteRoute('/journal/embo')}
+                    className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/embo' ? 'text-blue-300' : ''}`}
+                  >
+                    EMBO Journal
+                  </button>
+                  <button
+                    onClick={() => setMockLiveSiteRoute('/about')}
+                    className={`hover:text-blue-300 ${mockLiveSiteRoute === '/about' ? 'text-blue-300' : ''}`}
+                  >
+                    About
+                  </button>
+                </nav>
+              </div>
+              <div className="flex items-center space-x-4 text-sm">
+                <select
+                  value={mockLiveSiteRoute}
+                  onChange={(e) => setMockLiveSiteRoute(e.target.value as MockLiveSiteRoute)}
+                  className="px-3 py-1 bg-gray-800 text-white rounded border border-gray-700 hover:border-gray-600 cursor-pointer"
                 >
-                  Home
-                </button>
+                  <optgroup label="Website Pages">
+                    <option value="/">Homepage</option>
+                    <option value="/about">About</option>
+                    <option value="/search">Search Results</option>
+                  </optgroup>
+                  <optgroup label="Journal Pages">
+                    <option value="/journal/advma">Advanced Materials - Home</option>
+                    <option value="/journal/embo">EMBO Journal - Home</option>
+                  </optgroup>
+                  <optgroup label="Table of Contents">
+                    <option value="/toc/advma/current">ADVMA - Current Issue</option>
+                    <option value="/toc/embo/current">EMBO - Current Issue</option>
+                    <option value="/toc/advma/vol-35-issue-47">ADVMA - Vol 35 Issue 47</option>
+                    <option value="/toc/embo/vol-35-issue-47">EMBO - Vol 35 Issue 47</option>
+                  </optgroup>
+                  <optgroup label="Articles">
+                    <option value="/article/advma/67/12/p45">Sample Article</option>
+                  </optgroup>
+                </select>
                 <button
-                  onClick={() => setMockLiveSiteRoute('/journal/advma')}
-                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/advma' ? 'text-blue-300' : ''}`}
+                  onClick={() => setCurrentView('design-console')}
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Advanced Materials
+                  Back to Console
                 </button>
-                <button
-                  onClick={() => setMockLiveSiteRoute('/journal/embo')}
-                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/journal/embo' ? 'text-blue-300' : ''}`}
-                >
-                  EMBO Journal
-                </button>
-                <button
-                  onClick={() => setMockLiveSiteRoute('/about')}
-                  className={`hover:text-blue-300 ${mockLiveSiteRoute === '/about' ? 'text-blue-300' : ''}`}
-                >
-                  About
-                </button>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4 text-sm">
-              <select
-                value={mockLiveSiteRoute}
-                onChange={(e) => setMockLiveSiteRoute(e.target.value as MockLiveSiteRoute)}
-                className="px-3 py-1 bg-gray-800 text-white rounded border border-gray-700 hover:border-gray-600 cursor-pointer"
-              >
-                <optgroup label="Website Pages">
-                  <option value="/">Homepage</option>
-                  <option value="/about">About</option>
-                  <option value="/search">Search Results</option>
-                </optgroup>
-                <optgroup label="Journal Pages">
-                  <option value="/journal/advma">Advanced Materials - Home</option>
-                  <option value="/journal/embo">EMBO Journal - Home</option>
-                </optgroup>
-                <optgroup label="Table of Contents">
-                  <option value="/toc/advma/current">ADVMA - Current Issue</option>
-                  <option value="/toc/embo/current">EMBO - Current Issue</option>
-                  <option value="/toc/advma/vol-35-issue-47">ADVMA - Vol 35 Issue 47</option>
-                  <option value="/toc/embo/vol-35-issue-47">EMBO - Vol 35 Issue 47</option>
-                </optgroup>
-                <optgroup label="Articles">
-                  <option value="/article/advma/67/12/p45">Sample Article</option>
-                </optgroup>
-              </select>
-              <button
-                onClick={() => setCurrentView('design-console')}
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Back to Console
-              </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Page Content */}
         {renderPage()}
@@ -1412,7 +1411,7 @@ export function MockLiveSite({
 
       {/* Smart Editing Scope Button - OUTSIDE main container */}
       <div 
-        className="fixed bottom-6 right-6"
+        className="fixed bottom-6 right-20"
         style={{ zIndex: 999998, position: 'fixed' }}
       >
         <TemplateEditingScopeButton 

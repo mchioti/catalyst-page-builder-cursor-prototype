@@ -11,7 +11,8 @@ import { PageBuilder } from './components/PageBuilder'
 import { DynamicBrandingCSS } from './components/BrandingSystem/DynamicBrandingCSS'
 import { DesignConsole } from './components/DesignConsole'
 import { WidgetRenderer } from './components/Widgets/WidgetRenderer'
-import { PrototypeControls } from './components/PrototypeControls'
+import { EscapeHatch } from './components/PrototypeControls/EscapeHatch'
+import { usePrototypeStore } from './stores/prototypeStore'
 import { NotificationContainer, IssuesSidebar } from './components/Notifications'
 import { SkinWrap } from './components/Widgets/SkinWrap'
 import { buildWidget } from './utils/widgetBuilder'
@@ -58,7 +59,7 @@ const debugLog = createDebugLogger(DEBUG)
 // NOTE: buildWidget moved to src/utils/widgetBuilder.ts
 // NOTE: SkinWrap moved to src/components/Widgets/SkinWrap.tsx
 
-// Template Creation Wizard Component
+// Page Creation Wizard Component
 
 
 export default function App() {
@@ -68,12 +69,10 @@ export default function App() {
     setMockLiveSiteRoute, 
     setCurrentView, 
     setEditingContext, 
-    currentWebsiteId,
-    currentPersona,
-    setCurrentPersona,
-    consoleMode,
-    setConsoleMode
+    currentWebsiteId
   } = usePageStore()
+  
+  const { drawerOpen } = usePrototypeStore()
   
   // Expose usePageStore to window for component access (for prototype only)
   useEffect(() => {
@@ -98,19 +97,17 @@ export default function App() {
         <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
         <DesignConsole />
         <NotificationContainer />
-        <PrototypeControls
-          currentPersona={currentPersona}
-          onPersonaChange={setCurrentPersona}
-          consoleMode={consoleMode}
-          onConsoleModeChange={setConsoleMode}
-        />
+        {/* EscapeHatch is already included inside DesignConsole component */}
       </>
     )
   }
   
   if (currentView === 'mock-live-site') {
     return (
-      <>
+      <div 
+        className="min-h-screen transition-all duration-300 ease-in-out"
+        style={{ marginRight: drawerOpen ? '288px' : '0' }}
+      >
         <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
         <CanvasThemeProvider usePageStore={usePageStore}>
           <MockLiveSite 
@@ -119,21 +116,23 @@ export default function App() {
             setCurrentView={setCurrentView}
             setEditingContext={setEditingContext}
             usePageStore={usePageStore}
+            showNavigation={false}  // Navigation via Escape Hatch
           />
         </CanvasThemeProvider>
         <NotificationContainer />
-        <PrototypeControls
-          currentPersona={currentPersona}
-          onPersonaChange={setCurrentPersona}
-          consoleMode={consoleMode}
-          onConsoleModeChange={setConsoleMode}
+        <EscapeHatch 
+          context="live-site"
+          websiteId={currentWebsiteId}
         />
-      </>
+      </div>
     )
   }
   
   return (
-    <>
+    <div 
+      className="min-h-screen transition-all duration-300 ease-in-out"
+      style={{ marginRight: drawerOpen ? '288px' : '0' }}
+    >
       <DynamicBrandingCSS websiteId={currentWebsiteId} usePageStore={usePageStore} />
       <PageBuilder 
         usePageStore={usePageStore}
@@ -144,12 +143,10 @@ export default function App() {
       />
       <NotificationContainer />
       <IssuesSidebar />
-      <PrototypeControls
-        currentPersona={currentPersona}
-        onPersonaChange={setCurrentPersona}
-        consoleMode={consoleMode}
-        onConsoleModeChange={setConsoleMode}
+      <EscapeHatch 
+        context="editor"
+        websiteId={currentWebsiteId}
       />
-    </>
+    </div>
   )
 }

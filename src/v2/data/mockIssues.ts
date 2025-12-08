@@ -159,11 +159,185 @@ export const hcqIssues: Issue[] = [
   }
 ]
 
-// Combined export
+// ============================================================================
+// FEBS PRESS JOURNALS
+// ============================================================================
+
+// Get additional DOIs for FEBS journals
+const biologyDois = getDOIsByDomain('biology') || []
+const medicineDois = getDOIsByDomain('medicine') || []
+
+// The FEBS Journal - 3 issues
+export const febsJournalIssues: Issue[] = [
+  {
+    id: 'febsj-vol291-issue24',
+    journalId: 'febs-journal',
+    volume: 291,
+    issue: 24,
+    year: 2024,
+    month: 12,
+    coverImageUrl: 'https://febs.onlinelibrary.wiley.com/cover/17424658',
+    articleDois: aiDois.slice(0, 4),
+    isCurrentIssue: true,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-12-01'),
+    createdAt: new Date('2024-12-01'),
+    updatedAt: new Date('2024-12-01')
+  },
+  {
+    id: 'febsj-vol291-issue23',
+    journalId: 'febs-journal',
+    volume: 291,
+    issue: 23,
+    year: 2024,
+    month: 11,
+    articleDois: aiDois.slice(4, 8),
+    isCurrentIssue: false,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-11-01'),
+    createdAt: new Date('2024-11-01'),
+    updatedAt: new Date('2024-11-01')
+  },
+  {
+    id: 'febsj-vol291-issue22',
+    journalId: 'febs-journal',
+    volume: 291,
+    issue: 22,
+    year: 2024,
+    month: 10,
+    title: 'Special Issue: Protein Folding',
+    articleDois: chemDois.slice(0, 4),
+    isCurrentIssue: false,
+    isSpecialIssue: true,
+    publishedAt: new Date('2024-10-01'),
+    createdAt: new Date('2024-10-01'),
+    updatedAt: new Date('2024-10-01')
+  }
+]
+
+// FEBS Letters - 3 issues
+export const febsLettersIssues: Issue[] = [
+  {
+    id: 'febsl-vol598-issue24',
+    journalId: 'febs-letters',
+    volume: 598,
+    issue: 24,
+    year: 2024,
+    month: 12,
+    coverImageUrl: 'https://febs.onlinelibrary.wiley.com/cover/18733468',
+    articleDois: chemDois.slice(4, 8),
+    isCurrentIssue: true,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-12-01'),
+    createdAt: new Date('2024-12-01'),
+    updatedAt: new Date('2024-12-01')
+  },
+  {
+    id: 'febsl-vol598-issue23',
+    journalId: 'febs-letters',
+    volume: 598,
+    issue: 23,
+    year: 2024,
+    month: 11,
+    articleDois: chemDois.slice(8, 12),
+    isCurrentIssue: false,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-11-01'),
+    createdAt: new Date('2024-11-01'),
+    updatedAt: new Date('2024-11-01')
+  },
+  {
+    id: 'febsl-vol598-issue22',
+    journalId: 'febs-letters',
+    volume: 598,
+    issue: 22,
+    year: 2024,
+    month: 10,
+    articleDois: chemDois.slice(12, 16),
+    isCurrentIssue: false,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-10-01'),
+    createdAt: new Date('2024-10-01'),
+    updatedAt: new Date('2024-10-01')
+  }
+]
+
+// Molecular Oncology - 2 issues
+export const molOncologyIssues: Issue[] = [
+  {
+    id: 'mo-vol18-issue12',
+    journalId: 'mol-oncology',
+    volume: 18,
+    issue: 12,
+    year: 2024,
+    month: 12,
+    coverImageUrl: 'https://febs.onlinelibrary.wiley.com/cover/18780261',
+    articleDois: chemDois.slice(16, 20),
+    isCurrentIssue: true,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-12-01'),
+    createdAt: new Date('2024-12-01'),
+    updatedAt: new Date('2024-12-01')
+  },
+  {
+    id: 'mo-vol18-issue11',
+    journalId: 'mol-oncology',
+    volume: 18,
+    issue: 11,
+    year: 2024,
+    month: 11,
+    title: 'Cancer Biomarkers Special Issue',
+    articleDois: aiDois.slice(8, 12),
+    isCurrentIssue: false,
+    isSpecialIssue: true,
+    publishedAt: new Date('2024-11-01'),
+    createdAt: new Date('2024-11-01'),
+    updatedAt: new Date('2024-11-01')
+  }
+]
+
+// FEBS Open Bio - 2 issues
+export const febsOpenBioIssues: Issue[] = [
+  {
+    id: 'fob-vol14-issue12',
+    journalId: 'febs-open-bio',
+    volume: 14,
+    issue: 12,
+    year: 2024,
+    month: 12,
+    coverImageUrl: 'https://febs.onlinelibrary.wiley.com/cover/22115463',
+    articleDois: aiDois.slice(12, 14),
+    isCurrentIssue: true,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-12-01'),
+    createdAt: new Date('2024-12-01'),
+    updatedAt: new Date('2024-12-01')
+  },
+  {
+    id: 'fob-vol14-issue11',
+    journalId: 'febs-open-bio',
+    volume: 14,
+    issue: 11,
+    year: 2024,
+    month: 11,
+    articleDois: chemDois.slice(0, 3),
+    isCurrentIssue: false,
+    isSpecialIssue: false,
+    publishedAt: new Date('2024-11-01'),
+    createdAt: new Date('2024-11-01'),
+    updatedAt: new Date('2024-11-01')
+  }
+]
+
+// Combined export - includes both Catalyst and FEBS journals
 export const mockIssues: Issue[] = [
   ...jasIssues,
   ...oabIssues,
-  ...hcqIssues
+  ...hcqIssues,
+  ...febsJournalIssues,
+  ...febsLettersIssues,
+  ...molOncologyIssues,
+  ...febsOpenBioIssues
 ]
 
 // ============================================================================

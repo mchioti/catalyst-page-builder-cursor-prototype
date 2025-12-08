@@ -200,6 +200,240 @@ const febsSubmit: Page = {
   publishedAt: new Date('2024-11-20')
 }
 
+// ============================================================================
+// FEBS JOURNALS (4 journals)
+// ============================================================================
+
+const theFebsJournal = {
+  id: 'febs-journal',
+  name: 'The FEBS Journal',
+  acronym: 'FEBSJ',
+  description: 'Publishing high-quality research in molecular life sciences since 1967',
+  issn: {
+    print: '1742-464X',
+    online: '1742-4658'
+  },
+  impactFactor: 5.5,
+  isOpenAccess: false,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#00B5FF',  // FEBS cyan blue
+    secondaryColor: '#0077CC'
+  },
+  status: 'active' as const,
+  createdAt: new Date('1967-01-01'),
+  updatedAt: new Date('2024-12-01')
+}
+
+const febsLetters = {
+  id: 'febs-letters',
+  name: 'FEBS Letters',
+  acronym: 'FEBSL',
+  description: 'Rapid publication of short reports in molecular biosciences',
+  issn: {
+    print: '0014-5793',
+    online: '1873-3468'
+  },
+  impactFactor: 3.9,
+  isOpenAccess: false,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#7B1FA2',  // FEBS purple
+    secondaryColor: '#9C27B0'
+  },
+  status: 'active' as const,
+  createdAt: new Date('1968-01-01'),
+  updatedAt: new Date('2024-12-01')
+}
+
+const molecularOncology = {
+  id: 'mol-oncology',
+  name: 'Molecular Oncology',
+  acronym: 'MO',
+  description: 'Research on molecular and cellular mechanisms of cancer',
+  issn: {
+    online: '1878-0261'
+  },
+  impactFactor: 6.6,
+  isOpenAccess: true,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#00B5FF',  // FEBS cyan blue
+    secondaryColor: '#E91E63'
+  },
+  status: 'active' as const,
+  createdAt: new Date('2007-01-01'),
+  updatedAt: new Date('2024-12-01')
+}
+
+const febsOpenBio = {
+  id: 'febs-open-bio',
+  name: 'FEBS Open Bio',
+  acronym: 'FOB',
+  description: 'Open access journal for life science research',
+  issn: {
+    online: '2211-5463'
+  },
+  impactFactor: 2.8,
+  isOpenAccess: true,
+  isDiscontinued: false,
+  branding: {
+    primaryColor: '#1B5E20',  // FEBS green
+    secondaryColor: '#4CAF50'
+  },
+  status: 'active' as const,
+  createdAt: new Date('2011-01-01'),
+  updatedAt: new Date('2024-12-01')
+}
+
+// FEBS Journal Pages
+const febsJournalHome: Page = {
+  id: 'febsj-home',
+  name: 'Journal Home',
+  slug: 'febs-journal/home',
+  websiteId: 'febs-press',
+  journalId: 'febs-journal',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'full', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'latest-articles', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+const febsJournalArchive: Page = {
+  id: 'febsj-archive',
+  name: 'Issue Archive',
+  slug: 'febs-journal/archive',
+  websiteId: 'febs-press',
+  journalId: 'febs-journal',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'archive', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'issues-list', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+// FEBS Letters Pages
+const febsLettersHome: Page = {
+  id: 'febsl-home',
+  name: 'Journal Home',
+  slug: 'febs-letters/home',
+  websiteId: 'febs-press',
+  journalId: 'febs-letters',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'full', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'latest-articles', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+const febsLettersArchive: Page = {
+  id: 'febsl-archive',
+  name: 'Issue Archive',
+  slug: 'febs-letters/archive',
+  websiteId: 'febs-press',
+  journalId: 'febs-letters',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'archive', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'issues-list', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+// Molecular Oncology Pages
+const molOncologyHome: Page = {
+  id: 'mo-home',
+  name: 'Journal Home',
+  slug: 'mol-oncology/home',
+  websiteId: 'febs-press',
+  journalId: 'mol-oncology',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'full', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'latest-articles', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+const molOncologyArchive: Page = {
+  id: 'mo-archive',
+  name: 'Issue Archive',
+  slug: 'mol-oncology/archive',
+  websiteId: 'febs-press',
+  journalId: 'mol-oncology',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'archive', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'issues-list', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+// FEBS Open Bio Pages
+const febsOpenBioHome: Page = {
+  id: 'fob-home',
+  name: 'Journal Home',
+  slug: 'febs-open-bio/home',
+  websiteId: 'febs-press',
+  journalId: 'febs-open-bio',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'full', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'latest-articles', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
+const febsOpenBioArchive: Page = {
+  id: 'fob-archive',
+  name: 'Issue Archive',
+  slug: 'febs-open-bio/archive',
+  websiteId: 'febs-press',
+  journalId: 'febs-open-bio',
+  status: 'published',
+  composition: [
+    { id: nanoid(), sharedSectionId: 'header-main', variationKey: 'minimal', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'journal-banner', variationKey: 'archive', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'content-blocks', variationKey: 'issues-list', inheritFromTheme: true, divergenceCount: 0 },
+    { id: nanoid(), sharedSectionId: 'footer-main', variationKey: 'compact', inheritFromTheme: true, divergenceCount: 0 }
+  ],
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+  publishedAt: new Date('2024-12-01')
+}
+
 export const febsPressSite: Website = {
   id: 'febs-press',
   name: 'FEBS Press',
@@ -207,19 +441,30 @@ export const febsPressSite: Website = {
   themeId: 'foundation-theme-v1',
   status: 'active',
   
-  sharedSections: [],  // Could add website-specific sections here
+  sharedSections: [],
   
-  pages: [febsHomepage, febsSubmit],
+  // All FEBS pages including website pages and journal pages
+  pages: [
+    febsHomepage, 
+    febsSubmit,
+    febsJournalHome, febsJournalArchive,
+    febsLettersHome, febsLettersArchive,
+    molOncologyHome, molOncologyArchive,
+    febsOpenBioHome, febsOpenBioArchive
+  ],
+  
+  // FEBS journals
+  journals: [theFebsJournal, febsLetters, molecularOncology, febsOpenBio],
   
   branding: {
-    primaryColor: '#cc0000',
-    secondaryColor: '#8b0000',
+    primaryColor: '#00B5FF',  // FEBS cyan blue
+    secondaryColor: '#0077CC',
     logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/febs-custom-logo.png',
     fontFamily: 'Roboto'
   },
   
   createdAt: new Date('2024-01-15'),
-  updatedAt: new Date('2024-11-24')
+  updatedAt: new Date('2024-12-05')
 }
 
 // ============================================================================
@@ -868,4 +1113,32 @@ export const mockWebsites: Website[] = [
   catalystDemoSite,
   febsPressSite
 ]
+
+// Export FEBS journals for direct access
+export const febsJournals = [theFebsJournal, febsLetters, molecularOncology, febsOpenBio]
+
+// Export all journals across all websites for lookup
+export const allJournals = [
+  // Catalyst Demo journals
+  journalOfScience,
+  openAccessBiology,
+  historicalChemistry,
+  // FEBS Press journals
+  theFebsJournal,
+  febsLetters,
+  molecularOncology,
+  febsOpenBio
+]
+
+// Helper to get journal by ID across all websites
+export function getJournalById(journalId: string) {
+  return allJournals.find(j => j.id === journalId)
+}
+
+// Helper to get website by journal ID
+export function getWebsiteByJournalId(journalId: string): Website | undefined {
+  return mockWebsites.find(site => 
+    site.journals?.some(j => j.id === journalId)
+  )
+}
 

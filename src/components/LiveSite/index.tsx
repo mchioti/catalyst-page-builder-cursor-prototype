@@ -15,24 +15,44 @@
 import React, { useEffect, useMemo } from 'react'
 import { Routes, Route, useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
-import { EditingScopeButton } from './EditingScopeButton'
 import { CanvasRenderer } from './CanvasRenderer'
 import { usePageStore } from '../../stores'
+import { usePrototypeStore } from '../../stores/prototypeStore'
 import { mockWebsites } from '../../v2/data/mockWebsites'
+import { EditingScopeButton } from './EditingScopeButton'
+import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
 
 // Helper hook to get all websites from V1 store (includes user-created websites)
 function useAllWebsites() {
   const v1Websites = usePageStore(state => state.websites)
   
-  // Merge V1 websites with V2 mock websites, V1 takes precedence
+  // Merge V1 websites with V2 mock websites
+  // V1 takes precedence for most fields, but preserve V2 journals if V1 doesn't have them
   return useMemo(() => {
     const websiteMap = new Map<string, any>()
     
-    // Add mock websites first
+    // Add mock websites first (these have journals defined)
     mockWebsites.forEach(w => websiteMap.set(w.id, w))
     
-    // Override with V1 websites (includes user-created ones)
-    v1Websites.forEach(w => websiteMap.set(w.id, w))
+    // Merge V1 websites, but preserve journals from V2 if V1 doesn't have them
+    v1Websites.forEach(v1Site => {
+      const existingV2Site = websiteMap.get(v1Site.id)
+      if (existingV2Site) {
+        // Deep merge: V1 data takes precedence, but keep V2 journals if V1 has none
+        const v1Any = v1Site as any // Cast to access optional properties
+        websiteMap.set(v1Site.id, {
+          ...existingV2Site,  // V2 data (has journals)
+          ...v1Site,          // V1 data overrides
+          // But preserve journals from V2 if V1 doesn't have any
+          journals: v1Any.journals?.length > 0 ? v1Any.journals : existingV2Site.journals,
+          // Also preserve pages from V2 if needed
+          pages: v1Any.pages?.length > 0 ? v1Any.pages : existingV2Site.pages
+        })
+      } else {
+        // No V2 equivalent, just use V1 data
+        websiteMap.set(v1Site.id, v1Site)
+      }
+    })
     
     return Array.from(websiteMap.values())
   }, [v1Websites])
@@ -41,12 +61,9 @@ import {
   getHomepageStubForWebsite,
   createJournalsBrowseStub,
   createAboutStub,
-  createSearchStub,
-  createJournalHomeTemplate,
-  createIssueArchiveTemplate,
-  createIssueTocTemplate,
-  createArticleTemplate
+  createSearchStub
 } from '../PageBuilder/pageStubs'
+// PrototypeDrawer replaced with unified EscapeHatch component
 import { 
   getIssuesByJournal, 
   getIssue, 
@@ -64,11 +81,14 @@ import type { Journal, Issue, Article } from '../../v2/types/core'
 // ============================================================================
 
 function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; websiteId: string }) {
-  const navigate = useNavigate()
   const location = useLocation()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   const setCurrentWebsiteId = usePageStore(state => state.setCurrentWebsiteId)
+  
+  // Get persona and drawer state from prototype store
+  const { persona, canEdit, drawerOpen } = usePrototypeStore()
+  const showEditButton = canEdit() // Designer and Admin can edit
   
   // Sync the store's currentWebsiteId with the URL's websiteId
   // This ensures the CanvasThemeProvider can find the correct theme
@@ -78,115 +98,93 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
     }
   }, [websiteId, setCurrentWebsiteId])
   
-  const basePath = `/live/${websiteId}`
+  // Get site layout settings (header/footer)
+  // Default: header and footer are ENABLED unless explicitly set to false
+  const siteLayout = (website as any)?.siteLayout
+  const hasCustomHeader = siteLayout?.header && siteLayout.header.length > 0
+  const hasCustomFooter = siteLayout?.footer && siteLayout.footer.length > 0
+  
+  // Header/footer enabled by default (true unless explicitly set to false)
+  const headerEnabled = siteLayout?.headerEnabled !== false
+  const footerEnabled = siteLayout?.footerEnabled !== false
+  
+  // Check for page-specific overrides (based on current route)
+  const currentPageId = location.pathname.replace(`/live/${websiteId}`, '') || 'home'
+  const pageOverride = (website as any)?.pageLayoutOverrides?.[currentPageId]
+  const shouldShowHeader = headerEnabled && pageOverride?.header !== 'hide'
+  const shouldShowFooter = footerEnabled && pageOverride?.footer !== 'hide'
+  
   
   return (
-    <div className="min-h-screen bg-white">
-      {/* Site Navigation Bar */}
-      <header className="bg-gray-900 text-white px-6 py-3 sticky top-0 z-50">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-6">
-            <Link to={basePath} className="text-xl font-bold hover:text-blue-300 transition-colors">
-              {website?.name || websiteId}
-            </Link>
-            <nav className="flex space-x-4 text-sm">
-              <Link
-                to={basePath}
-                className={`hover:text-blue-300 ${location.pathname === basePath ? 'text-blue-300' : ''}`}
-              >
-                Home
-              </Link>
-              <Link
-                to={`${basePath}/journals`}
-                className={`hover:text-blue-300 ${location.pathname.includes('/journals') ? 'text-blue-300' : ''}`}
-              >
-                Journals
-              </Link>
-              <Link
-                to={`${basePath}/about`}
-                className={`hover:text-blue-300 ${location.pathname.includes('/about') ? 'text-blue-300' : ''}`}
-              >
-                About
-              </Link>
-              <Link
-                to={`${basePath}/search`}
-                className={`hover:text-blue-300 ${location.pathname.includes('/search') ? 'text-blue-300' : ''}`}
-              >
-                Search
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4 text-sm">
-            <button
-              onClick={() => navigate('/v1')}
-              className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-            >
-              Design Console
-            </button>
-          </div>
+    <div 
+      className="min-h-screen bg-white flex flex-col transition-all duration-300 ease-in-out"
+      style={{ marginRight: drawerOpen ? '288px' : '0' }}
+    >
+      {/* Site Header - Custom header from Site Layout (no default - must be configured) */}
+      {shouldShowHeader && hasCustomHeader && (
+        <CanvasRenderer 
+          items={pageOverride?.header === 'custom' ? pageOverride.customHeader : siteLayout.header} 
+          websiteId={websiteId} 
+          themeId={website?.themeId}
+        />
+      )}
+      
+      {/* Placeholder when no header configured - only visible as a hint */}
+      {shouldShowHeader && !hasCustomHeader && (
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 text-center">
+          <span className="text-xs text-gray-500">
+            ℹ️ No site header configured. Add one in Website Settings → Site Layout
+          </span>
         </div>
-      </header>
+      )}
       
       {/* Page Content */}
-      <main>
+      <main className="flex-1">
         {children}
       </main>
       
-      {/* Floating Edit Button with Scope Options */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end">
-        <EditingScopeButton 
-          websiteId={websiteId}
-          route={location.pathname.replace(`/live/${websiteId}`, '')}
-          journalName={website?.journals?.find(j => location.pathname.includes(`/journal/${j.id}`))?.name}
+      {/* Site Footer - Custom footer from Site Layout (no default - must be configured) */}
+      {shouldShowFooter && hasCustomFooter && (
+        <CanvasRenderer 
+          items={pageOverride?.footer === 'custom' ? pageOverride.customFooter : siteLayout.footer} 
+          websiteId={websiteId} 
+          themeId={website?.themeId}
         />
-        <div className="text-xs text-gray-500 text-center bg-white/90 px-2 py-1 rounded shadow">
-          {website?.name}: {location.pathname.replace(`/live/${websiteId}`, '') || 'Homepage'}
-        </div>
-      </div>
+      )}
       
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 px-6 mt-12">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-6">
-          <div>
-            <h4 className="font-bold mb-3">About</h4>
-            <div className="space-y-2 text-sm text-gray-300">
-              <Link to="/live/about" className="block hover:text-white">About Us</Link>
-              <a href="#" className="block hover:text-white">Terms and Conditions</a>
-              <a href="#" className="block hover:text-white">Privacy Policy</a>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-bold mb-3">Journals</h4>
-            <div className="space-y-2 text-sm text-gray-300">
-              <Link to="/live/journals" className="block hover:text-white">Browse All Journals</Link>
-              {website?.journals?.slice(0, 3).map(journal => (
-                <Link key={journal.id} to={`/live/journal/${journal.id}`} className="block hover:text-white">
-                  {journal.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-bold mb-3">For Authors</h4>
-            <div className="space-y-2 text-sm text-gray-300">
-              <a href="#" className="block hover:text-white">Submit Article</a>
-              <a href="#" className="block hover:text-white">Author Guidelines</a>
-              <a href="#" className="block hover:text-white">Publication Ethics</a>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-bold mb-3">Connect</h4>
-            <div className="space-y-2 text-sm text-gray-300">
-              <a href="#" className="block hover:text-white">📧 Contact Us</a>
-              <a href="#" className="block hover:text-white">🐦 Twitter</a>
-              <a href="#" className="block hover:text-white">💼 LinkedIn</a>
-            </div>
+      {/* Placeholder when no footer configured */}
+      {shouldShowFooter && !hasCustomFooter && (
+        <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center mt-auto">
+          <span className="text-xs text-gray-500">
+            ℹ️ No site footer configured. Add one in Website Settings → Site Layout
+          </span>
+        </div>
+      )}
+      
+      {/* Floating Edit Button - Shows for Designer and Admin personas (simulated UI) */}
+      {showEditButton && (
+        <div 
+          className="fixed bottom-6 z-50 flex flex-col gap-2 items-end transition-all duration-300 ease-in-out"
+          style={{ right: drawerOpen ? 'calc(288px + 5rem)' : '5rem' }}
+        >
+          <EditingScopeButton 
+            websiteId={websiteId}
+            route={location.pathname.replace(`/live/${websiteId}`, '')}
+            journalName={website?.journals?.find((j: any) => location.pathname.includes(`/journal/${j.id}`))?.name}
+          />
+          <div className="text-xs text-gray-500 text-center bg-white/90 px-2 py-1 rounded shadow">
+            {persona === 'designer' ? '🎨 Designer' : '👑 Admin'} • {website?.name}
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-gray-700 text-center text-sm text-gray-400">
-          © 2024 {website?.name} • Powered by Catalyst Publishing Platform
-        </div>
-      </footer>
+      )}
+      
+      {/* Escape Hatch - Always available for prototype user (meta layer) */}
+      <EscapeHatch
+        context="live-site"
+        websiteId={websiteId}
+        websiteName={website?.name}
+        journals={website?.journals || []}
+      />
     </div>
   )
 }
@@ -242,45 +240,20 @@ function JournalsBrowsePage() {
   const website = websites.find(w => w.id === websiteId)
   const journals = website?.journals || []
   
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'journals'))
-  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  // Generate fresh content for the journals page based on website's journals
+  // This is dynamically generated, not cached, to ensure correct journals are shown
+  const pageCanvas = React.useMemo(() => {
+    return createJournalsBrowseStub(websiteId, journals)
+  }, [websiteId, journals])
   
-  // Auto-initialize canvas data if not present
-  useEffect(() => {
-    if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, 'journals', createJournalsBrowseStub())
-    }
-  }, [websiteId, pageCanvas, setPageCanvas])
-  
-  // Render canvas content if available - pass website's themeId and brandMode
-  if (pageCanvas && pageCanvas.length > 0) {
-    return (
-      <CanvasRenderer 
-        items={pageCanvas} 
-        websiteId={websiteId} 
-        themeId={website?.themeId}
-        brandMode={website?.brandMode}
-      />
-    )
-  }
-  
-  // Fallback while initializing
+  // Render canvas content - dynamically generated from website's journals
   return (
-    <div className="py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">All Journals</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Explore our collection of {journals.length} peer-reviewed journals
-        </p>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {journals.map(journal => (
-            <JournalCard key={journal.id} journal={journal} showFullDescription />
-          ))}
-        </div>
-      </div>
-    </div>
+    <CanvasRenderer 
+      items={pageCanvas} 
+      websiteId={websiteId} 
+      themeId={website?.themeId}
+      brandMode={website?.brandMode}
+    />
   )
 }
 
@@ -293,50 +266,13 @@ function JournalHomePage() {
   const { journalId } = useParams<{ journalId: string }>()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
-  const journal = website?.journals?.find(j => j.id === journalId)
-  
-  // Page ID includes journalId for uniqueness
-  const pageId = `journal-${journalId}`
-  
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
-  const setPageCanvas = usePageStore(state => state.setPageCanvas)
-  
-  // Auto-initialize canvas data if not present
-  useEffect(() => {
-    if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, pageId, createJournalHomeTemplate())
-    }
-  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  const journal = website?.journals?.find((j: any) => j.id === journalId)
   
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
-  // Render canvas content if available
-  if (pageCanvas && pageCanvas.length > 0) {
-    // Create template context with journal data
-    const templateContext = {
-      journal: {
-        id: journal.id,
-        name: journal.name,
-        description: journal.description || '',
-        brandColor: journal.branding?.primaryColor || '#1e40af',
-        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
-      }
-    }
-    return (
-      <CanvasRenderer 
-        items={pageCanvas} 
-        websiteId={websiteId} 
-        themeId={website?.themeId}
-        brandMode={website?.brandMode}
-        templateContext={templateContext} 
-      />
-    )
-  }
-  
-  // Fallback while initializing
+  // Get dynamic content for this journal
   const currentIssue = getCurrentIssue(journalId!)
   const issues = getIssuesByJournal(journalId!)
   const latestArticles = currentIssue ? getArticlesForIssue(currentIssue.id).slice(0, 5) : []
@@ -405,21 +341,7 @@ function IssueArchivePage() {
   const { journalId } = useParams<{ journalId: string }>()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
-  const journal = website?.journals?.find(j => j.id === journalId)
-  
-  // Page ID includes journalId for uniqueness
-  const pageId = `journal-${journalId}-loi`
-  
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
-  const setPageCanvas = usePageStore(state => state.setPageCanvas)
-  
-  // Auto-initialize canvas data if not present
-  useEffect(() => {
-    if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, pageId, createIssueArchiveTemplate())
-    }
-  }, [websiteId, pageId, pageCanvas, setPageCanvas])
+  const journal = website?.journals?.find((j: any) => j.id === journalId)
   
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
@@ -427,29 +349,7 @@ function IssueArchivePage() {
   
   const issues = getIssuesByJournal(journalId!)
   
-  // Render canvas content if available - pass website's themeId and brandMode
-  if (pageCanvas && pageCanvas.length > 0) {
-    const templateContext = {
-      journal: {
-        id: journal.id,
-        name: journal.name,
-        description: journal.description || '',
-        brandColor: journal.branding?.primaryColor || '#1e40af',
-        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
-      }
-    }
-    return (
-      <CanvasRenderer 
-        items={pageCanvas} 
-        websiteId={websiteId} 
-        themeId={website?.themeId}
-        brandMode={website?.brandMode}
-        templateContext={templateContext} 
-      />
-    )
-  }
-  
-  // Fallback: Group issues by volume
+  // Group issues by volume
   const issuesByVolume = issues.reduce((acc, issue) => {
     const vol = issue.volume
     if (!acc[vol]) acc[vol] = []
@@ -494,7 +394,7 @@ function IssueTocPage() {
   const { journalId, vol, issue: issueNum } = useParams<{ journalId: string; vol: string; issue: string }>()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
-  const journal = website?.journals?.find(j => j.id === journalId)
+  const journal = website?.journals?.find((j: any) => j.id === journalId)
   
   // Handle 'current' as special case
   let issue: Issue | undefined
@@ -503,22 +403,6 @@ function IssueTocPage() {
   } else {
     issue = getIssue(journalId!, parseInt(vol!), parseInt(issueNum!))
   }
-  
-  // Page ID includes journalId and issue info
-  const pageId = vol === 'current' || !vol 
-    ? `journal-${journalId}-toc-current`
-    : `journal-${journalId}-toc-${vol}-${issueNum}`
-  
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
-  const setPageCanvas = usePageStore(state => state.setPageCanvas)
-  
-  // Auto-initialize canvas data if not present
-  useEffect(() => {
-    if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, pageId, createIssueTocTemplate())
-    }
-  }, [websiteId, pageId, pageCanvas, setPageCanvas])
   
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
@@ -534,34 +418,6 @@ function IssueTocPage() {
   const prevIssue = currentIndex > 0 ? allIssues[currentIndex - 1] : null
   const nextIssue = currentIndex < allIssues.length - 1 ? allIssues[currentIndex + 1] : null
   
-  // Render canvas content if available - pass website's themeId and brandMode
-  if (pageCanvas && pageCanvas.length > 0) {
-    const templateContext = {
-      journal: {
-        id: journal.id,
-        name: journal.name,
-        description: journal.description || '',
-        brandColor: journal.branding?.primaryColor || '#1e40af',
-        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
-      },
-      issue: {
-        id: issue.id,
-        name: formatVolumeIssue(issue),
-        description: issue.title || `Published ${formatIssueDate(issue)}`
-      }
-    }
-    return (
-      <CanvasRenderer 
-        items={pageCanvas} 
-        websiteId={websiteId} 
-        themeId={website?.themeId}
-        brandMode={website?.brandMode}
-        templateContext={templateContext} 
-      />
-    )
-  }
-  
-  // Fallback
   return (
     <div>
       <JournalBanner journal={journal} variant="issue" issue={issue} />
@@ -613,26 +469,12 @@ function ArticlePage() {
   const { journalId, doi } = useParams<{ journalId: string; doi: string }>()
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
-  const journal = website?.journals?.find(j => j.id === journalId)
+  const journal = website?.journals?.find((j: any) => j.id === journalId)
   
   // Decode DOI from URL
   const decodedDoi = decodeURIComponent(doi || '')
   const article = getArticleByDOI(decodedDoi)
   const citation = getCitationByDOI(decodedDoi)
-  
-  // Page ID - use a sanitized version of DOI
-  const pageId = `article-${decodedDoi.replace(/[/.]/g, '-')}`
-  
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, pageId))
-  const setPageCanvas = usePageStore(state => state.setPageCanvas)
-  
-  // Auto-initialize canvas data if not present
-  useEffect(() => {
-    if (!pageCanvas || pageCanvas.length === 0) {
-      setPageCanvas(websiteId, pageId, createArticleTemplate())
-    }
-  }, [websiteId, pageId, pageCanvas, setPageCanvas])
   
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
@@ -642,35 +484,6 @@ function ArticlePage() {
     return <NotFoundPage message={`Article with DOI "${decodedDoi}" not found`} />
   }
   
-  // Render canvas content if available - pass website's themeId and brandMode
-  if (pageCanvas && pageCanvas.length > 0) {
-    const templateContext = {
-      journal: {
-        id: journal.id,
-        name: journal.name,
-        brandColor: journal.branding?.primaryColor || '#1e40af'
-      },
-      article: {
-        title: article.title,
-        authors: article.authors.join(', '),
-        doi: article.doi,
-        abstract: article.abstract || citation?.abstract || 'Abstract not available.',
-        keywords: citation?.keywords?.join(', ') || '',
-        contentType: article.isOpenAccess ? 'Open Access' : 'Research Article'
-      }
-    }
-    return (
-      <CanvasRenderer 
-        items={pageCanvas} 
-        websiteId={websiteId} 
-        themeId={website?.themeId}
-        brandMode={website?.brandMode}
-        templateContext={templateContext} 
-      />
-    )
-  }
-  
-  // Fallback
   return (
     <div>
       <JournalBanner journal={journal} variant="minimal" />
@@ -792,7 +605,8 @@ function SearchPage() {
 // SHARED COMPONENTS
 // ============================================================================
 
-function JournalCard({ journal, showFullDescription }: { journal: Journal; showFullDescription?: boolean }) {
+// Helper component for displaying journal cards (kept for potential future use)
+function _JournalCard({ journal, showFullDescription }: { journal: Journal; showFullDescription?: boolean }) {
   const websiteId = useWebsiteId()
   const currentIssue = getCurrentIssue(journal.id)
   

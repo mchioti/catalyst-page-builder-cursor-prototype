@@ -973,6 +973,132 @@ export function PropertiesPanel({
               </p>
             </div>
           </div>
+          
+          {/* Overlay Settings */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-900 border-b pb-2 flex items-center gap-2">
+              Overlay Settings
+              {section.overlay?.enabled && (
+                <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Active</span>
+              )}
+            </h4>
+            
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">Enable Overlay</label>
+              <button
+                onClick={() => updateSection({
+                  overlay: section.overlay?.enabled
+                    ? { ...section.overlay, enabled: false }
+                    : { enabled: true, position: 'top', behavior: 'sticky', dismissible: true, showOnLoad: true, animation: 'slide' }
+                })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  section.overlay?.enabled ? 'bg-purple-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    section.overlay?.enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Overlay sections float over other content (sticky banners, fixed notifications, modals)
+            </p>
+            
+            {section.overlay?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['top', 'center', 'bottom'] as const).map((pos) => (
+                      <button
+                        key={pos}
+                        onClick={() => updateSection({
+                          overlay: { ...section.overlay!, position: pos }
+                        })}
+                        className={`px-3 py-2 text-sm rounded-md border transition-colors capitalize ${
+                          section.overlay?.position === pos
+                            ? 'bg-purple-50 border-purple-500 text-purple-700 font-medium'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Behavior</label>
+                  <select
+                    value={section.overlay?.behavior || 'sticky'}
+                    onChange={(e) => updateSection({
+                      overlay: { ...section.overlay!, behavior: e.target.value as 'sticky' | 'fixed' | 'modal' }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="sticky">Sticky (scrolls then sticks)</option>
+                    <option value="fixed">Fixed (always visible)</option>
+                    <option value="modal">Modal (centered popup)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Animation</label>
+                  <select
+                    value={section.overlay?.animation || 'none'}
+                    onChange={(e) => updateSection({
+                      overlay: { ...section.overlay!, animation: e.target.value as 'none' | 'slide' | 'fade' }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="none">None</option>
+                    <option value="slide">Slide</option>
+                    <option value="fade">Fade</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">Dismissible</label>
+                  <button
+                    onClick={() => updateSection({
+                      overlay: { ...section.overlay!, dismissible: !section.overlay?.dismissible }
+                    })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      section.overlay?.dismissible ? 'bg-purple-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        section.overlay?.dismissible ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                
+                {section.overlay?.behavior === 'modal' && (
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Show Backdrop</label>
+                    <button
+                      onClick={() => updateSection({
+                        overlay: { ...section.overlay!, backdrop: !section.overlay?.backdrop }
+                      })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        section.overlay?.backdrop ? 'bg-purple-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          section.overlay?.backdrop ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -1877,9 +2003,15 @@ export function PropertiesPanel({
             <button 
               onClick={() => {
                 const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
-                setCurrentView('design-console')
-                // Navigate to the specific website's publication cards based on current editing context
+                // Set up the view state first
                 setSiteManagerView(`${currentWebsiteId}-publication-cards` as any)
+                
+                // Check if we're in a routed context (URL-based editing) or V1 internal
+                if (window.location.pathname.startsWith('/edit/')) {
+                  window.location.href = '/v1'
+                } else {
+                  setCurrentView('design-console')
+                }
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
             >
@@ -2163,8 +2295,15 @@ export function PropertiesPanel({
             <button 
               onClick={() => {
                 const { setCurrentView, setSiteManagerView, currentWebsiteId } = usePageStore.getState()
-                setCurrentView('design-console')
+                // Set up the view state first
                 setSiteManagerView(`${currentWebsiteId}-publication-cards` as any)
+                
+                // Check if we're in a routed context (URL-based editing) or V1 internal
+                if (window.location.pathname.startsWith('/edit/')) {
+                  window.location.href = '/v1'
+                } else {
+                  setCurrentView('design-console')
+                }
               }}
               className="w-full px-3 py-2 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-50 transition-colors"
             >

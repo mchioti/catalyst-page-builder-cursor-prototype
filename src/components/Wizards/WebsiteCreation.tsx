@@ -253,7 +253,7 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
                     i + 1 === step ? 'text-blue-600' : 'text-gray-600'
                   }`}>
                     {i === 0 && 'Purpose'}
-                    {i === 1 && 'Templates'}
+                    {i === 1 && 'Pages'}
                     {i === 2 && 'Design'}
                     {i === 3 && 'Branding'}
                   </div>

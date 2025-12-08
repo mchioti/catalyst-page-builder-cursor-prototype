@@ -15,6 +15,8 @@ import { useBrandingStore } from '../../stores/brandingStore'
 import { createDebugLogger } from '../../utils/logger'
 import { applyListPattern } from '../../utils/listPatternRenderer'
 import { PublicationCard } from '../Publications/PublicationCard'
+import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
+import { generateAIContent } from '../../utils/aiContentGeneration'
 
 // Control logging for this file
 const DEBUG = false
@@ -551,6 +553,65 @@ export function SectionRenderer({
     return styles
   }
 
+  // Get overlay positioning styles - ONLY applies in live mode, not editor
+  const getOverlayStyles = (section: WidgetSection): React.CSSProperties => {
+    // Don't apply overlay positioning in editor - it breaks editing
+    if (!isLiveMode || !section.overlay?.enabled) return {}
+    
+    const { position, behavior } = section.overlay
+    const styles: React.CSSProperties = {}
+    
+    // Z-index for overlay layering
+    styles.zIndex = 1000
+    
+    // Position based on behavior type
+    if (behavior === 'fixed' || behavior === 'sticky') {
+      styles.position = behavior
+      styles.left = 0
+      styles.right = 0
+      
+      if (position === 'top') {
+        styles.top = 0
+      } else if (position === 'bottom') {
+        styles.bottom = 0
+      }
+    } else if (behavior === 'modal') {
+      styles.position = 'fixed'
+      styles.left = '50%'
+      styles.top = '50%'
+      styles.transform = 'translate(-50%, -50%)'
+      styles.maxWidth = '90vw'
+      styles.maxHeight = '90vh'
+    }
+    
+    return styles
+  }
+  
+  // Get overlay-specific classes - ONLY applies in live mode
+  const getOverlayClasses = (section: WidgetSection): string => {
+    // Don't apply overlay classes in editor
+    if (!isLiveMode || !section.overlay?.enabled) return ''
+    
+    const { behavior, animation } = section.overlay
+    const classes: string[] = []
+    
+    // Shadow for depth
+    if (behavior === 'fixed' || behavior === 'sticky') {
+      classes.push('shadow-lg')
+    } else if (behavior === 'modal') {
+      classes.push('shadow-2xl', 'rounded-lg')
+    }
+    
+    // Animation classes
+    if (animation === 'slide') {
+      classes.push('animate-slide-in')
+    } else if (animation === 'fade') {
+      classes.push('animate-fade-in')
+    }
+    
+    return classes.join(' ')
+  }
+
   // Get section container classes with background awareness and text color
   const getSectionContainerClasses = (section: WidgetSection) => {
     const hasBackground = section.background && section.background.type !== 'none'
@@ -687,18 +748,41 @@ export function SectionRenderer({
     }
   })
 
+  // Render backdrop for modal overlays - ONLY in live mode
+  const renderBackdrop = () => {
+    // Don't render backdrop in editor mode
+    if (!isLiveMode || !section.overlay?.enabled || section.overlay.behavior !== 'modal' || !section.overlay.backdrop) {
+      return null
+    }
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-[999]"
+        onClick={() => {
+          // Could trigger dismiss here if dismissible
+        }}
+      />
+    )
+  }
+
   return (
     <>
+      {/* Modal backdrop */}
+      {renderBackdrop()}
+      
       <div 
         ref={setSectionDropRef}
         data-section-id={section.id}
-        className={`${getSectionContainerClasses(section)} ${getSectionStylingClasses(section)} ${
+        data-overlay={section.overlay?.enabled ? 'true' : undefined}
+        data-overlay-position={section.overlay?.position}
+        data-overlay-behavior={section.overlay?.behavior}
+        className={`${getSectionContainerClasses(section)} ${getSectionStylingClasses(section)} ${getOverlayClasses(section)} ${
           activeDropZone === section.id && !isLiveMode
             ? 'ring-4 ring-purple-300 ring-opacity-50 border-purple-400 bg-purple-50' 
             : ''
         }`}
         style={{
           ...getSectionBackgroundStyles(section),
+          ...getOverlayStyles(section),
           // NEW: Top-level padding with spacing token support (e.g., 'semantic.lg', 'base.6', '24px')
           ...(section.padding && { 
             padding: resolveSpacingToken(section.padding, usePageStore) || section.padding
@@ -970,7 +1054,80 @@ export function SectionRenderer({
                     
                     // Pattern mode: Expand publications into separate grid items
                     const pubWidget = widget as any
-                    let publications = pubWidget.publications || []
+                    let publications: any[] = []
+                    
+                    // Get publications based on content source (matching WidgetRenderer logic)
+                    if (pubWidget.contentSource === 'schema-objects' && pubWidget.schemaSource) {
+                      const { selectionType, selectedIds, selectedType } = pubWidget.schemaSource
+                      const schemaObjects = usePageStore.getState().schemaObjects || []
+                      
+                      try {
+                        if (selectionType === 'by-type' && selectedType) {
+                          const filteredObjects = schemaObjects.filter((obj: any) => obj.type === selectedType)
+                          publications = filteredObjects
+                            .map((obj: any) => {
+                              try {
+                                return JSON.parse(obj.jsonLD)
+                              } catch (e) {
+                                return null
+                              }
+                            })
+                            .filter((pub: any) => pub !== null)
+                        } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
+                          publications = selectedIds
+                            .map((id: string) => schemaObjects.find((obj: any) => obj.id === id))
+                            .filter((obj: any) => obj !== undefined)
+                            .map((obj: any) => {
+                              try {
+                                return JSON.parse(obj.jsonLD)
+                              } catch (e) {
+                                return null
+                              }
+                            })
+                            .filter((pub: any) => pub !== null)
+                        }
+                      } catch (error) {
+                        console.error('Error loading schema objects in pattern mode:', error)
+                        publications = []
+                      }
+                    } else if (pubWidget.contentSource === 'doi-list' && pubWidget.doiSource?.dois && pubWidget.doiSource.dois.length > 0) {
+                      try {
+                        publications = pubWidget.doiSource.dois
+                          .map((doi: string) => {
+                            const citation = getCitationByDOI(doi)
+                            if (citation) {
+                              return citationToSchemaOrg(citation)
+                            }
+                            return null
+                          })
+                          .filter((pub: any) => pub !== null)
+                      } catch (error) {
+                        console.error('Error loading DOI publications in pattern mode:', error)
+                        publications = []
+                      }
+                    } else if (pubWidget.contentSource === 'ai-generated' && pubWidget.aiSource?.prompt) {
+                      try {
+                        if (pubWidget.aiSource.generatedContent && pubWidget.aiSource.lastGenerated) {
+                          const lastGenTime = pubWidget.aiSource.lastGenerated instanceof Date 
+                            ? pubWidget.aiSource.lastGenerated.getTime()
+                            : new Date(pubWidget.aiSource.lastGenerated).getTime()
+                          const hoursSinceGeneration = (Date.now() - lastGenTime) / (1000 * 60 * 60)
+                          if (hoursSinceGeneration < 1) {
+                            publications = pubWidget.aiSource.generatedContent
+                          } else {
+                            publications = generateAIContent(pubWidget.aiSource.prompt)
+                          }
+                        } else {
+                          publications = generateAIContent(pubWidget.aiSource.prompt)
+                        }
+                      } catch (error) {
+                        console.error('Error generating AI content in pattern mode:', error)
+                        publications = pubWidget.publications || []
+                      }
+                    } else {
+                      // Default: use publications array from widget
+                      publications = pubWidget.publications || []
+                    }
                     
                     // Apply max items
                     if (pubWidget.maxItems) {
@@ -1165,7 +1322,80 @@ export function SectionRenderer({
                     
                     // Pattern mode: Expand publications into separate flex items
                     const pubWidget = widget as any
-                    let publications = pubWidget.publications || []
+                    let publications: any[] = []
+                    
+                    // Get publications based on content source (matching WidgetRenderer logic)
+                    if (pubWidget.contentSource === 'schema-objects' && pubWidget.schemaSource) {
+                      const { selectionType, selectedIds, selectedType } = pubWidget.schemaSource
+                      const schemaObjects = usePageStore.getState().schemaObjects || []
+                      
+                      try {
+                        if (selectionType === 'by-type' && selectedType) {
+                          const filteredObjects = schemaObjects.filter((obj: any) => obj.type === selectedType)
+                          publications = filteredObjects
+                            .map((obj: any) => {
+                              try {
+                                return JSON.parse(obj.jsonLD)
+                              } catch (e) {
+                                return null
+                              }
+                            })
+                            .filter((pub: any) => pub !== null)
+                        } else if (selectionType === 'by-id' && selectedIds && selectedIds.length > 0) {
+                          publications = selectedIds
+                            .map((id: string) => schemaObjects.find((obj: any) => obj.id === id))
+                            .filter((obj: any) => obj !== undefined)
+                            .map((obj: any) => {
+                              try {
+                                return JSON.parse(obj.jsonLD)
+                              } catch (e) {
+                                return null
+                              }
+                            })
+                            .filter((pub: any) => pub !== null)
+                        }
+                      } catch (error) {
+                        console.error('Error loading schema objects in flex pattern mode:', error)
+                        publications = []
+                      }
+                    } else if (pubWidget.contentSource === 'doi-list' && pubWidget.doiSource?.dois && pubWidget.doiSource.dois.length > 0) {
+                      try {
+                        publications = pubWidget.doiSource.dois
+                          .map((doi: string) => {
+                            const citation = getCitationByDOI(doi)
+                            if (citation) {
+                              return citationToSchemaOrg(citation)
+                            }
+                            return null
+                          })
+                          .filter((pub: any) => pub !== null)
+                      } catch (error) {
+                        console.error('Error loading DOI publications in flex pattern mode:', error)
+                        publications = []
+                      }
+                    } else if (pubWidget.contentSource === 'ai-generated' && pubWidget.aiSource?.prompt) {
+                      try {
+                        if (pubWidget.aiSource.generatedContent && pubWidget.aiSource.lastGenerated) {
+                          const lastGenTime = pubWidget.aiSource.lastGenerated instanceof Date 
+                            ? pubWidget.aiSource.lastGenerated.getTime()
+                            : new Date(pubWidget.aiSource.lastGenerated).getTime()
+                          const hoursSinceGeneration = (Date.now() - lastGenTime) / (1000 * 60 * 60)
+                          if (hoursSinceGeneration < 1) {
+                            publications = pubWidget.aiSource.generatedContent
+                          } else {
+                            publications = generateAIContent(pubWidget.aiSource.prompt)
+                          }
+                        } else {
+                          publications = generateAIContent(pubWidget.aiSource.prompt)
+                        }
+                      } catch (error) {
+                        console.error('Error generating AI content in flex pattern mode:', error)
+                        publications = pubWidget.publications || []
+                      }
+                    } else {
+                      // Default: use publications array from widget
+                      publications = pubWidget.publications || []
+                    }
                     
                     // Apply max items
                     if (pubWidget.maxItems) {

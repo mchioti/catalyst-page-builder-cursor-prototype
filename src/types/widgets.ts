@@ -476,6 +476,17 @@ export type WidgetSection = {
   // Content mode (text color adaptation)
   contentMode?: 'light' | 'dark' // Light = dark text (light bg), Dark = white text (dark bg)
   
+  // Overlay configuration (for banners, modals, notifications)
+  overlay?: {
+    enabled: boolean
+    position: 'top' | 'bottom' | 'center' // Where the overlay appears
+    behavior: 'sticky' | 'fixed' | 'modal' // sticky = scrolls then sticks, fixed = always visible, modal = centered popup
+    dismissible?: boolean // Can user close it (shows X button)
+    showOnLoad?: boolean // Show immediately when page loads
+    backdrop?: boolean // Show dark backdrop behind (for modals)
+    animation?: 'none' | 'slide' | 'fade' // Entry animation
+  }
+  
   // Spacing tokens (NEW: Figma DS V2 - semantic spacing)
   padding?: string // e.g., 'semantic.lg', 'base.6', '24px'
   minHeight?: string // e.g., '500px', '60vh'

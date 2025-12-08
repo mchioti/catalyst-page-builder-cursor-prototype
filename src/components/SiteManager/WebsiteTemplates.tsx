@@ -1,5 +1,5 @@
 /**
- * Website Templates View
+ * Website Pages View
  * Shows templates relevant to this website with divergence tracking
  */
 
@@ -55,9 +55,9 @@ export function WebsiteTemplates({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   // Filter templates to only show those relevant to this website's content types and settings
-  // NOTE: ONLY show Publication Page Templates - exclude Stubs (website/supporting) and Sections (global/section)
+  // NOTE: ONLY show Publication Pages - exclude Stubs (website/supporting) and Sections (global/section)
   const relevantTemplates = allTemplates.filter(template => {
-    // ONLY show Publication Page Templates - exclude everything else
+    // ONLY show Publication Pages - exclude everything else
     if (template.category !== 'publication') {
       return false
     }
@@ -229,7 +229,7 @@ export function WebsiteTemplates({
       // 1. Copy routeCanvasItems[route] → publisherThemeCanvas[templateId]
       // 2. Update all non-modified/non-exempted websites
       // 3. Show success notification
-      alert(`✅ Template "${template.name}" promoted to Publisher Theme!\n\nAll websites will now inherit these modifications.`)
+      alert(`✅ Page "${template.name}" promoted to Publisher Design!\n\nAll websites will now inherit these modifications.`)
     }
   }
 
@@ -237,7 +237,7 @@ export function WebsiteTemplates({
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Templates</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Pages</h2>
         <p className="text-gray-600 mt-1">
           Manage templates and track modifications for this website
         </p>
@@ -270,7 +270,7 @@ export function WebsiteTemplates({
         </div>
       </div>
 
-      {/* Templates Table */}
+      {/* Pages Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         {filteredTemplates.length === 0 ? (
           <div className="p-12 text-center">

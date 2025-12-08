@@ -1,6 +1,17 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Search, Plus, Filter, X, RefreshCw } from 'lucide-react'
 import { TemplateRow } from './TemplateRow'
+import { CanvasRenderer } from '../LiveSite/CanvasRenderer'
+import { 
+  getHomepageStubForWebsite,
+  createAboutStub,
+  createSearchStub,
+  createJournalsBrowseStub,
+  createStandardHeaderStub,
+  createStandardFooterStub,
+  createNotificationBannerStub,
+  createCookieConsentStub
+} from '../PageBuilder/pageStubs'
 
 // Template categories - 2 main types: page templates and section templates
 type TemplateCategory = 'website' | 'publication' | 'supporting' | 'global' | 'section'
@@ -30,25 +41,11 @@ type Template = {
 // Website Page Templates from mockup
 const WEBSITE_TEMPLATES: Template[] = [
   {
-    id: 'theme-global-sections',
-    name: 'Theme (Global sections)',
-    description: 'Base theme with global sections like headers and footers',
-    category: 'website',
-    inheritsFrom: 'Modern Theme',
-    modifications: 0,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-03-15'),
-    createdBy: 'System',
-    usageCount: 2,
-    tags: ['theme', 'global', 'sections'],
-    status: 'active'
-  },
-  {
     id: 'website-homepage',
     name: 'Website Homepage',
     description: 'Homepage template for the publisher site',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 1,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
@@ -62,7 +59,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Search results',
     description: 'Template for displaying search results',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
@@ -76,7 +73,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Advanced Search',
     description: 'Advanced search page with filters and options',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-03-01'),
@@ -90,7 +87,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Browse',
     description: 'General browse page for content navigation',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 1,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-03-05'),
@@ -132,7 +129,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Profile and Institutional Admin pages',
     description: 'User profile and institutional administration pages',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-18'),
@@ -146,7 +143,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'Error pages',
     description: '404, 500, and other error page templates',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-02-20'),
     updatedAt: new Date('2024-03-20'),
@@ -160,7 +157,7 @@ const WEBSITE_TEMPLATES: Template[] = [
     name: 'eCommerce',
     description: 'Base eCommerce template for online sales',
     category: 'website',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-03-01'),
     updatedAt: new Date('2024-03-22'),
@@ -206,7 +203,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Standard Header',
     description: 'Default header template with logo, navigation, and search functionality',
     category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-10'),
@@ -220,7 +217,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Standard Footer',
     description: 'Footer template with links, copyright, and contact information',
     category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-02-28'),
@@ -230,67 +227,11 @@ const SECTION_TEMPLATES: Template[] = [
     status: 'active'
   },
   {
-    id: 'global-navigation-mega',
-    name: 'Mega Navigation Menu',
-    description: 'Comprehensive navigation with dropdown categories and search',
-    category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
-    modifications: 0,
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-03-15'),
-    createdBy: 'Design Team',
-    usageCount: 0,
-    tags: ['navigation', 'dropdown', 'search', 'comprehensive'],
-    status: 'active'
-  },
-  {
-    id: 'global-breadcrumb',
-    name: 'Breadcrumb Navigation',
-    description: 'Site navigation breadcrumb component for all pages',
-    category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
-    modifications: 0,
-    createdAt: new Date('2024-01-25'),
-    updatedAt: new Date('2024-03-01'),
-    createdBy: 'UX Team',
-    usageCount: 1,
-    tags: ['breadcrumb', 'navigation', 'site-structure'],
-    status: 'active'
-  },
-  {
-    id: 'global-search-bar',
-    name: 'Global Search Bar',
-    description: 'Advanced search component with filters and autocomplete',
-    category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
-    modifications: 0,
-    createdAt: new Date('2024-02-10'),
-    updatedAt: new Date('2024-03-20'),
-    createdBy: 'Dev Team',
-    usageCount: 0,
-    tags: ['search', 'filters', 'autocomplete', 'global'],
-    status: 'active'
-  },
-  {
-    id: 'global-user-account',
-    name: 'User Account Menu',
-    description: 'User login/account management dropdown menu',
-    category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
-    modifications: 0,
-    createdAt: new Date('2024-01-30'),
-    updatedAt: new Date('2024-03-05'),
-    createdBy: 'Auth Team',
-    usageCount: 1,
-    tags: ['user', 'account', 'authentication', 'dropdown'],
-    status: 'active'
-  },
-  {
     id: 'global-notification-banner',
     name: 'Notification Banner',
     description: 'Site-wide notification banner for announcements',
     category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-02-15'),
     updatedAt: new Date('2024-03-12'),
@@ -304,7 +245,7 @@ const SECTION_TEMPLATES: Template[] = [
     name: 'Cookie Consent Bar',
     description: 'GDPR-compliant cookie consent notification bar',
     category: 'global',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-02-20'),
@@ -322,7 +263,7 @@ const PUBLICATION_TEMPLATES: Template[] = [
     name: 'Publication Pages',
     description: 'Root template for all publication-related pages',
     category: 'publication',
-    inheritsFrom: 'theme-global-sections',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-15'),
@@ -785,7 +726,7 @@ const SUPPORTING_PAGES_TEMPLATES: Template[] = [
     name: 'Supporting Pages',
     description: 'Root template for general supporting pages',
     category: 'supporting',
-    inheritsFrom: 'Theme (Global sections)',
+    inheritsFrom: 'Design System',
     modifications: 0,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-03-05'),
@@ -1041,6 +982,154 @@ const CONTENT_SECTION_TEMPLATES: Template[] = [
 // Export all templates for use in other components (e.g., WebsiteTemplates)
 export const ALL_TEMPLATES = [...WEBSITE_TEMPLATES, ...PUBLICATION_TEMPLATES, ...SUPPORTING_PAGES_TEMPLATES, ...SECTION_TEMPLATES, ...CONTENT_SECTION_TEMPLATES]
 
+// ============================================================================
+// STUB PREVIEW MODAL - Shows actual rendered stub content
+// ============================================================================
+
+interface StubPreviewModalProps {
+  template: Template
+  themeId?: string
+  onClose: () => void
+}
+
+function StubPreviewModal({ template, themeId, onClose }: StubPreviewModalProps) {
+  // Get the actual stub content based on template ID
+  const stubContent = useMemo(() => {
+    // Map template IDs to actual stub functions
+    switch (template.id) {
+      // Website Pages
+      case 'website-homepage':
+        return getHomepageStubForWebsite('catalyst-demo', themeId)
+      case 'search-results':
+      case 'advanced-search':
+        return createSearchStub()
+      case 'browse':
+        return createJournalsBrowseStub('catalyst-demo', [])
+      case 'about':
+      case 'contact':
+      case 'privacy-policy':
+      case 'terms-of-service':
+        return createAboutStub()
+      // Section Library - Global Sections
+      case 'global-header-standard':
+        return createStandardHeaderStub()
+      case 'global-footer-standard':
+        return createStandardFooterStub()
+      case 'global-notification-banner':
+        return createNotificationBannerStub()
+      case 'global-cookie-consent':
+        return createCookieConsentStub()
+      default:
+        return null
+    }
+  }, [template.id, themeId])
+
+  const hasVisualPreview = stubContent && stubContent.length > 0
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900">
+              {template.category === 'global' ? 'Section Preview' : 'Stub Preview'}: {template.name}
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              {template.category === 'global' 
+                ? 'Reusable section • Site-wide component' 
+                : template.category === 'website' 
+                  ? 'Base design stub • Website Page' 
+                  : template.category === 'supporting' 
+                    ? 'Base design stub • Supporting Page' 
+                    : 'Page Template'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-200 rounded"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Metadata Bar */}
+        <div className="flex gap-6 px-4 py-3 bg-white border-b text-sm">
+          <div>
+            <span className="text-gray-500">Inherits From:</span>{' '}
+            <span className="font-medium">{template.inheritsFrom}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Used By:</span>{' '}
+            <span className="font-medium">{template.usageCount} websites</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Modifications:</span>{' '}
+            <span className={`font-medium ${template.modifications > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+              {template.modifications > 0 ? `${template.modifications} website(s)` : 'None'}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-500">Status:</span>{' '}
+            <span className={`font-medium ${template.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>
+              {template.status.charAt(0).toUpperCase() + template.status.slice(1)}
+            </span>
+          </div>
+        </div>
+
+        {/* Preview Content */}
+        <div className="flex-1 overflow-auto bg-gray-100 p-4">
+          {hasVisualPreview ? (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              {/* Scale down the preview to fit */}
+              <div className="transform origin-top" style={{ transform: 'scale(0.75)', width: '133.33%' }}>
+                <CanvasRenderer 
+                  items={stubContent} 
+                  websiteId="catalyst-demo"
+                  themeId={themeId}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-medium text-gray-700 mb-2">Preview Not Available</h4>
+              <p className="text-gray-500">
+                This template type doesn't have a visual preview yet.
+                <br />
+                <span className="text-sm">Template ID: {template.id}</span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-between items-center p-4 border-t bg-gray-50">
+          <div className="text-sm text-gray-500">
+            {hasVisualPreview 
+              ? 'This is the base design stub. Websites can modify this for their needs.'
+              : 'Publication templates generate content dynamically from your data.'}
+          </div>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// SITE MANAGER TEMPLATES - Main Component
+// ============================================================================
+
 interface SiteManagerTemplatesProps {
   themeId?: string // Theme ID to display in header badge
   usePageStore?: any // Zustand store hook for divergence tracking
@@ -1082,8 +1171,8 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   // Define categories with their type grouping
   // Note: Supporting Pages are MERGED with Website Pages under 'starters' type
   const categories = [
-    // Templates (data-driven hierarchical pages with inheritance)
-    { key: 'publication', label: 'Publication Page Templates', description: 'Data-driven hierarchical pages (Journal → Archive → Issue → Article)', type: 'templates', group: 'publication' },
+    // Pages (data-driven hierarchical pages with inheritance)
+    { key: 'publication', label: 'Publication Pages', description: 'Data-driven hierarchical pages (Journal → Archive → Issue → Article)', type: 'templates', group: 'publication' },
     
     // Stubs (marketing/creative pages, copy not inherit)
     // Website and Supporting are both shown under 'website' category for stubs
@@ -1096,7 +1185,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   ] as const
   
   // Get categories for the selected type (exclude hidden ones)
-  const availableCategories = categories.filter(cat => cat.type === selectedType && !cat.hidden)
+  const availableCategories = categories.filter(cat => cat.type === selectedType && !('hidden' in cat && cat.hidden))
   
   // Handle type change - auto-switch to first available category
   const handleTypeChange = (newType: 'templates' | 'starters' | 'sections') => {
@@ -1137,7 +1226,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
     }
     console.log('Template duplicated:', duplicatedTemplate)
     // In real app: addTemplate(duplicatedTemplate)
-    alert(`Template "${template.name}" duplicated successfully!`)
+    alert(`Page "${template.name}" duplicated successfully!`)
   }
 
   const handleEditTemplate = (template: Template) => {
@@ -1151,33 +1240,27 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
         setCurrentView('page-builder')
         // Small delay to ensure state is updated before showing alert
         setTimeout(() => {
-          alert(`🎯 Switched to Template Editing Mode!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the template context bar and modification indicators!\n💡 This is template management mode - modification indicators help you see modifications.`)
+          alert(`🎯 Switched to Page Editing Mode!\n\n📋 Page: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n✨ Notice the page context bar and modification indicators!\n💡 This is page management mode - modification indicators help you see modifications.`)
         }, 100)
       } else {
-        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Template: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the template context in action!\n✨ Look for modification indicators on customized elements.`)
+        alert(`🎯 Opening Page Builder for "${template.name}"!\n\n📋 Page: ${template.name}\n🏢 Website: Wiley Online Library\n🎨 Theme: ${getThemeName(themeId)}\n📊 Current Modifications: ${template.modifications}\n\n💡 Click Page Builder tab to see the page context in action!\n✨ Look for modification indicators on customized elements.`)
       }
     } else {
       // For other templates, show generic message
-      alert(`Opening Page Builder for "${template.name}"...\n\nThis would launch the drag-and-drop editor where you can modify the template layout, content, and styling.`)
+      alert(`Opening Page Builder for "${template.name}"...\n\nThis would launch the drag-and-drop editor where you can modify the page layout, content, and styling.`)
     }
   }
 
   const handleDeleteTemplate = (template: Template) => {
     if (template.usageCount > 0) {
-      alert(`Cannot delete "${template.name}"\n\nThis template is used by ${template.usageCount} pages. Remove all usages first.`)
+      alert(`Cannot delete "${template.name}"\n\nThis page is used by ${template.usageCount} instances. Remove all usages first.`)
       return
     }
     
     if (confirm(`Delete template "${template.name}"?\n\nThis action cannot be undone.`)) {
       console.log('Template deleted:', template.id)
-      alert('Template deleted successfully!')
+      alert('Page deleted successfully!')
     }
-  }
-
-  const handleManageModifications = (template: Template) => {
-    console.log('Managing modifications for template:', template.id)
-    // In real app: navigate to modification management
-    alert(`Managing Template Modifications for "${template.name}"\n\n${template.modifications} page(s) currently modify this template.\n\nThis would show:\n• Which specific pages/journals have modifications\n• What changes were made in each modification\n• Ability to approve/reject modification requests`)
   }
 
   const handlePreviewTemplate = (template: Template) => {
@@ -1188,7 +1271,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   const handleCreateTemplate = () => {
     console.log('Creating new template for category:', selectedCategory)
     // In real app: navigate to template creation wizard
-    alert(`Create New ${categories.find(c => c.key === selectedCategory)?.label.replace(' Templates', '')} Template\n\nThis would launch the Template Creation Wizard:\n\n1. Choose starting point (blank, existing template, or external)\n2. Configure template metadata\n3. Design in Page Builder\n4. Set inheritance and permissions\n5. Publish template`)
+    alert(`Create New ${categories.find(c => c.key === selectedCategory)?.label.replace(' Pages', '')} Page\n\nThis would launch the Page Creation Wizard:\n\n1. Choose starting point (blank, existing page, or external)\n2. Configure page metadata\n3. Design in Page Builder\n4. Set inheritance and permissions\n5. Publish page`)
   }
 
   // Helper function to determine indentation level based on inheritance (ID-based)
@@ -1271,7 +1354,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   const handleBulkUpdate = () => {
     const selectedCount = selectedTemplates.size
     if (selectedCount === 0) {
-      alert('Please select at least one template to update.')
+      alert('Please select at least one page to update.')
       return
     }
 
@@ -1284,7 +1367,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
     
     // TODO: Check if any selected templates have website modifications
     // If yes, trigger conflict resolution dialog
-    alert(`Update Selected Templates from Platform\n\n${selectedCount} template(s) selected:\n${selectedNames}\n\nThis would:\n1. Check for website modifications\n2. Show conflict dialog if needed\n3. Pull latest changes from platform release\n4. Apply updates to theme templates`)
+    alert(`Update Selected Pages from Platform\n\n${selectedCount} page(s) selected:\n${selectedNames}\n\nThis would:\n1. Check for website modifications\n2. Show conflict dialog if needed\n3. Pull latest changes from platform release\n4. Apply updates to design pages`)
     
     // Clear selection after update
     setSelectedTemplates(new Set())
@@ -1357,10 +1440,10 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedType === 'templates' && '📋 Templates'}
+                  {selectedType === 'templates' && '📋 Pages'}
                   {selectedType === 'starters' && '📄 Stubs'}
                   {selectedType === 'sections' && '🧩 Sections'}
-                  {availableCategories.length > 1 && ` • ${categories.find(c => c.key === selectedCategory)?.label.replace(' Page Templates', '').replace(' Sections', '')}`}
+                  {availableCategories.length > 1 && ` • ${categories.find(c => c.key === selectedCategory)?.label.replace(' Pages', '').replace(' Sections', '')}`}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {getThemeName(themeId)}
@@ -1429,7 +1512,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                       className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2"
                     >
                       <Plus className="h-4 w-4" />
-                      {selectedType === 'templates' && 'Create New Template'}
+                      {selectedType === 'templates' && 'Create New Page'}
                       {selectedType === 'starters' && 'Create New Stub'}
                       {selectedType === 'sections' && 'Create New Section'}
                     </button>
@@ -1463,7 +1546,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                         />
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {selectedType === 'templates' && 'Template Name'}
+                        {selectedType === 'templates' && 'Page Name'}
                         {selectedType === 'starters' && 'Stub Name'}
                         {selectedType === 'sections' && 'Section Name'}
                       </th>
@@ -1517,7 +1600,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>📋 Templates</span>
+                      <span>📋 Pages</span>
                       {selectedType === 'templates' && <span className="text-xs">▼</span>}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">Data-driven pages with inheritance</div>
@@ -1593,7 +1676,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   <>
                     <div className="flex items-start gap-2">
                       <div className="w-2 h-2 rounded-full bg-purple-500 mt-1"></div>
-                      <span><strong>Templates</strong> are data-driven pages with inheritance. Changes propagate to child pages.</span>
+                      <span><strong>Pages</strong> are data-driven pages with inheritance. Changes propagate to child pages.</span>
                     </div>
                   </>
                 )}
@@ -1621,215 +1704,11 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
       </div>
 
       {showPreview && selectedTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">Template Preview: {selectedTemplate.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedTemplate.category === 'website' && 'Website Infrastructure Template'}
-                  {selectedTemplate.category === 'publication' && 'Dynamic Content Generation Template'} 
-                  {selectedTemplate.category === 'supporting' && 'Custom Page Template (Creative Sandbox)'}
-                  {(selectedTemplate.category === 'global' || selectedTemplate.category === 'section') && 'Reusable Component Template'}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowPreview(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {/* Template Metadata */}
-              <div className="grid grid-cols-4 gap-4 mb-6 text-sm">
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Inherits From</div>
-                  <div className="font-medium">{selectedTemplate.inheritsFrom}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Used By</div>
-                  <div className="font-medium">{selectedTemplate.usageCount} {selectedTemplate.category === 'website' || selectedTemplate.category === 'publication' ? 'websites' : 'instances'}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Modifications</div>
-                  <div className="font-medium">{selectedTemplate.modifications}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="text-gray-500">Status</div>
-                  <div className={`font-medium ${selectedTemplate.status === 'active' ? 'text-green-600' : selectedTemplate.status === 'draft' ? 'text-yellow-600' : 'text-gray-600'}`}>
-                    {selectedTemplate.status.charAt(0).toUpperCase() + selectedTemplate.status.slice(1)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Template Preview Content */}
-              <div className="bg-gray-100 rounded-lg p-6">
-                <div className="bg-white rounded border-2 border-dashed border-gray-300 p-8">
-                  {selectedTemplate.category === 'website' && (
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">Website Page Layout</h4>
-                        <p className="text-gray-600">Consistent infrastructure with selective customization</p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="bg-blue-50 p-4 rounded">
-                          <div className="text-blue-600 font-medium">Header</div>
-                          <div className="text-xs text-gray-500">From Theme (Global sections)</div>
-                        </div>
-                        <div className="bg-green-50 p-4 rounded">
-                          <div className="text-green-600 font-medium">Main Content</div>
-                          <div className="text-xs text-gray-500">Customizable per page type</div>
-                        </div>
-                        <div className="bg-blue-50 p-4 rounded">
-                          <div className="text-blue-600 font-medium">Footer</div>
-                          <div className="text-xs text-gray-500">From Theme (Global sections)</div>
-                        </div>
-                      </div>
-                      {selectedTemplate.modifications > 0 && (
-                        <div className="bg-orange-50 p-3 rounded text-center">
-                          <div className="text-orange-700 font-medium">Customization Active</div>
-                          <div className="text-xs text-orange-600">{selectedTemplate.modifications} modification(s) by Wiley Online Library{selectedTemplate.usageCount > 1 ? ', Journal of Advanced Science' : ''}</div>
-                        </div>
-                      )}
-                      <div className="bg-blue-50 p-3 rounded text-center">
-                        <div className="text-blue-700 font-medium">Template Usage</div>
-                        <div className="text-xs text-blue-600">Used by {selectedTemplate.usageCount} of 3 total websites using {getThemeName(themeId)}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedTemplate.category === 'publication' && (
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">Dynamic Content Template</h4>
-                        <p className="text-gray-600">Generates pages from content at enterprise scale</p>
-                      </div>
-                      <div className="bg-purple-50 p-4 rounded">
-                        <div className="text-purple-700 font-medium mb-2">Content-Driven Generation</div>
-                        <div className="text-sm text-purple-600">
-                          • Used by {selectedTemplate.usageCount} {selectedTemplate.name.includes('Journal') ? 'journal websites' : 'websites'} (Wiley Online Library, Journal of Advanced Science)
-                          <br />
-                          • {selectedTemplate.modifications} of those websites have custom modifications
-                          <br />
-                          • Maintains consistency while allowing targeted customization
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="font-medium">Template Structure</div>
-                          <div className="text-gray-600">Header, Content Area, Metadata, Footer</div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="font-medium">Dynamic Elements</div>
-                          <div className="text-gray-600">Title, Author, Content, Related Items</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedTemplate.category === 'supporting' && (
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">Custom Page Template</h4>
-                        <p className="text-gray-600">Creative sandbox - compete with generic builders</p>
-                      </div>
-                      <div className="bg-green-50 p-4 rounded">
-                        <div className="text-green-700 font-medium mb-2">Maximum Creative Freedom</div>
-                        <div className="text-sm text-green-600">
-                          • Start from template, blank page, or external link
-                          <br />
-                          • Build custom sections and reusable components  
-                          <br />
-                          • Extract creations into new templates
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="bg-white p-2 rounded text-center border">Text Editing</div>
-                        <div className="bg-white p-2 rounded text-center border">Rich Media</div>
-                        <div className="bg-white p-2 rounded text-center border">Custom Layout</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {(selectedTemplate.category === 'global' || selectedTemplate.category === 'section') && (
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">Reusable Component</h4>
-                        <p className="text-gray-600">Shared across multiple pages and templates</p>
-                      </div>
-                      <div className="bg-indigo-50 p-4 rounded">
-                        <div className="text-indigo-700 font-medium mb-2">Component Template</div>
-                        <div className="text-sm text-indigo-600">
-                          Used by {selectedTemplate.usageCount} pages across the platform
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded text-center">
-                        <div className="text-gray-700">Drag & Drop Component</div>
-                        <div className="text-xs text-gray-500 mt-1">Can be added to any page or template</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-center mt-6 gap-3">
-                  <button 
-                    onClick={() => handleEditTemplate(selectedTemplate)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Edit in Page Builder
-                  </button>
-                  <button 
-                    onClick={() => handleDuplicateTemplate(selectedTemplate)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                  >
-                    Duplicate Template
-                  </button>
-                  {selectedTemplate.modifications > 0 && (
-                    <button 
-                      onClick={() => handleManageModifications(selectedTemplate)}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
-                    >
-                      Manage Modifications ({selectedTemplate.modifications})
-                    </button>
-                  )}
-                </div>
-
-                {/* Audit Information - Available on demand */}
-                <details className="mt-4">
-                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
-                    🔍 Audit Information
-                  </summary>
-                  <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-500">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="font-medium">Template Created</div>
-                        <div>{selectedTemplate.createdAt.toLocaleDateString()}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium">Created By</div>
-                        <div>{selectedTemplate.createdBy}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium">Last Updated</div>
-                        <div>{selectedTemplate.updatedAt.toLocaleDateString()}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium">Template Version</div>
-                        <div>1.0.0</div>
-                      </div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-200 text-gray-400">
-                      💡 This information is primarily for debugging and tracking when template changes originated from the design system.
-                    </div>
-                  </div>
-                </details>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StubPreviewModal 
+          template={selectedTemplate}
+          themeId={themeId}
+          onClose={() => setShowPreview(false)}
+        />
       )}
     </>
   )

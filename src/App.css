@@ -40,3 +40,75 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Overlay Section Animations */
+@keyframes slide-in-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Overlay animation classes */
+.animate-slide-in {
+  animation: slide-in-top 0.3s ease-out;
+}
+
+[data-overlay-position="bottom"].animate-slide-in {
+  animation: slide-in-bottom 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Overlay indicator badge in editor */
+[data-overlay="true"]::before {
+  content: attr(data-overlay-behavior) " " attr(data-overlay-position);
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: #8b5cf6;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+  z-index: 10;
+}
+
+/* Escape Hatch - Push content when drawer is open */
+body.escape-hatch-open {
+  margin-right: 288px; /* w-72 = 18rem = 288px */
+  transition: margin-right 0.3s ease-in-out;
+}
+
+body {
+  transition: margin-right 0.3s ease-in-out;
+}
+

@@ -15,11 +15,12 @@ import {
 } from 'lucide-react'
 import type { DesignConsoleView } from '../../types'
 import { usePageStore } from '../../AppV1'
+import { usePrototypeStore } from '../../stores/prototypeStore'
 import { SiteManagerTemplates } from '../SiteManager/SiteManagerTemplates'
 import { PublicationCards } from '../SiteManager/PublicationCards'
 import { ThemeEditor } from '../SiteManager/ThemeEditor'
 import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
-import { WebsiteDesignLibrary } from '../SiteManager/WebsiteDesignLibrary'
+import { WebsiteInheritedStubs } from '../SiteManager/WebsiteInheritedStubs'
 import { WebsiteBrandingConfiguration } from '../SiteManager/WebsiteBrandingConfiguration'
 import { WebsiteCreationWizard } from '../Wizards/WebsiteCreation'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
@@ -27,6 +28,7 @@ import AllDesigns from './AllDesigns'
 import { SiteManagerWebsites } from '../SiteManager/SiteManagerWebsites'
 import { WebsiteSettings } from '../SiteManager/WebsiteSettings'
 import { ThemePublicationCards } from '../SiteManager/ThemePublicationCards'
+import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
 
 // Theme preview images
 const themePreviewImages = {
@@ -37,11 +39,12 @@ const themePreviewImages = {
 }
 
 export function DesignConsole() {
-  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites, consoleMode } = usePageStore()
+  const { setCurrentView, setSiteManagerView, siteManagerView, themes, websites } = usePageStore()
+  const { consoleMode, drawerOpen } = usePrototypeStore()
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set(['modernist-theme'])) // Default expand modernist theme
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set(['catalyst-demo'])) // Default expand catalyst-demo
 
-  // Filter websites based on console mode (controlled by PrototypeControls panel)
+  // Filter websites based on console mode (controlled by Escape Hatch)
   const displayedWebsites = consoleMode === 'single' 
     ? websites.filter(w => w.id === 'febs-press') // Single website example
     : websites // Show all websites for multi-website publisher
@@ -71,7 +74,10 @@ export function DesignConsole() {
   const isWebsiteExpanded = (websiteId: string) => expandedWebsites.has(websiteId)
   
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div 
+      className="min-h-screen bg-slate-50 transition-all duration-300 ease-in-out"
+      style={{ marginRight: drawerOpen ? '288px' : '0' }}
+    >
       <div className="bg-white shadow-sm border-b border-slate-200">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
@@ -171,7 +177,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <LayoutTemplate className="w-4 h-4" />
-                        Templates
+                        Pages
                       </button>
 
                       <button
@@ -266,7 +272,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <LayoutTemplate className="w-4 h-4" />
-                        Template Library
+                        Page Library
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${theme.id}-starter-library` as DesignConsoleView)}
@@ -343,7 +349,7 @@ export function DesignConsole() {
                         onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Design Templates →
+                        Design Pages →
                       </button>
                         </div>
                   </div>
@@ -372,7 +378,7 @@ export function DesignConsole() {
                         onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Templates →
+                        Pages →
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
@@ -384,7 +390,7 @@ export function DesignConsole() {
                         onClick={() => setSiteManagerView(`${website.id}-custom-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Custom Templates →
+                        Custom Pages →
                       </button>
                     </div>
                   </div>
@@ -462,16 +468,11 @@ export function DesignConsole() {
                       </div>
           )}
           {siteManagerView === 'wiley-main-custom-templates' && (
-                      <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Wiley Online Library - Custom Templates</h2>
-                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-                      </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-                      </div>
-            </div>
+            <WebsiteInheritedStubs
+              websiteId="wiley-main"
+              websiteName="Wiley Online Library"
+              usePageStore={usePageStore}
+            />
           )}
 
           {siteManagerView === 'journal-of-science-settings' && (
@@ -507,16 +508,11 @@ export function DesignConsole() {
         </div>
           )}
           {siteManagerView === 'journal-of-science-custom-templates' && (
-            <div>
-              <div className="mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-slate-800">Journal of Advanced Science - Custom Templates</h2>
-                <p className="text-slate-600 mt-1">Website-specific templates beyond the foundational theme templates</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Templates - Coming Soon</h3>
-                <p className="text-gray-600">Create and manage custom page templates specific to this website.</p>
-              </div>
-            </div>
+            <WebsiteInheritedStubs
+              websiteId="journal-of-science"
+              websiteName="Journal of Advanced Science"
+              usePageStore={usePageStore}
+            />
           )}
 
 
@@ -589,7 +585,7 @@ export function DesignConsole() {
             })()
           )}
           
-          {/* Dynamic handler for Template Library (Publication templates only) */}
+          {/* Dynamic handler for Page Library (Publication pages only) */}
           {siteManagerView.endsWith('-template-library') && (
             (() => {
               const themeId = siteManagerView.replace('-template-library', '')
@@ -690,14 +686,14 @@ export function DesignConsole() {
             })()
           )}
           
-          {/* Dynamic fallback for any website custom templates not explicitly handled */}
+          {/* Dynamic fallback for any website stubs (inherited from design) */}
           {siteManagerView.endsWith('-custom-templates') &&
            !['wiley-main-custom-templates', 'journal-of-science-custom-templates'].includes(siteManagerView) && (
             (() => {
               const websiteId = siteManagerView.replace('-custom-templates', '')
               const website = websites.find(w => w.id === websiteId)
               return website ? (
-                <WebsiteDesignLibrary
+                <WebsiteInheritedStubs
                   websiteId={website.id}
                   websiteName={website.name}
                   usePageStore={usePageStore}
@@ -707,6 +703,13 @@ export function DesignConsole() {
           )}
         </div>
       </div>
+      
+      {/* Escape Hatch - Prototype Controls (always available) */}
+      <EscapeHatch 
+        context="design-console"
+        websiteId={displayedWebsites[0]?.id}
+        websiteName={displayedWebsites[0]?.name}
+      />
     </div>
   )
 }

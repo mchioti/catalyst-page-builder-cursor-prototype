@@ -380,12 +380,12 @@ export const createFeaturesPrefab = (): CanvasItem => {
  * Matches the Journal TOC banner with dark gradient background
  */
 export const createJournalBannerPrefab = (): CanvasItem => {
-  // Use vertical layout to match TOC template structure
+  // Use hero-with-buttons layout to match TOC template structure (two areas stacked)
   const bannerSection: WidgetSection = {
     id: nanoid(),
     name: 'Journal Banner',
     type: 'hero',
-    layout: 'vertical',
+    layout: 'hero-with-buttons',
     areas: [
       {
         id: nanoid(),
@@ -1548,15 +1548,373 @@ export const createWileyFigmaFeaturedContentPrefab = (): CanvasItem => {
   return typedSection
 }
 
+// =============================================================================
+// GLOBAL SECTIONS (Header, Footer, Navigation)
+// These sections appear site-wide on every page
+// =============================================================================
+
+/**
+ * Standard Header Section
+ * Two-column layout with logo and navigation menu
+ * Dark background with white text
+ */
+export const createStandardHeaderPrefab = (): CanvasItem => {
+  const headerSection = createBaseSection('two-columns', 'Standard Header')
+  const typedSection = headerSection as WidgetSection
+  
+  typedSection.type = 'hero' // Use hero type to get white text on dark background
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#1f2937',
+    opacity: 1
+  }
+  
+  typedSection.styling = {
+    paddingTop: 'small',
+    paddingBottom: 'small',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'medium',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  // Logo/Site name
+  const logoWidget = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: headerSection.id,
+    skin: 'minimal' as const,
+    text: '🏛️ Publisher Name',
+    level: 3 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'auto' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  // Navigation menu
+  const navWidget = {
+    id: nanoid(),
+    type: 'menu' as const,
+    sectionId: headerSection.id,
+    skin: 'minimal' as const,
+    menuType: 'global' as const,
+    style: 'horizontal' as const,
+    align: 'right' as const,
+    items: [
+      { id: nanoid(), label: 'Home', url: '/', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
+      { id: nanoid(), label: 'Journals', url: '/journals', target: '_self' as const, displayCondition: 'always' as const, order: 1 },
+      { id: nanoid(), label: 'About', url: '/about', target: '_self' as const, displayCondition: 'always' as const, order: 2 },
+      { id: nanoid(), label: 'Search', url: '/search', target: '_self' as const, displayCondition: 'always' as const, order: 3 },
+      { id: nanoid(), label: 'Sign In', url: '/login', target: '_self' as const, displayCondition: 'always' as const, order: 4 }
+    ]
+  }
+  
+  typedSection.areas[0].widgets = [logoWidget]
+  typedSection.areas[1].widgets = [navWidget]
+  
+  return typedSection
+}
+
+/**
+ * Standard Footer Section
+ * Multi-column layout with link groups and copyright
+ * Dark background with white text
+ */
+export const createStandardFooterPrefab = (): CanvasItem => {
+  const footerSection = createBaseSection('three-columns', 'Standard Footer')
+  const typedSection = footerSection as WidgetSection
+  
+  typedSection.type = 'hero' // Use hero type for white text
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#1f2937',
+    opacity: 1
+  }
+  
+  typedSection.styling = {
+    paddingTop: 'large',
+    paddingBottom: 'large',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'large',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  // Column 1: About
+  const aboutHeading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    text: 'About',
+    level: 4 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'auto' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const aboutMenu = {
+    id: nanoid(),
+    type: 'menu' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    menuType: 'custom' as const,
+    style: 'vertical' as const,
+    align: 'left' as const,
+    items: [
+      { id: nanoid(), label: 'About Us', url: '/about', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
+      { id: nanoid(), label: 'Terms & Conditions', url: '/terms', target: '_self' as const, displayCondition: 'always' as const, order: 1 },
+      { id: nanoid(), label: 'Privacy Policy', url: '/privacy', target: '_self' as const, displayCondition: 'always' as const, order: 2 }
+    ]
+  }
+  
+  // Column 2: Journals
+  const journalsHeading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    text: 'Journals',
+    level: 4 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'auto' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const journalsMenu = {
+    id: nanoid(),
+    type: 'menu' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    menuType: 'custom' as const,
+    style: 'vertical' as const,
+    align: 'left' as const,
+    items: [
+      { id: nanoid(), label: 'Browse All Journals', url: '/journals', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
+      { id: nanoid(), label: 'Submit Article', url: '/submit', target: '_self' as const, displayCondition: 'always' as const, order: 1 },
+      { id: nanoid(), label: 'Author Guidelines', url: '/guidelines', target: '_self' as const, displayCondition: 'always' as const, order: 2 }
+    ]
+  }
+  
+  // Column 3: Connect
+  const connectHeading = {
+    id: nanoid(),
+    type: 'heading' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    text: 'Connect',
+    level: 4 as const,
+    align: 'left' as const,
+    style: 'default' as const,
+    color: 'default' as const,
+    size: 'auto' as const,
+    icon: { enabled: false, position: 'left' as const, emoji: '' }
+  }
+  
+  const connectMenu = {
+    id: nanoid(),
+    type: 'menu' as const,
+    sectionId: footerSection.id,
+    skin: 'minimal' as const,
+    menuType: 'custom' as const,
+    style: 'vertical' as const,
+    align: 'left' as const,
+    items: [
+      { id: nanoid(), label: '📧 Contact Us', url: '/contact', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
+      { id: nanoid(), label: '🐦 Twitter', url: 'https://twitter.com', target: '_blank' as const, displayCondition: 'always' as const, order: 1 },
+      { id: nanoid(), label: '💼 LinkedIn', url: 'https://linkedin.com', target: '_blank' as const, displayCondition: 'always' as const, order: 2 }
+    ]
+  }
+  
+  typedSection.areas[0].widgets = [aboutHeading, aboutMenu]
+  typedSection.areas[1].widgets = [journalsHeading, journalsMenu]
+  typedSection.areas[2].widgets = [connectHeading, connectMenu]
+  
+  return typedSection
+}
+
+/**
+ * Copyright Bar Section
+ * Simple one-column footer bar with copyright text
+ */
+export const createCopyrightBarPrefab = (): CanvasItem => {
+  const copyrightSection = createBaseSection('one-column', 'Copyright Bar')
+  const typedSection = copyrightSection as WidgetSection
+  
+  typedSection.type = 'hero'
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#111827',
+    opacity: 1
+  }
+  
+  typedSection.styling = {
+    paddingTop: 'medium',
+    paddingBottom: 'medium',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'none',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  const copyrightText = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: copyrightSection.id,
+    skin: 'minimal' as const,
+    text: '© 2024 Publisher Name • Powered by Catalyst Publishing Platform',
+    align: 'center' as const
+  }
+  
+  typedSection.areas[0].widgets = [copyrightText]
+  
+  return typedSection
+}
+
+// =============================================================================
+// UTILITY SECTIONS (Banners, Overlays)
+// These sections are conditionally displayed
+// =============================================================================
+
+/**
+ * Notification Banner Section
+ * Yellow/amber background for announcements
+ */
+export const createNotificationBannerPrefab = (): CanvasItem => {
+  const bannerSection = createBaseSection('one-column', 'Notification Banner')
+  const typedSection = bannerSection as WidgetSection
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#fef3c7', // Amber-100
+    opacity: 1
+  }
+  
+  typedSection.styling = {
+    paddingTop: 'small',
+    paddingBottom: 'small',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'none',
+    variant: 'full-width',
+    textColor: 'default'
+  }
+  
+  // Overlay configuration - sticky at top
+  typedSection.overlay = {
+    enabled: true,
+    position: 'top',
+    behavior: 'sticky',
+    dismissible: true,
+    showOnLoad: true,
+    animation: 'slide'
+  }
+  
+  const bannerText = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: bannerSection.id,
+    skin: 'minimal' as const,
+    text: '📢 Important announcement: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Click here for details →',
+    align: 'center' as const
+  }
+  
+  typedSection.areas[0].widgets = [bannerText]
+  
+  return typedSection
+}
+
+/**
+ * Cookie Consent Banner Section
+ * Dark background, typically shown at bottom
+ */
+export const createCookieConsentPrefab = (): CanvasItem => {
+  const cookieSection = createBaseSection('one-column', 'Cookie Consent')
+  const typedSection = cookieSection as WidgetSection
+  
+  typedSection.type = 'hero'
+  
+  typedSection.background = {
+    type: 'color',
+    color: '#1f2937',
+    opacity: 1
+  }
+  
+  typedSection.styling = {
+    paddingTop: 'small',
+    paddingBottom: 'small',
+    paddingLeft: 'medium',
+    paddingRight: 'medium',
+    gap: 'none',
+    variant: 'full-width',
+    textColor: 'white'
+  }
+  
+  typedSection.contentMode = 'dark'
+  
+  // Overlay configuration - fixed at bottom
+  typedSection.overlay = {
+    enabled: true,
+    position: 'bottom',
+    behavior: 'fixed',
+    dismissible: true,
+    showOnLoad: true,
+    animation: 'slide'
+  }
+  
+  const cookieText = {
+    id: nanoid(),
+    type: 'text' as const,
+    sectionId: cookieSection.id,
+    skin: 'minimal' as const,
+    text: '🍪 We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies. Learn more →',
+    align: 'center' as const
+  }
+  
+  typedSection.areas[0].widgets = [cookieText]
+  
+  return typedSection
+}
+
 /**
  * Available prefab sections for easy access
  */
 export const PREFAB_SECTIONS = {
+  // Global Sections
+  standardHeader: createStandardHeaderPrefab,
+  standardFooter: createStandardFooterPrefab,
+  copyrightBar: createCopyrightBarPrefab,
   globalHeader: createGlobalHeaderPrefab,
   mainNavigation: createMainNavigationPrefab,
+  
+  // Utility Sections
+  notificationBanner: createNotificationBannerPrefab,
+  cookieConsent: createCookieConsentPrefab,
+  
+  // Content Sections
   hero: createHeroPrefab,
   featuredResearch: createFeaturesPrefab,
   journalBanner: createJournalBannerPrefab,
+  
+  // Wiley Theme Sections
   wileyHero: createWileyHeroPrefab,
   wileyThreeColumn: createWileyThreeColumnPrefab,
   wileyContentImage: createWileyContentImagePrefab,
@@ -1564,6 +1922,7 @@ export const PREFAB_SECTIONS = {
   wileyFigmaCardGrid: createWileyFigmaCardGridPrefab,
   wileyFigmaLogoGrid: createWileyFigmaLogoGridPrefab,
   wileyFigmaFeaturedContent: createWileyFigmaFeaturedContentPrefab,
+  
   // Wiley Figma DS V2 prefabs
   wileyDSV2Hero: createWileyDSV2HeroPrefab,
   wileyDSV2CardGrid: createWileyDSV2CardGridPrefab

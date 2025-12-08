@@ -6,53 +6,55 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { PageBuilder } from '../PageBuilder'
 import { DynamicBrandingCSS } from '../BrandingSystem/DynamicBrandingCSS'
 import { NotificationContainer, IssuesSidebar } from '../Notifications'
-import { PrototypeControls } from '../PrototypeControls'
+import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
 import { usePageStore } from '../../stores'
+import { usePrototypeStore } from '../../stores/prototypeStore'
 import { TemplateCanvas } from '../Templates/TemplateCanvas'
 import { InteractiveWidgetRenderer } from '../PageBuilder/InteractiveWidgetRenderer'
 import { buildWidget } from '../../utils/widgetBuilder'
 import { isSection } from '../../types'
 import { 
-  createHomepageStub,
-  createJournalsBrowseStub,
-  createAboutStub,
-  createSearchStub,
-  createJournalHomeTemplate,
-  createIssueArchiveTemplate,
-  createIssueTocTemplate,
-  createArticleTemplate,
   getPageStub,
-  type PageType
+  type PageType,
+  type JournalStubData,
+  type JournalContext
 } from '../PageBuilder/pageStubs'
+import { mockWebsites } from '../../v2/data/mockWebsites'
+import { 
+  getCurrentIssue, 
+  getIssue,
+  getArticlesForIssue,
+  getArticleByDOI
+} from '../../v2/data/mockIssues'
 
 export function PageBuilderEditor() {
-  const navigate = useNavigate()
   const { websiteId, '*': pageRoute } = useParams<{ websiteId: string; '*': string }>()
   const [searchParams] = useSearchParams()
   
-  const scope = searchParams.get('scope') || 'individual'
-  const journalId = searchParams.get('journal')
-  const issueType = searchParams.get('issueType')
+  // URL params for editing scope (kept for future template editing features)
+  const _scope = searchParams.get('scope') || 'individual'
+  const _journalId = searchParams.get('journal')
+  const _issueType = searchParams.get('issueType')
+  void _scope; void _journalId; void _issueType; // Suppress unused warnings
   
   const { 
     setCurrentWebsiteId, 
     setCurrentView, 
     setEditingContext,
     websites,
-    currentPersona,
-    setCurrentPersona,
-    consoleMode,
-    setConsoleMode,
     replaceCanvasItems,
     setIsEditingLoadedWebsite,
     getPageCanvas,
     setPageCanvas,
     canvasItems
   } = usePageStore()
+  
+  // Get drawer state for content pushing
+  const { drawerOpen } = usePrototypeStore()
   
   // Track if we've loaded content to prevent infinite loops
   const loadedPageRef = useRef<string | null>(null)
@@ -81,14 +83,153 @@ export function PageBuilderEditor() {
   }
   
   // Get current website to determine design ID
-  const currentWebsite = websites.find(w => w.id === websiteId)
+  // First check V1 store, then fall back to V2 mockWebsites for journals
+  const v1Website = websites.find(w => w.id === websiteId)
+  const v2Website = mockWebsites.find(w => w.id === websiteId)
+  
+  // Merge: use V1 website but get journals from V2 if V1 doesn't have them
+  const currentWebsite = v1Website ? {
+    ...v2Website,
+    ...v1Website,
+    journals: (v1Website as any).journals?.length > 0 
+      ? (v1Website as any).journals 
+      : v2Website?.journals
+  } : v2Website
+  
+  // Get journals from website for journals browse page
+  const journals = currentWebsite?.journals as JournalStubData[] | undefined
+  const journalCount = journals?.length || 0
+  
+  // Extract journal ID from page name for journal pages
+  const extractJournalId = (route: string): string | null => {
+    if (!route.startsWith('journal/')) return null
+    const parts = route.split('/')
+    return parts[1] || null
+  }
+  
+  // Extract volume/issue from page name for issue TOC pages
+  const extractIssueInfo = (route: string): { vol: string; issue: string } | null => {
+    const tocMatch = route.match(/\/toc\/(\d+)\/(\d+)/)
+    if (tocMatch) return { vol: tocMatch[1], issue: tocMatch[2] }
+    if (route.includes('/toc/current')) return { vol: 'current', issue: '' }
+    return null
+  }
+  
+  // Build journal context for journal pages
+  const buildJournalContext = (pageType: PageType, journalIdFromRoute: string | null): JournalContext | undefined => {
+    if (!journalIdFromRoute) return undefined
+    
+    const journal = journals?.find((j: any) => j.id === journalIdFromRoute)
+    if (!journal) return undefined
+    
+    const context: JournalContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description,
+        brandColor: (journal.branding as any)?.primaryColor || '#6366f1',
+        brandColorLight: (journal.branding as any)?.secondaryColor || '#818cf8'
+      }
+    }
+    
+    // Add issue and articles based on page type
+    if (pageType === 'journal-home') {
+      const currentIssue = getCurrentIssue(journalIdFromRoute)
+      if (currentIssue) {
+        context.issue = {
+          id: currentIssue.id,
+          volume: currentIssue.volume,
+          issue: currentIssue.issue,
+          year: currentIssue.year
+        }
+        context.articles = getArticlesForIssue(currentIssue.id).slice(0, 5).map(a => ({
+          doi: a.doi,
+          title: a.title,
+          authors: a.authors,
+          isOpenAccess: a.isOpenAccess
+        }))
+      }
+    } else if (pageType === 'issue-toc') {
+      const issueInfo = extractIssueInfo(pageName)
+      let issue
+      if (issueInfo?.vol === 'current') {
+        issue = getCurrentIssue(journalIdFromRoute)
+      } else if (issueInfo) {
+        issue = getIssue(journalIdFromRoute, parseInt(issueInfo.vol), parseInt(issueInfo.issue))
+      }
+      if (issue) {
+        context.issue = {
+          id: issue.id,
+          volume: issue.volume,
+          issue: issue.issue,
+          year: issue.year
+        }
+        context.articles = getArticlesForIssue(issue.id).map(a => ({
+          doi: a.doi,
+          title: a.title,
+          authors: a.authors,
+          isOpenAccess: a.isOpenAccess
+        }))
+      }
+    } else if (pageType === 'article') {
+      // Extract DOI from route
+      const doiMatch = pageName.match(/\/article\/(.+)$/)
+      if (doiMatch) {
+        const doi = decodeURIComponent(doiMatch[1])
+        const article = getArticleByDOI(doi)
+        if (article) {
+          context.articles = [{
+            doi: article.doi,
+            title: article.title,
+            authors: article.authors,
+            isOpenAccess: article.isOpenAccess
+          }]
+        }
+      }
+    }
+    
+    return context
+  }
   
   // Load page content on mount
   useEffect(() => {
-    const pageKey = `${websiteId}:${pageName}`
+    // For journals page, include journal count in key to regenerate when journals change
+    const isJournalsPage = pageName === 'journals'
+    const pageType = getPageType(pageName)
+    const isJournalPage = ['journal-home', 'issue-archive', 'issue-toc', 'article'].includes(pageType)
+    const journalIdFromRoute = extractJournalId(pageName)
     
-    // Skip if already loaded this exact page
+    const pageKey = isJournalsPage 
+      ? `${websiteId}:${pageName}:${journalCount}` 
+      : `${websiteId}:${pageName}`
+    
+    // Skip if already loaded this exact page (with same journal count for journals page)
     if (loadedPageRef.current === pageKey) {
+      return
+    }
+    
+    // For journals page, always regenerate to ensure correct journals are shown
+    if (isJournalsPage && journalCount > 0) {
+      const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
+      const defaultContent = getPageStub(pageType, websiteId!, designId, journals)
+      
+      replaceCanvasItems(defaultContent)
+      setPageCanvas(websiteId!, pageName, defaultContent)
+      setIsEditingLoadedWebsite(true)
+      loadedPageRef.current = pageKey
+      return
+    }
+    
+    // For journal pages, always regenerate with fresh data (don't use cached templates)
+    if (isJournalPage && journalIdFromRoute) {
+      const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
+      const journalContext = buildJournalContext(pageType, journalIdFromRoute)
+      const defaultContent = getPageStub(pageType, websiteId!, designId, journals, journalContext)
+      
+      replaceCanvasItems(defaultContent)
+      setPageCanvas(websiteId!, pageName, defaultContent)
+      setIsEditingLoadedWebsite(true)
+      loadedPageRef.current = pageKey
       return
     }
     
@@ -105,15 +246,15 @@ export function PageBuilderEditor() {
     
     // No saved data - load default content based on page type and website
     // Pass the website's themeId/designId to determine which design stub to use
-    const pageType = getPageType(pageName)
-    const designId = currentWebsite?.themeId || currentWebsite?.designId || currentWebsite?.name
-    const defaultContent = getPageStub(pageType, websiteId!, designId)
+    const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
+    
+    const defaultContent = getPageStub(pageType, websiteId!, designId, journals)
     
     replaceCanvasItems(defaultContent)
     setPageCanvas(websiteId!, pageName, defaultContent) // Save as initial state
     setIsEditingLoadedWebsite(true)
     loadedPageRef.current = pageKey
-  }, [websiteId, pageName, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas, currentWebsite])
+  }, [websiteId, pageName, journalCount, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas, currentWebsite, journals])
   
   // Auto-save canvas changes to pageCanvasData
   useEffect(() => {
@@ -125,48 +266,13 @@ export function PageBuilderEditor() {
   
   const website = websites.find(w => w.id === websiteId)
   
-  // Build breadcrumb/context info
-  const getEditingLabel = () => {
-    if (scope === 'global') return 'Editing Template (Global)'
-    if (scope === 'journal' && journalId) return `Editing ${journalId.toUpperCase()} Template`
-    if (scope === 'issue-type' && issueType) return `Editing All ${issueType} Issues`
-    return `Editing: ${pageName}`
-  }
-  
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div 
+      className="min-h-screen bg-gray-100 transition-all duration-300 ease-in-out"
+      style={{ marginRight: drawerOpen ? '288px' : '0' }}
+    >
       {/* DynamicBrandingCSS injects journal/subject branding - NOT the global theme */}
       <DynamicBrandingCSS websiteId={websiteId || 'catalyst-demo'} usePageStore={usePageStore} />
-      
-      {/* Editor Header - NOT wrapped in CanvasThemeProvider to avoid theme font leaking */}
-      <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(`/live/${websiteId}${pageName === 'home' ? '' : '/' + pageName}`)}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-          >
-            ← Back to Live Site
-          </button>
-          <div className="h-6 w-px bg-gray-300" />
-          <div>
-            <h1 className="text-sm font-semibold text-gray-900">{website?.name || websiteId}</h1>
-            <p className="text-xs text-gray-500">{getEditingLabel()}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {scope !== 'individual' && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded">
-              {scope === 'global' ? '🌐 Template Mode' : scope === 'journal' ? '📚 Journal Mode' : '📄 Issue Type Mode'}
-            </span>
-          )}
-          <button
-            onClick={() => navigate('/v1')}
-            className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded transition-colors"
-          >
-            Design Console
-          </button>
-        </div>
-      </header>
       
       {/* Page Builder - has its own internal CanvasThemeProvider for the canvas only */}
       <PageBuilder 
@@ -177,12 +283,12 @@ export function PageBuilderEditor() {
         isSection={isSection}
       />
       
-      {/* Prototype Controls - NOT wrapped in theme provider */}
-      <PrototypeControls
-        currentPersona={currentPersona}
-        onPersonaChange={setCurrentPersona}
-        consoleMode={consoleMode}
-        onConsoleModeChange={setConsoleMode}
+      {/* Escape Hatch - Prototype Controls (always available) */}
+      <EscapeHatch 
+        context="editor"
+        websiteId={websiteId}
+        websiteName={website?.name}
+        pageId={pageRoute || 'home'}
       />
       
       <NotificationContainer />
