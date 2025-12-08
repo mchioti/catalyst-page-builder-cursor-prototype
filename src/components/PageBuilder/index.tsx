@@ -1686,8 +1686,18 @@ export function PageBuilder({
                 
                 <button
                     onClick={() => {
-                      const { setCurrentView } = usePageStore.getState()
-                      setCurrentView('mock-live-site')
+                      // Check if we're in a routed context (URL-based editing) or V1 internal
+                      if (window.location.pathname.startsWith('/edit/')) {
+                        // Extract websiteId from URL: /edit/:websiteId/:pageId
+                        const pathParts = window.location.pathname.split('/')
+                        const websiteId = pathParts[2] || 'catalyst-demo'
+                        const pageId = pathParts[3] || ''
+                        // Navigate to live site at the same page
+                        window.location.href = `/live/${websiteId}${pageId ? '/' + pageId : ''}`
+                      } else {
+                        const { setCurrentView } = usePageStore.getState()
+                        setCurrentView('mock-live-site')
+                      }
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
