@@ -9,7 +9,6 @@ import {
   mapAntDesignToFoundation
 } from '../../foundation'
 
-// 🐛 DEBUG FLAG - Set to true to enable detailed theme provider logs
 const DEBUG_THEME_PROVIDER = false
 const debugLog = createDebugLogger(DEBUG_THEME_PROVIDER)
 
@@ -118,7 +117,14 @@ export function CanvasThemeProvider({ children, usePageStore, scopeCSS = false, 
     currentTheme = {
       ...currentTheme,
       colors: { ...currentTheme.colors, ...currentWebsite.themeOverrides.colors },
-      typography: { ...currentTheme.typography, ...currentWebsite.themeOverrides.typography },
+      typography: { 
+        ...currentTheme.typography, 
+        ...currentWebsite.themeOverrides.typography,
+        styles: {
+          ...currentTheme.typography?.styles,
+          ...currentWebsite.themeOverrides.typography?.styles
+        }
+      },
       spacing: { ...currentTheme.spacing, ...currentWebsite.themeOverrides.spacing },
       components: { ...currentTheme.components, ...currentWebsite.themeOverrides.components }
     }

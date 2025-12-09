@@ -21,6 +21,15 @@ import { usePrototypeStore } from '../../stores/prototypeStore'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { EditingScopeButton } from './EditingScopeButton'
 import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
+import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../PageBuilder/prefabSections'
+
+// Create default site layout for websites that don't have one
+const createDefaultSiteLayout = () => ({
+  headerEnabled: true,
+  footerEnabled: true,
+  header: [createStandardHeaderPrefab()],
+  footer: [createStandardFooterPrefab()]
+})
 
 // Helper hook to get all websites from V1 store (includes user-created websites)
 function useAllWebsites() {
@@ -46,11 +55,18 @@ function useAllWebsites() {
           // But preserve journals from V2 if V1 doesn't have any
           journals: v1Any.journals?.length > 0 ? v1Any.journals : existingV2Site.journals,
           // Also preserve pages from V2 if needed
-          pages: v1Any.pages?.length > 0 ? v1Any.pages : existingV2Site.pages
+          pages: v1Any.pages?.length > 0 ? v1Any.pages : existingV2Site.pages,
+          // Ensure siteLayout exists with default header/footer
+          siteLayout: v1Any.siteLayout || existingV2Site.siteLayout || createDefaultSiteLayout()
         })
       } else {
         // No V2 equivalent, just use V1 data
-        websiteMap.set(v1Site.id, v1Site)
+        // But ensure siteLayout exists
+        const v1Any = v1Site as any
+        websiteMap.set(v1Site.id, {
+          ...v1Site,
+          siteLayout: v1Any.siteLayout || createDefaultSiteLayout()
+        })
       }
     })
     

@@ -13,7 +13,6 @@
  * Scopes CSS to only apply within a specific container
  * Simple line-by-line approach that prefixes selectors
  */
-// Generate typography CSS from theme.typography.styles
 const generateTypographyCSS = (theme: any): string => {
   if (!theme.typography?.styles) return ''
   
@@ -26,38 +25,57 @@ const generateTypographyCSS = (theme: any): string => {
   
   const styles = theme.typography.styles
   
+  const toKebabCase = (str: string): string => {
+    return str
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+      .toLowerCase()
+  }
+  
   Object.keys(styles).forEach(styleName => {
     const style = styles[styleName]
     if (!style) return
     
-    const fontFamily = style.family === 'primary' 
-      ? (theme.typography.semantic?.primary || theme.typography.foundation?.sans || 'Inter, sans-serif')
-      : (theme.typography.semantic?.secondary || theme.typography.foundation?.mono || 'monospace')
+    const fontFamily = style.family === 'secondary' 
+      ? (theme.typography.semantic?.secondary || theme.typography.foundation?.mono || 'monospace')
+      : (theme.typography.semantic?.primary || theme.typography.foundation?.sans || theme.typography.bodyFont || 'Inter, sans-serif')
     
-    // Desktop styles (default)
-    if (style.desktop) {
+    const kebabName = toKebabCase(styleName)
+    
+    const desktopSize = style.desktop?.size || style.fontSize
+    const desktopLineHeight = style.desktop?.lineHeight || style.lineHeight
+    const desktopLetterSpacing = style.desktop?.letterSpacing || style.letterSpacing || '0'
+    const desktopWeight = style.desktop?.weight || style.fontWeight || 400
+    const desktopTransform = style.desktop?.transform || style.textTransform
+    
+    const mobileSize = style.mobile?.size || style.fontSizeMobile
+    const mobileLineHeight = style.mobile?.lineHeight || style.lineHeight
+    const mobileLetterSpacing = style.mobile?.letterSpacing || style.letterSpacing || '0'
+    const mobileWeight = style.mobile?.weight || desktopWeight
+    const mobileTransform = style.mobile?.transform || desktopTransform
+    
+    if (desktopSize) {
       css += `
-.typo-${styleName} {
+.typo-${kebabName} {
   font-family: ${fontFamily};
-  font-size: ${style.desktop.size};
-  line-height: ${style.desktop.lineHeight};
-  letter-spacing: ${style.desktop.letterSpacing || '0'};
-  font-weight: ${style.desktop.weight || 400};
-  ${style.desktop.transform ? `text-transform: ${style.desktop.transform};` : ''}
+  font-size: ${desktopSize};
+  line-height: ${desktopLineHeight || '1.5'};
+  letter-spacing: ${desktopLetterSpacing};
+  font-weight: ${desktopWeight};
+  ${desktopTransform ? `text-transform: ${desktopTransform};` : ''}
 }
 `
     }
     
-    // Mobile responsive styles
-    if (style.mobile) {
+    if (mobileSize && mobileSize !== desktopSize) {
       css += `
 @media (max-width: 768px) {
-  .typo-${styleName} {
-    font-size: ${style.mobile.size};
-    line-height: ${style.mobile.lineHeight};
-    letter-spacing: ${style.mobile.letterSpacing || '0'};
-    font-weight: ${style.mobile.weight || style.desktop?.weight || 400};
-    ${style.mobile.transform ? `text-transform: ${style.mobile.transform};` : ''}
+  .typo-${kebabName} {
+    font-size: ${mobileSize};
+    line-height: ${mobileLineHeight || '1.5'};
+    letter-spacing: ${mobileLetterSpacing};
+    font-weight: ${mobileWeight};
+    ${mobileTransform ? `text-transform: ${mobileTransform};` : ''}
   }
 }
 `

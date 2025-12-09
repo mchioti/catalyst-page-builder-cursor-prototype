@@ -1,4 +1,13 @@
 import type { Website } from '../types/templates'
+import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../components/PageBuilder/prefabSections'
+
+// Create default site layout with standard header/footer
+const createDefaultSiteLayout = () => ({
+  headerEnabled: true,
+  footerEnabled: true,
+  header: [createStandardHeaderPrefab()],
+  footer: [createStandardFooterPrefab()]
+})
 
 export const mockWebsites: Website[] = [
   {
@@ -97,7 +106,8 @@ export const mockWebsites: Website[] = [
       publishingTypes: ['academic', 'research']
     },
     deviationScore: 32,
-    lastThemeSync: new Date('2024-08-01')
+    lastThemeSync: new Date('2024-08-01'),
+    siteLayout: createDefaultSiteLayout()
   },
   {
     id: 'febs-press',
@@ -135,7 +145,8 @@ export const mockWebsites: Website[] = [
       publishingTypes: ['scientific', 'open-access']
     },
     deviationScore: 0,  // No deviations yet
-    lastThemeSync: new Date('2024-11-15')
+    lastThemeSync: new Date('2024-11-15'),
+    siteLayout: createDefaultSiteLayout()
   }
 ]
 

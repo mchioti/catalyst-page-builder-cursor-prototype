@@ -857,8 +857,9 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   const getSizeClass = () => {
     if (useTypography) {
       // Typography themes (Wiley DS V2, Carbon)
-      if (widget.size === 'auto') {
-        // Auto: Match typography to semantic level (H1 → typo-heading-h1, H2 → typo-heading-h2, etc.)
+      // Default to 'auto' when size is not specified (undefined)
+      if (widget.size === 'auto' || !widget.size) {
+        // Auto (default): Match typography to semantic level (H1 → typo-heading-h1, H2 → typo-heading-h2, etc.)
         return `typo-heading-h${widget.level}`
       } else {
         // Manual override: Map size to typography style
@@ -868,11 +869,12 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
           'medium': 'typo-heading-h4',  // Medium → H4 style (24px/20px)
           'small': 'typo-heading-h6'    // Small → H6 style (18px/16px)
         }
-        return sizeToTypographyMap[widget.size || 'medium'] || 'typo-heading-h4'
+        return sizeToTypographyMap[widget.size] || 'typo-heading-h4'
       }
     } else {
       // Legacy themes: Use Tailwind size classes
-      const effectiveSize = widget.size === 'auto' ? getSemanticDefaultSize(widget.level) : (widget.size || 'medium')
+      // Default to 'auto' when size is not specified (undefined)
+      const effectiveSize = (widget.size === 'auto' || !widget.size) ? getSemanticDefaultSize(widget.level) : widget.size
       return sizeClasses[effectiveSize] || sizeClasses.medium
     }
   }

@@ -44,7 +44,7 @@ export function getHomepageStubForWebsite(websiteId: string, designId?: string):
   if (designId) {
     const normalizedDesignId = designId.toLowerCase()
     if (normalizedDesignId.includes('wiley')) {
-      return createWileyHomepageStub()
+      return createWileyHomepageStub()  // Original Wiley homepage
     }
     if (normalizedDesignId.includes('febs')) {
       return createFebsHomepageStub()
@@ -338,7 +338,559 @@ export function createCarbonHomepageStub(): CanvasItemStub[] {
 }
 
 /**
+ * Wiley Online Library Global Landing Page
+ * Comprehensive page with hero, subjects, featured articles, stats, open access, quick links, and footer
+ */
+export function createWileyOnlineLibraryStub(): CanvasItemStub[] {
+  return [
+    // Hero Section
+    {
+      id: nanoid(),
+      name: 'Hero Banner',
+      type: 'hero',
+      layout: 'one-column',
+      background: {
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          direction: '135deg',
+          stops: [
+            { color: '#003b44', position: '0%' },
+            { color: '#006573', position: '50%' },
+            { color: '#007a8b', position: '100%' }
+          ]
+        }
+      },
+      contentMode: 'dark',
+      styling: {
+        paddingTop: '120px',
+        paddingBottom: '120px',
+        minHeight: '90vh',
+        textColor: 'white',
+        centerContent: true,
+        maxWidth: '6xl'
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Hero Content',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '🟢 Trusted by 15,000+ Institutions',
+              align: 'center',
+              typographyStyle: 'body-sm',
+              skin: 'minimal',
+              layout: {
+                variant: 'bordered',
+                padding: 'small',
+                background: 'transparent',
+                rounded: 'large'
+              }
+            },
+            { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+            {
+              id: nanoid(),
+              type: 'heading',
+              text: 'Discover Research That Matters',
+              level: 1,
+              align: 'center',
+              style: 'hero',
+              color: 'default',
+              typographyStyle: 'heading-h1',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Access millions of peer-reviewed articles, books, and protocols from the world\'s leading researchers across every discipline.',
+              align: 'center',
+              typographyStyle: 'body-xl',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
+            {
+              id: nanoid(),
+              type: 'button',
+              text: 'EXPLORE JOURNALS',
+              href: '/journals',
+              style: 'solid',
+              color: 'color1',
+              size: 'large',
+              align: 'center',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              text: 'FOR INSTITUTIONS',
+              href: '/institutions',
+              style: 'outline',
+              color: 'color5',
+              size: 'large',
+              align: 'center',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '3rem', skin: 'minimal' },
+            // Stats row using text widgets
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap;"><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">6M+</strong><span style="opacity: 0.7;">Articles</span></div><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">1,600+</strong><span style="opacity: 0.7;">Journals</span></div><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">22K+</strong><span style="opacity: 0.7;">Books</span></div></div>',
+              align: 'center',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Browse by Subject Section
+    {
+      id: nanoid(),
+      name: 'Browse by Subject',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#ffffff' },
+      contentMode: 'light',
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '7xl',
+        centerContent: true
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Section Header',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Browse by Subject',
+              align: 'center',
+              typographyStyle: 'body-sm',
+              inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              text: 'Explore Every Discipline',
+              level: 2,
+              align: 'center',
+              style: 'default',
+              typographyStyle: 'heading-h2',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Discover content across all major research areas, from life sciences and medicine to humanities.',
+              align: 'center',
+              typographyStyle: 'body-lg',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '3rem', skin: 'minimal' }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Subject Cards Grid',
+          widgets: [
+            // 8 Subject Cards as text/button combinations (simplified from editorial cards)
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;"><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">🧬</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Life Sciences</h3><p style="opacity: 0.8;">450+ Journals</p><a href="/subjects/life-sciences" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">⚗️</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Physical Sciences</h3><p style="opacity: 0.8;">380+ Journals</p><a href="/subjects/physical-sciences" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">🩺</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Health Sciences</h3><p style="opacity: 0.8;">320+ Journals</p><a href="/subjects/health-sciences" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">👥</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Social Sciences</h3><p style="opacity: 0.8;">280+ Journals</p><a href="/subjects/social-sciences" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">💻</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Computer Science</h3><p style="opacity: 0.8;">150+ Journals</p><a href="/subjects/computer-science" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">⚙️</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Engineering</h3><p style="opacity: 0.8;">200+ Journals</p><a href="/subjects/engineering" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">📚</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Humanities</h3><p style="opacity: 0.8;">180+ Journals</p><a href="/subjects/humanities" style="color: white; text-decoration: underline;">Explore →</a></div><div style="background: linear-gradient(135deg, #00bfb1 0%, #009e94 100%); border-radius: 12px; padding: 2rem; text-align: center; color: white;"><div style="font-size: 48px; margin-bottom: 1rem;">💼</div><h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Business</h3><p style="opacity: 0.8;">160+ Journals</p><a href="/subjects/business" style="color: white; text-decoration: underline;">Explore →</a></div></div>',
+              align: 'center',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Featured Articles Section
+    {
+      id: nanoid(),
+      name: 'Featured Articles',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#f2f2eb' },
+      contentMode: 'light',
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '7xl',
+        centerContent: true
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Section Header',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;"><div><span style="text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-size: 14px; font-weight: 600; display: block;">Latest Research</span><span style="font-size: 32px; font-weight: 700;">Featured Articles</span></div></div>',
+              align: 'left',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'tabs',
+              activeTabIndex: 0,
+              tabStyle: 'underline',
+              align: 'left',
+              skin: 'minimal',
+              tabs: [
+                { id: nanoid(), label: 'Most Read', widgets: [] },
+                { id: nanoid(), label: 'Most Cited', widgets: [] },
+                { id: nanoid(), label: 'Recent', widgets: [] },
+                { id: nanoid(), label: 'Open Access', widgets: [] }
+              ]
+            },
+            { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
+            // Article cards grid
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;"><div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);"><img src="https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_life%20sciences_abstract.jpeg" alt="" style="width: 100%; height: 180px; object-fit: cover;"><div style="padding: 1.5rem;"><span style="background: #00bfb1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">OPEN ACCESS</span><h3 style="font-size: 1.125rem; margin: 1rem 0 0.5rem;">CRISPR-Cas9 Advances in Gene Therapy</h3><p style="color: #666; font-size: 14px; line-height: 1.5;">Recent developments in CRISPR technology have opened new avenues for treating genetic disorders.</p><div style="margin-top: 1rem; font-size: 13px; color: #888;">Dec 2024 · 12.4K views</div></div></div><div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);"><img src="https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_physical-sciences_abstract.jpg" alt="" style="width: 100%; height: 180px; object-fit: cover;"><div style="padding: 1.5rem;"><span style="background: #f2f2eb; color: #666; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">RESEARCH ARTICLE</span><h3 style="font-size: 1.125rem; margin: 1rem 0 0.5rem;">Global Carbon Cycling Under Climate Change</h3><p style="color: #666; font-size: 14px; line-height: 1.5;">An analysis of terrestrial and oceanic carbon sinks and their response to anthropogenic warming.</p><div style="margin-top: 1rem; font-size: 13px; color: #888;">Nov 2024 · 8.7K views</div></div></div><div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);"><img src="https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_research_abstract.jpg" alt="" style="width: 100%; height: 180px; object-fit: cover;"><div style="padding: 1.5rem;"><span style="background: #f2f2eb; color: #666; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">RESEARCH ARTICLE</span><h3 style="font-size: 1.125rem; margin: 1rem 0 0.5rem;">Transformer Architectures for Scientific Discovery</h3><p style="color: #666; font-size: 14px; line-height: 1.5;">How large language models are accelerating scientific research across multiple disciplines.</p><div style="margin-top: 1rem; font-size: 13px; color: #888;">Dec 2024 · 15.2K views</div></div></div></div>',
+              align: 'center',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Impact Statistics Section
+    {
+      id: nanoid(),
+      name: 'Impact Statistics',
+      type: 'content-block',
+      layout: 'one-column',
+      background: {
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          direction: '135deg',
+          stops: [
+            { color: '#003b44', position: '0%' },
+            { color: '#00505c', position: '100%' }
+          ]
+        }
+      },
+      contentMode: 'dark',
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '7xl',
+        centerContent: true,
+        textColor: 'white'
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Stats Content',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Our Impact',
+              align: 'center',
+              typographyStyle: 'body-sm',
+              inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              text: 'Advancing Research Worldwide',
+              level: 2,
+              align: 'center',
+              style: 'default',
+              color: 'default',
+              typographyStyle: 'heading-h2',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Trusted by leading institutions and researchers across the globe for over 200 years.',
+              align: 'center',
+              typographyStyle: 'body-lg',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '3rem', skin: 'minimal' },
+            // Stats grid
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;"><div style="text-align: center; padding: 2rem;"><div style="font-size: 48px; margin-bottom: 1rem;">📥</div><div style="font-size: 3rem; font-weight: 700;">200M+</div><div style="opacity: 0.8;">Annual Downloads<br><small>Full-text articles accessed yearly</small></div></div><div style="text-align: center; padding: 2rem;"><div style="font-size: 48px; margin-bottom: 1rem;">🌍</div><div style="font-size: 3rem; font-weight: 700;">15K+</div><div style="opacity: 0.8;">Institutions<br><small>Universities with access</small></div></div><div style="text-align: center; padding: 2rem;"><div style="font-size: 48px; margin-bottom: 1rem;">✍️</div><div style="font-size: 3rem; font-weight: 700;">500K+</div><div style="opacity: 0.8;">Authors<br><small>Publishing researchers</small></div></div><div style="text-align: center; padding: 2rem;"><div style="font-size: 48px; margin-bottom: 1rem;">🏆</div><div style="font-size: 3rem; font-weight: 700;">85%</div><div style="opacity: 0.8;">Top Ranked<br><small>Journals in top categories</small></div></div></div>',
+              align: 'center',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Open Access Section
+    {
+      id: nanoid(),
+      name: 'Open Access',
+      type: 'content-block',
+      layout: 'two-columns',
+      background: { type: 'color', color: '#ffffff' },
+      contentMode: 'light',
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '7xl',
+        centerContent: true,
+        gap: '64px'
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Media Column',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'image',
+              src: 'https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Abstract/Abstract%20Green%20Wave%20Patterns%20-%20Abstract.jpeg',
+              alt: 'Open Access',
+              ratio: '4:3',
+              width: 'full',
+              objectFit: 'cover',
+              skin: 'minimal',
+              layout: { rounded: 'large', shadow: 'large' }
+            }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Content Column',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Open Access',
+              align: 'left',
+              typographyStyle: 'body-sm',
+              inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              text: 'Make Your Research Freely Available',
+              level: 2,
+              align: 'left',
+              style: 'default',
+              typographyStyle: 'heading-h2',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Open Access publishing ensures your work reaches the widest possible audience, increasing citations and accelerating scientific discovery.',
+              align: 'left',
+              typographyStyle: 'body-lg',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '✓ Immediate, unrestricted access to your research<br>✓ CC-BY licensing for maximum reuse<br>✓ Compliant with funder mandates<br>✓ 1,000+ institutional agreements',
+              align: 'left',
+              typographyStyle: 'body-md',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
+            {
+              id: nanoid(),
+              type: 'button',
+              text: 'LEARN MORE',
+              href: '/open-access',
+              style: 'solid',
+              color: 'color1',
+              size: 'medium',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              text: 'CHECK ELIGIBILITY',
+              href: '/open-access/eligibility',
+              style: 'outline',
+              color: 'color2',
+              size: 'medium',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Quick Links Section
+    {
+      id: nanoid(),
+      name: 'Quick Links',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#e3ebe8' },
+      contentMode: 'light',
+      styling: {
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '7xl',
+        centerContent: true
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Quick Links Content',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: 'Resources',
+              align: 'center',
+              typographyStyle: 'body-sm',
+              inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'heading',
+              text: 'Quick Links for Researchers',
+              level: 2,
+              align: 'center',
+              style: 'default',
+              typographyStyle: 'heading-h2',
+              skin: 'minimal'
+            },
+            { id: nanoid(), type: 'spacer', height: '2.5rem', skin: 'minimal' },
+            // Quick links grid
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;"><a href="/authors/submit" style="background: white; border-radius: 12px; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><span style="font-size: 32px;">✍️</span><div><strong style="display: block;">Submit a Manuscript</strong><span style="color: #00bfb1;">Submit →</span></div></a><a href="/authors/guidelines" style="background: white; border-radius: 12px; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><span style="font-size: 32px;">📖</span><div><strong style="display: block;">Author Guidelines</strong><span style="color: #00bfb1;">View →</span></div></a><a href="/institutions/access" style="background: white; border-radius: 12px; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><span style="font-size: 32px;">🏛️</span><div><strong style="display: block;">Institutional Access</strong><span style="color: #00bfb1;">Check →</span></div></a><a href="/support" style="background: white; border-radius: 12px; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"><span style="font-size: 32px;">💬</span><div><strong style="display: block;">Help & Support</strong><span style="color: #00bfb1;">Get Help →</span></div></a></div>',
+              align: 'center',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Newsletter Section
+    {
+      id: nanoid(),
+      name: 'Newsletter Signup',
+      type: 'content-block',
+      layout: 'one-column',
+      background: {
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          direction: '135deg',
+          stops: [
+            { color: '#003b44', position: '0%' },
+            { color: '#006573', position: '100%' }
+          ]
+        }
+      },
+      contentMode: 'dark',
+      styling: {
+        paddingTop: '64px',
+        paddingBottom: '64px',
+        maxWidth: '4xl',
+        centerContent: true,
+        textColor: 'white'
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Newsletter Content',
+          widgets: [
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;"><div><strong style="font-size: 24px; display: block; margin-bottom: 8px;">Stay Ahead with Latest Research</strong><span style="opacity: 0.8;">Get weekly updates on trending articles and announcements.</span></div></div>',
+              align: 'left',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'button',
+              text: 'SUBSCRIBE',
+              href: '/newsletter/subscribe',
+              style: 'solid',
+              color: 'color1',
+              size: 'large',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    },
+    // Footer Section
+    {
+      id: nanoid(),
+      name: 'Footer',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#003b44' },
+      contentMode: 'dark',
+      styling: {
+        paddingTop: '64px',
+        paddingBottom: '32px',
+        maxWidth: '7xl',
+        centerContent: true,
+        textColor: 'white'
+      },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Footer Content',
+          widgets: [
+            // Footer grid
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2rem; margin-bottom: 2rem;"><div><strong style="font-size: 24px; display: block; margin-bottom: 16px;">WILEY</strong><span style="opacity: 0.6; font-size: 14px; line-height: 1.6;">Wiley Online Library is one of the world\'s most extensive multidisciplinary collections of online resources.</span></div><div><strong style="display: block; margin-bottom: 16px;">Resources</strong><div style="display: flex; flex-direction: column; gap: 8px; opacity: 0.7;"><a href="/authors" style="color: white; text-decoration: none;">Author Resources</a><a href="/reviewers" style="color: white; text-decoration: none;">Reviewer Resources</a><a href="/librarians" style="color: white; text-decoration: none;">Librarian Resources</a><a href="/open-access" style="color: white; text-decoration: none;">Open Access</a></div></div><div><strong style="display: block; margin-bottom: 16px;">About</strong><div style="display: flex; flex-direction: column; gap: 8px; opacity: 0.7;"><a href="/about" style="color: white; text-decoration: none;">About Wiley</a><a href="/press" style="color: white; text-decoration: none;">Press Releases</a><a href="/careers" style="color: white; text-decoration: none;">Careers</a><a href="/contact" style="color: white; text-decoration: none;">Contact Us</a></div></div><div><strong style="display: block; margin-bottom: 16px;">Help</strong><div style="display: flex; flex-direction: column; gap: 8px; opacity: 0.7;"><a href="/support" style="color: white; text-decoration: none;">Support Center</a><a href="/getting-started" style="color: white; text-decoration: none;">Getting Started</a><a href="/technical-support" style="color: white; text-decoration: none;">Technical Support</a><a href="/faqs" style="color: white; text-decoration: none;">FAQs</a></div></div><div><strong style="display: block; margin-bottom: 16px;">Connect</strong><span style="opacity: 0.6;">Follow us on social media</span></div></div>',
+              align: 'left',
+              skin: 'minimal'
+            },
+            {
+              id: nanoid(),
+              type: 'divider',
+              style: 'solid',
+              thickness: '1px',
+              color: 'rgba(255,255,255,0.1)',
+              marginTop: '2rem',
+              marginBottom: '1.5rem',
+              skin: 'minimal'
+            },
+            // Footer bottom
+            {
+              id: nanoid(),
+              type: 'text',
+              text: '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;"><span style="opacity: 0.6; font-size: 14px;">© 2000-2024 John Wiley & Sons, Inc.</span><div style="display: flex; gap: 1.5rem; font-size: 14px; opacity: 0.7;"><a href="/privacy" style="color: white; text-decoration: none;">Privacy</a><a href="/terms" style="color: white; text-decoration: none;">Terms</a><a href="/cookies" style="color: white; text-decoration: none;">Cookies</a><a href="/accessibility" style="color: white; text-decoration: none;">Accessibility</a></div></div>',
+              align: 'left',
+              skin: 'minimal'
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+/**
  * Wiley Design Homepage Stub (based on wiley-home-2-stub)
+ * @deprecated Use createWileyOnlineLibraryStub for the full WOL landing page
  */
 export function createWileyHomepageStub(): CanvasItemStub[] {
   return [

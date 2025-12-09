@@ -5,6 +5,7 @@ import { getStarterTemplateForTheme } from '../../utils/themeStarters'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
 import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
+import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../PageBuilder/prefabSections'
 
 // TODO: Add proper type imports when extracting store
 interface Website {
@@ -166,7 +167,14 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
       // Store selected templates
       selectedTemplates: Array.from(selectedTemplates),
       deviationScore: calculateInitialDeviation(websiteData.modifications, selectedTheme),
-      lastThemeSync: new Date()
+      lastThemeSync: new Date(),
+      // Default site layout with standard header and footer
+      siteLayout: {
+        headerEnabled: true,
+        footerEnabled: true,
+        header: [createStandardHeaderPrefab()],
+        footer: [createStandardFooterPrefab()]
+      }
     }
     
     // Add website to store

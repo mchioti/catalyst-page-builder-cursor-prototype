@@ -247,8 +247,11 @@ export function WebsiteSettings({ websiteId }: { websiteId: string }) {
         <div className="space-y-4">
           {/* Header Settings */}
           <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-900">Global Header</h4>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">Global Header</h4>
+                <p className="text-sm text-gray-500">Displays at the top of all pages</p>
+              </div>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -263,25 +266,18 @@ export function WebsiteSettings({ websiteId }: { websiteId: string }) {
                   }}
                   className="rounded border-gray-300"
                 />
-                <span className="text-gray-700">Enable header</span>
+                <span className="text-gray-700">Show header</span>
               </label>
             </div>
-            <div className="text-sm text-gray-600">
-              {(website as any)?.siteLayout?.header?.length > 0 ? (
-                <span className="text-green-600">✓ Custom header configured ({(website as any).siteLayout.header.length} section{(website as any).siteLayout.header.length > 1 ? 's' : ''})</span>
-              ) : (
-                <span className="text-gray-500">Using default header</span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              To customize: Add a Header section in the Page Builder, then save it to this website's Site Layout.
-            </p>
           </div>
           
           {/* Footer Settings */}
           <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-900">Global Footer</h4>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">Global Footer</h4>
+                <p className="text-sm text-gray-500">Displays at the bottom of all pages</p>
+              </div>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -296,19 +292,9 @@ export function WebsiteSettings({ websiteId }: { websiteId: string }) {
                   }}
                   className="rounded border-gray-300"
                 />
-                <span className="text-gray-700">Enable footer</span>
+                <span className="text-gray-700">Show footer</span>
               </label>
             </div>
-            <div className="text-sm text-gray-600">
-              {(website as any)?.siteLayout?.footer?.length > 0 ? (
-                <span className="text-green-600">✓ Custom footer configured ({(website as any).siteLayout.footer.length} section{(website as any).siteLayout.footer.length > 1 ? 's' : ''})</span>
-              ) : (
-                <span className="text-gray-500">Using default footer</span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              To customize: Add a Footer section in the Page Builder, then save it to this website's Site Layout.
-            </p>
           </div>
           
           {/* Page Overrides Info */}

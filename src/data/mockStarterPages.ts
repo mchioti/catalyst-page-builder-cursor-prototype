@@ -659,9 +659,376 @@ const legacyMockHomepage: CustomStarterPage = {
   ]
 }
 
+// Wiley Online Library Global Landing Page - Full 8-Section Version
+// Transformed from Claude's JSON to work with our architecture (areas don't have layouts)
+// Note: Using 'as any[]' to bypass strict typing for mock data - runtime handles partial configs
+const wileyOnlineLibraryLanding: CustomStarterPage = {
+  id: 'wiley-online-library-landing',
+  name: 'Wiley Online Library Landing',
+  description: 'Full WOL landing page: Hero, Subjects (8 cards), Featured Articles, Stats, Open Access, Quick Links, Newsletter, Footer',
+  source: 'mock',
+  websiteId: 'wiley-ds',
+  websiteName: 'Wiley Design System',
+  createdAt: new Date('2024-12-09'),
+  canvasItems: [
+    // ==================== SECTION 1: HERO ====================
+    {
+      id: nanoid(),
+      name: 'Hero Banner',
+      type: 'hero',
+      layout: 'one-column',
+      background: {
+        type: 'gradient',
+        gradient: {
+          type: 'linear',
+          direction: '135deg',
+          stops: [
+            { color: '#003b44', position: '0%' },
+            { color: '#006573', position: '50%' },
+            { color: '#007a8b', position: '100%' }
+          ]
+        }
+      },
+      contentMode: 'dark',
+      styling: {
+        paddingTop: '120px',
+        paddingBottom: '120px',
+        minHeight: '90vh',
+        textColor: 'white',
+        centerContent: true,
+        maxWidth: '6xl'
+      },
+      areas: [{
+        id: nanoid(),
+        name: 'Hero Content',
+        widgets: [
+          { id: nanoid(), type: 'text', text: '🟢 Trusted by 15,000+ Institutions', align: 'center', typographyStyle: 'body-sm', skin: 'minimal' },
+          { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+          { id: nanoid(), type: 'heading', text: 'Discover Research That Matters', level: 1, align: 'center', style: 'hero', size: 'auto', skin: 'minimal' },
+          { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+          { id: nanoid(), type: 'text', text: 'Access millions of peer-reviewed articles, books, and protocols from the world\'s leading researchers across every discipline.', align: 'center', typographyStyle: 'body-xl', skin: 'minimal' },
+          { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
+          { id: nanoid(), type: 'button', text: 'EXPLORE JOURNALS', href: '/journals', style: 'solid', color: 'color1', size: 'large', align: 'center', skin: 'minimal' },
+          { id: nanoid(), type: 'button', text: 'FOR INSTITUTIONS', href: '/institutions', style: 'outline', color: 'color5', size: 'large', align: 'center', skin: 'minimal' },
+          { id: nanoid(), type: 'spacer', height: '3rem', skin: 'minimal' },
+          { id: nanoid(), type: 'text', text: '<div style="display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap;"><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">6M+</strong><span style="opacity: 0.7;">Articles</span></div><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">1,600+</strong><span style="opacity: 0.7;">Journals</span></div><div style="text-align: center;"><strong style="font-size: 2.5rem; display: block;">22K+</strong><span style="opacity: 0.7;">Books</span></div></div>', align: 'center', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 2: BROWSE BY SUBJECT - HEADER ====================
+    {
+      id: nanoid(),
+      name: 'Browse by Subject - Header',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#ffffff' },
+      contentMode: 'light',
+      styling: { paddingTop: '80px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Header',
+        widgets: [
+          { id: nanoid(), type: 'text', text: 'Browse by Subject', align: 'center', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;', skin: 'minimal' },
+          { id: nanoid(), type: 'heading', text: 'Explore Every Discipline', level: 2, align: 'center', style: 'default', size: 'auto', skin: 'minimal' },
+          { id: nanoid(), type: 'text', text: 'Discover content across all major research areas, from life sciences and medicine to humanities.', align: 'center', typographyStyle: 'body-lg', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 2B: BROWSE BY SUBJECT - GRID (8 cards) ====================
+    {
+      id: nanoid(),
+      name: 'Browse by Subject - Cards',
+      type: 'content-block',
+      layout: 'grid',
+      gridConfig: { columns: 4, gap: '1.25rem', alignItems: 'stretch' },
+      background: { type: 'color', color: '#ffffff' },
+      contentMode: 'light',
+      styling: { paddingTop: '0', paddingBottom: '80px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Subject Cards',
+        widgets: [
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Life Sciences' }, description: { enabled: true, text: '450+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/life-sciences', type: 'link' } }, image: { src: 'https://picsum.photos/seed/lifesci/200/200', alt: 'Life Sciences' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Physical Sciences' }, description: { enabled: true, text: '380+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/physical-sciences', type: 'link' } }, image: { src: 'https://picsum.photos/seed/physics/200/200', alt: 'Physical Sciences' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Health Sciences' }, description: { enabled: true, text: '320+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/health-sciences', type: 'link' } }, image: { src: 'https://picsum.photos/seed/health/200/200', alt: 'Health Sciences' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Social Sciences' }, description: { enabled: true, text: '280+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/social-sciences', type: 'link' } }, image: { src: 'https://picsum.photos/seed/social/200/200', alt: 'Social Sciences' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Computer Science' }, description: { enabled: true, text: '150+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/computer-science', type: 'link' } }, image: { src: 'https://picsum.photos/seed/compsci/200/200', alt: 'Computer Science' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Engineering' }, description: { enabled: true, text: '200+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/engineering', type: 'link' } }, image: { src: 'https://picsum.photos/seed/engineering/200/200', alt: 'Engineering' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Humanities' }, description: { enabled: true, text: '180+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/humanities', type: 'link' } }, image: { src: 'https://picsum.photos/seed/humanities/200/200', alt: 'Humanities' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Business' }, description: { enabled: true, text: '160+ Journals' }, callToAction: { enabled: true, text: 'Explore', url: '/subjects/business', type: 'link' } }, image: { src: 'https://picsum.photos/seed/business/200/200', alt: 'Business' }, config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true }, skin: 'modern' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 3: FEATURED ARTICLES - HEADER ====================
+    {
+      id: nanoid(),
+      name: 'Featured Articles - Header',
+      type: 'content-block',
+      layout: 'two-columns',
+      background: { type: 'color', color: '#f2f2eb' },
+      contentMode: 'light',
+      styling: { paddingTop: '80px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Title',
+          widgets: [
+            { id: nanoid(), type: 'text', text: 'Latest Research', align: 'left', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;', skin: 'minimal' },
+            { id: nanoid(), type: 'heading', text: 'Featured Articles', level: 2, align: 'left', style: 'default', size: 'auto', skin: 'minimal' }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'CTA',
+          widgets: [
+            { id: nanoid(), type: 'button', text: 'VIEW ALL', href: '/articles', style: 'outline', color: 'color2', size: 'medium', align: 'right', skin: 'minimal' }
+          ]
+        }
+      ]
+    },
+
+    // ==================== SECTION 3B: FEATURED ARTICLES - TABS ====================
+    {
+      id: nanoid(),
+      name: 'Featured Articles - Tabs',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#f2f2eb' },
+      contentMode: 'light',
+      styling: { paddingTop: '0', paddingBottom: '24px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Tabs',
+        widgets: [
+          { id: nanoid(), type: 'tabs', activeTabIndex: 0, tabStyle: 'underline', align: 'left', skin: 'minimal', tabs: [
+            { id: nanoid(), label: 'Most Read', widgets: [] },
+            { id: nanoid(), label: 'Most Cited', widgets: [] },
+            { id: nanoid(), label: 'Recent', widgets: [] },
+            { id: nanoid(), label: 'Open Access', widgets: [] }
+          ]}
+        ]
+      }]
+    },
+
+    // ==================== SECTION 3C: FEATURED ARTICLES - GRID ====================
+    {
+      id: nanoid(),
+      name: 'Featured Articles - Cards',
+      type: 'content-block',
+      layout: 'grid',
+      gridConfig: { columns: 3, gap: '1.5rem', alignItems: 'stretch' },
+      background: { type: 'color', color: '#f2f2eb' },
+      contentMode: 'light',
+      styling: { paddingTop: '0', paddingBottom: '80px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Article Cards',
+        widgets: [
+          { id: nanoid(), type: 'publication-details', contentSource: 'schema-objects', layout: 'default', skin: 'modern', publication: { title: 'CRISPR-Cas9 Advances in Gene Therapy', abstract: 'Recent developments in CRISPR technology have opened new avenues for treating genetic disorders.', authors: [{ name: 'Cell Biology Research Team' }], publicationDate: '2024-12', doi: '10.1002/example.001', accessStatus: 'open-access', contentType: 'research-article', thumbnail: 'https://picsum.photos/seed/crispr/400/300', metrics: { views: 12400 } }, cardConfig: { showContentTypeLabel: true, showTitle: true, showThumbnail: true, thumbnailPosition: 'top', showAuthors: false, showAbstract: true, abstractLength: 'short', showPublicationDate: true, showAccessStatus: true, showUsageMetrics: true, titleStyle: 'medium' } },
+          { id: nanoid(), type: 'publication-details', contentSource: 'schema-objects', layout: 'default', skin: 'modern', publication: { title: 'Global Carbon Cycling Under Climate Change', abstract: 'An analysis of terrestrial and oceanic carbon sinks and their response to anthropogenic warming.', authors: [{ name: 'Climate Science Group' }], publicationDate: '2024-11', doi: '10.1002/example.002', contentType: 'research-article', thumbnail: 'https://picsum.photos/seed/climate/400/300', metrics: { views: 8700 } }, cardConfig: { showContentTypeLabel: true, showTitle: true, showThumbnail: true, thumbnailPosition: 'top', showAuthors: false, showAbstract: true, abstractLength: 'short', showPublicationDate: true, showAccessStatus: false, showUsageMetrics: true, titleStyle: 'medium' } },
+          { id: nanoid(), type: 'publication-details', contentSource: 'schema-objects', layout: 'default', skin: 'modern', publication: { title: 'Transformer Architectures for Scientific Discovery', abstract: 'How large language models are accelerating scientific research across multiple disciplines.', authors: [{ name: 'AI Research Team' }], publicationDate: '2024-12', doi: '10.1002/example.003', contentType: 'research-article', thumbnail: 'https://picsum.photos/seed/ai/400/300', metrics: { views: 15200 } }, cardConfig: { showContentTypeLabel: true, showTitle: true, showThumbnail: true, thumbnailPosition: 'top', showAuthors: false, showAbstract: true, abstractLength: 'short', showPublicationDate: true, showAccessStatus: false, showUsageMetrics: true, titleStyle: 'medium' } }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 4: IMPACT STATISTICS - HEADER ====================
+    {
+      id: nanoid(),
+      name: 'Impact Statistics - Header',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'gradient', gradient: { type: 'linear', direction: '135deg', stops: [{ color: '#003b44', position: '0%' }, { color: '#00505c', position: '100%' }] } },
+      contentMode: 'dark',
+      styling: { paddingTop: '80px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true, textColor: 'white' },
+      areas: [{
+        id: nanoid(),
+        name: 'Header',
+        widgets: [
+          { id: nanoid(), type: 'text', text: 'Our Impact', align: 'center', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;', skin: 'minimal' },
+          { id: nanoid(), type: 'heading', text: 'Advancing Research Worldwide', level: 2, align: 'center', style: 'default', size: 'auto', skin: 'minimal' },
+          { id: nanoid(), type: 'text', text: 'Trusted by leading institutions and researchers across the globe for over 200 years.', align: 'center', typographyStyle: 'body-lg', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 4B: IMPACT STATISTICS - GRID ====================
+    {
+      id: nanoid(),
+      name: 'Impact Statistics - Cards',
+      type: 'content-block',
+      layout: 'grid',
+      gridConfig: { columns: 4, gap: '1.5rem', alignItems: 'stretch' },
+      background: { type: 'gradient', gradient: { type: 'linear', direction: '135deg', stops: [{ color: '#003b44', position: '0%' }, { color: '#00505c', position: '100%' }] } },
+      contentMode: 'dark',
+      styling: { paddingTop: '24px', paddingBottom: '80px', maxWidth: '7xl', centerContent: true, textColor: 'white' },
+      areas: [{
+        id: nanoid(),
+        name: 'Stats Cards',
+        widgets: [
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: '200M+' }, description: { enabled: true, text: 'Annual Downloads' }, callToAction: { enabled: false } }, image: { src: 'https://picsum.photos/seed/downloads/100/100', alt: 'Downloads' }, config: { contentAlignment: 'center', imagePosition: 'top' }, skin: 'dark' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: '15K+' }, description: { enabled: true, text: 'Institutions' }, callToAction: { enabled: false } }, image: { src: 'https://picsum.photos/seed/institutions/100/100', alt: 'Institutions' }, config: { contentAlignment: 'center', imagePosition: 'top' }, skin: 'dark' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: '500K+' }, description: { enabled: true, text: 'Authors' }, callToAction: { enabled: false } }, image: { src: 'https://picsum.photos/seed/authors/100/100', alt: 'Authors' }, config: { contentAlignment: 'center', imagePosition: 'top' }, skin: 'dark' },
+          { id: nanoid(), type: 'editorial-card', layout: 'color-block', content: { preheader: { enabled: false }, headline: { enabled: true, text: '85%' }, description: { enabled: true, text: 'Top Ranked' }, callToAction: { enabled: false } }, image: { src: 'https://picsum.photos/seed/ranked/100/100', alt: 'Ranked' }, config: { contentAlignment: 'center', imagePosition: 'top' }, skin: 'dark' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 5: OPEN ACCESS ====================
+    {
+      id: nanoid(),
+      name: 'Open Access',
+      type: 'content-block',
+      layout: 'two-columns',
+      background: { type: 'color', color: '#ffffff' },
+      contentMode: 'light',
+      styling: { paddingTop: '80px', paddingBottom: '80px', maxWidth: '7xl', centerContent: true, gap: '64px' },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Media',
+          widgets: [
+            { id: nanoid(), type: 'image', src: 'https://picsum.photos/seed/openaccess/800/600', alt: 'Open Access Research', ratio: '4:3', width: 'full', objectFit: 'cover', skin: 'minimal' }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Content',
+          widgets: [
+            { id: nanoid(), type: 'text', text: 'Open Access', align: 'left', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;', skin: 'minimal' },
+            { id: nanoid(), type: 'heading', text: 'Make Your Research Freely Available', level: 2, align: 'left', style: 'default', size: 'auto', skin: 'minimal' },
+            { id: nanoid(), type: 'text', text: 'Open Access publishing ensures your work reaches the widest possible audience, increasing citations and accelerating scientific discovery.', align: 'left', typographyStyle: 'body-lg', skin: 'minimal' },
+            { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
+            { id: nanoid(), type: 'text', text: '✓ Immediate, unrestricted access to your research<br>✓ CC-BY licensing for maximum reuse<br>✓ Compliant with funder mandates<br>✓ 1,000+ institutional agreements', align: 'left', typographyStyle: 'body-md', skin: 'minimal' },
+            { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
+            { id: nanoid(), type: 'button', text: 'LEARN MORE', href: '/open-access', style: 'solid', color: 'color1', size: 'medium', skin: 'minimal' },
+            { id: nanoid(), type: 'button', text: 'CHECK ELIGIBILITY', href: '/open-access/eligibility', style: 'outline', color: 'color2', size: 'medium', skin: 'minimal' }
+          ]
+        }
+      ]
+    },
+
+    // ==================== SECTION 6: QUICK LINKS - HEADER ====================
+    {
+      id: nanoid(),
+      name: 'Quick Links - Header',
+      type: 'content-block',
+      layout: 'one-column',
+      background: { type: 'color', color: '#e3ebe8' },
+      contentMode: 'light',
+      styling: { paddingTop: '80px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Header',
+        widgets: [
+          { id: nanoid(), type: 'text', text: 'Resources', align: 'center', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;', skin: 'minimal' },
+          { id: nanoid(), type: 'heading', text: 'Quick Links for Researchers', level: 2, align: 'center', style: 'default', size: 'auto', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 6B: QUICK LINKS - GRID ====================
+    {
+      id: nanoid(),
+      name: 'Quick Links - Cards',
+      type: 'content-block',
+      layout: 'grid',
+      gridConfig: { columns: 4, gap: '1.25rem', alignItems: 'stretch' },
+      background: { type: 'color', color: '#e3ebe8' },
+      contentMode: 'light',
+      styling: { paddingTop: '0', paddingBottom: '80px', maxWidth: '7xl', centerContent: true },
+      areas: [{
+        id: nanoid(),
+        name: 'Link Cards',
+        widgets: [
+          { id: nanoid(), type: 'editorial-card', layout: 'split', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Submit a Manuscript' }, description: { enabled: false }, callToAction: { enabled: true, text: 'Submit', url: '/authors/submit', type: 'link' } }, image: { src: 'https://picsum.photos/seed/submit/100/100', alt: 'Submit' }, config: { contentAlignment: 'left', imagePosition: 'left' }, skin: 'minimal' },
+          { id: nanoid(), type: 'editorial-card', layout: 'split', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Author Guidelines' }, description: { enabled: false }, callToAction: { enabled: true, text: 'View', url: '/authors/guidelines', type: 'link' } }, image: { src: 'https://picsum.photos/seed/guidelines/100/100', alt: 'Guidelines' }, config: { contentAlignment: 'left', imagePosition: 'left' }, skin: 'minimal' },
+          { id: nanoid(), type: 'editorial-card', layout: 'split', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Institutional Access' }, description: { enabled: false }, callToAction: { enabled: true, text: 'Check', url: '/institutions/access', type: 'link' } }, image: { src: 'https://picsum.photos/seed/institution/100/100', alt: 'Institution' }, config: { contentAlignment: 'left', imagePosition: 'left' }, skin: 'minimal' },
+          { id: nanoid(), type: 'editorial-card', layout: 'split', content: { preheader: { enabled: false }, headline: { enabled: true, text: 'Help & Support' }, description: { enabled: false }, callToAction: { enabled: true, text: 'Get Help', url: '/support', type: 'link' } }, image: { src: 'https://picsum.photos/seed/help/100/100', alt: 'Help' }, config: { contentAlignment: 'left', imagePosition: 'left' }, skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 7: NEWSLETTER ====================
+    {
+      id: nanoid(),
+      name: 'Newsletter Signup',
+      type: 'content-block',
+      layout: 'flexible',
+      flexConfig: { direction: 'row', wrap: true, justifyContent: 'space-between', gap: '2rem' },
+      background: { type: 'gradient', gradient: { type: 'linear', direction: '135deg', stops: [{ color: '#003b44', position: '0%' }, { color: '#006573', position: '100%' }] } },
+      contentMode: 'dark',
+      styling: { paddingTop: '64px', paddingBottom: '64px', maxWidth: '4xl', centerContent: true, textColor: 'white' },
+      areas: [{
+        id: nanoid(),
+        name: 'Newsletter Content',
+        widgets: [
+          { id: nanoid(), type: 'text', text: '<strong style="font-size: 24px; display: block; margin-bottom: 8px;">Stay Ahead with Latest Research</strong><span style="opacity: 0.8;">Get weekly updates on trending articles and announcements.</span>', align: 'left', skin: 'minimal' },
+          { id: nanoid(), type: 'button', text: 'SUBSCRIBE', href: '/newsletter/subscribe', style: 'solid', color: 'color1', size: 'large', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 8: FOOTER - LINKS GRID ====================
+    {
+      id: nanoid(),
+      name: 'Footer - Links',
+      type: 'content-block',
+      layout: 'grid',
+      gridConfig: { columns: 5, gap: '2rem', alignItems: 'start' },
+      background: { type: 'color', color: '#003b44' },
+      contentMode: 'dark',
+      styling: { paddingTop: '64px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true, textColor: 'white' },
+      areas: [{
+        id: nanoid(),
+        name: 'Footer Links',
+        widgets: [
+          { id: nanoid(), type: 'text', text: '<strong style="font-size: 24px; display: block; margin-bottom: 16px;">WILEY</strong><span style="opacity: 0.6; font-size: 14px; line-height: 1.6;">Wiley Online Library is one of the world\'s most extensive multidisciplinary collections of online resources.</span>', align: 'left', skin: 'minimal' },
+          { id: nanoid(), type: 'menu', menuType: 'custom', style: 'vertical', align: 'left', skin: 'minimal', items: [{ id: nanoid(), label: 'Resources', url: '#', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Author Resources', url: '/authors', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Reviewer Resources', url: '/reviewers', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Librarian Resources', url: '/librarians', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Open Access', url: '/open-access', displayCondition: 'always' as const, target: '_self' as const }] },
+          { id: nanoid(), type: 'menu', menuType: 'custom', style: 'vertical', align: 'left', skin: 'minimal', items: [{ id: nanoid(), label: 'About', url: '#', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'About Wiley', url: '/about', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Press Releases', url: '/press', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Careers', url: '/careers', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Contact Us', url: '/contact', displayCondition: 'always' as const, target: '_self' as const }] },
+          { id: nanoid(), type: 'menu', menuType: 'custom', style: 'vertical', align: 'left', skin: 'minimal', items: [{ id: nanoid(), label: 'Help', url: '#', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Support Center', url: '/support', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Getting Started', url: '/getting-started', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Technical Support', url: '/technical-support', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'FAQs', url: '/faqs', displayCondition: 'always' as const, target: '_self' as const }] },
+          { id: nanoid(), type: 'text', text: '<strong style="display: block; margin-bottom: 16px;">Connect</strong><span style="opacity: 0.6;">Follow us on social media</span>', align: 'left', skin: 'minimal' }
+        ]
+      }]
+    },
+
+    // ==================== SECTION 8B: FOOTER - BOTTOM ====================
+    {
+      id: nanoid(),
+      name: 'Footer - Bottom',
+      type: 'content-block',
+      layout: 'two-columns',
+      background: { type: 'color', color: '#003b44' },
+      contentMode: 'dark',
+      styling: { paddingTop: '0', paddingBottom: '32px', maxWidth: '7xl', centerContent: true, textColor: 'white' },
+      areas: [
+        {
+          id: nanoid(),
+          name: 'Copyright',
+          widgets: [
+            { id: nanoid(), type: 'divider', style: 'solid', thickness: '1px', color: 'rgba(255,255,255,0.1)', marginTop: '0', marginBottom: '1.5rem', skin: 'minimal' },
+            { id: nanoid(), type: 'text', text: '© 2000-2024 John Wiley & Sons, Inc.', align: 'left', typographyStyle: 'body-sm', inlineStyles: 'opacity: 0.6;', skin: 'minimal' }
+          ]
+        },
+        {
+          id: nanoid(),
+          name: 'Legal Links',
+          widgets: [
+            { id: nanoid(), type: 'spacer', height: '2.5rem', skin: 'minimal' },
+            { id: nanoid(), type: 'menu', menuType: 'custom', style: 'horizontal', align: 'right', skin: 'minimal', items: [{ id: nanoid(), label: 'Privacy', url: '/privacy', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Terms', url: '/terms', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Cookies', url: '/cookies', displayCondition: 'always' as const, target: '_self' as const }, { id: nanoid(), label: 'Accessibility', url: '/accessibility', displayCondition: 'always' as const, target: '_self' as const }] }
+          ]
+        }
+      ]
+    }
+  ] as any[]
+}
+
 export const mockStarterPages: CustomStarterPage[] = [
   catalystGenericHomepage,
   febsHomepage2025,
-  legacyMockHomepage
+  legacyMockHomepage,
+  wileyOnlineLibraryLanding
 ]
 

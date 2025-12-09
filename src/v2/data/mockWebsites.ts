@@ -4,6 +4,15 @@
 
 import { nanoid } from 'nanoid'
 import type { Website, Page } from '../types/core'
+import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../../components/PageBuilder/prefabSections'
+
+// Create default site layout with standard header/footer
+const createDefaultSiteLayout = () => ({
+  headerEnabled: true,
+  footerEnabled: true,
+  header: [createStandardHeaderPrefab()],
+  footer: [createStandardFooterPrefab()]
+})
 
 // ============================================================================
 // CATALYST DEMO SITE
@@ -462,6 +471,9 @@ export const febsPressSite: Website = {
     logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/febs-custom-logo.png',
     fontFamily: 'Roboto'
   },
+  
+  // Default site layout with standard header and footer
+  siteLayout: createDefaultSiteLayout(),
   
   createdAt: new Date('2024-01-15'),
   updatedAt: new Date('2024-12-05')
@@ -1100,6 +1112,9 @@ export const catalystDemoSite: Website = {
     logoUrl: 'https://febs.onlinelibrary.wiley.com/pb-assets/tmp-images/footer-logo-wiley-1510029248417.png',
     fontFamily: 'Inter'
   },
+  
+  // Default site layout with standard header and footer
+  siteLayout: createDefaultSiteLayout(),
   
   createdAt: new Date('2024-11-01'),
   updatedAt: new Date('2024-11-24')

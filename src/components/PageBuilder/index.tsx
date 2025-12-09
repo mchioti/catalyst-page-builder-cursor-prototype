@@ -1989,7 +1989,27 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
   usePageStore: any
   buildWidget: (item: any) => Widget
 }) {
-  const { customSections = [], customStarterPages = [], canvasItems, replaceCanvasItems, removeCustomStarterPage, selectWidget, currentWebsiteId } = usePageStore()
+  const { customSections = [], customStarterPages = [], canvasItems, replaceCanvasItems, removeCustomStarterPage, selectWidget, currentWebsiteId, websites } = usePageStore()
+  
+  // Get current website's theme/design ID for matching stubs
+  const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
+  const currentThemeId = currentWebsite?.themeId || currentWebsite?.designId || ''
+  
+  // Filter stubs: match by websiteId OR by design/theme
+  const relevantStubs = customStarterPages.filter((page: any) => {
+    // Exact website match
+    if (page.websiteId === currentWebsiteId) return true
+    // Design/theme match (e.g., 'wiley-ds' matches any wiley-themed website)
+    if (page.websiteId && currentThemeId) {
+      const pageDesign = page.websiteId.toLowerCase()
+      const currentDesign = currentThemeId.toLowerCase()
+      if (pageDesign.includes('wiley') && currentDesign.includes('wiley')) return true
+      if (pageDesign.includes('febs') && currentDesign.includes('febs')) return true
+      if (pageDesign.includes('carbon') && currentDesign.includes('carbon')) return true
+      if (pageDesign.includes('classic') && currentDesign.includes('classic')) return true
+    }
+    return false
+  })
 
   // DIY Widgets - Advanced/Technical widgets for power users
   const diyWidgets = [
@@ -2115,11 +2135,9 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
           Saved Stubs
         </h3>
 
-        {customStarterPages.filter((page: any) => page.websiteId === currentWebsiteId).length > 0 ? (
+        {relevantStubs.length > 0 ? (
           <div className="space-y-2">
-            {customStarterPages
-              .filter((page: any) => page.websiteId === currentWebsiteId)
-              .map((page: any) => {
+            {relevantStubs.map((page: any) => {
                 const itemCount = page.canvasItems?.length || 0
                 
                 return (
