@@ -61,6 +61,7 @@ function resolveSpacingToken(tokenRef: string | undefined, usePageStore: any): s
 interface SectionRendererProps {
   section: WidgetSection
   onWidgetClick: (id: string, e: React.MouseEvent) => void
+  onSectionClick?: (id: string) => void
   dragAttributes?: any
   dragListeners?: any
   activeSectionToolbar: string | null
@@ -75,6 +76,18 @@ interface SectionRendererProps {
   websiteId?: string // Website ID for breakpoints
   sidebarHeight?: React.CSSProperties // Height styles for sidebar
   isInSidebarGroup?: boolean // If true, section is part of sidebar group and wrapper behavior is handled by group
+  isGlobalSection?: 'header' | 'footer' // If set, this section is from global site layout
+  
+  // Callback injection for flexible storage (parent decides WHERE to save)
+  onDeleteWidget?: (widgetId: string) => void
+  onUpdateWidget?: (widgetId: string, updates: any) => void
+  onDeleteSection?: () => void
+  onDuplicateSection?: () => void
+  
+  // Permission flags (parent decides WHAT'S allowed)
+  canDeleteSection?: boolean
+  canReorderSection?: boolean
+  canDuplicateSection?: boolean
 }
 
 // Component for draggable widgets within sections
@@ -90,7 +103,8 @@ export function DraggableWidgetInSection({
   usePageStore,
   isLiveMode = false,
   journalContext,
-  sectionContentMode
+  sectionContentMode,
+  onDeleteWidget // Callback injection for custom delete behavior
 }: {
   widget: Widget
   sectionId: string
@@ -104,6 +118,7 @@ export function DraggableWidgetInSection({
   isLiveMode?: boolean
   journalContext?: string
   sectionContentMode?: 'light' | 'dark'
+  onDeleteWidget?: (widgetId: string) => void
 }) {
   // Use draggable to allow movement between areas and sections
   const widgetDrag = useDraggable({
@@ -303,8 +318,13 @@ export function DraggableWidgetInSection({
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                const { deleteWidget } = usePageStore.getState()
-                deleteWidget(widget.id)
+                // Use callback if provided, otherwise fall back to store
+                if (onDeleteWidget) {
+                  onDeleteWidget(widget.id)
+                } else {
+                  const { deleteWidget } = usePageStore.getState()
+                  deleteWidget(widget.id)
+                }
               }}
               className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
               title="Delete widget"
@@ -348,6 +368,7 @@ export function DraggableWidgetInSection({
 export function SectionRenderer({ 
   section, 
   onWidgetClick,
+  onSectionClick,
   dragAttributes,
   dragListeners,
   activeSectionToolbar,
@@ -361,7 +382,17 @@ export function SectionRenderer({
   journalContext,
   websiteId = 'catalyst-demo', // Default website ID
   sidebarHeight,
-  isInSidebarGroup = false
+  isInSidebarGroup = false,
+  isGlobalSection,
+  // Callback injection
+  onDeleteWidget,
+  onUpdateWidget,
+  onDeleteSection,
+  onDuplicateSection,
+  // Permission flags (default to true for backward compatibility)
+  canDeleteSection = true,
+  canReorderSection = true,
+  canDuplicateSection = true
 }: SectionRendererProps) {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
@@ -841,115 +872,143 @@ export function SectionRenderer({
         {...dragListeners}
       >
         {/* Section Action Toolbar - appears on click - only in editor mode */}
+        {/* Uses permission flags to control which actions are available */}
         {!isLiveMode && activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-              <div 
-                {...dragAttributes}
-                {...dragListeners}
-                className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
-                title="Drag to reorder section"
-              >
-                <GripVertical className="w-3 h-3" />
-              </div>
+              {/* Drag handle - only if reordering allowed */}
+              {canReorderSection && (
+                <div 
+                  {...dragAttributes}
+                  {...dragListeners}
+                  className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing rounded hover:bg-gray-100 transition-colors"
+                  title="Drag to reorder section"
+                >
+                  <GripVertical className="w-3 h-3" />
+                </div>
+              )}
+              {/* Move up - only if reordering allowed */}
+              {canReorderSection && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                    const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    if (currentIndex > 0) {
+                      const newCanvasItems = [...canvasItems]
+                      const temp = newCanvasItems[currentIndex]
+                      newCanvasItems[currentIndex] = newCanvasItems[currentIndex - 1]
+                      newCanvasItems[currentIndex - 1] = temp
+                      replaceCanvasItems(newCanvasItems)
+                    }
+                  }}
+                  className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move section up"
+                  type="button"
+                  disabled={(() => {
+                    const { canvasItems } = usePageStore.getState()
+                    const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    return currentIndex === 0
+                  })()}
+                >
+                  <ArrowUp className="w-3 h-3" />
+                </button>
+              )}
+              {/* Move down - only if reordering allowed */}
+              {canReorderSection && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                    const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    if (currentIndex < canvasItems.length - 1) {
+                      const newCanvasItems = [...canvasItems]
+                      const temp = newCanvasItems[currentIndex]
+                      newCanvasItems[currentIndex] = newCanvasItems[currentIndex + 1]
+                      newCanvasItems[currentIndex + 1] = temp
+                      replaceCanvasItems(newCanvasItems)
+                    }
+                  }}
+                  className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move section down"
+                  type="button"
+                  disabled={(() => {
+                    const { canvasItems } = usePageStore.getState()
+                    const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    return currentIndex === canvasItems.length - 1
+                  })()}
+                >
+                  <ArrowDown className="w-3 h-3" />
+                </button>
+              )}
+              {/* Duplicate - only if allowed */}
+              {canDuplicateSection && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (onDuplicateSection) {
+                      onDuplicateSection()
+                    } else {
+                      handleDuplicateSection()
+                    }
+                  }}
+                  className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                  title="Duplicate section"
+                  type="button"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              )}
+              {/* Save as custom - only for canvas sections */}
+              {!isGlobalSection && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowSaveModal(true)
+                  }}
+                  className="p-1 text-gray-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
+                  title="Save as custom section"
+                  type="button"
+                >
+                  <BookOpen className="w-3 h-3" />
+                </button>
+              )}
+              {/* Section properties - ALWAYS available */}
               <button
                 onClick={(e) => {
-                  e.preventDefault()
                   e.stopPropagation()
-                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                  if (currentIndex > 0) {
-                    const newCanvasItems = [...canvasItems]
-                    const temp = newCanvasItems[currentIndex]
-                    newCanvasItems[currentIndex] = newCanvasItems[currentIndex - 1]
-                    newCanvasItems[currentIndex - 1] = temp
-                    replaceCanvasItems(newCanvasItems)
-                  }
-                }}
-                className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Move section up"
-                type="button"
-                disabled={(() => {
-                  const { canvasItems } = usePageStore.getState()
-                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                  return currentIndex === 0
-                })()}
-              >
-                <ArrowUp className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                  if (currentIndex < canvasItems.length - 1) {
-                    const newCanvasItems = [...canvasItems]
-                    const temp = newCanvasItems[currentIndex]
-                    newCanvasItems[currentIndex] = newCanvasItems[currentIndex + 1]
-                    newCanvasItems[currentIndex + 1] = temp
-                    replaceCanvasItems(newCanvasItems)
-                  }
-                }}
-                className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Move section down"
-                type="button"
-                disabled={(() => {
-                  const { canvasItems } = usePageStore.getState()
-                  const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                  return currentIndex === canvasItems.length - 1
-                })()}
-              >
-                <ArrowDown className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  handleDuplicateSection()
-                }}
-                className="p-1 text-gray-500 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                title="Duplicate section"
-                type="button"
-              >
-                <Copy className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setShowSaveModal(true)
-                }}
-                className="p-1 text-gray-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
-                title="Save as custom section"
-                type="button"
-              >
-                <BookOpen className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Could add section properties/settings here in the future
+                  // Section is already selected via parent click, properties panel shows
                 }}
                 className="p-1 text-gray-500 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
-                title="Section properties"
+                title="Section properties (see right panel)"
               >
                 <Edit className="w-3 h-3" />
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  const { replaceCanvasItems, canvasItems } = usePageStore.getState()
-                  const newCanvasItems = canvasItems.filter((item: any) => item.id !== section.id)
-                  replaceCanvasItems(newCanvasItems)
-                }}
-                className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                title="Delete section"
-                type="button"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              {/* Delete - only if allowed */}
+              {canDeleteSection && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (onDeleteSection) {
+                      onDeleteSection()
+                    } else {
+                      const { replaceCanvasItems, canvasItems } = usePageStore.getState()
+                      const newCanvasItems = canvasItems.filter((item: any) => item.id !== section.id)
+                      replaceCanvasItems(newCanvasItems)
+                    }
+                  }}
+                  className="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                  title="Delete section"
+                  type="button"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -1048,6 +1107,7 @@ export function SectionRenderer({
                           isLiveMode={isLiveMode}
                           journalContext={journalContext}
                           sectionContentMode={section.contentMode}
+                          onDeleteWidget={onDeleteWidget}
                         />
                       )
                     }
@@ -1316,6 +1376,7 @@ export function SectionRenderer({
                           isLiveMode={isLiveMode}
                           journalContext={journalContext}
                           sectionContentMode={section.contentMode}
+                          onDeleteWidget={onDeleteWidget}
                         />
                       )
                     }
@@ -1656,6 +1717,7 @@ export function SectionRenderer({
                           isLiveMode={isLiveMode}
                           journalContext={journalContext}
                           sectionContentMode={section.contentMode}
+                          onDeleteWidget={onDeleteWidget}
                         />
                       ))}
                     </div>

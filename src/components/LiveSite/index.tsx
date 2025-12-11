@@ -124,11 +124,29 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const headerEnabled = siteLayout?.headerEnabled !== false
   const footerEnabled = siteLayout?.footerEnabled !== false
   
-  // Check for page-specific overrides (based on current route)
-  const currentPageId = location.pathname.replace(`/live/${websiteId}`, '') || 'home'
-  const pageOverride = (website as any)?.pageLayoutOverrides?.[currentPageId]
-  const shouldShowHeader = headerEnabled && pageOverride?.header !== 'hide'
-  const shouldShowFooter = footerEnabled && pageOverride?.footer !== 'hide'
+  // Check for page-specific overrides from store
+  const pathAfterLive = location.pathname.replace(`/live/${websiteId}`, '').replace(/^\//, '')
+  const currentPageId = pathAfterLive || 'home'
+  const pageLayoutOverrides = usePageStore(state => (state as any).pageLayoutOverrides || {})
+  const getPageCanvas = usePageStore(state => (state as any).getPageCanvas)
+  const overrideKey = `${websiteId}:${currentPageId}`
+  const pageOverrides = pageLayoutOverrides[overrideKey] || { headerOverride: 'global', footerOverride: 'global' }
+  
+  // Get page-specific header/footer if in page-edit mode
+  const pageHeaderSections = pageOverrides.headerOverride === 'page-edit' && getPageCanvas 
+    ? getPageCanvas(websiteId, `header-${currentPageId}`) 
+    : null
+  const pageFooterSections = pageOverrides.footerOverride === 'page-edit' && getPageCanvas
+    ? getPageCanvas(websiteId, `footer-${currentPageId}`)
+    : null
+  
+  // Use page-specific sections if available, otherwise global
+  const headerToRender = pageHeaderSections || siteLayout?.header
+  const footerToRender = pageFooterSections || siteLayout?.footer
+  
+  // Show header/footer unless: 1) disabled at site level, OR 2) hidden for this page
+  const shouldShowHeader = headerEnabled && pageOverrides.headerOverride !== 'hide'
+  const shouldShowFooter = footerEnabled && pageOverrides.footerOverride !== 'hide'
   
   
   return (
@@ -136,17 +154,17 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
       className="min-h-screen bg-white flex flex-col transition-all duration-300 ease-in-out"
       style={{ marginRight: drawerOpen ? '288px' : '0' }}
     >
-      {/* Site Header - Custom header from Site Layout (no default - must be configured) */}
-      {shouldShowHeader && hasCustomHeader && (
+      {/* Site Header - Custom header from Site Layout (or page-specific) */}
+      {shouldShowHeader && headerToRender && headerToRender.length > 0 && (
         <CanvasRenderer 
-          items={pageOverride?.header === 'custom' ? pageOverride.customHeader : siteLayout.header} 
+          items={headerToRender} 
           websiteId={websiteId} 
           themeId={website?.themeId}
         />
       )}
       
       {/* Placeholder when no header configured - only visible as a hint */}
-      {shouldShowHeader && !hasCustomHeader && (
+      {shouldShowHeader && (!headerToRender || headerToRender.length === 0) && (
         <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 text-center">
           <span className="text-xs text-gray-500">
             ℹ️ No site header configured. Add one in Website Settings → Site Layout
@@ -159,17 +177,17 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
         {children}
       </main>
       
-      {/* Site Footer - Custom footer from Site Layout (no default - must be configured) */}
-      {shouldShowFooter && hasCustomFooter && (
+      {/* Site Footer - Custom footer from Site Layout (or page-specific) */}
+      {shouldShowFooter && footerToRender && footerToRender.length > 0 && (
         <CanvasRenderer 
-          items={pageOverride?.footer === 'custom' ? pageOverride.customFooter : siteLayout.footer} 
+          items={footerToRender} 
           websiteId={websiteId} 
           themeId={website?.themeId}
         />
       )}
       
       {/* Placeholder when no footer configured */}
-      {shouldShowFooter && !hasCustomFooter && (
+      {shouldShowFooter && (!footerToRender || footerToRender.length === 0) && (
         <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center mt-auto">
           <span className="text-xs text-gray-500">
             ℹ️ No site footer configured. Add one in Website Settings → Site Layout

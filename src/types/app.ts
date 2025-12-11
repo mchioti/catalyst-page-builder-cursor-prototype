@@ -199,6 +199,15 @@ export type PageState = {
   setPageCanvas: (websiteId: string, pageId: string, items: CanvasItem[]) => void
   clearPageCanvas: (websiteId: string, pageId: string) => void
   
+  // Per-page header/footer overrides
+  pageLayoutOverrides: Record<string, { 
+    headerOverride?: 'global' | 'hide' | 'page-edit'
+    footerOverride?: 'global' | 'hide' | 'page-edit' 
+  }>
+  getPageLayoutOverrides: (websiteId: string, pageId: string) => { headerOverride?: 'global' | 'hide' | 'page-edit'; footerOverride?: 'global' | 'hide' | 'page-edit' }
+  setPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => void
+  updateSiteLayoutWidget: (websiteId: string, sectionType: 'header' | 'footer', widgetId: string, updates: any) => void
+  
   // Global template management
   setGlobalTemplateCanvas: (items: CanvasItem[]) => void
   clearGlobalTemplateCanvas: () => void

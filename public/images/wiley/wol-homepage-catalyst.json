@@ -1,0 +1,1179 @@
+{
+  "page": {
+    "id": "wol-global-landing",
+    "name": "Wiley Online Library - Global Landing Page",
+    "slug": "/",
+    "theme": "wiley-ds",
+    "meta": {
+      "title": "Wiley Online Library | Discover Research That Matters",
+      "description": "Access millions of peer-reviewed articles, books, and protocols from the world's leading researchers across every discipline.",
+      "keywords": ["research", "journals", "academic", "peer-reviewed", "wiley"]
+    },
+    "sections": [
+      {
+        "id": "hero-section",
+        "name": "Hero Banner",
+        "type": "hero",
+        "layout": "one-column",
+        "background": {
+          "type": "gradient",
+          "gradient": {
+            "type": "linear",
+            "direction": "135deg",
+            "stops": [
+              { "color": "#003b44", "position": "0%" },
+              { "color": "#006573", "position": "50%" },
+              { "color": "#007a8b", "position": "100%" }
+            ]
+          }
+        },
+        "contentMode": "dark",
+        "styling": {
+          "paddingTop": "120px",
+          "paddingBottom": "120px",
+          "minHeight": "90vh",
+          "textColor": "white",
+          "centerContent": true,
+          "maxWidth": "6xl"
+        },
+        "areas": [
+          {
+            "id": "hero-content",
+            "name": "Hero Content",
+            "widgets": [
+              {
+                "id": "hero-badge",
+                "type": "text",
+                "text": "🟢 Trusted by 15,000+ Institutions",
+                "align": "center",
+                "typographyStyle": "body-sm",
+                "skin": "minimal",
+                "layout": {
+                  "variant": "bordered",
+                  "padding": "small",
+                  "background": "transparent",
+                  "rounded": "large"
+                }
+              },
+              {
+                "id": "hero-spacer-1",
+                "type": "spacer",
+                "height": "1.5rem"
+              },
+              {
+                "id": "hero-title",
+                "type": "heading",
+                "text": "Discover Research That Matters",
+                "level": 1,
+                "align": "center",
+                "style": "hero",
+                "color": "default",
+                "typographyStyle": "heading-h1"
+              },
+              {
+                "id": "hero-spacer-2",
+                "type": "spacer",
+                "height": "1.5rem"
+              },
+              {
+                "id": "hero-subtitle",
+                "type": "text",
+                "text": "Access millions of peer-reviewed articles, books, and protocols from the world's leading researchers across every discipline.",
+                "align": "center",
+                "typographyStyle": "body-xl"
+              },
+              {
+                "id": "hero-spacer-3",
+                "type": "spacer",
+                "height": "2rem"
+              },
+              {
+                "id": "hero-cta-primary",
+                "type": "button",
+                "text": "EXPLORE JOURNALS",
+                "href": "/journals",
+                "style": "solid",
+                "color": "color1",
+                "size": "large",
+                "align": "center"
+              },
+              {
+                "id": "hero-cta-secondary",
+                "type": "button",
+                "text": "FOR INSTITUTIONS",
+                "href": "/institutions",
+                "style": "outline",
+                "color": "color5",
+                "size": "large",
+                "align": "center"
+              },
+              {
+                "id": "hero-spacer-4",
+                "type": "spacer",
+                "height": "3rem"
+              }
+            ]
+          },
+          {
+            "id": "hero-stats",
+            "name": "Hero Stats Row",
+            "layout": "flexible",
+            "flexConfig": {
+              "direction": "row",
+              "wrap": true,
+              "justifyContent": "center",
+              "gap": "3rem"
+            },
+            "widgets": [
+              {
+                "id": "stat-articles",
+                "type": "text",
+                "text": "<strong style='font-size: 2.5rem; display: block;'>6M+</strong><span style='opacity: 0.7;'>Articles</span>",
+                "align": "center",
+                "typographyStyle": "body-lg"
+              },
+              {
+                "id": "stat-journals",
+                "type": "text",
+                "text": "<strong style='font-size: 2.5rem; display: block;'>1,600+</strong><span style='opacity: 0.7;'>Journals</span>",
+                "align": "center",
+                "typographyStyle": "body-lg"
+              },
+              {
+                "id": "stat-books",
+                "type": "text",
+                "text": "<strong style='font-size: 2.5rem; display: block;'>22K+</strong><span style='opacity: 0.7;'>Books</span>",
+                "align": "center",
+                "typographyStyle": "body-lg"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "subjects-section",
+        "name": "Browse by Subject",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "color",
+          "color": "#ffffff"
+        },
+        "contentMode": "light",
+        "styling": {
+          "paddingTop": "80px",
+          "paddingBottom": "80px",
+          "maxWidth": "7xl",
+          "centerContent": true
+        },
+        "areas": [
+          {
+            "id": "subjects-header",
+            "name": "Section Header",
+            "widgets": [
+              {
+                "id": "subjects-eyebrow",
+                "type": "text",
+                "text": "Browse by Subject",
+                "align": "center",
+                "typographyStyle": "body-sm",
+                "inlineStyles": "text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;"
+              },
+              {
+                "id": "subjects-title",
+                "type": "heading",
+                "text": "Explore Every Discipline",
+                "level": 2,
+                "align": "center",
+                "style": "default",
+                "typographyStyle": "heading-h2"
+              },
+              {
+                "id": "subjects-desc",
+                "type": "text",
+                "text": "Discover content across all major research areas, from life sciences and medicine to humanities.",
+                "align": "center",
+                "typographyStyle": "body-lg"
+              },
+              {
+                "id": "subjects-spacer",
+                "type": "spacer",
+                "height": "3rem"
+              }
+            ]
+          },
+          {
+            "id": "subjects-grid",
+            "name": "Subject Cards Grid",
+            "layout": "grid",
+            "gridConfig": {
+              "columns": 4,
+              "gap": "1.25rem",
+              "alignItems": "stretch"
+            },
+            "widgets": [
+              {
+                "id": "subject-life-sciences",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Life Sciences" },
+                  "description": { "enabled": true, "text": "450+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/life-sciences", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Genetics_1000px.png",
+                  "alt": "Life Sciences - DNA Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-physical-sciences",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Physical Sciences" },
+                  "description": { "enabled": true, "text": "380+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/physical-sciences", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Physical%20sciences_1000px.png",
+                  "alt": "Physical Sciences - Flask Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-health-sciences",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Health Sciences" },
+                  "description": { "enabled": true, "text": "320+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/health-sciences", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Health%20sciences_1000px.png",
+                  "alt": "Health Sciences - Stethoscope Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-social-sciences",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Social Sciences" },
+                  "description": { "enabled": true, "text": "280+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/social-sciences", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Social%20sciences%20%26%20humanities_1000px.png",
+                  "alt": "Social Sciences Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-computer-science",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Computer Science" },
+                  "description": { "enabled": true, "text": "150+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/computer-science", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Digital%20learning_1000px.png",
+                  "alt": "Computer Science - Digital Learning Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-engineering",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Engineering" },
+                  "description": { "enabled": true, "text": "200+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/engineering", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Institution%20Building_1000px.png",
+                  "alt": "Engineering - Institution Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-humanities",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Humanities" },
+                  "description": { "enabled": true, "text": "180+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/humanities", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Books-Journal_1000px.png",
+                  "alt": "Humanities - Books Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "subject-business",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Business" },
+                  "description": { "enabled": true, "text": "160+ Journals" },
+                  "callToAction": { "enabled": true, "text": "Explore", "url": "/subjects/business", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Financials-investments_1000px.png",
+                  "alt": "Business - Financials Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top",
+                  "useAccentColor": true
+                },
+                "skin": "modern"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "featured-articles-section",
+        "name": "Featured Articles",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "color",
+          "color": "#f2f2eb"
+        },
+        "contentMode": "light",
+        "styling": {
+          "paddingTop": "80px",
+          "paddingBottom": "80px",
+          "maxWidth": "7xl",
+          "centerContent": true
+        },
+        "areas": [
+          {
+            "id": "featured-header",
+            "name": "Section Header",
+            "layout": "flexible",
+            "flexConfig": {
+              "direction": "row",
+              "wrap": true,
+              "justifyContent": "space-between",
+              "gap": "1rem"
+            },
+            "widgets": [
+              {
+                "id": "featured-title-group",
+                "type": "text",
+                "text": "<span style='text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-size: 14px; font-weight: 600; display: block;'>Latest Research</span><span style='font-size: 32px; font-weight: 700;'>Featured Articles</span>",
+                "align": "left"
+              },
+              {
+                "id": "featured-view-all",
+                "type": "button",
+                "text": "VIEW ALL",
+                "href": "/articles",
+                "style": "outline",
+                "color": "color2",
+                "size": "medium"
+              }
+            ]
+          },
+          {
+            "id": "featured-tabs",
+            "name": "Article Tabs",
+            "widgets": [
+              {
+                "id": "article-tabs",
+                "type": "tabs",
+                "activeTabIndex": 0,
+                "tabStyle": "underline",
+                "align": "left",
+                "tabs": [
+                  {
+                    "id": "tab-most-read",
+                    "label": "Most Read",
+                    "widgets": []
+                  },
+                  {
+                    "id": "tab-most-cited",
+                    "label": "Most Cited",
+                    "widgets": []
+                  },
+                  {
+                    "id": "tab-recent",
+                    "label": "Recent",
+                    "widgets": []
+                  },
+                  {
+                    "id": "tab-open-access",
+                    "label": "Open Access",
+                    "widgets": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "featured-articles-grid",
+            "name": "Articles Grid",
+            "layout": "grid",
+            "gridConfig": {
+              "columns": 3,
+              "gap": "1.5rem",
+              "alignItems": "stretch"
+            },
+            "widgets": [
+              {
+                "id": "article-1",
+                "type": "publication-details",
+                "contentSource": "schema-objects",
+                "layout": "default",
+                "publication": {
+                  "title": "CRISPR-Cas9 Advances in Gene Therapy",
+                  "abstract": "Recent developments in CRISPR technology have opened new avenues for treating genetic disorders.",
+                  "authors": [{ "name": "Cell Biology Research Team" }],
+                  "publicationDate": "2024-12",
+                  "doi": "10.1002/example.001",
+                  "accessStatus": "open-access",
+                  "contentType": "research-article",
+                  "thumbnail": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_life%20sciences_abstract.jpeg",
+                  "metrics": {
+                    "views": 12400
+                  }
+                },
+                "cardConfig": {
+                  "showContentTypeLabel": true,
+                  "showTitle": true,
+                  "showThumbnail": true,
+                  "thumbnailPosition": "top",
+                  "showAuthors": false,
+                  "showAbstract": true,
+                  "abstractLength": "short",
+                  "showPublicationDate": true,
+                  "showAccessStatus": true,
+                  "showUsageMetrics": true,
+                  "titleStyle": "medium"
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "article-2",
+                "type": "publication-details",
+                "contentSource": "schema-objects",
+                "layout": "default",
+                "publication": {
+                  "title": "Global Carbon Cycling Under Climate Change",
+                  "abstract": "An analysis of terrestrial and oceanic carbon sinks and their response to anthropogenic warming.",
+                  "authors": [{ "name": "Climate Science Group" }],
+                  "publicationDate": "2024-11",
+                  "doi": "10.1002/example.002",
+                  "contentType": "research-article",
+                  "thumbnail": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_physical-sciences_abstract.jpg",
+                  "metrics": {
+                    "views": 8700
+                  }
+                },
+                "cardConfig": {
+                  "showContentTypeLabel": true,
+                  "showTitle": true,
+                  "showThumbnail": true,
+                  "thumbnailPosition": "top",
+                  "showAuthors": false,
+                  "showAbstract": true,
+                  "abstractLength": "short",
+                  "showPublicationDate": true,
+                  "showAccessStatus": false,
+                  "showUsageMetrics": true,
+                  "titleStyle": "medium"
+                },
+                "skin": "modern"
+              },
+              {
+                "id": "article-3",
+                "type": "publication-details",
+                "contentSource": "schema-objects",
+                "layout": "default",
+                "publication": {
+                  "title": "Transformer Architectures for Scientific Discovery",
+                  "abstract": "How large language models are accelerating scientific research across multiple disciplines.",
+                  "authors": [{ "name": "AI Research Team" }],
+                  "publicationDate": "2024-12",
+                  "doi": "10.1002/example.003",
+                  "contentType": "research-article",
+                  "thumbnail": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Hero/wiley_website_research_abstract.jpg",
+                  "metrics": {
+                    "views": 15200
+                  }
+                },
+                "cardConfig": {
+                  "showContentTypeLabel": true,
+                  "showTitle": true,
+                  "showThumbnail": true,
+                  "thumbnailPosition": "top",
+                  "showAuthors": false,
+                  "showAbstract": true,
+                  "abstractLength": "short",
+                  "showPublicationDate": true,
+                  "showAccessStatus": false,
+                  "showUsageMetrics": true,
+                  "titleStyle": "medium"
+                },
+                "skin": "modern"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "stats-section",
+        "name": "Impact Statistics",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "gradient",
+          "gradient": {
+            "type": "linear",
+            "direction": "135deg",
+            "stops": [
+              { "color": "#003b44", "position": "0%" },
+              { "color": "#00505c", "position": "100%" }
+            ]
+          }
+        },
+        "contentMode": "dark",
+        "styling": {
+          "paddingTop": "80px",
+          "paddingBottom": "80px",
+          "maxWidth": "7xl",
+          "centerContent": true,
+          "textColor": "white"
+        },
+        "areas": [
+          {
+            "id": "stats-header",
+            "name": "Section Header",
+            "widgets": [
+              {
+                "id": "stats-eyebrow",
+                "type": "text",
+                "text": "Our Impact",
+                "align": "center",
+                "typographyStyle": "body-sm",
+                "inlineStyles": "text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;"
+              },
+              {
+                "id": "stats-title",
+                "type": "heading",
+                "text": "Advancing Research Worldwide",
+                "level": 2,
+                "align": "center",
+                "style": "default",
+                "color": "default",
+                "typographyStyle": "heading-h2"
+              },
+              {
+                "id": "stats-desc",
+                "type": "text",
+                "text": "Trusted by leading institutions and researchers across the globe for over 200 years.",
+                "align": "center",
+                "typographyStyle": "body-lg"
+              },
+              {
+                "id": "stats-spacer",
+                "type": "spacer",
+                "height": "3rem"
+              }
+            ]
+          },
+          {
+            "id": "stats-grid",
+            "name": "Stats Cards Grid",
+            "layout": "grid",
+            "gridConfig": {
+              "columns": 4,
+              "gap": "1.5rem",
+              "alignItems": "stretch"
+            },
+            "widgets": [
+              {
+                "id": "stat-downloads",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "200M+" },
+                  "description": { "enabled": true, "text": "Annual Downloads\nFull-text articles accessed yearly" },
+                  "callToAction": { "enabled": false }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Digital%20learning_1000px.png",
+                  "alt": "Downloads Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top"
+                },
+                "skin": "dark"
+              },
+              {
+                "id": "stat-institutions",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "15K+" },
+                  "description": { "enabled": true, "text": "Institutions\nUniversities with access" },
+                  "callToAction": { "enabled": false }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Global_1000px.png",
+                  "alt": "Global Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top"
+                },
+                "skin": "dark"
+              },
+              {
+                "id": "stat-authors",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "500K+" },
+                  "description": { "enabled": true, "text": "Authors\nPublishing researchers" },
+                  "callToAction": { "enabled": false }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Bright%20Green_Book%20Author.png",
+                  "alt": "Authors Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top"
+                },
+                "skin": "dark"
+              },
+              {
+                "id": "stat-rankings",
+                "type": "editorial-card",
+                "layout": "color-block",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "85%" },
+                  "description": { "enabled": true, "text": "Top Ranked\nJournals in top categories" },
+                  "callToAction": { "enabled": false }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Open%20Access_1000px.png",
+                  "alt": "Rankings Icon"
+                },
+                "config": {
+                  "contentAlignment": "center",
+                  "imagePosition": "top"
+                },
+                "skin": "dark"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "open-access-section",
+        "name": "Open Access",
+        "type": "content-block",
+        "layout": "two-columns",
+        "background": {
+          "type": "color",
+          "color": "#ffffff"
+        },
+        "contentMode": "light",
+        "styling": {
+          "paddingTop": "80px",
+          "paddingBottom": "80px",
+          "maxWidth": "7xl",
+          "centerContent": true,
+          "gap": "64px"
+        },
+        "areas": [
+          {
+            "id": "open-access-media",
+            "name": "Media Column",
+            "widgets": [
+              {
+                "id": "oa-image",
+                "type": "image",
+                "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Brand%20Images/Abstract/Abstract%20Green%20Wave%20Patterns%20-%20Abstract.jpeg",
+                "alt": "Open Access",
+                "ratio": "4:3",
+                "width": "full",
+                "objectFit": "cover",
+                "layout": {
+                  "rounded": "large",
+                  "shadow": "large"
+                }
+              }
+            ]
+          },
+          {
+            "id": "open-access-content",
+            "name": "Content Column",
+            "widgets": [
+              {
+                "id": "oa-eyebrow",
+                "type": "text",
+                "text": "Open Access",
+                "align": "left",
+                "typographyStyle": "body-sm",
+                "inlineStyles": "text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;"
+              },
+              {
+                "id": "oa-title",
+                "type": "heading",
+                "text": "Make Your Research Freely Available",
+                "level": 2,
+                "align": "left",
+                "style": "default",
+                "typographyStyle": "heading-h2"
+              },
+              {
+                "id": "oa-description",
+                "type": "text",
+                "text": "Open Access publishing ensures your work reaches the widest possible audience, increasing citations and accelerating scientific discovery.",
+                "align": "left",
+                "typographyStyle": "body-lg"
+              },
+              {
+                "id": "oa-spacer-1",
+                "type": "spacer",
+                "height": "1.5rem"
+              },
+              {
+                "id": "oa-benefits",
+                "type": "text",
+                "text": "✓ Immediate, unrestricted access to your research<br>✓ CC-BY licensing for maximum reuse<br>✓ Compliant with funder mandates<br>✓ 1,000+ institutional agreements",
+                "align": "left",
+                "typographyStyle": "body-md"
+              },
+              {
+                "id": "oa-spacer-2",
+                "type": "spacer",
+                "height": "2rem"
+              },
+              {
+                "id": "oa-cta-primary",
+                "type": "button",
+                "text": "LEARN MORE",
+                "href": "/open-access",
+                "style": "solid",
+                "color": "color1",
+                "size": "medium"
+              },
+              {
+                "id": "oa-cta-secondary",
+                "type": "button",
+                "text": "CHECK ELIGIBILITY",
+                "href": "/open-access/eligibility",
+                "style": "outline",
+                "color": "color2",
+                "size": "medium"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "quick-links-section",
+        "name": "Quick Links",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "color",
+          "color": "#e3ebe8"
+        },
+        "contentMode": "light",
+        "styling": {
+          "paddingTop": "80px",
+          "paddingBottom": "80px",
+          "maxWidth": "7xl",
+          "centerContent": true
+        },
+        "areas": [
+          {
+            "id": "quick-links-header",
+            "name": "Section Header",
+            "widgets": [
+              {
+                "id": "ql-eyebrow",
+                "type": "text",
+                "text": "Resources",
+                "align": "center",
+                "typographyStyle": "body-sm",
+                "inlineStyles": "text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1; font-weight: 600;"
+              },
+              {
+                "id": "ql-title",
+                "type": "heading",
+                "text": "Quick Links for Researchers",
+                "level": 2,
+                "align": "center",
+                "style": "default",
+                "typographyStyle": "heading-h2"
+              },
+              {
+                "id": "ql-spacer",
+                "type": "spacer",
+                "height": "2.5rem"
+              }
+            ]
+          },
+          {
+            "id": "quick-links-grid",
+            "name": "Quick Links Grid",
+            "layout": "grid",
+            "gridConfig": {
+              "columns": 4,
+              "gap": "1.25rem",
+              "alignItems": "stretch"
+            },
+            "widgets": [
+              {
+                "id": "ql-submit",
+                "type": "editorial-card",
+                "layout": "split",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Submit a Manuscript" },
+                  "description": { "enabled": false },
+                  "callToAction": { "enabled": true, "text": "Submit", "url": "/authors/submit", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Bright%20Green_Book%20Author.png",
+                  "alt": "Submit Manuscript"
+                },
+                "config": {
+                  "contentAlignment": "left",
+                  "imagePosition": "left"
+                },
+                "skin": "minimal"
+              },
+              {
+                "id": "ql-guidelines",
+                "type": "editorial-card",
+                "layout": "split",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Author Guidelines" },
+                  "description": { "enabled": false },
+                  "callToAction": { "enabled": true, "text": "View", "url": "/authors/guidelines", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Books-Journal_1000px.png",
+                  "alt": "Author Guidelines"
+                },
+                "config": {
+                  "contentAlignment": "left",
+                  "imagePosition": "left"
+                },
+                "skin": "minimal"
+              },
+              {
+                "id": "ql-institutional",
+                "type": "editorial-card",
+                "layout": "split",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Institutional Access" },
+                  "description": { "enabled": false },
+                  "callToAction": { "enabled": true, "text": "Check", "url": "/institutions/access", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Institution%20Building_1000px.png",
+                  "alt": "Institutional Access"
+                },
+                "config": {
+                  "contentAlignment": "left",
+                  "imagePosition": "left"
+                },
+                "skin": "minimal"
+              },
+              {
+                "id": "ql-help",
+                "type": "editorial-card",
+                "layout": "split",
+                "content": {
+                  "preheader": { "enabled": false },
+                  "headline": { "enabled": true, "text": "Help & Support" },
+                  "description": { "enabled": false },
+                  "callToAction": { "enabled": true, "text": "Get Help", "url": "/support", "type": "link" }
+                },
+                "image": {
+                  "src": "https://wiley.sharepoint.com/teams/Brand/Org%20Image%20Library/Icons/Bright%20Green/PNG/1000%20px/Wiley_Icon_Green_Learning%20(generally)_1000px.png",
+                  "alt": "Help & Support"
+                },
+                "config": {
+                  "contentAlignment": "left",
+                  "imagePosition": "left"
+                },
+                "skin": "minimal"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "newsletter-section",
+        "name": "Newsletter Signup",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "gradient",
+          "gradient": {
+            "type": "linear",
+            "direction": "135deg",
+            "stops": [
+              { "color": "#003b44", "position": "0%" },
+              { "color": "#006573", "position": "100%" }
+            ]
+          }
+        },
+        "contentMode": "dark",
+        "styling": {
+          "paddingTop": "64px",
+          "paddingBottom": "64px",
+          "maxWidth": "4xl",
+          "centerContent": true,
+          "textColor": "white",
+          "rounded": "large"
+        },
+        "areas": [
+          {
+            "id": "newsletter-content",
+            "name": "Newsletter Content",
+            "layout": "flexible",
+            "flexConfig": {
+              "direction": "row",
+              "wrap": true,
+              "justifyContent": "space-between",
+              "gap": "2rem"
+            },
+            "widgets": [
+              {
+                "id": "newsletter-text",
+                "type": "text",
+                "text": "<strong style='font-size: 24px; display: block; margin-bottom: 8px;'>Stay Ahead with Latest Research</strong><span style='opacity: 0.8;'>Get weekly updates on trending articles and announcements.</span>",
+                "align": "left",
+                "flexProperties": { "grow": true }
+              },
+              {
+                "id": "newsletter-cta",
+                "type": "button",
+                "text": "SUBSCRIBE",
+                "href": "/newsletter/subscribe",
+                "style": "solid",
+                "color": "color1",
+                "size": "large",
+                "flexProperties": { "grow": false }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "footer-section",
+        "name": "Footer",
+        "type": "content-block",
+        "layout": "one-column",
+        "background": {
+          "type": "color",
+          "color": "#003b44"
+        },
+        "contentMode": "dark",
+        "styling": {
+          "paddingTop": "64px",
+          "paddingBottom": "32px",
+          "maxWidth": "7xl",
+          "centerContent": true,
+          "textColor": "white"
+        },
+        "areas": [
+          {
+            "id": "footer-grid",
+            "name": "Footer Links Grid",
+            "layout": "grid",
+            "gridConfig": {
+              "columns": 5,
+              "gap": "2rem",
+              "alignItems": "start"
+            },
+            "widgets": [
+              {
+                "id": "footer-brand",
+                "type": "text",
+                "text": "<strong style='font-size: 24px; display: block; margin-bottom: 16px;'>WILEY</strong><span style='opacity: 0.6; font-size: 14px; line-height: 1.6;'>Wiley Online Library is one of the world's most extensive multidisciplinary collections of online resources.</span>",
+                "align": "left",
+                "gridSpan": { "column": "span 1" }
+              },
+              {
+                "id": "footer-resources",
+                "type": "menu",
+                "menuType": "custom",
+                "style": "vertical",
+                "align": "left",
+                "items": [
+                  { "id": "fr-1", "label": "Resources", "url": "#", "displayCondition": "always" },
+                  { "id": "fr-2", "label": "Author Resources", "url": "/authors", "displayCondition": "always" },
+                  { "id": "fr-3", "label": "Reviewer Resources", "url": "/reviewers", "displayCondition": "always" },
+                  { "id": "fr-4", "label": "Librarian Resources", "url": "/librarians", "displayCondition": "always" },
+                  { "id": "fr-5", "label": "Open Access", "url": "/open-access", "displayCondition": "always" }
+                ]
+              },
+              {
+                "id": "footer-about",
+                "type": "menu",
+                "menuType": "custom",
+                "style": "vertical",
+                "align": "left",
+                "items": [
+                  { "id": "fa-1", "label": "About", "url": "#", "displayCondition": "always" },
+                  { "id": "fa-2", "label": "About Wiley", "url": "/about", "displayCondition": "always" },
+                  { "id": "fa-3", "label": "Press Releases", "url": "/press", "displayCondition": "always" },
+                  { "id": "fa-4", "label": "Careers", "url": "/careers", "displayCondition": "always" },
+                  { "id": "fa-5", "label": "Contact Us", "url": "/contact", "displayCondition": "always" }
+                ]
+              },
+              {
+                "id": "footer-help",
+                "type": "menu",
+                "menuType": "custom",
+                "style": "vertical",
+                "align": "left",
+                "items": [
+                  { "id": "fh-1", "label": "Help", "url": "#", "displayCondition": "always" },
+                  { "id": "fh-2", "label": "Support Center", "url": "/support", "displayCondition": "always" },
+                  { "id": "fh-3", "label": "Getting Started", "url": "/getting-started", "displayCondition": "always" },
+                  { "id": "fh-4", "label": "Technical Support", "url": "/technical-support", "displayCondition": "always" },
+                  { "id": "fh-5", "label": "FAQs", "url": "/faqs", "displayCondition": "always" }
+                ]
+              },
+              {
+                "id": "footer-connect",
+                "type": "text",
+                "text": "<strong style='display: block; margin-bottom: 16px;'>Connect</strong><span style='opacity: 0.6;'>Follow us on social media</span>",
+                "align": "left"
+              }
+            ]
+          },
+          {
+            "id": "footer-divider",
+            "name": "Footer Divider",
+            "widgets": [
+              {
+                "id": "footer-line",
+                "type": "divider",
+                "style": "solid",
+                "thickness": "1px",
+                "color": "rgba(255,255,255,0.1)",
+                "marginTop": "2rem",
+                "marginBottom": "1.5rem"
+              }
+            ]
+          },
+          {
+            "id": "footer-bottom",
+            "name": "Footer Bottom",
+            "layout": "flexible",
+            "flexConfig": {
+              "direction": "row",
+              "wrap": true,
+              "justifyContent": "space-between",
+              "gap": "1rem"
+            },
+            "widgets": [
+              {
+                "id": "footer-copyright",
+                "type": "text",
+                "text": "© 2000-2024 John Wiley & Sons, Inc.",
+                "align": "left",
+                "typographyStyle": "body-sm",
+                "inlineStyles": "opacity: 0.6;"
+              },
+              {
+                "id": "footer-legal",
+                "type": "menu",
+                "menuType": "custom",
+                "style": "horizontal",
+                "align": "right",
+                "items": [
+                  { "id": "fl-1", "label": "Privacy", "url": "/privacy", "displayCondition": "always" },
+                  { "id": "fl-2", "label": "Terms", "url": "/terms", "displayCondition": "always" },
+                  { "id": "fl-3", "label": "Cookies", "url": "/cookies", "displayCondition": "always" },
+                  { "id": "fl-4", "label": "Accessibility", "url": "/accessibility", "displayCondition": "always" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

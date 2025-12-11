@@ -495,8 +495,18 @@ For notification banners, cookie consent, modals:
 | `width` | string | `auto`, `full`, `small`, `medium`, `large` | Width preset |
 | `objectFit` | string | `cover`, `contain`, `fill`, `scale-down`, `none` | CSS object-fit behavior |
 
-**Placeholder Images - Use picsum.photos:**
-For development and prototyping, use picsum.photos with semantic seeds:
+**Image Sources - Three Options:**
+
+1. **Local images from public folder (preferred for brand assets):**
+```javascript
+// Place images in: public/images/wiley/
+// Reference as: /images/wiley/filename.jpeg
+'/images/wiley/wiley_website_life sciences_abstract.jpeg'
+'/images/wiley/Wiley_Icon_Green_Genetics_1000px.png'
+'/images/wiley/Abstract Green Wave Patterns - Abstract.jpeg'
+```
+
+2. **Placeholder images - picsum.photos (for prototyping):**
 ```javascript
 // Random but consistent images (seed = deterministic)
 'https://picsum.photos/seed/lifesciences/400/300'   // 400x300 image
@@ -505,6 +515,13 @@ For development and prototyping, use picsum.photos with semantic seeds:
 
 // Pattern: https://picsum.photos/seed/{semantic-name}/{width}/{height}
 ```
+
+3. **External URLs (for web-hosted images):**
+```javascript
+'https://example.com/path/to/image.jpg'
+```
+
+**⚠️ IMPORTANT:** `file://` URLs do NOT work due to browser security. Use the public folder approach instead.
 
 **Example:**
 ```javascript
@@ -1228,7 +1245,7 @@ const landingPage = [
 4. ✅ Heading widgets rely on default `size: 'auto'` (semantic sizing)
 5. ✅ Menu items have all required properties including `order`
 6. ✅ Editorial card `content` objects have `enabled` and `text` even when disabled
-7. ✅ Use picsum.photos for placeholder images with semantic seeds
+7. ✅ Use `/images/wiley/...` for brand assets or `picsum.photos` for placeholders (NOT `file://`)
 
 ---
 

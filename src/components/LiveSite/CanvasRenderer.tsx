@@ -101,6 +101,40 @@ interface CanvasRendererProps {
   templateContext?: TemplateContext
 }
 
+// Render a single canvas item (section or widget)
+function renderItem(item: CanvasItem, idx: number, websiteId: string) {
+  if (isSection(item)) {
+    return (
+      <SectionRenderer
+        key={item.id || idx}
+        section={item}
+        onWidgetClick={() => {}} // No-op in live mode
+        dragAttributes={{}}
+        dragListeners={{}}
+        activeSectionToolbar={null}
+        setActiveSectionToolbar={() => {}}
+        activeWidgetToolbar={null}
+        setActiveWidgetToolbar={() => {}}
+        activeDropZone={null}
+        showToast={() => {}}
+        usePageStore={usePageStore}
+        isLiveMode={true} // Key: renders in live/preview mode
+        websiteId={websiteId}
+      />
+    )
+  } else {
+    // Standalone widget (rare, usually widgets are in sections)
+    return (
+      <div key={item.id || idx} className="px-6 py-4 max-w-6xl mx-auto">
+        <WidgetRenderer 
+          widget={item as Widget} 
+          isLiveMode={true}
+        />
+      </div>
+    )
+  }
+}
+
 // Main Canvas Renderer - Uses V1's actual renderers for proper theming
 export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, brandMode, templateContext }: CanvasRendererProps) {
   if (!items || items.length === 0) {
@@ -112,43 +146,34 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
     ? processItemsWithContext(items, templateContext) 
     : items
   
+  // Separate items by role: headers go first, footers go last, content in middle
+  const headerItems: CanvasItem[] = []
+  const contentItems: CanvasItem[] = []
+  const footerItems: CanvasItem[] = []
+  
+  processedItems.forEach(item => {
+    if (isSection(item) && item.role === 'header') {
+      headerItems.push(item)
+    } else if (isSection(item) && item.role === 'footer') {
+      footerItems.push(item)
+    } else {
+      contentItems.push(item)
+    }
+  })
+  
   return (
     <>
       <DynamicBrandingCSS websiteId={websiteId} usePageStore={usePageStore} />
       <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId} themeId={themeId} brandMode={brandMode}>
         <div className="canvas-renderer-live">
-          {processedItems.map((item, idx) => {
-            if (isSection(item)) {
-              return (
-                <SectionRenderer
-                  key={item.id || idx}
-                  section={item}
-                  onWidgetClick={() => {}} // No-op in live mode
-                  dragAttributes={{}}
-                  dragListeners={{}}
-                  activeSectionToolbar={null}
-                  setActiveSectionToolbar={() => {}}
-                  activeWidgetToolbar={null}
-                  setActiveWidgetToolbar={() => {}}
-                  activeDropZone={null}
-                  showToast={() => {}}
-                  usePageStore={usePageStore}
-                  isLiveMode={true} // Key: renders in live/preview mode
-                  websiteId={websiteId}
-                />
-              )
-            } else {
-              // Standalone widget (rare, usually widgets are in sections)
-              return (
-                <div key={item.id || idx} className="px-6 py-4 max-w-6xl mx-auto">
-                  <WidgetRenderer 
-                    widget={item as Widget} 
-                    isLiveMode={true}
-                  />
-                </div>
-              )
-            }
-          })}
+          {/* Page-level headers (sections with role='header') */}
+          {headerItems.map((item, idx) => renderItem(item, idx, websiteId))}
+          
+          {/* Main content */}
+          {contentItems.map((item, idx) => renderItem(item, idx + headerItems.length, websiteId))}
+          
+          {/* Page-level footers (sections with role='footer') */}
+          {footerItems.map((item, idx) => renderItem(item, idx + headerItems.length + contentItems.length, websiteId))}
         </div>
       </CanvasThemeProvider>
     </>

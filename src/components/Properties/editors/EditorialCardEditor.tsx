@@ -7,7 +7,8 @@
  * Extracted from PropertiesPanel.tsx for better modularity.
  */
 
-import React from 'react'
+import React, { useRef } from 'react'
+import { Upload } from 'lucide-react'
 import type { Widget } from '../../../types'
 
 interface EditorialCardEditorProps {
@@ -20,6 +21,7 @@ interface EditorialCardEditorProps {
  */
 export function EditorialCardEditor({ widget, updateWidget }: EditorialCardEditorProps) {
   const cardWidget = widget as any // EditorialCardWidget type
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const updateContent = (field: string, updates: any) => {
     updateWidget({
@@ -47,6 +49,18 @@ export function EditorialCardEditor({ widget, updateWidget }: EditorialCardEdito
     updateImage({ src: randomUrl })
   }
   
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string
+        updateImage({ src: dataUrl })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  
   return (
     <div className="space-y-4">
       {/* Layout Selection */}
@@ -71,19 +85,36 @@ export function EditorialCardEditor({ widget, updateWidget }: EditorialCardEdito
         <h4 className="text-sm font-semibold text-gray-900 mb-3">Image</h4>
         <div className="flex gap-2">
           <input
-            type="url"
+            type="text"
             value={cardWidget.image?.src || ''}
             onChange={(e) => updateImage({ src: e.target.value })}
             placeholder="https://example.com/image.jpg"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono text-xs"
           />
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 px-3 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+            title="Upload from local file"
+          >
+            <Upload className="w-4 h-4" />
+            Local File
+          </button>
           <button
             onClick={handleRandomImage}
-            className="px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
+            className="flex-1 px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
           >
             🎲 Random
           </button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         
         <label className="block text-sm font-medium text-gray-700 mb-2 mt-3">Alt Text</label>
         <input

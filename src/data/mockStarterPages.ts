@@ -1025,10 +1025,239 @@ const wileyOnlineLibraryLanding: CustomStarterPage = {
   ] as any[]
 }
 
+// Claude's WOL Landing Page V2 - Created by Claude following the Skills doc instructions
+const wolLandingClaudeV2: CustomStarterPage = {
+  id: 'wol-landing-claude-v2',
+  name: 'WOL Landing (Claude V2)',
+  description: 'Claude-generated WOL landing page following Page Builder Skills doc. Uses editorial-cards, menus, gradients.',
+  source: 'mock',
+  websiteId: 'wiley-ds',
+  websiteName: 'Wiley Design System',
+  createdAt: new Date('2024-12-10'),
+  canvasItems: [
+    {
+      "id": "hero-section",
+      "name": "Hero Banner",
+      "type": "hero",
+      "layout": "one-column",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "direction": "135deg",
+          "stops": [
+            { "color": "#003b44", "position": "0%" },
+            { "color": "#007a8b", "position": "100%" }
+          ]
+        }
+      },
+      "contentMode": "dark",
+      "styling": {
+        "paddingTop": "96px",
+        "paddingBottom": "96px",
+        "centerContent": true
+      },
+      "areas": [
+        {
+          "id": "hero-content",
+          "name": "Content",
+          "widgets": [
+            { "id": "hero-badge", "type": "text", "skin": "minimal", "text": "Over 8 million articles available", "align": "center", "typographyStyle": "body-sm", "inlineStyles": "display: inline-block; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2);" },
+            { "id": "hero-spacer-1", "type": "spacer", "skin": "minimal", "height": "1.5rem" },
+            { "id": "hero-heading", "type": "heading", "skin": "minimal", "text": "Discover the World's Research", "level": 1, "style": "hero", "align": "center" },
+            { "id": "hero-spacer-2", "type": "spacer", "skin": "minimal", "height": "1.5rem" },
+            { "id": "hero-description", "type": "text", "skin": "minimal", "text": "Access peer-reviewed journals, books, and reference works across science, technology, medicine, and social sciences from Wiley's trusted publishing portfolio.", "align": "center", "typographyStyle": "body-lg" },
+            { "id": "hero-spacer-3", "type": "spacer", "skin": "minimal", "height": "2rem" },
+            { "id": "hero-cta-primary", "type": "button", "skin": "minimal", "text": "Browse Journals", "href": "/journals", "style": "solid", "color": "color1", "size": "large", "align": "center" },
+            { "id": "hero-spacer-4", "type": "spacer", "skin": "minimal", "height": "1rem" },
+            { "id": "hero-cta-secondary", "type": "button", "skin": "minimal", "text": "Institutional Access", "href": "/institutional", "style": "outline", "color": "color2", "size": "large", "align": "center" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stats-section",
+      "name": "Stats",
+      "type": "content-block",
+      "layout": "grid",
+      "gridConfig": { "columns": 4, "gap": "2rem", "alignItems": "center" },
+      "background": { "type": "color", "color": "#f8f8f8" },
+      "contentMode": "light",
+      "styling": { "paddingTop": "48px", "paddingBottom": "48px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "stats-content",
+          "name": "Stats Grid",
+          "widgets": [
+            { "id": "stat-1", "type": "text", "skin": "minimal", "text": "<strong style=\"font-size: 32px; color: #003b44;\">1,600+</strong><br><span style=\"color: #525252;\">Peer-reviewed journals</span>", "align": "center" },
+            { "id": "stat-2", "type": "text", "skin": "minimal", "text": "<strong style=\"font-size: 32px; color: #003b44;\">8M+</strong><br><span style=\"color: #525252;\">Research articles</span>", "align": "center" },
+            { "id": "stat-3", "type": "text", "skin": "minimal", "text": "<strong style=\"font-size: 32px; color: #003b44;\">22,000+</strong><br><span style=\"color: #525252;\">Online books</span>", "align": "center" },
+            { "id": "stat-4", "type": "text", "skin": "minimal", "text": "<strong style=\"font-size: 32px; color: #003b44;\">250+</strong><br><span style=\"color: #525252;\">Reference works</span>", "align": "center" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "featured-header-section",
+      "name": "Featured Content Header",
+      "type": "content-block",
+      "layout": "one-column",
+      "background": { "type": "color", "color": "#ffffff" },
+      "contentMode": "light",
+      "styling": { "paddingTop": "64px", "paddingBottom": "24px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "featured-header-content",
+          "name": "Header",
+          "widgets": [
+            { "id": "featured-heading", "type": "heading", "skin": "minimal", "text": "Featured Content", "level": 2, "align": "center", "style": "default" },
+            { "id": "featured-spacer", "type": "spacer", "skin": "minimal", "height": "1rem" },
+            { "id": "featured-subheading", "type": "text", "skin": "minimal", "text": "Explore the latest research across disciplines from leading journals and reference works.", "align": "center", "typographyStyle": "body-md", "inlineStyles": "color: #525252; max-width: 640px; margin: 0 auto;" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "featured-grid-section",
+      "name": "Featured Content Grid",
+      "type": "content-block",
+      "layout": "grid",
+      "gridConfig": { "columns": 3, "gap": "1.5rem", "alignItems": "stretch" },
+      "background": { "type": "color", "color": "#ffffff" },
+      "contentMode": "light",
+      "styling": { "paddingTop": "0", "paddingBottom": "64px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "featured-cards",
+          "name": "Cards",
+          "widgets": [
+            { "id": "card-ai-healthcare", "type": "editorial-card", "skin": "modern", "layout": "color-block", "content": { "preheader": { "enabled": true, "text": "New Research" }, "headline": { "enabled": true, "text": "AI in Healthcare" }, "description": { "enabled": true, "text": "Discover how artificial intelligence is transforming diagnostics, treatment planning, and patient outcomes." }, "callToAction": { "enabled": true, "text": "Explore collection", "url": "/collections/ai-healthcare", "type": "link" } }, "image": { "src": "https://picsum.photos/seed/ai-healthcare/400/300", "alt": "AI in Healthcare" }, "config": { "contentAlignment": "left", "imagePosition": "top", "useAccentColor": false } },
+            { "id": "card-climate", "type": "editorial-card", "skin": "modern", "layout": "color-block", "content": { "preheader": { "enabled": true, "text": "Sustainability" }, "headline": { "enabled": true, "text": "Climate Solutions" }, "description": { "enabled": true, "text": "Research advancing our understanding of climate change mitigation and sustainable development." }, "callToAction": { "enabled": true, "text": "Explore collection", "url": "/collections/climate-solutions", "type": "link" } }, "image": { "src": "https://picsum.photos/seed/climate/400/300", "alt": "Climate Solutions" }, "config": { "contentAlignment": "left", "imagePosition": "top", "useAccentColor": false } },
+            { "id": "card-gene-therapy", "type": "editorial-card", "skin": "modern", "layout": "color-block", "content": { "preheader": { "enabled": true, "text": "Life Sciences" }, "headline": { "enabled": true, "text": "Gene Therapy Advances" }, "description": { "enabled": true, "text": "Breakthrough research in genetic medicine and its applications for treating inherited diseases." }, "callToAction": { "enabled": true, "text": "Explore collection", "url": "/collections/gene-therapy", "type": "link" } }, "image": { "src": "https://picsum.photos/seed/gene-therapy/400/300", "alt": "Gene Therapy Advances" }, "config": { "contentAlignment": "left", "imagePosition": "top", "useAccentColor": false } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subjects-header-section",
+      "name": "Subjects Header",
+      "type": "content-block",
+      "layout": "one-column",
+      "background": { "type": "color", "color": "#003b44" },
+      "contentMode": "dark",
+      "styling": { "paddingTop": "64px", "paddingBottom": "24px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "subjects-header-content",
+          "name": "Header",
+          "widgets": [
+            { "id": "subjects-heading", "type": "heading", "skin": "minimal", "text": "Browse by Subject", "level": 2, "align": "center", "style": "default" },
+            { "id": "subjects-spacer", "type": "spacer", "skin": "minimal", "height": "1rem" },
+            { "id": "subjects-subheading", "type": "text", "skin": "minimal", "text": "Find research in your field from our comprehensive collection of scholarly content.", "align": "center", "typographyStyle": "body-md", "inlineStyles": "opacity: 0.7; max-width: 640px; margin: 0 auto;" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subjects-grid-section",
+      "name": "Subjects Grid",
+      "type": "content-block",
+      "layout": "grid",
+      "gridConfig": { "columns": 4, "gap": "1.5rem", "alignItems": "stretch" },
+      "background": { "type": "color", "color": "#003b44" },
+      "contentMode": "dark",
+      "styling": { "paddingTop": "0", "paddingBottom": "64px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "subjects-cards",
+          "name": "Subject Cards",
+          "widgets": [
+            { "id": "subject-medicine", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">❤️</div><strong>Medicine</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">450+ journals</span></div>", "align": "center" },
+            { "id": "subject-chemistry", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">🧪</div><strong>Chemistry</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">180+ journals</span></div>", "align": "center" },
+            { "id": "subject-engineering", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">⚙️</div><strong>Engineering</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">220+ journals</span></div>", "align": "center" },
+            { "id": "subject-earth", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">🌍</div><strong>Earth Sciences</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">95+ journals</span></div>", "align": "center" },
+            { "id": "subject-social", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">📚</div><strong>Social Sciences</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">310+ journals</span></div>", "align": "center" },
+            { "id": "subject-mathematics", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">🔢</div><strong>Mathematics</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">85+ journals</span></div>", "align": "center" },
+            { "id": "subject-physics", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">💡</div><strong>Physics</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">65+ journals</span></div>", "align": "center" },
+            { "id": "subject-business", "type": "text", "skin": "minimal", "text": "<div style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; text-align: center;\"><div style=\"width: 48px; height: 48px; background: linear-gradient(135deg, #00d875, #33e090); border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;\">💰</div><strong>Business</strong><br><span style=\"font-size: 14px; opacity: 0.6;\">195+ journals</span></div>", "align": "center" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cta-section",
+      "name": "Call to Action",
+      "type": "content-block",
+      "layout": "one-column",
+      "background": { "type": "gradient", "gradient": { "type": "linear", "direction": "135deg", "stops": [{ "color": "#00d875", "position": "0%" }, { "color": "#33e090", "position": "100%" }] } },
+      "contentMode": "light",
+      "styling": { "paddingTop": "64px", "paddingBottom": "64px", "centerContent": true },
+      "areas": [
+        {
+          "id": "cta-content",
+          "name": "CTA Content",
+          "widgets": [
+            { "id": "cta-heading", "type": "heading", "skin": "minimal", "text": "Ready to accelerate your research?", "level": 2, "align": "center", "style": "default", "color": "default" },
+            { "id": "cta-spacer-1", "type": "spacer", "skin": "minimal", "height": "1rem" },
+            { "id": "cta-description", "type": "text", "skin": "minimal", "text": "Get instant access to millions of research articles, journals, and books with institutional or personal subscriptions.", "align": "center", "typographyStyle": "body-md", "inlineStyles": "max-width: 640px; margin: 0 auto; color: #004d58;" },
+            { "id": "cta-spacer-2", "type": "spacer", "skin": "minimal", "height": "1.5rem" },
+            { "id": "cta-button", "type": "button", "skin": "minimal", "text": "Request Access", "href": "/request-access", "style": "solid", "color": "color3", "size": "large", "align": "center" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "footer-section",
+      "name": "Footer",
+      "type": "content-block",
+      "layout": "grid",
+      "gridConfig": { "columns": 4, "gap": "2rem", "alignItems": "start" },
+      "background": { "type": "color", "color": "#003b44" },
+      "contentMode": "dark",
+      "styling": { "paddingTop": "64px", "paddingBottom": "32px", "maxWidth": "7xl", "centerContent": true },
+      "areas": [
+        {
+          "id": "footer-links",
+          "name": "Footer Links",
+          "widgets": [
+            { "id": "footer-col-1-heading", "type": "text", "skin": "minimal", "text": "<strong>Resources</strong>", "align": "left" },
+            { "id": "footer-col-1-menu", "type": "menu", "skin": "minimal", "menuType": "custom", "style": "vertical", "align": "left", "items": [{ "id": "menu-journals", "label": "Journals", "url": "/journals", "target": "_self", "displayCondition": "always", "order": 0 }, { "id": "menu-books", "label": "Books", "url": "/books", "target": "_self", "displayCondition": "always", "order": 1 }, { "id": "menu-databases", "label": "Databases", "url": "/databases", "target": "_self", "displayCondition": "always", "order": 2 }, { "id": "menu-subjects", "label": "Subjects", "url": "/subjects", "target": "_self", "displayCondition": "always", "order": 3 }] },
+            { "id": "footer-col-2-heading", "type": "text", "skin": "minimal", "text": "<strong>Solutions</strong>", "align": "left" },
+            { "id": "footer-col-2-menu", "type": "menu", "skin": "minimal", "menuType": "custom", "style": "vertical", "align": "left", "items": [{ "id": "menu-librarians", "label": "Librarians", "url": "/librarians", "target": "_self", "displayCondition": "always", "order": 0 }, { "id": "menu-corporations", "label": "Corporations", "url": "/corporations", "target": "_self", "displayCondition": "always", "order": 1 }, { "id": "menu-societies", "label": "Societies", "url": "/societies", "target": "_self", "displayCondition": "always", "order": 2 }, { "id": "menu-researchers", "label": "Researchers", "url": "/researchers", "target": "_self", "displayCondition": "always", "order": 3 }] },
+            { "id": "footer-col-3-heading", "type": "text", "skin": "minimal", "text": "<strong>About</strong>", "align": "left" },
+            { "id": "footer-col-3-menu", "type": "menu", "skin": "minimal", "menuType": "custom", "style": "vertical", "align": "left", "items": [{ "id": "menu-about", "label": "About Wiley", "url": "/about", "target": "_self", "displayCondition": "always", "order": 0 }, { "id": "menu-careers", "label": "Careers", "url": "/careers", "target": "_self", "displayCondition": "always", "order": 1 }, { "id": "menu-newsroom", "label": "Newsroom", "url": "/newsroom", "target": "_self", "displayCondition": "always", "order": 2 }, { "id": "menu-contact", "label": "Contact", "url": "/contact", "target": "_self", "displayCondition": "always", "order": 3 }] },
+            { "id": "footer-col-4-heading", "type": "text", "skin": "minimal", "text": "<strong>Help</strong>", "align": "left" },
+            { "id": "footer-col-4-menu", "type": "menu", "skin": "minimal", "menuType": "custom", "style": "vertical", "align": "left", "items": [{ "id": "menu-support", "label": "Support", "url": "/support", "target": "_self", "displayCondition": "always", "order": 0 }, { "id": "menu-faq", "label": "FAQ", "url": "/faq", "target": "_self", "displayCondition": "always", "order": 1 }, { "id": "menu-training", "label": "Training", "url": "/training", "target": "_self", "displayCondition": "always", "order": 2 }, { "id": "menu-feedback", "label": "Feedback", "url": "/feedback", "target": "_self", "displayCondition": "always", "order": 3 }] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "footer-bottom-section",
+      "name": "Footer Bottom",
+      "type": "content-block",
+      "layout": "one-column",
+      "background": { "type": "color", "color": "#003b44" },
+      "contentMode": "dark",
+      "styling": { "paddingTop": "24px", "paddingBottom": "24px", "maxWidth": "7xl", "centerContent": true, "border": { "enabled": true, "color": "default", "width": "thin", "style": "solid", "position": "top" } },
+      "areas": [
+        {
+          "id": "footer-bottom-content",
+          "name": "Legal",
+          "widgets": [
+            { "id": "footer-legal-menu", "type": "menu", "skin": "minimal", "menuType": "custom", "style": "horizontal", "align": "center", "items": [{ "id": "legal-copyright", "label": "© 2000-2025 John Wiley & Sons, Inc.", "url": "#", "target": "_self", "displayCondition": "always", "order": 0 }, { "id": "legal-privacy", "label": "Privacy Policy", "url": "/privacy", "target": "_self", "displayCondition": "always", "order": 1 }, { "id": "legal-terms", "label": "Terms of Use", "url": "/terms", "target": "_self", "displayCondition": "always", "order": 2 }, { "id": "legal-cookies", "label": "Cookie Settings", "url": "/cookies", "target": "_self", "displayCondition": "always", "order": 3 }, { "id": "legal-accessibility", "label": "Accessibility", "url": "/accessibility", "target": "_self", "displayCondition": "always", "order": 4 }, { "id": "legal-sitemap", "label": "Sitemap", "url": "/sitemap", "target": "_self", "displayCondition": "always", "order": 5 }] }
+          ]
+        }
+      ]
+    }
+  ] as any[]
+}
+
 export const mockStarterPages: CustomStarterPage[] = [
   catalystGenericHomepage,
   febsHomepage2025,
   legacyMockHomepage,
-  wileyOnlineLibraryLanding
+  wileyOnlineLibraryLanding,
+  wolLandingClaudeV2
 ]
 

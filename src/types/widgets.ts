@@ -476,6 +476,12 @@ export type WidgetSection = {
   // Content mode (text color adaptation)
   contentMode?: 'light' | 'dark' // Light = dark text (light bg), Dark = white text (dark bg)
   
+  // Section role - determines rendering position in page
+  // 'header' = renders at top of page (before content)
+  // 'footer' = renders at bottom of page (after content)
+  // 'content' = renders in normal document flow (default)
+  role?: 'header' | 'footer' | 'content'
+  
   // Overlay configuration (for banners, modals, notifications)
   overlay?: {
     enabled: boolean

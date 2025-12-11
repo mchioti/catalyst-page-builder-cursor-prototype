@@ -7,8 +7,8 @@
  * Extracted from PropertiesPanel.tsx for better modularity.
  */
 
-import React from 'react'
-import { Info } from 'lucide-react'
+import React, { useRef } from 'react'
+import { Info, Upload } from 'lucide-react'
 import type { ImageWidget, Widget } from '../../../types'
 
 interface ImageEditorProps {
@@ -21,6 +21,7 @@ interface ImageEditorProps {
  */
 export function ImageEditor({ widget, updateWidget }: ImageEditorProps) {
   const imageWidget = widget as ImageWidget
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const handleRandomImage = () => {
     // Generate random Picsum URL with timestamp to ensure uniqueness
@@ -28,27 +29,59 @@ export function ImageEditor({ widget, updateWidget }: ImageEditorProps) {
     updateWidget({ src: randomUrl })
   }
   
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Read the file and convert to data URL
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string
+        updateWidget({ src: dataUrl })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Image Source URL</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Image Source</label>
         <div className="flex gap-2">
           <input
-            type="url"
+            type="text"
             value={imageWidget.src}
             onChange={(e) => updateWidget({ src: e.target.value })}
             placeholder="https://example.com/image.jpg"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono text-xs"
           />
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 px-3 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+            title="Upload from local file"
+          >
+            <Upload className="w-4 h-4" />
+            Local File
+          </button>
           <button
             onClick={handleRandomImage}
-            className="px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
+            className="flex-1 px-3 py-2 bg-purple-50 border border-purple-300 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap"
             title="Load random image from Picsum"
           >
             🎲 Random
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-1">Or click Random to load a placeholder image from Picsum</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <p className="text-xs text-gray-500 mt-2">
+          Enter a URL, upload a local file, or generate a random placeholder
+        </p>
       </div>
       
       <div>
@@ -157,6 +190,15 @@ export function ImageEditor({ widget, updateWidget }: ImageEditorProps) {
               <li>• Consider loading performance for large images</li>
               <li>• Use appropriate aspect ratios for your design</li>
             </ul>
+            <p className="font-medium mt-2 mb-1">Supported Sources</p>
+            <ul className="text-xs space-y-1">
+              <li>• <code className="bg-blue-100 px-1 rounded">https://</code> - Web URLs</li>
+              <li>• <code className="bg-blue-100 px-1 rounded">Local File</code> - Upload button (converts to data URL)</li>
+              <li>• <code className="bg-blue-100 px-1 rounded">🎲 Random</code> - Picsum placeholders</li>
+            </ul>
+            <p className="text-xs mt-2 text-blue-600 italic">
+              Note: Browser security prevents <code className="bg-blue-100 px-0.5 rounded">file://</code> URLs. Use the Local File button instead.
+            </p>
           </div>
         </div>
       </div>

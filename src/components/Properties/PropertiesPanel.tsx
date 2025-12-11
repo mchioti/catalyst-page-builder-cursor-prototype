@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { createDebugLogger } from '../../utils/logger'
@@ -60,6 +61,16 @@ interface PropertiesPanelProps {
   }>
   onExpandedChange?: (expanded: boolean) => void
   isExpanded?: boolean
+  // Global sections (header/footer) to search for widgets
+  globalSections?: CanvasItem[]
+  // For global section widget updates
+  headerSections?: CanvasItem[]
+  footerSections?: CanvasItem[]
+  currentWebsiteId?: string
+  currentPageId?: string
+  // Edit mode for header/footer ('global' edits site-wide, 'page-edit' creates page-specific copy)
+  headerEditMode?: 'global' | 'hide' | 'page-edit'
+  footerEditMode?: 'global' | 'hide' | 'page-edit'
 }
 
 export function PropertiesPanel({ 
@@ -70,9 +81,18 @@ export function PropertiesPanel({
   usePageStore,
   SchemaFormEditor,
   onExpandedChange,
-  isExpanded
+  isExpanded,
+  globalSections = [],
+  headerSections = [],
+  footerSections = [],
+  currentWebsiteId = '',
+  currentPageId = '',
+  headerEditMode = 'global',
+  footerEditMode = 'global'
 }: PropertiesPanelProps) {
-  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects } = usePageStore()
+  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects, updateSiteLayoutWidget, setPageCanvas, getPageCanvas } = usePageStore()
+  const pageCanvasData = usePageStore((state: any) => state.pageCanvasData || {})
+  const navigate = useNavigate()
   
   // State for menu items inline editor (expanded panel)
   const [isEditingMenuItems, setIsEditingMenuItems] = useState(false)
@@ -176,6 +196,42 @@ export function PropertiesPanel({
     }
   }
   
+  // Search in global sections (header/footer) OR page-specific sections if in page-edit mode
+  const pageHeaderKey = `${currentWebsiteId}:header-${currentPageId}`
+  const pageFooterKey = `${currentWebsiteId}:footer-${currentPageId}`
+  const pageHeaderSections = headerEditMode === 'page-edit' ? pageCanvasData[pageHeaderKey] : null
+  const pageFooterSections = footerEditMode === 'page-edit' ? pageCanvasData[pageFooterKey] : null
+  
+  // Determine which sections to search - prefer page-specific when in page-edit mode
+  const sectionsToSearch = [
+    ...(pageHeaderSections || headerSections),
+    ...(pageFooterSections || footerSections)
+  ]
+  
+  if (!selectedItem && sectionsToSearch.length > 0) {
+    // First, check if the SECTION ITSELF is selected (not a widget inside it)
+    const foundSection = sectionsToSearch.find(s => s.id === selectedWidget)
+    if (foundSection) {
+      selectedItem = foundSection
+      debugLog('log', '✅ Found SECTION in header/footer:', foundSection.id)
+    } else {
+      // Search for widgets inside sections
+      for (const section of sectionsToSearch) {
+        if (isSection(section)) {
+          for (const area of section.areas) {
+            const foundWidget = area.widgets.find(w => w.id === selectedWidget)
+            if (foundWidget) {
+              selectedItem = foundWidget
+              debugLog('log', '✅ Found widget in header/footer section:', foundWidget.type, foundWidget.id)
+              break
+            }
+          }
+          if (selectedItem) break
+        }
+      }
+    }
+  }
+  
   // Log if we found the item
   if (selectedItem && !isSection(selectedItem)) {
     debugLog('log', '✅ Properties Panel - Widget found:', { 
@@ -219,7 +275,73 @@ export function PropertiesPanel({
     )
   }
 
+  // Helper to check if widget is in a section array
+  const isWidgetInSections = (sections: CanvasItem[], widgetId: string): boolean => {
+    return sections.some(section => {
+      if (isSection(section)) {
+        return section.areas.some(area => 
+          area.widgets.some(w => w.id === widgetId)
+        )
+      }
+      return false
+    })
+  }
+  
   const updateWidget = (updates: Partial<Widget>) => {
+    // Check if widget is from header or footer (global sections)
+    const isInHeader = isWidgetInSections(headerSections, selectedWidget || '')
+    const isInFooter = isWidgetInSections(footerSections, selectedWidget || '')
+    
+    // If widget is from global header/footer
+    if ((isInHeader || isInFooter) && currentWebsiteId) {
+      const sectionType = isInHeader ? 'header' : 'footer'
+      const editMode = isInHeader ? headerEditMode : footerEditMode
+      
+      if (editMode === 'page-edit' && currentPageId) {
+        // PAGE-SPECIFIC EDIT: Update page-specific copy
+        console.log(`📝 [PAGE-EDIT] Updating ${sectionType} widget:`, selectedWidget, 'with:', updates)
+        console.log(`📝 [PAGE-EDIT] Website: ${currentWebsiteId}, Page: ${currentPageId}`)
+        
+        // Get or create page-specific sections
+        const pageKey = `${sectionType}-${currentPageId}`
+        let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
+        
+        console.log(`📝 [PAGE-EDIT] Existing page sections for key "${pageKey}":`, pageSections ? 'found' : 'none')
+        
+        // If no page-specific copy exists, create one from global
+        if (!pageSections) {
+          pageSections = JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
+          console.log(`📋 [PAGE-EDIT] Created page-specific copy from global ${sectionType}`)
+        }
+        
+        // Update the widget in the page-specific copy
+        const updatedSections = pageSections.map((section: any) => ({
+          ...section,
+          areas: section.areas?.map((area: any) => ({
+            ...area,
+            widgets: area.widgets?.map((widget: any) => 
+              widget.id === selectedWidget ? { ...widget, ...updates } : widget
+            )
+          }))
+        }))
+        
+        // Save to page canvas
+        if (setPageCanvas) {
+          console.log(`💾 [PAGE-EDIT] Saving to pageCanvasData with key: ${currentWebsiteId}:${pageKey}`)
+          setPageCanvas(currentWebsiteId, pageKey, updatedSections)
+        } else {
+          console.error('❌ [PAGE-EDIT] setPageCanvas not available!')
+        }
+        return
+      } else if (updateSiteLayoutWidget) {
+        // GLOBAL EDIT: Update site-wide header/footer
+        debugLog('log', `📝 Updating global ${sectionType} widget:`, selectedWidget, updates)
+        updateSiteLayoutWidget(currentWebsiteId, sectionType, selectedWidget || '', updates)
+        return
+      }
+    }
+    
+    // Otherwise, update in canvasItems as usual
     const updatedCanvasItems = canvasItems.map((item: CanvasItem) => {
       if (isSection(item)) {
         return {
@@ -269,6 +391,45 @@ export function PropertiesPanel({
   }
 
   const updateSection = (updates: Partial<WidgetSection>) => {
+    // Check if section is from global header/footer
+    const isInHeader = headerSections.some(s => s.id === selectedWidget)
+    const isInFooter = footerSections.some(s => s.id === selectedWidget)
+    
+    if ((isInHeader || isInFooter) && currentWebsiteId) {
+      const sectionType = isInHeader ? 'header' : 'footer'
+      const editMode = isInHeader ? headerEditMode : footerEditMode
+      
+      if (editMode === 'page-edit' && currentPageId) {
+        // Update page-specific copy
+        console.log(`📝 [PAGE-EDIT] Updating ${sectionType} section:`, selectedWidget, updates)
+        
+        const pageKey = `${sectionType}-${currentPageId}`
+        let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
+        
+        if (!pageSections) {
+          pageSections = JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
+        }
+        
+        const updatedSections = pageSections.map((section: any) => 
+          section.id === selectedWidget ? { ...section, ...updates } : section
+        )
+        
+        if (setPageCanvas) {
+          setPageCanvas(currentWebsiteId, pageKey, updatedSections)
+        }
+        return
+      } else {
+        // Update global site layout
+        console.log(`📝 [GLOBAL] Updating ${sectionType} section:`, selectedWidget, updates)
+        const updateSiteLayoutSection = (usePageStore.getState() as any).updateSiteLayoutSection
+        if (updateSiteLayoutSection) {
+          updateSiteLayoutSection(currentWebsiteId, sectionType, selectedWidget, updates)
+        }
+        return
+      }
+    }
+    
+    // Regular canvas section update
     const updatedCanvasItems = canvasItems.map((item: CanvasItem) => {
       if (isSection(item) && item.id === selectedWidget) {
         return { ...item, ...updates }
@@ -314,6 +475,28 @@ export function PropertiesPanel({
             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section ID</span>
             <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{section.id}</p>
           </div>
+        </div>
+        
+        {/* Section Role - for marking sections as page header/footer */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Section Role
+            <span className="ml-2 text-xs font-normal text-gray-500">(for page-level header/footer)</span>
+          </label>
+          <select
+            value={section.role || 'content'}
+            onChange={(e) => updateSection({ role: e.target.value as 'header' | 'footer' | 'content' })}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+          >
+            <option value="content">Content (normal flow)</option>
+            <option value="header">Page Header (renders at top)</option>
+            <option value="footer">Page Footer (renders at bottom)</option>
+          </select>
+          {section.role && section.role !== 'content' && (
+            <p className="mt-1 text-xs text-amber-600">
+              ⚠️ This section will render as the page {section.role}, outside normal content flow.
+            </p>
+          )}
         </div>
         
         <div className="space-y-4">
@@ -831,6 +1014,225 @@ export function PropertiesPanel({
                     <option value="repeat-x">Repeat X</option>
                     <option value="repeat-y">Repeat Y</option>
                   </select>
+                </div>
+              </div>
+            )}
+            
+            {backgroundType === 'gradient' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gradient Type</label>
+                    <select
+                      value={section.background?.gradient?.type || 'linear'}
+                      onChange={(e) => updateSection({
+                        background: {
+                          ...section.background,
+                          type: 'gradient',
+                          gradient: {
+                            ...section.background?.gradient,
+                            type: e.target.value as 'linear' | 'radial',
+                            direction: section.background?.gradient?.direction || 'to right',
+                            stops: section.background?.gradient?.stops || [
+                              { color: '#ffffff', position: '0%' },
+                              { color: '#f3f4f6', position: '100%' }
+                            ]
+                          }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="linear">Linear</option>
+                      <option value="radial">Radial</option>
+                    </select>
+                  </div>
+                  
+                  {section.background?.gradient?.type !== 'radial' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Direction</label>
+                      <select
+                        value={section.background?.gradient?.direction || 'to right'}
+                        onChange={(e) => updateSection({
+                          background: {
+                            ...section.background,
+                            type: 'gradient',
+                            gradient: {
+                              ...section.background?.gradient,
+                              type: section.background?.gradient?.type || 'linear',
+                              direction: e.target.value,
+                              stops: section.background?.gradient?.stops || [
+                                { color: '#ffffff', position: '0%' },
+                                { color: '#f3f4f6', position: '100%' }
+                              ]
+                            }
+                          }
+                        })}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="to right">→ Left to Right</option>
+                        <option value="to left">← Right to Left</option>
+                        <option value="to bottom">↓ Top to Bottom</option>
+                        <option value="to top">↑ Bottom to Top</option>
+                        <option value="to bottom right">↘ Diagonal Down</option>
+                        <option value="to top right">↗ Diagonal Up</option>
+                        <option value="to bottom left">↙ Diagonal Down Left</option>
+                        <option value="to top left">↖ Diagonal Up Left</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Color Stops</label>
+                  {(() => {
+                    const defaultStops = [
+                      { color: '#ffffff', position: '0%' },
+                      { color: '#f3f4f6', position: '100%' }
+                    ]
+                    const currentStops = section.background?.gradient?.stops || defaultStops
+                    
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          {currentStops.map((stop, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={stop.color}
+                                onChange={(e) => {
+                                  const stops = [...currentStops]
+                                  stops[index] = { ...stops[index], color: e.target.value }
+                                  updateSection({
+                                    background: {
+                                      ...section.background,
+                                      type: 'gradient',
+                                      gradient: {
+                                        ...section.background?.gradient,
+                                        type: section.background?.gradient?.type || 'linear',
+                                        direction: section.background?.gradient?.direction || 'to right',
+                                        stops
+                                      }
+                                    }
+                                  })
+                                }}
+                                className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={stop.color}
+                                onChange={(e) => {
+                                  const stops = [...currentStops]
+                                  stops[index] = { ...stops[index], color: e.target.value }
+                                  updateSection({
+                                    background: {
+                                      ...section.background,
+                                      type: 'gradient',
+                                      gradient: {
+                                        ...section.background?.gradient,
+                                        type: section.background?.gradient?.type || 'linear',
+                                        direction: section.background?.gradient?.direction || 'to right',
+                                        stops
+                                      }
+                                    }
+                                  })
+                                }}
+                                className="w-20 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
+                                placeholder="#ffffff"
+                              />
+                              <input
+                                type="text"
+                                value={stop.position}
+                                onChange={(e) => {
+                                  const stops = [...currentStops]
+                                  stops[index] = { ...stops[index], position: e.target.value }
+                                  updateSection({
+                                    background: {
+                                      ...section.background,
+                                      type: 'gradient',
+                                      gradient: {
+                                        ...section.background?.gradient,
+                                        type: section.background?.gradient?.type || 'linear',
+                                        direction: section.background?.gradient?.direction || 'to right',
+                                        stops
+                                      }
+                                    }
+                                  })
+                                }}
+                                className="w-16 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
+                                placeholder="50%"
+                              />
+                              {currentStops.length > 2 && (
+                                <button
+                                  onClick={() => {
+                                    const stops = currentStops.filter((_, i) => i !== index)
+                                    updateSection({
+                                      background: {
+                                        ...section.background,
+                                        type: 'gradient',
+                                        gradient: {
+                                          ...section.background?.gradient,
+                                          type: section.background?.gradient?.type || 'linear',
+                                          direction: section.background?.gradient?.direction || 'to right',
+                                          stops
+                                        }
+                                      }
+                                    })
+                                  }}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                  title="Remove color stop"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const stops = [...currentStops]
+                            // Insert a new stop in the middle
+                            stops.push({ color: '#e5e7eb', position: '50%' })
+                            // Sort by position
+                            stops.sort((a, b) => parseInt(a.position) - parseInt(b.position))
+                            updateSection({
+                              background: {
+                                ...section.background,
+                                type: 'gradient',
+                                gradient: {
+                                  ...section.background?.gradient,
+                                  type: section.background?.gradient?.type || 'linear',
+                                  direction: section.background?.gradient?.direction || 'to right',
+                                  stops
+                                }
+                              }
+                            })
+                          }}
+                          className="mt-2 px-3 py-1.5 text-xs border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-gray-400 hover:bg-gray-50 w-full"
+                        >
+                          + Add Color Stop
+                        </button>
+                      </>
+                    )
+                  })()}
+                </div>
+                
+                {/* Gradient Preview */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preview</label>
+                  <div 
+                    className="h-12 rounded-md border border-gray-200"
+                    style={{
+                      background: (() => {
+                        const gradient = section.background?.gradient
+                        if (!gradient?.stops || gradient.stops.length < 2) return '#f3f4f6'
+                        const stopsStr = gradient.stops.map(s => `${s.color} ${s.position}`).join(', ')
+                        if (gradient.type === 'radial') {
+                          return `radial-gradient(circle, ${stopsStr})`
+                        }
+                        return `linear-gradient(${gradient.direction || 'to right'}, ${stopsStr})`
+                      })()
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -2008,7 +2410,7 @@ export function PropertiesPanel({
                 
                 // Check if we're in a routed context (URL-based editing) or V1 internal
                 if (window.location.pathname.startsWith('/edit/')) {
-                  window.location.href = '/v1'
+                  navigate('/v1')
                 } else {
                   setCurrentView('design-console')
                 }
@@ -2300,7 +2702,7 @@ export function PropertiesPanel({
                 
                 // Check if we're in a routed context (URL-based editing) or V1 internal
                 if (window.location.pathname.startsWith('/edit/')) {
-                  window.location.href = '/v1'
+                  navigate('/v1')
                 } else {
                   setCurrentView('design-console')
                 }

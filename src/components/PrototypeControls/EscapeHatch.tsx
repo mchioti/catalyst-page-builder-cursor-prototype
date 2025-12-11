@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
-  ChevronLeft, 
   ChevronRight, 
   Home, 
   Edit3,
   Layers,
-  DoorOpen,
   Monitor,
   MonitorSmartphone,
   Globe,
@@ -50,20 +48,18 @@ export function EscapeHatch({
       {/* Toggle Button */}
       <button
         onClick={() => setDrawerOpen(!drawerOpen)}
-        className={`fixed top-1/2 -translate-y-1/2 z-[9999] bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-l-lg shadow-lg transition-all duration-300 ${
+        className={`fixed top-1/2 -translate-y-1/2 z-[9999] bg-white hover:bg-gray-50 p-1.5 rounded-l-lg shadow-lg transition-all duration-300 border border-r-0 border-gray-200 ${
           drawerOpen ? 'right-72' : 'right-0'
         }`}
         title="Escape Hatch - Prototype Controls"
       >
-        <DoorOpen className="w-5 h-5" />
-        {drawerOpen ? <ChevronRight className="w-4 h-4 mt-1" /> : <ChevronLeft className="w-4 h-4 mt-1" />}
+        <img src="/catalyst-PB.png" alt="Catalyst PB" className="w-8 h-8 object-contain" />
       </button>
       
       {/* Drawer Panel - pushes content */}
       <div className={`fixed right-0 top-0 h-full w-72 bg-white shadow-2xl z-[9998] transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full flex flex-col">
           <div className="bg-amber-500 text-white px-4 py-3 flex items-center gap-2">
-            <DoorOpen className="w-5 h-5" />
             <span className="font-semibold">Escape Hatch</span>
             <span className="text-xs opacity-75 ml-auto">Prototype</span>
           </div>

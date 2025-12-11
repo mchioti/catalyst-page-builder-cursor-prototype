@@ -261,6 +261,13 @@ export const usePageStore = create<PageState>((set, get) => ({
   // Per-website, per-page canvas storage (for Live Site integration)
   // Key format: "websiteId:pageId" -> CanvasItem[]
   pageCanvasData: {} as Record<string, CanvasItem[]>,
+  
+  // Per-page header/footer overrides
+  // Key format: "websiteId:pageId" -> { headerOverride, footerOverride }
+  pageLayoutOverrides: {} as Record<string, { 
+    headerOverride?: 'global' | 'hide' | 'page-edit'
+    footerOverride?: 'global' | 'hide' | 'page-edit' 
+  }>,
   customSections: initializeCustomSections(),
   customStarterPages: initializeCustomStarterPages(),
   templates: [],
@@ -342,10 +349,236 @@ export const usePageStore = create<PageState>((set, get) => ({
       [`${websiteId}:${pageId}`]: items
     }
   })),
+  
+  // Delete a page-specific canvas (discard override)
+  deletePageCanvas: (websiteId: string, pageId: string) => set((state) => {
+    const key = `${websiteId}:${pageId}`
+    const { [key]: _, ...rest } = state.pageCanvasData
+    return { pageCanvasData: rest }
+  }),
+  
+  // Add a widget to a website's global header/footer
+  // Insert a widget BEFORE a target widget in siteLayout (for precise positioning)
+  insertWidgetInSiteLayout: (websiteId: string, sectionType: 'header' | 'footer', sectionId: string, areaId: string, widget: any, beforeWidgetId: string) => set((state) => {
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return state
+    
+    const siteLayout = (website as any).siteLayout
+    if (!siteLayout) return state
+    
+    const sections = sectionType === 'header' ? siteLayout.header : siteLayout.footer
+    if (!sections) return state
+    
+    const updatedSections = sections.map((section: any) => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          areas: section.areas?.map((area: any) => {
+            if (area.id === areaId) {
+              const widgets = [...(area.widgets || [])]
+              const targetIndex = widgets.findIndex((w: any) => w.id === beforeWidgetId)
+              if (targetIndex !== -1) {
+                widgets.splice(targetIndex, 0, widget)
+              } else {
+                widgets.push(widget) // Fallback: append
+              }
+              return { ...area, widgets }
+            }
+            return area
+          })
+        }
+      }
+      return section
+    })
+    
+    return {
+      websites: state.websites.map(w => 
+        w.id === websiteId
+          ? { 
+              ...w, 
+              siteLayout: {
+                ...siteLayout,
+                [sectionType]: updatedSections
+              },
+              updatedAt: new Date() 
+            } 
+          : w
+      )
+    }
+  }),
+  
+  addWidgetToSiteLayout: (websiteId: string, sectionType: 'header' | 'footer', sectionId: string, areaId: string, widget: any) => set((state) => {
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return state
+    
+    const siteLayout = (website as any).siteLayout
+    if (!siteLayout) return state
+    
+    const sections = sectionType === 'header' ? siteLayout.header : siteLayout.footer
+    if (!sections) return state
+    
+    const updatedSections = sections.map((section: any) => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          areas: section.areas?.map((area: any) => {
+            if (area.id === areaId) {
+              return {
+                ...area,
+                widgets: [...(area.widgets || []), widget]
+              }
+            }
+            return area
+          })
+        }
+      }
+      return section
+    })
+    
+    return {
+      websites: state.websites.map(w => 
+        w.id === websiteId 
+          ? { 
+              ...w, 
+              siteLayout: {
+                ...siteLayout,
+                [sectionType]: updatedSections
+              },
+              updatedAt: new Date() 
+            } 
+          : w
+      )
+    }
+  }),
+  
+  // Update a section in a website's global header/footer (for section properties)
+  updateSiteLayoutSection: (websiteId: string, sectionType: 'header' | 'footer', sectionId: string, updates: any) => set((state) => {
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return state
+    
+    const siteLayout = (website as any).siteLayout
+    if (!siteLayout) return state
+    
+    const sections = sectionType === 'header' ? siteLayout.header : siteLayout.footer
+    if (!sections) return state
+    
+    const updatedSections = sections.map((section: any) => 
+      section.id === sectionId ? { ...section, ...updates } : section
+    )
+    
+    return {
+      websites: state.websites.map(w => 
+        w.id === websiteId 
+          ? { 
+              ...w, 
+              siteLayout: {
+                ...siteLayout,
+                [sectionType]: updatedSections
+              },
+              updatedAt: new Date() 
+            } 
+          : w
+      )
+    }
+  }),
   clearPageCanvas: (websiteId: string, pageId: string) => set((state) => {
     const newPageCanvasData = { ...state.pageCanvasData }
     delete newPageCanvasData[`${websiteId}:${pageId}`]
     return { pageCanvasData: newPageCanvasData }
+  }),
+  
+  // Page-level layout overrides (header/footer visibility per page)
+  getPageLayoutOverrides: (websiteId: string, pageId: string) => {
+    const state = get()
+    const key = `${websiteId}:${pageId}`
+    return state.pageLayoutOverrides[key] || { headerOverride: 'global', footerOverride: 'global' }
+  },
+  setPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => set((state) => {
+    const key = `${websiteId}:${pageId}`
+    const existing = state.pageLayoutOverrides[key] || {}
+    return {
+      pageLayoutOverrides: {
+        ...state.pageLayoutOverrides,
+        [key]: {
+          ...existing,
+          [type === 'header' ? 'headerOverride' : 'footerOverride']: mode
+        }
+      }
+    }
+  }),
+  
+  // Delete a widget from a website's global header/footer (siteLayout)
+  deleteWidgetFromSiteLayout: (websiteId: string, sectionType: 'header' | 'footer', widgetId: string) => set((state) => {
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return state
+    
+    const siteLayout = (website as any).siteLayout
+    if (!siteLayout) return state
+    
+    const sections = sectionType === 'header' ? siteLayout.header : siteLayout.footer
+    if (!sections || sections.length === 0) return state
+    
+    // Deep delete: find and remove the widget from sections
+    const updatedSections = sections.map((section: any) => ({
+      ...section,
+      areas: section.areas?.map((area: any) => ({
+        ...area,
+        widgets: area.widgets?.filter((widget: any) => widget.id !== widgetId)
+      }))
+    }))
+    
+    return {
+      websites: state.websites.map(w => 
+        w.id === websiteId 
+          ? { 
+              ...w, 
+              siteLayout: {
+                ...siteLayout,
+                [sectionType]: updatedSections
+              },
+              updatedAt: new Date() 
+            } 
+          : w
+      )
+    }
+  }),
+  
+  // Update a widget within a website's global header/footer (siteLayout)
+  updateSiteLayoutWidget: (websiteId: string, sectionType: 'header' | 'footer', widgetId: string, updates: any) => set((state) => {
+    const website = state.websites.find(w => w.id === websiteId)
+    if (!website) return state
+    
+    const siteLayout = (website as any).siteLayout
+    if (!siteLayout) return state
+    
+    const sections = sectionType === 'header' ? siteLayout.header : siteLayout.footer
+    if (!sections || sections.length === 0) return state
+    
+    // Deep update: find and update the widget within the sections
+    const updatedSections = sections.map((section: any) => ({
+      ...section,
+      areas: section.areas?.map((area: any) => ({
+        ...area,
+        widgets: area.widgets?.map((widget: any) => 
+          widget.id === widgetId ? { ...widget, ...updates } : widget
+        )
+      }))
+    }))
+    
+    return {
+      websites: state.websites.map(w => 
+        w.id === websiteId 
+          ? { 
+              ...w, 
+              siteLayout: {
+                ...siteLayout,
+                [sectionType]: updatedSections
+              },
+              updatedAt: new Date() 
+            } 
+          : w
+      )
+    }
   }),
   
   // Global template management

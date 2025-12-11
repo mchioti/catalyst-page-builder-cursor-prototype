@@ -77,6 +77,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 import { PREFAB_SECTIONS } from './prefabSections'
 import { createDebugLogger } from '../../utils/logger'
@@ -137,6 +138,7 @@ import type {
 } from '../../types/widgets'
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
+import { GlobalSectionBar } from './GlobalSectionBar'
 
 // Component props interface
 interface PageBuilderProps {
@@ -170,6 +172,9 @@ export function PageBuilder({
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage } = usePageStore()
   
+  // Navigation for preview
+  const navigate = useNavigate()
+  
   // Track active drag item for DragOverlay
   const [activeDragItem, setActiveDragItem] = useState<{ widget?: Widget; type?: string; item?: any } | null>(null)
   
@@ -198,6 +203,41 @@ export function PageBuilder({
   const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
   const currentTheme = themes.find((t: any) => t.id === currentWebsite?.themeId)
   const themeName = currentTheme?.name || 'No Theme'
+  
+  // Get site layout for global header/footer
+  const siteLayout = (currentWebsite as any)?.siteLayout
+  const headerSections = siteLayout?.header || []
+  const footerSections = siteLayout?.footer || []
+  const headerEnabled = siteLayout?.headerEnabled !== false
+  const footerEnabled = siteLayout?.footerEnabled !== false
+  
+  // Get page-level layout overrides from store
+  const { getPageLayoutOverrides, setPageLayoutOverride } = usePageStore()
+  
+  // Get current page ID from URL (for /edit/:websiteId/:pageId routes)
+  // Fall back to mockLiveSiteRoute for legacy routes, then 'home' as default
+  const location = useLocation()
+  const getPageIdFromUrl = () => {
+    // Check if we're on /edit/:websiteId/:pageId route
+    const editMatch = location.pathname.match(/\/edit\/[^\/]+\/(.+)/)
+    if (editMatch) {
+      return editMatch[1] // e.g., "journals", "about", "home"
+    }
+    // Fall back to mockLiveSiteRoute for legacy routes
+    return mockLiveSiteRoute?.replace(/^\//, '') || 'home'
+  }
+  const currentPageId = getPageIdFromUrl()
+  const pageOverrides = getPageLayoutOverrides(currentWebsiteId, currentPageId)
+  const headerOverrideMode = pageOverrides.headerOverride || 'global'
+  const footerOverrideMode = pageOverrides.footerOverride || 'global'
+  
+  // Handlers to update overrides (persisted to store)
+  const setHeaderOverrideMode = (mode: 'global' | 'hide' | 'page-edit') => {
+    setPageLayoutOverride(currentWebsiteId, currentPageId, 'header', mode)
+  }
+  const setFooterOverrideMode = (mode: 'global' | 'hide' | 'page-edit') => {
+    setPageLayoutOverride(currentWebsiteId, currentPageId, 'footer', mode)
+  }
 
 
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
@@ -712,6 +752,22 @@ export function PageBuilder({
         const newWidget = buildWidget(libraryItem)
         newWidget.sectionId = sectionId
         
+        // First, check if this section is in siteLayout (global header/footer)
+        const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+        const targetSiteLayout = targetWebsite?.siteLayout
+        const headerSection = targetSiteLayout?.header?.find((s: any) => s.id === sectionId)
+        const footerSection = targetSiteLayout?.footer?.find((s: any) => s.id === sectionId)
+        
+        if (headerSection || footerSection) {
+          // This is a global section - use siteLayout store action with insert position
+          const sectionType = headerSection ? 'header' : 'footer'
+          debugLog('log', '🌐 Widget-target drop in global siteLayout (' + sectionType + ')')
+          const { insertWidgetInSiteLayout } = usePageStore.getState()
+          insertWidgetInSiteLayout(currentWebsiteId, sectionType, sectionId, areaId, newWidget, targetWidgetId)
+          debugLog('log', '✅ Widget inserted before target in global ' + sectionType + '!')
+          return
+        }
+        
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
           if (isSection(canvasItem) && canvasItem.id === sectionId) {
             return {
@@ -837,6 +893,22 @@ export function PageBuilder({
         // Create new widget from library item
         const newWidget = buildWidget(libraryItem)
         newWidget.sectionId = sectionId
+        
+        // First, check if this section is in siteLayout (global header/footer)
+        const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+        const targetSiteLayout = targetWebsite?.siteLayout
+        const headerSection = targetSiteLayout?.header?.find((s: any) => s.id === sectionId)
+        const footerSection = targetSiteLayout?.footer?.find((s: any) => s.id === sectionId)
+        
+        if (headerSection || footerSection) {
+          // This is a global section - use siteLayout store action
+          const sectionType = headerSection ? 'header' : 'footer'
+          debugLog('log', '🌐 Section is in global siteLayout (' + sectionType + ')')
+          const { addWidgetToSiteLayout } = usePageStore.getState()
+          addWidgetToSiteLayout(currentWebsiteId, sectionType, sectionId, areaId, newWidget)
+          debugLog('log', '✅ Widget added to global ' + sectionType + '!')
+          return
+        }
         
         // DEBUG: Log current canvas sections
         debugLog('log', '📋 Current canvas sections:', canvasItems.map((item: CanvasItem) => ({
@@ -1545,10 +1617,28 @@ export function PageBuilder({
     
     // If not found at canvas level, search within section areas
     if (!widget) {
+      // Search in canvas sections
       for (const canvasItem of canvasItems) {
         if (isSection(canvasItem)) {
           for (const area of canvasItem.areas) {
             const foundWidget = area.widgets.find((w: Widget) => w.id === widgetId)
+            if (foundWidget) {
+              widget = foundWidget
+              break
+            }
+          }
+          if (widget) break
+        }
+      }
+    }
+    
+    // Also search in header/footer sections (global sections)
+    if (!widget) {
+      const globalSections = [...headerSections, ...footerSections]
+      for (const section of globalSections) {
+        if (section.areas) {
+          for (const area of section.areas) {
+            const foundWidget = area.widgets?.find((w: Widget) => w.id === widgetId)
             if (foundWidget) {
               widget = foundWidget
               break
@@ -1577,7 +1667,7 @@ export function PageBuilder({
     setActiveWidgetToolbar(activeWidgetToolbar === widgetId ? null : widgetId)
     selectWidget(widgetId)
   }
-
+  
   return (
     <DndContext
       sensors={sensors}
@@ -1692,8 +1782,8 @@ export function PageBuilder({
                         const pathParts = window.location.pathname.split('/')
                         const websiteId = pathParts[2] || 'catalyst-demo'
                         const pageId = pathParts[3] || ''
-                        // Navigate to live site at the same page
-                        window.location.href = `/live/${websiteId}${pageId ? '/' + pageId : ''}`
+                        // Use client-side navigation to preserve state
+                        navigate(`/live/${websiteId}${pageId ? '/' + pageId : ''}`)
                       } else {
                         const { setCurrentView } = usePageStore.getState()
                         setCurrentView('mock-live-site')
@@ -1708,7 +1798,7 @@ export function PageBuilder({
                     onClick={() => {
                       // Check if we're in a routed context (URL-based editing) or V1 internal
                       if (window.location.pathname.startsWith('/edit/')) {
-                        window.location.href = '/v1'
+                        navigate('/v1')
                       } else {
                         setCurrentView('design-console')
                       }
@@ -1859,7 +1949,24 @@ export function PageBuilder({
             )}
             
             <CanvasThemeProvider usePageStore={usePageStore} scopeCSS={true}>
-              <div className="theme-preview bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm">
+              <div className="theme-preview bg-white border border-slate-200 rounded-lg min-h-96 relative shadow-sm overflow-hidden">
+              
+              {/* Global Header Bar */}
+              <GlobalSectionBar
+                type="header"
+                sections={headerSections}
+                isEnabled={headerEnabled}
+                websiteId={currentWebsiteId}
+                pageId={currentPageId}
+                usePageStore={usePageStore}
+                onWidgetClick={handleWidgetClick}
+                selectedWidget={selectedWidget}
+                activeWidgetToolbar={activeWidgetToolbar}
+                setActiveWidgetToolbar={setActiveWidgetToolbar}
+                overrideMode={headerOverrideMode}
+                onOverrideModeChange={setHeaderOverrideMode}
+              />
+              
               {canvasItems.length === 0 ? (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center text-gray-500">
@@ -1894,6 +2001,23 @@ export function PageBuilder({
                   </div>
                 </SortableContext>
               )}
+              
+              {/* Global Footer Bar */}
+              <GlobalSectionBar
+                type="footer"
+                sections={footerSections}
+                isEnabled={footerEnabled}
+                websiteId={currentWebsiteId}
+                pageId={currentPageId}
+                usePageStore={usePageStore}
+                onWidgetClick={handleWidgetClick}
+                selectedWidget={selectedWidget}
+                activeWidgetToolbar={activeWidgetToolbar}
+                setActiveWidgetToolbar={setActiveWidgetToolbar}
+                overrideMode={footerOverrideMode}
+                onOverrideModeChange={setFooterOverrideMode}
+              />
+              
             </div>
             </CanvasThemeProvider>
           </div>
@@ -1931,6 +2055,13 @@ export function PageBuilder({
             SchemaFormEditor={SchemaFormEditor}
             onExpandedChange={setIsPropertiesPanelExpanded}
             isExpanded={isPropertiesPanelExpanded}
+            globalSections={[...headerSections, ...footerSections]}
+            headerSections={headerSections}
+            footerSections={footerSections}
+            currentWebsiteId={currentWebsiteId}
+            currentPageId={currentPageId}
+            headerEditMode={headerOverrideMode}
+            footerEditMode={footerOverrideMode}
           />
         </div>
       </div>
