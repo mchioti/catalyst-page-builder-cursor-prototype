@@ -1,7 +1,8 @@
 ---
 name: Catalyst Page Builder Widgets
-description: Guide for building pages using the Catalyst Page Builder widget library, including widget types, properties, and design system token integration.
-version: 2.0.0
+description: Guide for building pages using the Catalyst Page Builder widget library, including widget types, properties, and Foundation Design System token integration.
+version: 2.1.0
+theme: Wiley DS V2 (wiley-figma-ds-v2)
 ---
 
 # Catalyst Page Builder - Widget Reference Skill
@@ -17,7 +18,6 @@ The Catalyst Page Builder uses a **section-based architecture** where pages are 
 - **Areas**: Simple widget containers inside sections (NO layout properties)
 - **Widgets**: Content elements placed within section areas
 - **Design Tokens**: Theme-level values (colors, typography, spacing) applied to widgets
-- **Skins**: Visual treatment presets (`minimal`, `modern`, `classic`, `accent`, `hero`)
 
 ---
 
@@ -75,7 +75,7 @@ When a property is not specified, these defaults apply:
 Every widget MUST have:
 - `id`: string (use `nanoid()` for generation)
 - `type`: string (widget type identifier)
-- `skin`: string (usually `'minimal'`)
+- `skin`: `'minimal'` (always use this value)
 
 ### Rule 4: Schema.org for Publications
 
@@ -450,7 +450,7 @@ For notification banners, cookie consent, modals:
 
 **Design Token Integration:**
 - `typographyStyle` maps to theme typography tokens (e.g., `body-md` → 16px, line-height 24px)
-- Font family inherited from theme's `bodyFont` (e.g., `Lato, sans-serif`)
+- Font family inherited from theme's `bodyFont` (Inter in Wiley DS V2)
 - Text color from `semanticColors.content.primary` or `.secondary`
 
 ---
@@ -472,11 +472,22 @@ For notification banners, cookie consent, modals:
 | `icon.position` | string | `left`, `right` | Icon placement |
 | `icon.emoji` | string | — | Emoji character |
 
+**Heading Style Variants:**
+| Style | Visual Effect |
+|-------|--------------|
+| `default` | Plain heading, no decoration |
+| `bordered-left` | Vertical accent bar on left |
+| `underlined` | Horizontal line below |
+| `highlighted` | **Primary color background**, adaptive text (white/black), inline-block width |
+| `decorated` | Decorative flourish elements |
+| `gradient` | Gradient text fill |
+| `hero` | Extra large, bold treatment |
+
 **Design Token Integration:**
 - `typographyStyle: 'auto'` uses heading level (h1 → `heading-h1` token)
-- Font family from theme's `headingFont` (e.g., `Volkhov, serif`)
+- Font family from theme's `headingFont` (Inter in Wiley DS V2)
 - Responsive sizes: desktop and mobile breakpoints
-- Colors map to `semanticColors.interactive` or `content` tokens
+- `highlighted` style uses theme's primary color with automatic contrast text
 
 ---
 
@@ -561,9 +572,17 @@ For notification banners, cookie consent, modals:
 | `icon.position` | string | `left`, `right` | Icon placement |
 | `icon.emoji` | string | — | Emoji character |
 
+**Button Color Options (Wiley DS V2 - Green Brand):**
+| Value | Maps To | On Light Background | On Dark Background |
+|-------|---------|---------------------|-------------------|
+| `color1` | Primary | #008F8A (Teal) | #00D875 (Green) |
+| `color2` | Secondary | #003B44 (Dark Teal) | #F2F2EB (Cream) |
+| `color3` | Tertiary | #FFFFFF (White) | #003B44 (Dark Teal) |
+
+**Note:** Button colors automatically adapt based on background (light vs dark). The theme handles this via `contentMode`.
+
 **Design Token Integration:**
-- `color1-5` map to theme button color presets
-- Border radius from `components.button.borderRadius` (e.g., `2px` for Classic UX3)
+- Border radius from `components.button.borderRadius` (4px in Wiley DS V2)
 - Font weight from `components.button.fontWeight`
 - Hover/active states from `semanticColors.interactive` tokens
 
@@ -969,66 +988,177 @@ Publication widgets are designed to work with **Schema.org content definitions**
 
 ---
 
+### Schema.org Object Structure
+
+When using `contentSource: 'schema-objects'`, the referenced objects should follow the schema.org `ScholarlyArticle` structure:
+
+```json
+{
+  "@type": "ScholarlyArticle",
+  "name": "Machine Learning Approaches for Climate Prediction",
+  "headline": "Machine Learning Approaches for Climate Prediction",
+  "author": [
+    { "@type": "Person", "name": "Jane Smith", "affiliation": "MIT" },
+    { "@type": "Person", "name": "John Doe", "affiliation": "Stanford" }
+  ],
+  "datePublished": "2024-03-15",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Journal of Climate Science"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "DOI",
+    "value": "10.1002/jcs.2024.001"
+  },
+  "abstract": "This study presents novel machine learning techniques for improving long-term climate predictions...",
+  "keywords": ["climate", "machine learning", "prediction"],
+  "isAccessibleForFree": false,
+  "image": "https://example.com/article-thumbnail.jpg"
+}
+```
+
+**Key Properties:**
+| Property | Required | Description |
+|----------|----------|-------------|
+| `@type` | Yes | Must be `"ScholarlyArticle"` |
+| `name` / `headline` | Yes | Article title |
+| `author` | Yes | Array of Person objects |
+| `datePublished` | Yes | ISO date string |
+| `identifier.value` | Yes | DOI string |
+| `abstract` | Recommended | Article abstract |
+| `publisher.name` | Recommended | Journal name |
+| `isAccessibleForFree` | Optional | Open access flag |
+| `image` | Optional | Thumbnail URL |
+
+---
+
+### Supported Schema.org Types
+
+Publication widgets work with multiple schema.org content types, not just articles:
+
+**CreativeWork Types (Publications):**
+| Type | Use Case | Example |
+|------|----------|---------|
+| `ScholarlyArticle` | Research articles | Journal article with DOI |
+| `Book` | Monographs, textbooks | Academic book |
+| `Chapter` | Book chapters | Chapter within edited volume |
+| `Periodical` | Journals | Journal browse/listing |
+| `PublicationIssue` | Journal issues | Issue table of contents |
+| `PublicationVolume` | Journal volumes | Volume archive |
+
+**Other Supported Types:**
+| Type | Use Case | Example |
+|------|----------|---------|
+| `Person` | Authors, editors, reviewers | "Meet the Editors" section |
+| `Organization` | Institutions, publishers, societies | "Partner Institutions" |
+| `Event` | Conferences, webinars, deadlines | "Upcoming Events" section |
+
+**Content Source Behavior:**
+| `contentSource` | What It Does |
+|-----------------|--------------|
+| `dynamic-query` | Fetches live data from backend in schema.org format |
+| `schema-objects` | References handcrafted schema.org objects for custom content |
+| `doi-list` | Fetches specific articles by DOI |
+| `context` | Inherits from page/journal context |
+
+The card configurator supports common properties across all these types, allowing consistent display regardless of content type.
+
+---
+
+**Available Mock Data:**
+
+The Page Builder includes real DOI data from these journals for testing:
+
+- **Computer Science:** Software: Practice and Experience, Concurrency and Computation
+- **Chemistry:** Angewandte Chemie, Advanced Materials, Chemistry - A European Journal
+
+When building mockups for academic pages, these subject areas have sample data available.
+
+---
+
 ## Design System Token Architecture
 
-### 3-Layer Token System
+### Theme Declaration
+
+Every page JSON should specify its theme at the top level. **Use Wiley DS V2 as the default:**
+
+```json
+{
+  "theme": "wiley-figma-ds-v2",
+  "sections": [...]
+}
+```
+
+The theme determines how Foundation tokens resolve to actual values (colors, fonts, sizes).
+
+---
+
+### Foundation Design System (3-Layer Token Architecture)
+
+The Page Builder uses **Foundation DS** - a universal token contract. You write to Foundation tokens, and the theme adapter resolves them.
 
 ```
-Layer 1: Foundation
-├── colors (teal, purple, red, green, yellow, blue, gray scales)
-├── typography (families, weights, sizes with desktop/mobile)
+Layer 1: Foundation (Raw Values)
+├── colors (scales: gray, purple, teal, blue, green, red, yellow)
+├── typography (families, weights, sizes with desktop/mobile breakpoints)
 └── spacing (base scale 0-10, semantic xs-3xl)
 
-Layer 2: Semantic
-├── interactive (primary, secondary, accent with states)
+Layer 2: Semantic (Purpose-Mapped)
+├── interactive (primary, secondary, accent with hover/active states)
 ├── surface (background, card, border, divider)
 ├── content (primary, secondary, muted, inverse, link)
 └── feedback (success, warning, error, info)
 
-Layer 3: Component
+Layer 3: Component (UI Elements)
 ├── button (borderRadius, fontWeight, transition)
 ├── card (borderRadius, boxShadow, border)
 └── form (borderRadius, border, focusColor)
 ```
 
-### Available Designs (Themes)
+---
 
-1. **Classic UX3** (`classic-ux3-theme`)
-   - Primary: Teal 600 (#339899)
-   - Heading font: Volkhov (serif)
-   - Body font: Lato (sans-serif)
-   - Button radius: 2px
+### Primary Theme: Wiley DS V2 (Green Brand)
 
-2. **FEBS Design** (variant of Classic)
-   - Primary: FEBS Blue (#00B5FF)
-   - Accent: Rust (#C25338)
-   - Font: Open Sans
+**Theme ID:** `wiley-figma-ds-v2`
 
-3. **Carbon Design System** (`carbon-ds-theme`)
-   - IBM Design Language
-   - Primary: Blue 60 (#0f62fe)
-   - Font: IBM Plex Sans/Mono
+| Token Category | Wiley Green Value |
+|----------------|-------------------|
+| **Primary Color** | #00D875 (Green) / #008F8A (Teal) |
+| **Secondary Color** | #003B44 (Dark Teal) |
+| **Tertiary Color** | #F2F2EB (Cream) |
+| **Primary Font** | Inter, sans-serif |
+| **Secondary Font** | "Open Sans", sans-serif |
+| **Responsive** | Desktop/mobile breakpoints ✓ |
 
-4. **Wiley Design System** (`wiley-ds-theme`)
-   - Primary: Wiley Purple
-   - Multiple brand modes (Wiley, WT, Dummies)
+**Brand Note:** The Wiley (Green) brand is locked at website creation. All colors are managed through button variants and automatically adapt based on light/dark backgrounds.
 
-### Typography Tokens
+**Why Wiley DS V2?** This is the production design system. Pages created with this theme are production-ready.
+
+### Typography Tokens (Wiley DS V2)
+
+**How It Works:** You set `typographyStyle: "body-lg"` on a widget → Page Builder generates CSS class `.typo-body-lg` → Theme provides the actual values.
 
 **Heading Styles:**
-- `heading-h1`: 48px desktop / 36px mobile
-- `heading-h2`: 40px desktop / 32px mobile
-- `heading-h3`: 32px desktop / 28px mobile
-- `heading-h4`: 28px desktop / 24px mobile
-- `heading-h5`: 24px desktop / 20px mobile
-- `heading-h6`: 20px desktop / 18px mobile
+| Token | Desktop | Mobile | Weight |
+|-------|---------|--------|--------|
+| `heading-h1` | 56px | 40px | 700 |
+| `heading-h2` | 48px | 32px | 700 |
+| `heading-h3` | 40px | 28px | 600 |
+| `heading-h4` | 32px | 24px | 600 |
+| `heading-h5` | 24px | 20px | 600 |
+| `heading-h6` | 20px | 18px | 600 |
 
 **Body Styles:**
-- `body-xl`: 20px, line-height 32px
-- `body-lg`: 18px, line-height 28px
-- `body-md`: 16px, line-height 24px (default)
-- `body-sm`: 14px, line-height 20px
-- `body-xs`: 12px, line-height 16px
+| Token | Size | Line Height | Weight |
+|-------|------|-------------|--------|
+| `body-xl` | 24px | 1.5 | 400 |
+| `body-lg` | 20px | 1.5 | 400 |
+| `body-md` | 16px | 1.5 | 400 (default) |
+| `body-sm` | 14px | 1.4 | 400 |
+| `body-xs` | 12px | 1.4 | 400 |
+
+**Note:** These are Wiley DS V2 values. The Foundation token names are universal; actual values come from the theme.
 
 ### Spacing Tokens
 
@@ -1059,7 +1189,7 @@ All widgets inherit these base properties:
 |----------|------|---------|-------------|
 | `id` | string | — | Unique widget ID (auto-generated) |
 | `type` | string | — | Widget type identifier |
-| `skin` | string | `minimal`, `modern`, `classic`, `accent`, `hero`, `journal`, `primary`, `dark`, `muted`, `center`, `footer`, `compact`, `raw` | Visual skin preset |
+| `skin` | string | `'minimal'` | Always use `'minimal'` (legacy property, kept for compatibility) |
 | `sectionId` | string | — | Parent section reference |
 | `layout.variant` | string | `default`, `card`, `bordered`, `elevated` | Layout variant |
 | `layout.padding` | string | `none`, `small`, `medium`, `large` | Internal padding |
@@ -1118,127 +1248,10 @@ All widgets inherit these base properties:
 
 ---
 
-## Complete Page Example
+## Key Patterns Checklist
 
-Here's a properly structured landing page following all rules:
+When generating Page Builder JSON, ensure:
 
-```javascript
-// Page: sections array (each section is a CanvasItem)
-const landingPage = [
-  // SECTION 1: Hero
-  {
-    id: nanoid(),
-    name: 'Hero Banner',
-    type: 'hero',
-    layout: 'one-column',
-    background: {
-      type: 'gradient',
-      gradient: {
-        type: 'linear',
-        direction: '135deg',
-        stops: [
-          { color: '#003b44', position: '0%' },
-          { color: '#007a8b', position: '100%' }
-        ]
-      }
-    },
-    contentMode: 'dark',
-    styling: { paddingTop: '96px', paddingBottom: '96px', centerContent: true },
-    areas: [{
-      id: nanoid(),
-      name: 'Content',
-      widgets: [
-        { id: nanoid(), type: 'heading', text: 'Welcome', level: 1, style: 'hero', skin: 'minimal' },
-        { id: nanoid(), type: 'spacer', height: '1.5rem', skin: 'minimal' },
-        { id: nanoid(), type: 'text', text: 'Description text here...', align: 'center', typographyStyle: 'body-lg', skin: 'minimal' },
-        { id: nanoid(), type: 'spacer', height: '2rem', skin: 'minimal' },
-        { id: nanoid(), type: 'button', text: 'Get Started', href: '/start', style: 'solid', color: 'color1', size: 'large', skin: 'minimal' }
-      ]
-    }]
-  },
-
-  // SECTION 2: Features Header (separate section, NOT nested in area)
-  {
-    id: nanoid(),
-    name: 'Features Header',
-    type: 'content-block',
-    layout: 'one-column',
-    background: { type: 'color', color: '#ffffff' },
-    contentMode: 'light',
-    styling: { paddingTop: '64px', paddingBottom: '24px', maxWidth: '7xl', centerContent: true },
-    areas: [{
-      id: nanoid(),
-      name: 'Header',
-      widgets: [
-        { id: nanoid(), type: 'text', text: 'Our Features', align: 'center', typographyStyle: 'body-sm', inlineStyles: 'text-transform: uppercase; letter-spacing: 0.1em; color: #00bfb1;', skin: 'minimal' },
-        { id: nanoid(), type: 'heading', text: 'What We Offer', level: 2, align: 'center', style: 'default', skin: 'minimal' }
-      ]
-    }]
-  },
-
-  // SECTION 3: Features Grid (separate section for grid layout)
-  {
-    id: nanoid(),
-    name: 'Features Grid',
-    type: 'content-block',
-    layout: 'grid',
-    gridConfig: { columns: 3, gap: '1.5rem', alignItems: 'stretch' },
-    background: { type: 'color', color: '#ffffff' },
-    contentMode: 'light',
-    styling: { paddingTop: '0', paddingBottom: '64px', maxWidth: '7xl', centerContent: true },
-    areas: [{
-      id: nanoid(),
-      name: 'Cards',
-      widgets: [
-        { id: nanoid(), type: 'editorial-card', layout: 'color-block', skin: 'modern',
-          content: { preheader: { enabled: false, text: '' }, headline: { enabled: true, text: 'Feature 1' }, description: { enabled: true, text: 'Description...' }, callToAction: { enabled: true, text: 'Learn More', url: '/feature-1', type: 'link' } },
-          image: { src: 'https://picsum.photos/seed/feature1/200/200', alt: 'Feature 1' },
-          config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true } },
-        { id: nanoid(), type: 'editorial-card', layout: 'color-block', skin: 'modern',
-          content: { preheader: { enabled: false, text: '' }, headline: { enabled: true, text: 'Feature 2' }, description: { enabled: true, text: 'Description...' }, callToAction: { enabled: true, text: 'Learn More', url: '/feature-2', type: 'link' } },
-          image: { src: 'https://picsum.photos/seed/feature2/200/200', alt: 'Feature 2' },
-          config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true } },
-        { id: nanoid(), type: 'editorial-card', layout: 'color-block', skin: 'modern',
-          content: { preheader: { enabled: false, text: '' }, headline: { enabled: true, text: 'Feature 3' }, description: { enabled: true, text: 'Description...' }, callToAction: { enabled: true, text: 'Learn More', url: '/feature-3', type: 'link' } },
-          image: { src: 'https://picsum.photos/seed/feature3/200/200', alt: 'Feature 3' },
-          config: { contentAlignment: 'center', imagePosition: 'top', useAccentColor: true } }
-      ]
-    }]
-  },
-
-  // SECTION 4: Footer
-  {
-    id: nanoid(),
-    name: 'Footer',
-    type: 'content-block',
-    layout: 'grid',
-    gridConfig: { columns: 4, gap: '2rem', alignItems: 'start' },
-    background: { type: 'color', color: '#1a1a1a' },
-    contentMode: 'dark',
-    styling: { paddingTop: '64px', paddingBottom: '32px', maxWidth: '7xl', centerContent: true },
-    areas: [{
-      id: nanoid(),
-      name: 'Footer Links',
-      widgets: [
-        { id: nanoid(), type: 'text', text: '<strong>Company</strong>', align: 'left', skin: 'minimal' },
-        { id: nanoid(), type: 'menu', menuType: 'custom', style: 'vertical', skin: 'minimal',
-          items: [
-            { id: nanoid(), label: 'About', url: '/about', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
-            { id: nanoid(), label: 'Contact', url: '/contact', target: '_self' as const, displayCondition: 'always' as const, order: 1 }
-          ] },
-        { id: nanoid(), type: 'text', text: '<strong>Resources</strong>', align: 'left', skin: 'minimal' },
-        { id: nanoid(), type: 'menu', menuType: 'custom', style: 'vertical', skin: 'minimal',
-          items: [
-            { id: nanoid(), label: 'Documentation', url: '/docs', target: '_self' as const, displayCondition: 'always' as const, order: 0 },
-            { id: nanoid(), label: 'Support', url: '/support', target: '_self' as const, displayCondition: 'always' as const, order: 1 }
-          ] }
-      ]
-    }]
-  }
-]
-```
-
-**Key Patterns to Follow:**
 1. ✅ Each section has its own `layout` and `gridConfig`/`flexConfig`
 2. ✅ Areas only contain `id`, `name`, and `widgets`
 3. ✅ All widgets have `id`, `type`, and `skin`
@@ -1246,6 +1259,15 @@ const landingPage = [
 5. ✅ Menu items have all required properties including `order`
 6. ✅ Editorial card `content` objects have `enabled` and `text` even when disabled
 7. ✅ Use `/images/wiley/...` for brand assets or `picsum.photos` for placeholders (NOT `file://`)
+8. ✅ Match `contentMode` to background (dark background → `"dark"`, light → `"light"`)
+9. ✅ Use `typographyStyle` tokens instead of inline font styles
+
+**For complete page examples, see `PageBuilder-Page-Examples-Skill.md`** which includes:
+- Journal Home Page (with `PublicationListWidget`)
+- Issue Table of Contents (with `PublicationDetailsWidget`)
+- Article Browse/Grid
+- Editorial/About Page
+- Generic Landing Page
 
 ---
 
@@ -1264,7 +1286,23 @@ Apply this Skill when:
 
 - Full widget type definitions: `src/types/widgets.ts`
 - Widget library configuration: `src/library.ts`
-- Theme definitions: `src/data/mockThemes.ts`
+- Wiley DS V2 theme: `src/data/mockThemes.ts` (look for `wiley-figma-ds-v2`)
+- Wiley DS adapter: `src/foundation/adapters/wiley-ds-v2.ts`
 - Section prefabs: `src/components/PageBuilder/prefabSections.ts`
 - Starter page examples: `src/data/mockStarterPages.ts`
+
+---
+
+## Quick Reference: Theme Declaration
+
+```json
+{
+  "theme": "wiley-figma-ds-v2",
+  "sections": [
+    // Your page sections here
+  ]
+}
+```
+
+This is **required** at the top of every page JSON.
 
