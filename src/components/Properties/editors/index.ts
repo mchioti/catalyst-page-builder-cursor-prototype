@@ -19,6 +19,7 @@ export { CollapseEditor } from './InteractiveEditor'
 export { TabsEditor } from './TabsEditor'
 export { EditorialCardEditor } from './EditorialCardEditor'
 export { MenuEditor, MenuItemForm } from './MenuEditor'
+export { BreadcrumbsEditor } from './BreadcrumbsEditor'
 
 // Content Engine Components (reusable across publication widgets and future content widgets)
 export {
@@ -49,6 +50,7 @@ import { CollapseEditor } from './InteractiveEditor'
 import { TabsEditor } from './TabsEditor'
 import { EditorialCardEditor } from './EditorialCardEditor'
 import { MenuEditor } from './MenuEditor'
+import { BreadcrumbsEditor } from './BreadcrumbsEditor'
 
 // Registry maps widget types to their property editor components
 export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditorProps>> = {
@@ -65,6 +67,7 @@ export const PROPERTY_EDITORS: Record<string, React.ComponentType<PropertyEditor
   
   // Navigation ✅
   'menu': MenuEditor,
+  'breadcrumbs': BreadcrumbsEditor,
   
   // Interactive ✅
   'tabs': TabsEditor,

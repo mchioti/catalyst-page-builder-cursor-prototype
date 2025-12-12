@@ -833,13 +833,29 @@ Publication widgets are designed to work with **Schema.org content definitions**
 
 **Content Source Options:**
 
-| `contentSource` | How It Works | Configuration Property |
-|-----------------|--------------|------------------------|
-| `'doi'` | Fetches metadata from DOI | `doiSource: { doi: '10.1002/...' }` |
-| `'doi-list'` | Fetches multiple DOIs | `doiListSource: { dois: ['10.1002/...', ...] }` |
-| `'schema-objects'` | References stored Schema.org objects | `schemaSource: { selectedIds: ['id1', 'id2'] }` |
-| `'ai-generated'` | AI generates publication data | `aiSource: { prompt: '...', domain: 'chemistry' }` |
-| `'context'` | Gets from page/journal context | — (automatic) |
+| `contentSource` | Who Provides Content? | What Claude Sends | What Happens |
+|-----------------|----------------------|-------------------|--------------|
+| `'dynamic-query'` | **Page Builder** | Just `maxItems` and `cardConfig` | PB auto-generates random mock articles |
+| `'schema-objects'` | **Claude** | Full schema.org objects in `publications` array | PB renders exactly what Claude provides |
+| `'doi-list'` | **Page Builder** | List of DOIs in `doiSource.dois` | PB fetches metadata from hardcoded DOI database |
+
+### When to Use Each:
+
+| Use Case | Content Source | Why |
+|----------|---------------|-----|
+| **Quick placeholder** - any mock articles will do | `dynamic-query` | PB generates random content, Claude sends nothing |
+| **Claude's own mock data** - Claude crafts specific fake articles | `schema-objects` | Claude controls the content (titles, authors, etc.) |
+| **Real publications** - actual articles from DOI database | `doi-list` | Uses hardcoded chemistry/CS DOIs |
+
+**💡 Key Decision:**
+- Want PB to generate random placeholders? → `dynamic-query`
+- Want to craft your own mock articles with specific titles/authors? → `schema-objects` + `publications` array
+
+**⚡ `dynamic-query` Auto-Generates:**
+- Random article titles, authors, abstracts
+- Thumbnail images from [picsum.photos](https://picsum.photos) (portrait 160×200 for left/right, banner 880×200 for top/bottom/underlay)
+- Access status badges (70% Open Access, 30% Subscription)
+- Realistic DOIs and publication metadata
 
 ---
 
@@ -887,6 +903,76 @@ Publication widgets are designed to work with **Schema.org content definitions**
 }
 ```
 
+**Example - Dynamic Query (Claude sends NO content, PB generates it):**
+```javascript
+{
+  id: nanoid(),
+  type: 'publication-list',
+  skin: 'minimal',
+  contentSource: 'dynamic-query',  // ← PB will generate mock articles automatically
+  layout: 'list',
+  maxItems: 5,                      // ← How many mock articles to generate
+  // NO publications array needed! PB generates content automatically.
+  cardConfig: {                     // ← Just configure how cards look
+    showContentTypeLabel: true,
+    showTitle: true,
+    showAuthors: true,
+    authorStyle: 'abbreviated',
+    showAbstract: true,
+    abstractLength: 'medium',
+    showPublicationDate: true,
+    showAccessStatus: true,
+    showDOI: true,
+    showThumbnail: true,
+    thumbnailPosition: 'right'  // 'left'/'right' = portrait image, 'top'/'bottom'/'underlay' = banner image
+  }
+}
+```
+
+**Example - Schema Objects (Claude sends its own mock data):**
+```javascript
+{
+  id: nanoid(),
+  type: 'publication-list',
+  skin: 'minimal',
+  contentSource: 'schema-objects',  // ← Claude provides the content
+  publications: [                    // ← Claude's mock data as schema.org objects
+    {
+      "@type": "ScholarlyArticle",
+      "name": "Advances in Polymer Chemistry for Sustainable Materials",
+      "author": [
+        { "@type": "Person", "name": "Maria Chen", "givenName": "Maria", "familyName": "Chen" },
+        { "@type": "Person", "name": "James Rodriguez", "givenName": "James", "familyName": "Rodriguez" }
+      ],
+      "datePublished": "2024-03-15",
+      "abstract": "This study explores novel polymer synthesis techniques that reduce environmental impact while maintaining material performance...",
+      "image": "https://picsum.photos/160/200?random=123",      // Use picsum for mock images
+      "thumbnailUrl": "https://picsum.photos/160/200?random=123",
+      "thumbnailUrlWide": "https://picsum.photos/880/200?random=123",  // For top/bottom/underlay positions
+      "isAccessibleForFree": true,
+      "identifier": { "@type": "PropertyValue", "propertyID": "DOI", "value": "10.1002/mock.2024.001" },
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Journal of Polymer Science"
+      }
+    },
+    {
+      "@type": "ScholarlyArticle",
+      "name": "Machine Learning Applications in Chemical Process Optimization",
+      "author": [{ "@type": "Person", "name": "Sarah Johnson" }],
+      "datePublished": "2024-02-28",
+      "abstract": "We present a comprehensive review of machine learning methods...",
+      "image": "https://picsum.photos/160/200?random=456",
+      "isAccessibleForFree": false
+    }
+  ],
+  layout: 'list',
+  cardConfig: { ... }
+}
+```
+
+**Tip for mock images:** Use `https://picsum.photos/WIDTH/HEIGHT?random=SEED` where SEED is any number for consistent images.
+
 **Example - DOI List Source:**
 ```javascript
 {
@@ -894,7 +980,7 @@ Publication widgets are designed to work with **Schema.org content definitions**
   type: 'publication-list',
   skin: 'minimal',
   contentSource: 'doi-list',
-  doiListSource: {
+  doiSource: {
     dois: ['10.1002/example.001', '10.1002/example.002', '10.1002/example.003']
   },
   layout: 'list',
@@ -910,7 +996,7 @@ Publication widgets are designed to work with **Schema.org content definitions**
 | `showThumbnail` | boolean | Show thumbnail image |
 | `thumbnailPosition` | string | `top`, `left`, `right`, `bottom`, `underlay` |
 | `showAuthors` | boolean | Show author names |
-| `authorStyle` | string | `initials` or `full` |
+| `authorStyle` | string | `initials`, `abbreviated`, or `full` |
 | `showAbstract` | boolean | Show abstract text |
 | `abstractLength` | string | `short`, `medium`, `long` |
 | `showPublicationDate` | boolean | Show publication date |

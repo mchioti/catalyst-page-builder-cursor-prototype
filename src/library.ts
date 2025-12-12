@@ -52,7 +52,7 @@ export const LIBRARY_CONFIG: LibraryCategory[] = [
         name: 'Navigation',
         items: [
           { id: 'menu', label: 'Menu', type: 'menu', description: 'Context-aware navigation menu', skin: 'minimal', status: 'supported', legacy: { axpCategory: 'Navigation widgets', internalName: 'menu' } },
-          { id: 'breadcrumbs', label: 'Breadcrumbs', type: 'link', description: 'Alternative navigation aid', status: 'planned' },
+          { id: 'breadcrumbs', label: 'Breadcrumbs', type: 'breadcrumbs', description: 'Navigation trail showing page hierarchy', skin: 'minimal', status: 'supported' },
           { id: 'social-links', label: 'Social Links', type: 'link', description: 'Icons linking to social profiles', status: 'planned' },
         ],
       },

@@ -103,8 +103,9 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const setCurrentWebsiteId = usePageStore(state => state.setCurrentWebsiteId)
   
   // Get persona and drawer state from prototype store
-  const { persona, canEdit, drawerOpen } = usePrototypeStore()
-  const showEditButton = canEdit() // Designer and Admin can edit
+  const { persona, drawerOpen } = usePrototypeStore()
+  // Designer and Admin can edit - compute directly from persona for reactivity
+  const showEditButton = persona === 'designer' || persona === 'admin'
   
   // Sync the store's currentWebsiteId with the URL's websiteId
   // This ensures the CanvasThemeProvider can find the correct theme
@@ -120,9 +121,9 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const hasCustomHeader = siteLayout?.header && siteLayout.header.length > 0
   const hasCustomFooter = siteLayout?.footer && siteLayout.footer.length > 0
   
-  // Header/footer enabled by default (true unless explicitly set to false)
-  const headerEnabled = siteLayout?.headerEnabled !== false
-  const footerEnabled = siteLayout?.footerEnabled !== false
+  // Check if header/footer is globally enabled (site-wide setting)
+  const headerGloballyEnabled = siteLayout?.headerEnabled !== false
+  const footerGloballyEnabled = siteLayout?.footerEnabled !== false
   
   // Check for page-specific overrides from store
   const pathAfterLive = location.pathname.replace(`/live/${websiteId}`, '').replace(/^\//, '')
@@ -144,9 +145,9 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const headerToRender = pageHeaderSections || siteLayout?.header
   const footerToRender = pageFooterSections || siteLayout?.footer
   
-  // Show header/footer unless: 1) disabled at site level, OR 2) hidden for this page
-  const shouldShowHeader = headerEnabled && pageOverrides.headerOverride !== 'hide'
-  const shouldShowFooter = footerEnabled && pageOverrides.footerOverride !== 'hide'
+  // Show header/footer if: 1) globally enabled AND 2) not hidden for this specific page
+  const shouldShowHeader = headerGloballyEnabled && pageOverrides.headerOverride !== 'hide'
+  const shouldShowFooter = footerGloballyEnabled && pageOverrides.footerOverride !== 'hide'
   
   
   return (

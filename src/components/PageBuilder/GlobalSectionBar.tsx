@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react'
-import { ChevronDown, ChevronUp, Globe, EyeOff, FileText, MoreVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, Globe, EyeOff, FileText, MoreVertical, EyeOffIcon, Eye } from 'lucide-react'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import type { CanvasItem, WidgetSection } from '../../types'
 
@@ -19,11 +19,9 @@ type OverrideMode = 'global' | 'hide' | 'page-edit'
 interface GlobalSectionBarProps {
   type: 'header' | 'footer'
   sections: CanvasItem[]
-  isEnabled: boolean
   websiteId: string
   pageId: string
   usePageStore: any
-  onToggleVisibility?: () => void
   onWidgetClick?: (widgetId: string, e: React.MouseEvent) => void
   selectedWidget?: string | null
   activeWidgetToolbar?: string | null
@@ -35,11 +33,9 @@ interface GlobalSectionBarProps {
 export function GlobalSectionBar({
   type,
   sections,
-  isEnabled,
   websiteId,
   pageId,
   usePageStore,
-  onToggleVisibility,
   onWidgetClick,
   selectedWidget,
   activeWidgetToolbar,
@@ -55,10 +51,19 @@ export function GlobalSectionBar({
   // Get store actions for global section updates
   const deleteWidgetFromSiteLayout = usePageStore((state: any) => state.deleteWidgetFromSiteLayout)
   const setPageCanvas = usePageStore((state: any) => state.setPageCanvas)
+  const websites = usePageStore((state: any) => state.websites || [])
+  const updateWebsite = usePageStore((state: any) => state.updateWebsite)
   
   const isHeader = type === 'header'
   const label = isHeader ? 'Header' : 'Footer'
   const isPageEdit = overrideMode === 'page-edit'
+  
+  // Get current website and check if header/footer is globally enabled
+  const website = websites.find((w: any) => w.id === websiteId)
+  const siteLayout = website?.siteLayout || {}
+  const isGloballyEnabled = isHeader 
+    ? siteLayout.headerEnabled !== false 
+    : siteLayout.footerEnabled !== false
   
   // Get page-specific sections if in page-edit mode
   const pageKey = `${type}-${pageId}`
@@ -99,33 +104,45 @@ export function GlobalSectionBar({
   
   // Dropdown options based on current mode
   const getDropdownOptions = () => {
+    const options: { value: string; label: string; desc: string; icon: React.ReactNode }[] = []
+    
     switch (overrideMode) {
       case 'global':
         if (hasPageOverride) {
-          return [
+          options.push(
             { value: 'page-edit', label: 'View Page Override', desc: 'Edit existing page-specific version', icon: <FileText className="w-4 h-4 text-blue-500" /> },
-            { value: 'discard', label: 'Discard Page Override', desc: 'Delete page version, use global', icon: <Globe className="w-4 h-4 text-red-500" /> },
-            { value: 'hide', label: 'Hide on Page', desc: 'Hide for this page only', icon: <EyeOff className="w-4 h-4 text-gray-500" /> }
-          ]
+            { value: 'discard', label: 'Discard Page Override', desc: 'Delete page version, use global', icon: <Globe className="w-4 h-4 text-red-500" /> }
+          )
         }
-        return [
-          { value: 'hide', label: 'Hide on Page', desc: 'Hide for this page only', icon: <EyeOff className="w-4 h-4 text-gray-500" /> },
-          { value: 'page-edit', label: 'Edit for This Page', desc: 'Create page-specific version', icon: <FileText className="w-4 h-4 text-gray-500" /> }
-        ]
+        options.push(
+          { value: 'hide', label: 'Hide on Page', desc: 'Hide for this page only', icon: <EyeOff className="w-4 h-4 text-gray-500" /> }
+        )
+        break
       case 'hide':
-        return [
-          { value: 'global', label: `Show ${label}`, desc: 'Use site-wide default', icon: <Globe className="w-4 h-4 text-gray-500" /> },
-          { value: 'page-edit', label: 'Edit for This Page', desc: 'Page-specific modifications', icon: <FileText className="w-4 h-4 text-gray-500" /> }
-        ]
+        options.push(
+          { value: 'global', label: `Show ${label}`, desc: 'Use site-wide default', icon: <Globe className="w-4 h-4 text-gray-500" /> }
+        )
+        break
       case 'page-edit':
-        return [
+        options.push(
           { value: 'global', label: `Use Global ${label}`, desc: 'Switch to global (keep page copy)', icon: <Globe className="w-4 h-4 text-gray-500" /> },
           { value: 'discard', label: 'Discard Changes', desc: 'Delete page copy, use global', icon: <Globe className="w-4 h-4 text-red-500" /> },
           { value: 'hide', label: 'Hide on Page', desc: 'Hide for this page only', icon: <EyeOff className="w-4 h-4 text-gray-500" /> }
-        ]
-      default:
-        return []
+        )
+        break
     }
+    
+    // Add global hide/show option (separate from page-level hide)
+    if (isGloballyEnabled) {
+      options.push({
+        value: 'hide-global',
+        label: `Hide ${label} Globally`,
+        desc: 'Hide on all pages across the website',
+        icon: <EyeOff className="w-4 h-4 text-red-500" />
+      })
+    }
+    
+    return options
   }
   
   const dropdownOptions = getDropdownOptions()
@@ -142,32 +159,65 @@ export function GlobalSectionBar({
       const copiedSections = JSON.parse(JSON.stringify(sections)) // Deep clone
       setPageCanvas(websiteId, pageKey, copiedSections)
       onOverrideModeChange?.('page-edit')
+    } else if (value === 'hide-global') {
+      // Hide header/footer globally (across all pages)
+      if (updateWebsite && website) {
+        const updatedSiteLayout = { ...siteLayout }
+        if (isHeader) {
+          updatedSiteLayout.headerEnabled = false
+        } else {
+          updatedSiteLayout.footerEnabled = false
+        }
+        updateWebsite(websiteId, {
+          ...website,
+          siteLayout: updatedSiteLayout,
+          updatedAt: new Date()
+        })
+      }
+    } else if (value === 'show-global') {
+      // Show header/footer globally (across all pages)
+      if (updateWebsite && website) {
+        const updatedSiteLayout = { ...siteLayout }
+        if (isHeader) {
+          updatedSiteLayout.headerEnabled = true
+        } else {
+          updatedSiteLayout.footerEnabled = true
+        }
+        updateWebsite(websiteId, {
+          ...website,
+          siteLayout: updatedSiteLayout,
+          updatedAt: new Date()
+        })
+      }
     } else {
       onOverrideModeChange?.(value as OverrideMode)
     }
     setShowDropdown(false)
   }
   
-  // Don't show if disabled at site level
-  if (!isEnabled) {
+  // Show globally hidden state
+  if (!isGloballyEnabled) {
     return (
       <div className={`
-        flex items-center justify-center gap-2 py-1.5 px-4
-        ${isHeader ? 'border-b' : 'border-t'} border-dashed border-gray-200
-        bg-gray-50/50 text-gray-400 text-xs
+        flex items-center justify-between py-1.5 px-4
+        ${isHeader ? 'border-b' : 'border-t'} border-dashed border-orange-200
+        bg-orange-50/50 text-orange-600 text-xs
       `}>
-        <EyeOff className="w-3 h-3" />
-        <span>Global {label} disabled</span>
-        {onToggleVisibility && (
-          <button onClick={onToggleVisibility} className="ml-2 text-blue-500 hover:text-blue-600 hover:underline">
-            Enable
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <EyeOff className="w-3 h-3" />
+          <span>{label} hidden globally (all pages)</span>
+        </div>
+        <button 
+          onClick={() => handleOptionClick('show-global')}
+          className="text-blue-500 hover:text-blue-600 hover:underline"
+        >
+          Show {label} Globally
+        </button>
       </div>
     )
   }
   
-  // Show hidden state
+  // Show page-level hidden state
   if (overrideMode === 'hide') {
     return (
       <div className={`
@@ -270,7 +320,9 @@ export function GlobalSectionBar({
               </button>
               
               {showDropdown && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                <div className={`absolute right-0 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 ${
+                  isHeader ? 'top-full mt-1' : 'bottom-full mb-1'
+                }`}>
                   {dropdownOptions.map((option: any) => (
                     <button
                       key={option.value}

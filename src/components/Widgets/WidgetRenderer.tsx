@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel, EditorialCardWidget } from '../../types'
+import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel, EditorialCardWidget, BreadcrumbsWidget, BreadcrumbItem } from '../../types'
+import { Home, ChevronRight } from 'lucide-react'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent } from '../../utils/aiContentGeneration'
 import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
@@ -1139,6 +1140,17 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
       console.error('Error generating AI content:', error)
       publications = widget.publications // Fallback to default
     }
+  } else if (widget.contentSource === 'dynamic-query') {
+    // Dynamic query - in prototype, generate mock content based on maxItems
+    // In production, this would fetch from a backend API
+    try {
+      const itemCount = widget.maxItems || 5
+      const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
+      publications = generateAIContent(defaultPrompt)
+    } catch (error) {
+      console.error('Error generating dynamic query content:', error)
+      publications = widget.publications || []
+    }
   } else {
     // Use default publications for other content sources
     publications = widget.publications || []
@@ -2028,6 +2040,115 @@ const CollapseWidgetRenderer: React.FC<{
   )
 }
 
+// Breadcrumbs Widget Component
+const BreadcrumbsWidgetRenderer: React.FC<{ 
+  widget: BreadcrumbsWidget
+  sectionContentMode?: 'light' | 'dark'
+}> = ({ widget, sectionContentMode }) => {
+  const items = widget.items || []
+  const maxItems = widget.maxItems || 0 // 0 = no limit
+  
+  // Truncate items if maxItems is set
+  const displayItems = maxItems > 0 && items.length > maxItems 
+    ? [...items.slice(0, 1), { label: '...', href: undefined }, ...items.slice(-(maxItems - 2))]
+    : items
+  
+  // Separator characters
+  const separators: Record<string, string> = {
+    'arrow': '→',
+    'slash': '/',
+    'chevron': '›',
+    'dot': '•',
+    'custom': widget.customSeparator || '/'
+  }
+  const separator = separators[widget.separator] || '/'
+  
+  // Alignment classes
+  const alignClasses: Record<string, string> = {
+    'left': 'justify-start',
+    'center': 'justify-center',
+    'right': 'justify-end'
+  }
+  
+  // Style-specific classes
+  const getItemClasses = (isLast: boolean, isFirst: boolean) => {
+    const baseClasses = sectionContentMode === 'dark' 
+      ? 'text-gray-300 hover:text-white' 
+      : 'text-gray-600 hover:text-gray-900'
+    
+    const lastClasses = sectionContentMode === 'dark'
+      ? 'text-white font-medium'
+      : 'text-gray-900 font-medium'
+    
+    switch (widget.style) {
+      case 'pills':
+        return isLast 
+          ? `${lastClasses} bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-sm`
+          : `${baseClasses} px-3 py-1 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`
+      case 'underline':
+        return isLast
+          ? `${lastClasses} border-b-2 border-current pb-0.5`
+          : `${baseClasses} hover:border-b-2 hover:border-current pb-0.5 transition-all`
+      default: // 'default'
+        return isLast ? lastClasses : baseClasses
+    }
+  }
+  
+  const separatorClass = sectionContentMode === 'dark' 
+    ? 'text-gray-500' 
+    : 'text-gray-400'
+  
+  return (
+    <nav aria-label="Breadcrumb" className="w-full">
+      <ol className={`flex flex-wrap items-center gap-2 text-sm ${alignClasses[widget.align || 'left']}`}>
+        {displayItems.map((item, index) => {
+          const isFirst = index === 0
+          const isLast = index === displayItems.length - 1
+          const showHomeIcon = widget.showHomeIcon && isFirst
+          
+          return (
+            <li key={index} className="flex items-center gap-2">
+              {/* Separator (not for first item) */}
+              {index > 0 && (
+                widget.separator === 'chevron' ? (
+                  <ChevronRight className={`w-4 h-4 ${separatorClass}`} aria-hidden="true" />
+                ) : (
+                  <span className={separatorClass} aria-hidden="true">{separator}</span>
+                )
+              )}
+              
+              {/* Breadcrumb item */}
+              {item.href && !isLast ? (
+                <a 
+                  href={item.href} 
+                  className={`${getItemClasses(isLast, isFirst)} flex items-center gap-1.5 transition-colors`}
+                >
+                  {showHomeIcon && <Home className="w-4 h-4" />}
+                  {item.icon?.enabled && item.icon?.emoji && (
+                    <span>{item.icon.emoji}</span>
+                  )}
+                  <span>{item.label}</span>
+                </a>
+              ) : (
+                <span 
+                  className={`${getItemClasses(isLast, isFirst)} flex items-center gap-1.5`}
+                  aria-current={isLast ? 'page' : undefined}
+                >
+                  {showHomeIcon && <Home className="w-4 h-4" />}
+                  {item.icon?.enabled && item.icon?.emoji && (
+                    <span>{item.icon.emoji}</span>
+                  )}
+                  <span>{item.label}</span>
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
 
 // Main Widget Renderer Component
 export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; journalContext?: string; sectionContentMode?: 'light' | 'dark'; isLiveMode?: boolean }> = ({ widget, schemaObjects = [], journalContext, sectionContentMode, isLiveMode = false }) => {
@@ -2102,6 +2223,9 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
           </div>
         )
       }
+      
+      case 'breadcrumbs':
+        return <BreadcrumbsWidgetRenderer widget={widget as BreadcrumbsWidget} sectionContentMode={sectionContentMode} />
       
       default:
         return <div className="text-gray-500">Unsupported widget type: {(widget as any).type}</div>

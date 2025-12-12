@@ -376,7 +376,29 @@ The Page Builder is designed for **academic publishing websites**. Understanding
 | Article detail page | `PublicationDetailsWidget` | Shows full article metadata |
 | Featured research section | `PublicationListWidget` | Can limit count, show thumbnails |
 
-**Technical details:** See `PageBuilder-Widgets-Skill.md` for `contentSource` options and schema.org structure.
+**Two Options for Mock Data:**
+
+| Option | Content Source | When to Use |
+|--------|---------------|-------------|
+| **PB generates random content** | `dynamic-query` | Quick placeholders - any articles will do |
+| **Claude crafts specific mock content** | `schema-objects` | Claude wants specific titles, authors, abstracts |
+
+**Using `dynamic-query` (PB generates):**
+```json
+{ "contentSource": "dynamic-query", "maxItems": 5, "cardConfig": {...} }
+```
+
+**Using `schema-objects` (Claude provides):**
+```json
+{ 
+  "contentSource": "schema-objects", 
+  "publications": [
+    { "@type": "ScholarlyArticle", "name": "My Specific Title", ... }
+  ]
+}
+```
+
+**Technical details:** See `PageBuilder-Widgets-Skill.md` for schema.org structure and `cardConfig` properties.
 
 ### When to Use Editorial Cards Instead
 

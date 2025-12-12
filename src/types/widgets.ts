@@ -89,7 +89,7 @@ export type PublicationCardConfig = {
   
   // Author Information
   showAuthors: boolean
-  authorStyle: 'initials' | 'full'
+  authorStyle: 'initials' | 'full' | 'abbreviated'
   showAffiliations: boolean
   
   // Content Summary
@@ -262,6 +262,25 @@ export type SpacerWidget = WidgetBase & {
   height: string // e.g., '1rem', '2rem', '50px', '10vh'
 }
 
+// Breadcrumbs widget - navigation trail showing page hierarchy
+export type BreadcrumbItem = {
+  label: string
+  href?: string        // Optional - last item typically has no link
+  icon?: WidgetIcon    // Optional icon before label
+}
+
+export type BreadcrumbsWidget = WidgetBase & {
+  type: 'breadcrumbs'
+  items: BreadcrumbItem[]
+  separator: 'arrow' | 'slash' | 'chevron' | 'dot' | 'custom'
+  customSeparator?: string  // Only used if separator is 'custom'
+  showHomeIcon?: boolean    // Show home icon for first item
+  maxItems?: number         // Truncate with ellipsis if too many (0 = no limit)
+  style?: 'default' | 'pills' | 'underline'
+  align?: 'left' | 'center' | 'right'
+  source?: 'static' | 'context'  // 'context' = auto-generate from page hierarchy
+}
+
 // ====================================
 // CORE: List-Based Widget Pattern System
 // ====================================
@@ -370,7 +389,7 @@ export interface EditorialCardWidget extends WidgetBase {
   }
 }
 
-export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget | EditorialCardWidget
+export type Widget = TextWidget | ImageWidget | NavbarWidget | HTMLWidget | CodeWidget | HeadingWidget | ButtonWidget | PublicationListWidget | PublicationDetailsWidget | MenuWidget | TabsWidget | CollapseWidget | DividerWidget | SpacerWidget | EditorialCardWidget | BreadcrumbsWidget
 
 // Layout types for widget sections
 export type ContentBlockLayout = 

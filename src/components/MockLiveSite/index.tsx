@@ -6,6 +6,7 @@ import type { EditingScope, IssueType } from './TemplateEditingScopeButton'
 import { ConflictResolutionDialog } from './ConflictResolutionDialog'
 import { createTOCTemplate } from '../Templates/TOCTemplate'
 import { useBrandingStore } from '../../stores/brandingStore'
+import { usePrototypeStore } from '../../stores/prototypeStore'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { createDebugLogger } from '../../utils/logger'
 import { mockStarterPages } from '../../data/mockStarterPages'
@@ -750,6 +751,10 @@ export function MockLiveSite({
   
   debugLog('log', '🚀 MockLiveSite RENDER START:', { mockLiveSiteRoute })
   
+  // Get persona from prototype store - only show edit button for designer/admin
+  const persona = usePrototypeStore(state => state.persona)
+  const showEditButton = persona === 'designer' || persona === 'admin'
+  
   // Get canvas data from store (MUST BE FIRST - needed by other hooks)
   const canvasItems = usePageStore((state: any) => state.canvasItems) as CanvasItem[]
   const globalTemplateCanvas = usePageStore((state: any) => state.globalTemplateCanvas) as CanvasItem[]
@@ -1410,15 +1415,18 @@ export function MockLiveSite({
       </div>
 
       {/* Smart Editing Scope Button - OUTSIDE main container */}
-      <div 
-        className="fixed bottom-6 right-20"
-        style={{ zIndex: 999998, position: 'fixed' }}
-      >
-        <TemplateEditingScopeButton 
-          mockLiveSiteRoute={mockLiveSiteRoute}
-          onEdit={handleScopeEdit}
-        />
-      </div>
+      {/* Only show for Designer and Admin personas */}
+      {showEditButton && (
+        <div 
+          className="fixed bottom-6 right-20"
+          style={{ zIndex: 999998, position: 'fixed' }}
+        >
+          <TemplateEditingScopeButton 
+            mockLiveSiteRoute={mockLiveSiteRoute}
+            onEdit={handleScopeEdit}
+          />
+        </div>
+      )}
 
         {/* Conflict Resolution Dialog */}
         <ConflictResolutionDialog

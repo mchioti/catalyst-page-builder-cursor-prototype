@@ -391,6 +391,25 @@ export function PropertiesPanel({
   }
 
   const updateSection = (updates: Partial<WidgetSection>) => {
+    // Helper to clear legacy padding properties when new padding is set
+    // This avoids CSS specificity conflicts (individual padding properties override shorthand)
+    const processUpdatesWithPadding = (section: any, updates: any) => {
+      const processed = { ...section, ...updates }
+      
+      // When setting new `padding` property, clear legacy `styling.padding*`
+      if ('padding' in updates && section.styling) {
+        processed.styling = {
+          ...section.styling,
+          paddingTop: undefined,
+          paddingBottom: undefined,
+          paddingLeft: undefined,
+          paddingRight: undefined
+        }
+      }
+      
+      return processed
+    }
+    
     // Check if section is from global header/footer
     const isInHeader = headerSections.some(s => s.id === selectedWidget)
     const isInFooter = footerSections.some(s => s.id === selectedWidget)
@@ -411,7 +430,7 @@ export function PropertiesPanel({
         }
         
         const updatedSections = pageSections.map((section: any) => 
-          section.id === selectedWidget ? { ...section, ...updates } : section
+          section.id === selectedWidget ? processUpdatesWithPadding(section, updates) : section
         )
         
         if (setPageCanvas) {
@@ -432,7 +451,7 @@ export function PropertiesPanel({
     // Regular canvas section update
     const updatedCanvasItems = canvasItems.map((item: CanvasItem) => {
       if (isSection(item) && item.id === selectedWidget) {
-        return { ...item, ...updates }
+        return processUpdatesWithPadding(item, updates)
       }
       return item
     })
@@ -1276,47 +1295,72 @@ export function PropertiesPanel({
                 <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Spacing & Layout</h4>
                 
                 {/* Section Padding */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Section Padding</label>
-                  {hasSpacingTokens && (
-                    <div className="mb-3">
-                      <p className="text-xs text-gray-500 mb-2">Quick presets (Wiley DS):</p>
-                      <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { label: 'None', value: 'none' },
-                          { label: 'SM', value: 'sm' },
-                          { label: 'MD', value: 'md' },
-                          { label: 'LG', value: 'lg' },
-                          { label: 'XL', value: 'xl' },
-                          { label: '2XL', value: '2xl' },
-                          { label: '3XL', value: '3xl' }
-                        ].map((preset) => (
-                          <button
-                            key={preset.value}
-                            onClick={() => updateSection({
-                              padding: `semantic.${preset.value}`
-                            })}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-blue-50 transition-colors"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
+                {(() => {
+                  // Compute effective padding from new property OR legacy styling
+                  const legacyPaddingMap: { [key: string]: string } = {
+                    'small': '16px', 'medium': '24px', 'large': '32px'
+                  }
+                  const legacyPaddingTop = section.styling?.paddingTop 
+                    ? (legacyPaddingMap[section.styling.paddingTop] || section.styling.paddingTop)
+                    : undefined
+                  const legacyPaddingBottom = section.styling?.paddingBottom
+                    ? (legacyPaddingMap[section.styling.paddingBottom] || section.styling.paddingBottom)
+                    : undefined
+                  
+                  // If legacy values are equal, show as unified padding
+                  const displayValue = section.padding || (legacyPaddingTop === legacyPaddingBottom ? legacyPaddingTop : '') || ''
+                  
+                  return (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Section Padding</label>
+                      {hasSpacingTokens && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 mb-2">Quick presets (Wiley DS):</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              { label: 'None', value: '0px' },
+                              { label: 'SM', value: '8px' },
+                              { label: 'MD', value: '16px' },
+                              { label: 'LG', value: '24px' },
+                              { label: 'XL', value: '32px' },
+                              { label: '2XL', value: '40px' },
+                              { label: '3XL', value: '64px' }
+                            ].map((preset) => (
+                              <button
+                                key={preset.value}
+                                onClick={() => updateSection({
+                                  padding: preset.value
+                                })}
+                                className={`px-2 py-1 text-xs border rounded transition-colors ${
+                                  (section.padding === preset.value || (!section.padding && displayValue === preset.value))
+                                    ? 'bg-blue-100 border-blue-500 text-blue-700 font-medium' 
+                                    : 'border-gray-300 hover:bg-blue-50'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        value={displayValue}
+                        onChange={(e) => updateSection({ padding: e.target.value || undefined })}
+                        placeholder="e.g., 24px, 1.5rem, 2em"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      />
+                      {!section.padding && legacyPaddingTop && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          ⚠️ Using legacy padding ({legacyPaddingTop}). Set a value to migrate.
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Use presets above or custom values (e.g., 24px, 1.5rem)
+                      </p>
                     </div>
-                  )}
-                  <input
-                    type="text"
-                    value={section.padding || ''}
-                    onChange={(e) => updateSection({ padding: e.target.value || undefined })}
-                    placeholder={hasSpacingTokens ? "semantic.lg or 24px" : "e.g., 24px or 1.5rem"}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {hasSpacingTokens 
-                      ? "Use presets above or custom values (e.g., semantic.lg, base.6, 24px)"
-                      : "Use CSS units (e.g., 24px, 1.5rem)"}
-                  </p>
-                </div>
+                  )
+                })()}
                 
                 {/* Min Height */}
                 <div>
@@ -1988,8 +2032,8 @@ export function PropertiesPanel({
       {(() => {
         const WidgetEditor = PROPERTY_EDITORS[widget.type]
         if (WidgetEditor) {
-          // Menu editor needs special props for panel expansion
-          if (widget.type === 'menu') {
+          // Editors with expandable drawers need special props for panel expansion
+          if (widget.type === 'menu' || widget.type === 'breadcrumbs') {
             return (
               <WidgetEditor 
                 widget={widget} 

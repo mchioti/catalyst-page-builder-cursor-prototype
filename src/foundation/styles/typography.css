@@ -140,19 +140,19 @@
    ============================================================================ */
 
 .foundation-heading--weight-regular {
-  font-weight: var(--foundation-font-weight-regular) !important;
+  font-weight: var(--foundation-font-weight-regular);
 }
 
 .foundation-heading--weight-medium {
-  font-weight: var(--foundation-font-weight-medium) !important;
+  font-weight: var(--foundation-font-weight-medium);
 }
 
 .foundation-heading--weight-semibold {
-  font-weight: var(--foundation-font-weight-semibold) !important;
+  font-weight: var(--foundation-font-weight-semibold);
 }
 
 .foundation-heading--weight-bold {
-  font-weight: var(--foundation-font-weight-bold) !important;
+  font-weight: var(--foundation-font-weight-bold);
 }
 
 /* ============================================================================

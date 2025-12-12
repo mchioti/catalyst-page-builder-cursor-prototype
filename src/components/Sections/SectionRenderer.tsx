@@ -444,8 +444,10 @@ export function SectionRenderer({
     })
     
     // Use inline styles for max-width to support any custom breakpoint value
+    // NOTE: Removed px-4 sm:px-6 lg:px-8 - section.padding should handle all padding
+    // This wrapper only constrains content width, doesn't add padding
     return {
-      classes: 'mx-auto px-4 sm:px-6 lg:px-8',
+      classes: 'mx-auto',
       styles: {
         maxWidth: desktopBreakpoint,
         width: '100%'
@@ -488,7 +490,9 @@ export function SectionRenderer({
       gap: 'medium'
     }
     
-    const padding = getSectionPaddingClasses(styling)
+    // IMPORTANT: Skip padding classes if section.padding is set (inline style takes priority)
+    // Tailwind's individual padding classes (pt-6, pb-6) would override inline shorthand padding
+    const padding = section.padding ? '' : getSectionPaddingClasses(styling)
     const gap = getGapClasses(styling.gap)
     
     return `${padding} ${gap}`.trim()
@@ -815,6 +819,7 @@ export function SectionRenderer({
           ...getSectionBackgroundStyles(section),
           ...getOverlayStyles(section),
           // NEW: Top-level padding with spacing token support (e.g., 'semantic.lg', 'base.6', '24px')
+          // When section.padding is set, it takes priority over all legacy styling.padding* properties
           ...(section.padding && { 
             padding: resolveSpacingToken(section.padding, usePageStore) || section.padding
           }),
@@ -823,25 +828,26 @@ export function SectionRenderer({
             minHeight: resolveSpacingToken(section.minHeight, usePageStore) || section.minHeight
           }),
           // LEGACY: Support both semantic values ('small', 'medium', 'large') and pixel values ('80px', '96px')
-          ...(section.styling?.paddingTop && { 
+          // IMPORTANT: Only apply legacy padding if section.padding is NOT set (new property takes priority)
+          ...(!section.padding && section.styling?.paddingTop && { 
             paddingTop: section.styling.paddingTop === 'large' ? '32px' 
               : section.styling.paddingTop === 'medium' ? '24px'
               : section.styling.paddingTop === 'small' ? '16px'
               : section.styling.paddingTop // Use as-is if it's a pixel value like '80px'
           }),
-          ...(section.styling?.paddingBottom && { 
+          ...(!section.padding && section.styling?.paddingBottom && { 
             paddingBottom: section.styling.paddingBottom === 'large' ? '32px'
               : section.styling.paddingBottom === 'medium' ? '24px'
               : section.styling.paddingBottom === 'small' ? '16px'
               : section.styling.paddingBottom
           }),
-          ...(section.styling?.paddingLeft && { 
+          ...(!section.padding && section.styling?.paddingLeft && { 
             paddingLeft: section.styling.paddingLeft === 'large' ? '32px'
               : section.styling.paddingLeft === 'medium' ? '24px'
               : section.styling.paddingLeft === 'small' ? '16px'
               : section.styling.paddingLeft
           }),
-          ...(section.styling?.paddingRight && { 
+          ...(!section.padding && section.styling?.paddingRight && { 
             paddingRight: section.styling.paddingRight === 'large' ? '32px'
               : section.styling.paddingRight === 'medium' ? '24px'
               : section.styling.paddingRight === 'small' ? '16px'
@@ -1184,6 +1190,16 @@ export function SectionRenderer({
                         console.error('Error generating AI content in pattern mode:', error)
                         publications = pubWidget.publications || []
                       }
+                    } else if (pubWidget.contentSource === 'dynamic-query') {
+                      // Dynamic query - generate mock content in prototype
+                      try {
+                        const itemCount = pubWidget.maxItems || 5
+                        const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
+                        publications = generateAIContent(defaultPrompt)
+                      } catch (error) {
+                        console.error('Error generating dynamic query content in pattern mode:', error)
+                        publications = pubWidget.publications || []
+                      }
                     } else {
                       // Default: use publications array from widget
                       publications = pubWidget.publications || []
@@ -1451,6 +1467,16 @@ export function SectionRenderer({
                         }
                       } catch (error) {
                         console.error('Error generating AI content in flex pattern mode:', error)
+                        publications = pubWidget.publications || []
+                      }
+                    } else if (pubWidget.contentSource === 'dynamic-query') {
+                      // Dynamic query - generate mock content in prototype
+                      try {
+                        const itemCount = pubWidget.maxItems || 5
+                        const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
+                        publications = generateAIContent(defaultPrompt)
+                      } catch (error) {
+                        console.error('Error generating dynamic query content in flex pattern mode:', error)
                         publications = pubWidget.publications || []
                       }
                     } else {

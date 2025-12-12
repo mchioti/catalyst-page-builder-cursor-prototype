@@ -258,7 +258,9 @@ export function PageBuilderEditor() {
   
   // Auto-save canvas changes to pageCanvasData
   useEffect(() => {
-    if (websiteId && pageName && canvasItems.length > 0 && loadedPageRef.current === `${websiteId}:${pageName}`) {
+    // Use startsWith to handle pageKeys with suffixes (e.g., journals page: "websiteId:journals:journals-5")
+    const baseKey = `${websiteId}:${pageName}`
+    if (websiteId && pageName && canvasItems.length > 0 && loadedPageRef.current?.startsWith(baseKey)) {
       // Save canvas changes
       setPageCanvas(websiteId, pageName, canvasItems)
     }

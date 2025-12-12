@@ -227,6 +227,16 @@ export function generateAIContent(prompt: string): any[] {
 
     const journal = journals[Math.floor(Math.random() * journals.length)]
     
+    // Random access status (70% open access)
+    const isOpenAccess = Math.random() > 0.3
+    
+    // Random thumbnails from picsum with unique seed - different sizes for different positions
+    const thumbnailSeed = Math.floor(Math.random() * 1000000)
+    // Portrait thumbnail (for left/right positions)
+    const thumbnailUrl = `https://picsum.photos/160/200?random=${thumbnailSeed}`
+    // Wide/banner thumbnail (for top/bottom/underlay positions)
+    const thumbnailUrlWide = `https://picsum.photos/880/200?random=${thumbnailSeed}`
+    
     const article = {
     "@context": "https://schema.org",
     "@type": "ScholarlyArticle",
@@ -241,6 +251,10 @@ export function generateAIContent(prompt: string): any[] {
       "description": abstract,
       "author": selectedAuthors,
       "datePublished": publishDate.toISOString().split('T')[0],
+      "isAccessibleForFree": isOpenAccess,
+      "image": thumbnailUrl,
+      "thumbnailUrl": thumbnailUrl,
+      "thumbnailUrlWide": thumbnailUrlWide,
     "isPartOf": {
       "@type": "PublicationIssue",
         "name": journal,

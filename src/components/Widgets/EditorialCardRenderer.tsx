@@ -69,7 +69,7 @@ export const EditorialCardRenderer: React.FC<EditorialCardRendererProps> = ({ wi
   
   // Render image
   const renderImage = () => {
-    if (!image.src) return null
+    if (!image?.src) return null
     
     return (
       <img 

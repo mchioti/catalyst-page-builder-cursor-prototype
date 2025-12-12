@@ -161,8 +161,28 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
     return parts.join(', ')
   }
 
+  // Helper to get thumbnail URL from schema.org properties
+  // Uses wide image for top/bottom/underlay, portrait for left/right
+  const getThumbnailUrl = (item: any, position: string) => {
+    const isWidePosition = position === 'top' || position === 'bottom' || position === 'underlay'
+    if (isWidePosition && item.thumbnailUrlWide) {
+      return item.thumbnailUrlWide
+    }
+    return item.thumbnailUrl || item.image || item.thumbnail || null
+  }
+
   // Helper to get access status badge
-  const getAccessStatusBadge = (accessMode: string | undefined) => {
+  const getAccessStatusBadge = (item: any) => {
+    // Check for isAccessibleForFree (schema.org standard)
+    if (item.isAccessibleForFree === true) {
+      return <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">Open Access</span>
+    }
+    if (item.isAccessibleForFree === false) {
+      return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">Subscription</span>
+    }
+    
+    // Fallback to legacy accessMode
+    const accessMode = item.accessMode
     if (!accessMode) return null
     
     const badges = {
@@ -226,26 +246,75 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
   const backgroundClasses = getBackgroundClasses();
   const backgroundStyle = getBackgroundStyle();
 
+  // Get thumbnail position and URL (position affects image dimensions)
+  const thumbnailPosition = finalConfig.thumbnailPosition || 'left'
+  const thumbnailUrl = getThumbnailUrl(article, thumbnailPosition)
+  const showThumbnail = finalConfig.showThumbnail && thumbnailUrl
+  
+  // Thumbnail component
+  const ThumbnailImage = () => (
+    <div className={`flex-shrink-0 ${
+      thumbnailPosition === 'top' || thumbnailPosition === 'bottom' ? 'w-full h-40' :
+      thumbnailPosition === 'underlay' ? 'absolute inset-0' : 'w-24 h-32'
+    }`}>
+      <img 
+        src={thumbnailUrl} 
+        alt={getTitle(article)}
+        className={`object-cover rounded ${
+          thumbnailPosition === 'underlay' ? 'w-full h-full opacity-20' : 'w-full h-full'
+        }`}
+        onError={(e) => {
+          // Hide broken images
+          (e.target as HTMLImageElement).style.display = 'none'
+        }}
+      />
+    </div>
+  )
+
+  // Determine if horizontal layout (thumbnail left/right)
+  const isHorizontalLayout = showThumbnail && (thumbnailPosition === 'left' || thumbnailPosition === 'right')
+
   return (
     <div 
-      className={`publication-card h-full flex flex-col rounded-lg p-6 ${alignmentClass} ${backgroundClasses}`}
+      className={`publication-card h-full rounded-lg p-6 ${alignmentClass} ${backgroundClasses} ${
+        thumbnailPosition === 'underlay' ? 'relative overflow-hidden' : ''
+      }`}
       style={backgroundStyle}
     >
-      {/* Header with type label and access status */}
-      <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
-        <div className="flex items-center gap-2">
-          {finalConfig.showContentTypeLabel && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
-              {getContentType(article)}
-            </span>
-          )}
-          {finalConfig.showAccessStatus && (
-            getAccessStatusBadge(article.accessMode)
-          )}
+      {/* Underlay thumbnail */}
+      {showThumbnail && thumbnailPosition === 'underlay' && <ThumbnailImage />}
+      
+      {/* Top thumbnail */}
+      {showThumbnail && thumbnailPosition === 'top' && (
+        <div className="mb-4 -mx-6 -mt-6">
+          <ThumbnailImage />
         </div>
-      </div>
+      )}
+      
+      {/* Main content wrapper - horizontal when thumbnail is left/right */}
+      <div className={`flex ${isHorizontalLayout ? 'flex-row gap-4' : 'flex-col'} ${
+        thumbnailPosition === 'underlay' ? 'relative z-10' : ''
+      }`}>
+        {/* Left thumbnail */}
+        {showThumbnail && thumbnailPosition === 'left' && <ThumbnailImage />}
+        
+        {/* Content */}
+        <div className="flex-1 flex flex-col">
+          {/* Header with type label and access status */}
+          <div className={`flex items-center ${badgeJustifyClass} mb-4`}>
+            <div className="flex items-center gap-2">
+              {finalConfig.showContentTypeLabel && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
+                  {getContentType(article)}
+                </span>
+              )}
+              {finalConfig.showAccessStatus && (
+                getAccessStatusBadge(article)
+              )}
+            </div>
+          </div>
 
-      {/* Article/Chapter Title */}
+          {/* Article/Chapter Title */}
       {finalConfig.showTitle && (
         <h3 className={`text-lg font-semibold ${textColors.primary} mb-2 leading-tight`}>
           {getTitle(article)}
@@ -336,6 +405,18 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
           </div>
         )}
       </div>
+        </div>
+        
+        {/* Right thumbnail */}
+        {showThumbnail && thumbnailPosition === 'right' && <ThumbnailImage />}
+      </div>
+      
+      {/* Bottom thumbnail */}
+      {showThumbnail && thumbnailPosition === 'bottom' && (
+        <div className="mt-4 -mx-6 -mb-6">
+          <ThumbnailImage />
+        </div>
+      )}
     </div>
   )
 }

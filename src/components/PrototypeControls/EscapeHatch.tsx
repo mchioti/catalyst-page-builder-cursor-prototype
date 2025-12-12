@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   ChevronRight, 
   Home, 
@@ -13,6 +13,7 @@ import {
   Search
 } from 'lucide-react'
 import { usePrototypeStore, type Persona, type ConsoleMode } from '../../stores/prototypeStore'
+import { usePageStore } from '../../stores'
 
 interface EscapeHatchProps {
   context: 'live-site' | 'design-console' | 'editor'
@@ -31,9 +32,29 @@ export function EscapeHatch({
 }: EscapeHatchProps) {
   const [showJournals, setShowJournals] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   
   // Drawer state is in the store so parent layouts can respond to it
   const { persona, setPersona, consoleMode, setConsoleMode, drawerOpen, setDrawerOpen } = usePrototypeStore()
+  
+  // Get setCurrentView from page store to sync view state with routing
+  const setCurrentView = usePageStore(state => state.setCurrentView)
+  
+  // Navigation helper that closes drawer, sets view state, and navigates
+  const navigateTo = (path: string) => {
+    setDrawerOpen(false)
+    
+    // Set the currentView state based on target path to ensure AppV1 renders correctly
+    if (path === '/v1') {
+      setCurrentView('design-console')
+    } else if (path.startsWith('/live/')) {
+      setCurrentView('mock-live-site')
+    } else if (path.startsWith('/edit/')) {
+      setCurrentView('page-builder')
+    }
+    
+    navigate(path)
+  }
   
   const basePath = websiteId ? `/live/${websiteId}` : ''
   
@@ -124,21 +145,70 @@ export function EscapeHatch({
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase mb-3">Quick Actions</div>
               <div className="space-y-2">
-                {context !== 'live-site' && websiteId && (
-                  <Link to={`/live/${websiteId}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
-                    <Eye className="w-4 h-4" /><span className="text-sm font-medium">View Live Site</span>
-                  </Link>
-                )}
-                {context === 'live-site' && websiteId && (
-                  <Link to={`/edit/${websiteId}/home?scope=individual`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-                    <Edit3 className="w-4 h-4" /><span className="text-sm font-medium">Edit This Page</span>
-                  </Link>
-                )}
-                {context !== 'design-console' && (
-                  <Link to="/v1" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">
-                    <Layers className="w-4 h-4" /><span className="text-sm font-medium">Design Console</span>
-                  </Link>
-                )}
+                {/* View Live Site - disabled when already on live site or no websiteId */}
+                {(() => {
+                  const isDisabled = context === 'live-site' || !websiteId
+                  const disabledReason = context === 'live-site' ? 'Already viewing' : 'No website selected'
+                  return (
+                    <button 
+                      onClick={() => !isDisabled && navigateTo(`/live/${websiteId}`)}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                        isDisabled 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-green-50 text-green-700 hover:bg-green-100'
+                      }`}
+                      title={isDisabled ? disabledReason : 'View Live Site'}
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="text-sm font-medium">View Live Site</span>
+                      {isDisabled && <span className="ml-auto text-xs">({disabledReason})</span>}
+                    </button>
+                  )
+                })()}
+                
+                {/* Edit This Page - disabled when not on live site or no websiteId */}
+                {(() => {
+                  const isDisabled = context !== 'live-site' || !websiteId
+                  const disabledReason = context === 'editor' ? 'Already editing' : context === 'design-console' ? 'Go to Live Site first' : 'No website selected'
+                  return (
+                    <button 
+                      onClick={() => !isDisabled && navigateTo(`/edit/${websiteId}/home?scope=individual`)}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                        isDisabled 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      }`}
+                      title={isDisabled ? disabledReason : 'Edit This Page'}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Edit This Page</span>
+                      {isDisabled && <span className="ml-auto text-xs">({disabledReason})</span>}
+                    </button>
+                  )
+                })()}
+                
+                {/* Design Console - disabled when already in design console */}
+                {(() => {
+                  const isDisabled = context === 'design-console'
+                  return (
+                    <button 
+                      onClick={() => !isDisabled && navigateTo('/v1')}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                        isDisabled 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                      }`}
+                      title={isDisabled ? 'Already in Design Console' : 'Design Console'}
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span className="text-sm font-medium">Design Console</span>
+                      {isDisabled && <span className="ml-auto text-xs">(Already here)</span>}
+                    </button>
+                  )
+                })()}
               </div>
             </div>
             
@@ -146,7 +216,7 @@ export function EscapeHatch({
               <div className="text-xs font-semibold text-gray-500 uppercase mb-3">Simulating Persona</div>
               <div className="space-y-2">
                 {(Object.keys(personaLabels) as Persona[]).map((p) => (
-                  <button key={p} onClick={() => setPersona(p)} className={`w-full flex items-start gap-3 px-3 py-2 rounded-lg transition-colors text-left ${persona === p ? 'ring-2 ring-amber-500 bg-amber-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+                  <button key={p} onClick={() => { setPersona(p); setDrawerOpen(false); }} className={`w-full flex items-start gap-3 px-3 py-2 rounded-lg transition-colors text-left ${persona === p ? 'ring-2 ring-amber-500 bg-amber-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
                     <span className="text-lg mt-0.5">{personaLabels[p].icon}</span>
                     <div className="flex-1">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${personaLabels[p].color}`}>{personaLabels[p].label}</span>

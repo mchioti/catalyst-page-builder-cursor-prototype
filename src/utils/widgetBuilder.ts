@@ -17,7 +17,8 @@ import type {
   HeadingWidget, 
   ButtonWidget, 
   PublicationListWidget, 
-  PublicationDetailsWidget 
+  PublicationDetailsWidget,
+  BreadcrumbsWidget
 } from '../types/widgets'
 import { type LibraryItem as SpecItem } from '../library'
 import { MOCK_SCHOLARLY_ARTICLES, DEFAULT_PUBLICATION_CARD_CONFIG } from '../constants'
@@ -290,6 +291,24 @@ export function buildWidget(item: SpecItem): Widget {
         iconPosition: 'right',
         style: 'default'
       } as any; // CollapseWidget
+    
+    case 'breadcrumbs':
+      // Navigation breadcrumbs trail
+      return {
+        ...baseWidget,
+        type: 'breadcrumbs',
+        items: [
+          { label: 'Home', href: '/' },
+          { label: 'Section', href: '/section' },
+          { label: 'Current Page' } // Last item has no href
+        ],
+        separator: 'chevron',
+        showHomeIcon: true,
+        maxItems: 0, // No limit
+        style: 'default',
+        align: 'left',
+        source: 'static'
+      } as BreadcrumbsWidget;
     
     default:
       // Fallback to text widget

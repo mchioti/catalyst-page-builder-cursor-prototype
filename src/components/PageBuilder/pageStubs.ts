@@ -956,7 +956,7 @@ export function createWileyHomepageStub(): CanvasItemStub[] {
           ]
         }
       ],
-      padding: 'semantic.3xl',
+      padding: '64px',
       minHeight: '500px',
       styling: {
         gap: 'large',
@@ -1206,7 +1206,7 @@ export function createWileyHomepageStub(): CanvasItemStub[] {
           ]
         }
       ],
-      padding: 'semantic.3xl',
+      padding: '64px',
       styling: {
         gap: 'large',
         variant: 'full-width',

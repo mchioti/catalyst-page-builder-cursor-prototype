@@ -1056,7 +1056,7 @@ export const createWileyDSV2HeroPrefab = (): CanvasItem => {
   const typedSection = heroSection as WidgetSection
   
   // NEW: Use semantic spacing tokens
-  typedSection.padding = 'semantic.3xl'  // 64px - Figma semantic token
+  typedSection.padding = '64px'  // 3XL from Wiley DS
   typedSection.minHeight = '500px'       // Figma spec: L1 template VAR 2 (shorter hero)
   
   // Styling: Shorter hero with background image (L1 template VAR 2)
@@ -1129,7 +1129,7 @@ export const createWileyDSV2CardGridPrefab = (): CanvasItem => {
   const typedSection = cardGridSection as WidgetSection
   
   // NEW: Use semantic spacing tokens
-  typedSection.padding = 'semantic.3xl'  // 64px vertical, matches hero section
+  typedSection.padding = '64px'  // 3XL from Wiley DS, matches hero section
   
   // Styling: Dark Heritage 900 background with generous padding
   typedSection.styling = {

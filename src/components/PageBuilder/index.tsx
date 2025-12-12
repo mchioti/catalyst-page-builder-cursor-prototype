@@ -208,8 +208,7 @@ export function PageBuilder({
   const siteLayout = (currentWebsite as any)?.siteLayout
   const headerSections = siteLayout?.header || []
   const footerSections = siteLayout?.footer || []
-  const headerEnabled = siteLayout?.headerEnabled !== false
-  const footerEnabled = siteLayout?.footerEnabled !== false
+  // Header/footer are always enabled - visibility is controlled per-page via dropdown
   
   // Get page-level layout overrides from store
   const { getPageLayoutOverrides, setPageLayoutOverride } = usePageStore()
@@ -1775,7 +1774,8 @@ export function PageBuilder({
                 )}
                 
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       // Check if we're in a routed context (URL-based editing) or V1 internal
                       if (window.location.pathname.startsWith('/edit/')) {
                         // Extract websiteId from URL: /edit/:websiteId/:pageId
@@ -1783,7 +1783,11 @@ export function PageBuilder({
                         const websiteId = pathParts[2] || 'catalyst-demo'
                         const pageId = pathParts[3] || ''
                         // Use client-side navigation to preserve state
-                        navigate(`/live/${websiteId}${pageId ? '/' + pageId : ''}`)
+                        // Homepage is at /live/:websiteId (not /live/:websiteId/home)
+                        const livePath = pageId === 'home' || pageId === '' 
+                          ? `/live/${websiteId}` 
+                          : `/live/${websiteId}/${pageId}`
+                        navigate(livePath)
                       } else {
                         const { setCurrentView } = usePageStore.getState()
                         setCurrentView('mock-live-site')
@@ -1795,12 +1799,13 @@ export function PageBuilder({
                     Preview Changes
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Always set the view state first, then navigate if needed
+                      setCurrentView('design-console')
                       // Check if we're in a routed context (URL-based editing) or V1 internal
                       if (window.location.pathname.startsWith('/edit/')) {
                         navigate('/v1')
-                      } else {
-                        setCurrentView('design-console')
                       }
                     }}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
@@ -1955,7 +1960,6 @@ export function PageBuilder({
               <GlobalSectionBar
                 type="header"
                 sections={headerSections}
-                isEnabled={headerEnabled}
                 websiteId={currentWebsiteId}
                 pageId={currentPageId}
                 usePageStore={usePageStore}
@@ -2006,7 +2010,6 @@ export function PageBuilder({
               <GlobalSectionBar
                 type="footer"
                 sections={footerSections}
-                isEnabled={footerEnabled}
                 websiteId={currentWebsiteId}
                 pageId={currentPageId}
                 usePageStore={usePageStore}

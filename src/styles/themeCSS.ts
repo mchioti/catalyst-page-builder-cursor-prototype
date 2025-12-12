@@ -314,7 +314,7 @@ const generateThemeCSSInternal = (theme: any): string => {
 /* Button Styles - OUTLINE */
 /* 🎨 Context-aware: Adapt border/text color based on background */
 .btn-outline-color1 {
-  box-shadow: none !important; /* Outline buttons have no shadow by default */
+  box-shadow: none; /* Outline buttons have no shadow by default */
 }
 
 .btn-outline-color1.on-light-bg {
@@ -327,7 +327,7 @@ const generateThemeCSSInternal = (theme: any): string => {
   background: var(--semantic-primary-dark, var(--theme-color-primary));
   color: white;
   border-color: var(--semantic-primary-dark, var(--theme-color-primary));
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-outline-color1.on-light-bg:active {
@@ -345,7 +345,7 @@ const generateThemeCSSInternal = (theme: any): string => {
   background: var(--semantic-primary-light, var(--theme-color-primary));
   color: black;
   border-color: var(--semantic-primary-light, var(--theme-color-primary));
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-outline-color1.on-dark-bg:active {
@@ -400,8 +400,8 @@ const generateThemeCSSInternal = (theme: any): string => {
 /* Button Styles - LINK */
 /* 🎨 Context-aware: Adapt text color based on background */
 .btn-link-color1 {
-  box-shadow: none !important; /* Link buttons have no shadow */
-  padding: 0 !important;
+  box-shadow: none; /* Link buttons have no shadow */
+  padding: 0;
 }
 
 .btn-link-color1.on-light-bg {
