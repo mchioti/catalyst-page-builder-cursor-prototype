@@ -123,6 +123,8 @@ import { SchemaFormEditor } from '../Schema/SchemaFormEditor'
 import { LayoutPicker } from '../Canvas/LayoutPicker'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { LayoutRenderer } from '../Canvas/LayoutRenderer'
+import { NotificationBell } from '../Notifications/NotificationBell'
+import { NewBadge } from '../shared/NewBadge'
 
 // Type imports
 import type { 
@@ -1813,6 +1815,9 @@ export function PageBuilder({
                   <Settings className="w-4 h-4" />
                     Design Console
                 </button>
+                
+                {/* Notification Bell */}
+                <NotificationBell />
               </div>
             </div>
             
@@ -2278,7 +2283,10 @@ function DIYZoneContent({ showToast, usePageStore, buildWidget }: {
                   <div key={page.id} className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{page.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{page.name}</span>
+                          <NewBadge itemId={`starter:${page.id}`} variant="pill" />
+                        </div>
                         <div className="text-xs text-gray-500 mt-1">{page.description}</div>
                         <div className="text-xs text-gray-400 mt-1">
                           {itemCount} section{itemCount !== 1 ? 's' : ''} • 

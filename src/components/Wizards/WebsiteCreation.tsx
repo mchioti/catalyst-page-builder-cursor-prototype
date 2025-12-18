@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
-import { Palette } from 'lucide-react'
 import { getStarterTemplateForTheme } from '../../utils/themeStarters'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
 import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
 import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../PageBuilder/prefabSections'
+import { DesignSystemCard } from '../shared/DesignSystemCard'
 
 // TODO: Add proper type imports when extracting store
 interface Website {
@@ -51,7 +51,7 @@ interface WebsiteCreationWizardProps {
   onComplete: (website: Website) => void
   onCancel: () => void
   usePageStore: any // TODO: Type this properly when extracting store
-  themePreviewImages: Record<string, string>
+  themePreviewImages?: Record<string, string> // Optional, no longer used in compact card view
 }
 
 interface PageStore {
@@ -62,7 +62,7 @@ interface PageStore {
   setCurrentView: (view: string) => void
 }
 
-export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, themePreviewImages }: WebsiteCreationWizardProps) {
+export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore }: WebsiteCreationWizardProps) {
   const { addWebsite, themes: availableThemes, setCurrentWebsiteId, replaceCanvasItems, setCurrentView } = usePageStore() as PageStore
   const { initializeWebsiteBranding, updateWebsiteBranding } = useBrandingStore()
   const [step, setStep] = useState(1)
@@ -370,13 +370,13 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
               </div>
             )}
             
-            {/* STEP 2: PAGE TEMPLATES */}
+            {/* STEP 2: PAGE LAYOUTS */}
             {step === 2 && selectedTheme && (
               <div>
                 <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Review & Select Page Templates</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Review & Select Page Layouts</h4>
                   <p className="text-gray-600">
-                    Showing templates for: {' '}
+                    Showing page layouts for: {' '}
                     {websiteData.purpose.contentTypes.map((type, idx) => {
                       const labels: Record<string, string> = {
                         'journals': 'Academic Journals',
@@ -388,10 +388,10 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
                         <span key={type}>
                           {idx > 0 && (idx === websiteData.purpose.contentTypes.length - 1 ? ' and ' : ', ')}
                           <strong>{labels[type]}</strong>
-                        </span>
-                      )
-                    })}
-                    {' • '}All templates will be available in your website
+                      </span>
+                    )
+                  })}
+                    {' • '}All page layouts will be available in your website
                   </p>
                 </div>
                 
@@ -417,71 +417,17 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">How should your pages look?</h4>
                   <p className="text-gray-600 mb-6">Choose a design system for your website</p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
+                  {/* Unified compact card grid - same as Designs page */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {availableThemes.map((theme: Theme) => (
-                      <div 
+                      <DesignSystemCard
                         key={theme.id}
+                        theme={theme}
+                        isSelected={websiteData.themeId === theme.id}
                         onClick={() => setWebsiteData({...websiteData, themeId: theme.id})}
-                        className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
-                          websiteData.themeId === theme.id 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="h-32 rounded mb-4 overflow-hidden border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 relative">
-                          <img 
-                            src={themePreviewImages[theme.id as keyof typeof themePreviewImages]} 
-                            alt={`${theme.name} theme preview (designed by Gemini)`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback to showing theme info if image fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
-                          <div className="absolute inset-0 hidden items-center justify-center flex-col text-gray-500">
-                            <Palette className="w-8 h-8 mb-2" />
-                            <span className="text-xs font-medium">{theme.name} Theme</span>
-                          </div>
-                        </div>
-                        <h5 className="font-medium text-gray-900 text-lg">{theme.name}</h5>
-                        <p className="text-sm text-gray-600 mt-1 mb-3">{theme.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`px-2 py-1 text-xs rounded-full bg-green-100 text-green-800`}>
-                              {theme.publishingType}
-                            </div>
-                            <span className="text-xs text-gray-500">v{theme.version}</span>
-                          </div>
-                          <span className="text-xs text-gray-500">{theme.templates.length} templates</span>
-                        </div>
-                      </div>
+                      />
                     ))}
                   </div>
-                  
-                  {selectedTheme && (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <Palette className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h6 className="font-medium text-blue-900">{selectedTheme.name}</h6>
-                          <p className="text-sm text-blue-700 mt-1">{selectedTheme.description}</p>
-                          <div className="mt-3">
-                            <div className="text-xs font-medium text-blue-800 mb-2">Included Templates:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {selectedTheme.templates.map((template: any) => (
-                                <span key={template.id} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                  {template.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -672,7 +618,7 @@ export function WebsiteCreationWizard({ onComplete, onCancel, usePageStore, them
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium text-blue-800">Templates:</span> 
+                        <span className="font-medium text-blue-800">Page Layouts:</span> 
                         <span className="text-blue-700 ml-2">{selectedTheme?.templates.length || 0} included</span>
                       </div>
                       <div>

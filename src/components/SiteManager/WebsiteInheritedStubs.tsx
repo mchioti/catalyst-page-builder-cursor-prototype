@@ -11,6 +11,7 @@ import {
   FileText, Home, HelpCircle, SearchIcon
 } from 'lucide-react'
 import { mockWebsites } from '../../v2/data/mockWebsites'
+import { NewBadge } from '../shared/NewBadge'
 
 // Stub types that come from the Design
 type DesignStub = {
@@ -216,7 +217,10 @@ export function WebsiteInheritedStubs({
                       {stub.icon}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{stub.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{stub.name}</span>
+                        <NewBadge itemId={`starter:${stub.id}`} variant="pill" />
+                      </div>
                       <div className="text-sm text-gray-500">{stub.description}</div>
                     </div>
                   </div>

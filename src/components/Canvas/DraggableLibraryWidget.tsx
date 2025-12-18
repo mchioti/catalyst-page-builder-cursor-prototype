@@ -4,6 +4,7 @@ import { Code } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import type { LibraryItem as SpecItem } from '../../library'
 import type { WidgetSection } from '../../types/widgets'
+import { NewBadge } from '../shared/NewBadge'
 
 // We need to import usePageStore and buildWidget - for now we'll declare them as passed props
 interface DraggableLibraryWidgetProps {
@@ -120,10 +121,11 @@ export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buil
           <p className="text-sm text-gray-600">{item.description}</p>
         </div>
       ) : (
-        <div>
-      {item.label}
-      {item.status === 'planned' && (
-        <span className="ml-2 text-xs text-orange-600">(Planned)</span>
+        <div className="flex items-center gap-2">
+          <span>{item.label}</span>
+          <NewBadge itemId={`widget:${item.type}`} variant="compact" />
+          {item.status === 'planned' && (
+            <span className="text-xs text-orange-600">(Planned)</span>
           )}
         </div>
       )}
