@@ -1,6 +1,7 @@
 import type { PublicationCardConfig } from '../../types/widgets'
 
 // Publication Card component - Schema.org CreativeWork compliant
+// Handles multiple types: Periodical (Journal), PublicationIssue, ScholarlyArticle, Book, Chapter
 export function PublicationCard({ article, config, align = 'left', contentMode }: { article: any, config?: PublicationCardConfig, align?: 'left' | 'center' | 'right', contentMode?: 'light' | 'dark' }) {
   
   // Get text color classes based on content mode
@@ -27,33 +28,104 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
   };
   
   const textColors = getTextColorClasses();
-  // Fallback configuration for publications
-  const getConfigForPublication = () => ({
-    showContentTypeLabel: true,
-    showTitle: true,
-    showSubtitle: false,
-    showThumbnail: true,
-    thumbnailPosition: 'left',
-    showPublicationTitle: true,
-    showVolumeIssue: false,
-    showBookSeriesTitle: false,
-    showChapterPages: false,
-    showNumberOfIssues: false,
-    showPublicationDate: true,
-    showDOI: true,
-    showISSN: false,
-    showISBN: false,
-    showAuthors: true,
-    authorStyle: 'full',
-    showAffiliations: false,
-    showAbstract: false,
-    abstractLength: 'short',
-    showKeywords: false,
-    showAccessStatus: true,
-    showViewDownloadOptions: true,
-    showUsageMetrics: false,
-    titleStyle: 'medium'
-  })
+  
+  // Detect schema.org type
+  const schemaType = article?.['@type'] || article?.type || 'ScholarlyArticle'
+  const isPeriodical = schemaType === 'Periodical' || schemaType === 'Journal'
+  const isPublicationIssue = schemaType === 'PublicationIssue'
+  const isPublicationVolume = schemaType === 'PublicationVolume'
+  const isBook = schemaType === 'Book'
+  
+  // Fallback configuration - varies by type
+  const getConfigForPublication = () => {
+    // Default config for journals
+    if (isPeriodical) {
+      return {
+        showContentTypeLabel: true,
+        showTitle: true,
+        showSubtitle: true,
+        showThumbnail: true,
+        thumbnailPosition: 'left',
+        showPublicationTitle: false, // Journal IS the publication
+        showVolumeIssue: false,
+        showBookSeriesTitle: false,
+        showChapterPages: false,
+        showNumberOfIssues: true, // Relevant for journals
+        showPublicationDate: false,
+        showDOI: false,
+        showISSN: true, // Relevant for journals
+        showISBN: false,
+        showAuthors: false, // Journals don't have authors
+        authorStyle: 'full',
+        showAffiliations: false,
+        showAbstract: true, // Show journal description
+        abstractLength: 'medium',
+        showKeywords: false,
+        showAccessStatus: true,
+        showViewDownloadOptions: false,
+        showUsageMetrics: true, // Impact factor etc.
+        titleStyle: 'large'
+      }
+    }
+    
+    // Default config for issues
+    if (isPublicationIssue) {
+      return {
+        showContentTypeLabel: true,
+        showTitle: true,
+        showSubtitle: false,
+        showThumbnail: true,
+        thumbnailPosition: 'left',
+        showPublicationTitle: true, // Show journal name
+        showVolumeIssue: true,
+        showBookSeriesTitle: false,
+        showChapterPages: false,
+        showNumberOfIssues: false,
+        showPublicationDate: true,
+        showDOI: false,
+        showISSN: false,
+        showISBN: false,
+        showAuthors: false, // Issues don't have authors
+        authorStyle: 'full',
+        showAffiliations: false,
+        showAbstract: false,
+        abstractLength: 'short',
+        showKeywords: false,
+        showAccessStatus: false,
+        showViewDownloadOptions: true,
+        showUsageMetrics: false,
+        titleStyle: 'medium'
+      }
+    }
+    
+    // Default config for articles/other
+    return {
+      showContentTypeLabel: true,
+      showTitle: true,
+      showSubtitle: false,
+      showThumbnail: true,
+      thumbnailPosition: 'left',
+      showPublicationTitle: true,
+      showVolumeIssue: false,
+      showBookSeriesTitle: false,
+      showChapterPages: false,
+      showNumberOfIssues: false,
+      showPublicationDate: true,
+      showDOI: true,
+      showISSN: false,
+      showISBN: false,
+      showAuthors: true,
+      authorStyle: 'full',
+      showAffiliations: false,
+      showAbstract: false,
+      abstractLength: 'short',
+      showKeywords: false,
+      showAccessStatus: true,
+      showViewDownloadOptions: true,
+      showUsageMetrics: false,
+      titleStyle: 'medium'
+    }
+  }
   
   // Use provided config or generate one based on content type
   const finalConfig = config || getConfigForPublication()
@@ -115,18 +187,98 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
 
   // Helper to get content type from schema.org @type
   const getContentType = (item: any) => {
-    if (item['@type']) {
-      return item['@type']
-    }
-    if (item.type) {
-      return item.type
+    const type = item['@type'] || item.type
+    if (type) {
+      // Map schema.org types to display labels
+      const typeLabels: Record<string, string> = {
+        'Periodical': 'Journal',
+        'Journal': 'Journal',
+        'PublicationIssue': 'Issue',
+        'PublicationVolume': 'Volume',
+        'ScholarlyArticle': 'Research Article',
+        'Article': 'Article',
+        'Book': 'Book',
+        'Chapter': 'Chapter',
+        'Review': 'Review',
+        'Report': 'Report'
+      }
+      return typeLabels[type] || type
     }
     // Fallback logic based on properties
+    if (item.issn) return 'Journal'
+    if (item.issueNumber) return 'Issue'
     if (item.isPartOf?.isPartOf) return 'Article'
     if (item.isPartOf && !item.isPartOf.isPartOf) return 'Chapter'
     if (item.author && item.datePublished) return 'Article'
     if (item.isbn) return 'Book'
     return 'CreativeWork'
+  }
+  
+  // Helper to get ISSN from journal (handles various formats)
+  const getISSN = (item: any) => {
+    // Direct issn property
+    if (item.issn) {
+      if (typeof item.issn === 'string') return item.issn
+      if (item.issn.print) return `Print: ${item.issn.print}`
+      if (item.issn.online) return `Online: ${item.issn.online}`
+      return String(item.issn)
+    }
+    // Check identifier array
+    return getIdentifier(item, 'ISSN')
+  }
+  
+  // Helper to get journal metrics (impact factor, etc.)
+  const getJournalMetrics = (item: any) => {
+    const metrics: { label: string; value: string }[] = []
+    
+    if (item.impactFactor) {
+      metrics.push({ label: 'Impact Factor', value: String(item.impactFactor) })
+    }
+    if (item.citescore) {
+      metrics.push({ label: 'CiteScore', value: String(item.citescore) })
+    }
+    if (item.hIndex) {
+      metrics.push({ label: 'h-Index', value: String(item.hIndex) })
+    }
+    if (item.numberOfArticles) {
+      metrics.push({ label: 'Articles', value: String(item.numberOfArticles) })
+    }
+    if (item.numberOfIssues) {
+      metrics.push({ label: 'Issues', value: String(item.numberOfIssues) })
+    }
+    
+    return metrics
+  }
+  
+  // Helper to get issue/volume info for PublicationIssue type
+  const getIssueInfo = (item: any) => {
+    const parts: string[] = []
+    
+    // Volume info (usually in isPartOf for issues)
+    if (item.isPartOf?.volumeNumber) {
+      parts.push(`Volume ${item.isPartOf.volumeNumber}`)
+    } else if (item.volumeNumber) {
+      parts.push(`Volume ${item.volumeNumber}`)
+    }
+    
+    // Issue number
+    if (item.issueNumber) {
+      parts.push(`Issue ${item.issueNumber}`)
+    }
+    
+    return parts.join(', ')
+  }
+  
+  // Helper to get parent journal name for issues
+  const getJournalName = (item: any) => {
+    // For issues, the journal is in isPartOf chain
+    if (item.isPartOf?.isPartOf?.name) {
+      return item.isPartOf.isPartOf.name // Issue → Volume → Journal
+    }
+    if (item.isPartOf?.name) {
+      return item.isPartOf.name // Issue → Journal (no volume)
+    }
+    return null
   }
 
   // Helper to format publication info (Journal/Book Title, Volume, Issue, Pages)
@@ -328,25 +480,99 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
         </p>
       )}
 
-      {/* Authors */}
-      {finalConfig.showAuthors && article.author && (
-        <p className={`${textColors.secondary} text-sm mb-2`}>
-          {formatAuthors(article.author)}
-        </p>
+      {/* ========== JOURNAL (Periodical) SPECIFIC CONTENT ========== */}
+      {isPeriodical && (
+        <>
+          {/* ISSN */}
+          {finalConfig.showISSN && (
+            <div className={`${textColors.muted} text-sm mb-2`}>
+              {article.issn?.print && <span>ISSN (Print): {article.issn.print}</span>}
+              {article.issn?.print && article.issn?.online && <span className="mx-2">•</span>}
+              {article.issn?.online && <span>ISSN (Online): {article.issn.online}</span>}
+              {!article.issn?.print && !article.issn?.online && getISSN(article) && (
+                <span>ISSN: {getISSN(article)}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Journal Metrics (Impact Factor, etc.) */}
+          {finalConfig.showUsageMetrics && (
+            <div className="flex flex-wrap gap-3 mb-3">
+              {getJournalMetrics(article).map((metric, idx) => (
+                <div key={idx} className="flex items-center gap-1">
+                  <span className={`${textColors.muted} text-xs`}>{metric.label}:</span>
+                  <span className={`${textColors.secondary} text-sm font-semibold`}>{metric.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Publisher */}
+          {article.publisher?.name && (
+            <p className={`${textColors.muted} text-sm mb-2`}>
+              Publisher: {article.publisher.name}
+            </p>
+          )}
+        </>
+      )}
+      
+      {/* ========== ISSUE (PublicationIssue) SPECIFIC CONTENT ========== */}
+      {isPublicationIssue && (
+        <>
+          {/* Volume/Issue Info */}
+          {finalConfig.showVolumeIssue && getIssueInfo(article) && (
+            <p className={`${textColors.secondary} text-sm font-medium mb-2`}>
+              {getIssueInfo(article)}
+            </p>
+          )}
+          
+          {/* Parent Journal Name */}
+          {finalConfig.showPublicationTitle && getJournalName(article) && (
+            <p className={`${textColors.muted} text-sm mb-2`}>
+              {getJournalName(article)}
+            </p>
+          )}
+          
+          {/* Issue Date */}
+          {finalConfig.showPublicationDate && article.datePublished && (
+            <p className={`${textColors.muted} text-sm mb-3`}>
+              {formatDate(article.datePublished)}
+            </p>
+          )}
+          
+          {/* Number of Articles in Issue */}
+          {article.numberOfArticles && (
+            <p className={`${textColors.muted} text-sm mb-2`}>
+              {article.numberOfArticles} articles
+            </p>
+          )}
+        </>
       )}
 
-      {/* Publication Information (Journal/Book Title) */}
-      {finalConfig.showPublicationTitle && (
-        <p className={`${textColors.muted} text-sm mb-3`}>
-          {formatPublicationInfo(article)}
-        </p>
-      )}
+      {/* ========== ARTICLE/DEFAULT CONTENT ========== */}
+      {!isPeriodical && !isPublicationIssue && (
+        <>
+          {/* Authors */}
+          {finalConfig.showAuthors && article.author && (
+            <p className={`${textColors.secondary} text-sm mb-2`}>
+              {formatAuthors(article.author)}
+            </p>
+          )}
 
-      {/* Publication Date */}
-      {finalConfig.showPublicationDate && article.datePublished && (
-        <p className={`${textColors.muted} text-sm mb-4`}>
-          Published: {formatDate(article.datePublished)}
-        </p>
+          {/* Publication Information (Journal/Book Title) */}
+          {finalConfig.showPublicationTitle && (
+            <p className={`${textColors.muted} text-sm mb-3`}>
+              {formatPublicationInfo(article)}
+            </p>
+          )}
+
+          {/* Publication Date */}
+          {finalConfig.showPublicationDate && article.datePublished && (
+            <p className={`${textColors.muted} text-sm mb-4`}>
+              Published: {formatDate(article.datePublished)}
+            </p>
+          )}
+        </>
       )}
 
       {/* Abstract */}

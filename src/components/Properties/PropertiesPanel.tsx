@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { createDebugLogger } from '../../utils/logger'
+import { useBrandingStore } from '../../stores/brandingStore'
 
 // 🐛 DEBUG FLAG - Set to true to enable detailed properties panel logs
 const DEBUG_PROPERTIES_PANEL = false
@@ -396,6 +397,11 @@ export function PropertiesPanel({
     const processUpdatesWithPadding = (section: any, updates: any) => {
       const processed = { ...section, ...updates }
       
+      // When updating background, completely replace it (don't merge old properties)
+      if ('background' in updates && updates.background !== undefined) {
+        processed.background = updates.background
+      }
+      
       // When setting new `padding` property, clear legacy `styling.padding*`
       if ('padding' in updates && section.styling) {
         processed.styling = {
@@ -460,7 +466,12 @@ export function PropertiesPanel({
   
   if (isSection(selectedItem)) {
     const section = selectedItem as WidgetSection
-    const backgroundType = section.background?.type || 'none'
+    // Detect if using context branding (color is a template variable like {journal.branding.primaryColor})
+    const bgType = section.background?.type as string | undefined
+    const isContextBranding = bgType === 'branding' || 
+      (section.background?.color?.startsWith('{') && section.background?.color?.endsWith('}')) ||
+      (section.background?.gradient?.stops?.some(s => s.color?.startsWith('{') && s.color?.endsWith('}')))
+    const backgroundType = isContextBranding ? 'branding' : (bgType || 'none')
     
     // Helper function to get friendly section type name based on layout
     const getSectionTypeName = (layout: string): string => {
@@ -822,40 +833,374 @@ export function PropertiesPanel({
               <select
                 value={backgroundType}
                 onChange={(e) => {
-                  const newType = e.target.value as 'color' | 'image' | 'gradient' | 'none'
-                  updateSection({
-                    background: newType === 'none' ? undefined : {
-                      type: newType,
-                      ...(newType === 'color' && { color: '#ffffff' }),
-                      ...(newType === 'image' && { 
+                  const newType = e.target.value as 'color' | 'image' | 'gradient' | 'branding' | 'none'
+                  
+                  // Clear old background and set new one based on type
+                  if (newType === 'none') {
+                    updateSection({ background: undefined })
+                  } else if (newType === 'color') {
+                    // If current color is a context variable, reset to white, otherwise keep it
+                    const currentColor = section.background?.color
+                    const isContextVar = currentColor?.startsWith('{') && currentColor?.endsWith('}')
+                    updateSection({
+                      background: {
+                        type: 'color',
+                        color: isContextVar ? '#ffffff' : (currentColor || '#ffffff')
+                      }
+                    })
+                  } else if (newType === 'branding') {
+                    // Check if currently using gradient with context variables
+                    const hasContextGradient = section.background?.gradient?.stops?.some(
+                      (s: any) => s.color?.startsWith('{') && s.color?.endsWith('}')
+                    )
+                    if (hasContextGradient && section.background?.gradient) {
+                      // Keep the gradient but ensure it's properly formatted
+                      updateSection({
+                        background: {
+                          type: 'gradient',
+                          gradient: section.background.gradient
+                        }
+                      })
+                    } else {
+                      // Default to solid branding color
+                      updateSection({
+                        background: {
+                          type: 'color',
+                          color: '{journal.branding.primaryColor}'
+                        }
+                      })
+                    }
+                  } else if (newType === 'image') {
+                    updateSection({
+                      background: {
+                        type: 'image',
                         image: { 
                           url: '', 
                           position: 'center', 
                           repeat: 'no-repeat', 
                           size: 'cover' 
-                        } 
-                      }),
-                      ...(newType === 'gradient' && { 
-                        gradient: { 
-                          type: 'linear', 
-                          direction: 'to right',
-                          stops: [
+                        }
+                      }
+                    })
+                  } else if (newType === 'gradient') {
+                    // If current gradient has context variables, keep them, otherwise reset
+                    const currentStops = section.background?.gradient?.stops
+                    const hasContextStops = currentStops?.some(
+                      (s: any) => s.color?.startsWith('{') && s.color?.endsWith('}')
+                    )
+                    updateSection({
+                      background: {
+                        type: 'gradient',
+                        gradient: {
+                          type: 'linear',
+                          direction: section.background?.gradient?.direction || 'to right',
+                          stops: (hasContextStops && currentStops) ? currentStops : [
                             { color: '#ffffff', position: '0%' },
                             { color: '#f3f4f6', position: '100%' }
                           ]
-                        } 
-                      })
-                    }
-                  })
+                        }
+                      }
+                    })
+                  }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="none">None</option>
+                <option value="branding">Context Branding</option>
                 <option value="color">Solid Color</option>
                 <option value="image">Background Image</option>
                 <option value="gradient">Gradient</option>
               </select>
             </div>
+            
+            {/* Context Branding - Journal/Website aware colors */}
+            {backgroundType === 'branding' && (() => {
+              const { currentWebsiteId, websites } = usePageStore.getState()
+              const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+              
+              // Get journal colors from branding store (Design Console)
+              const brandingState = useBrandingStore.getState()
+              const websiteBranding = brandingState.getWebsiteBranding(currentWebsiteId)
+              
+              // Determine if using gradient or solid
+              const isBrandingGradient = section.background?.gradient?.stops?.some(
+                (s: any) => s.color?.startsWith('{') && s.color?.endsWith('}')
+              )
+              const brandingStyle = isBrandingGradient ? 'gradient' : 'solid'
+              
+              // Get current color variable
+              const currentColorVar = section.background?.color || '{journal.branding.primaryColor}'
+              
+              // Context color options with resolved preview colors from branding store
+              const getResolvedColor = (variable: string): string => {
+                if (variable === '{journal.branding.primaryColor}') {
+                  return websiteBranding?.journals?.[0]?.colors?.primary || 
+                         currentWebsite?.branding?.primaryColor || '#6366f1'
+                }
+                if (variable === '{journal.branding.secondaryColor}') {
+                  return websiteBranding?.journals?.[0]?.colors?.secondary || 
+                         currentWebsite?.branding?.secondaryColor || '#818cf8'
+                }
+                if (variable === '{website.branding.primaryColor}') {
+                  return websiteBranding?.website?.colors?.primary || 
+                         currentWebsite?.branding?.primaryColor || '#3b82f6'
+                }
+                if (variable === '{website.branding.accentColor}') {
+                  return websiteBranding?.website?.colors?.accent || 
+                         currentWebsite?.branding?.accentColor || '#f59e0b'
+                }
+                return '#6366f1'
+              }
+              
+              const contextColors = [
+                { 
+                  label: 'Journal Primary', 
+                  variable: '{journal.branding.primaryColor}',
+                  preview: getResolvedColor('{journal.branding.primaryColor}'),
+                  description: 'Uses the journal\'s brand color (editable in Design Console)'
+                },
+                { 
+                  label: 'Journal Secondary', 
+                  variable: '{journal.branding.secondaryColor}',
+                  preview: getResolvedColor('{journal.branding.secondaryColor}'),
+                  description: 'Uses the journal\'s secondary color'
+                },
+                { 
+                  label: 'Site Primary', 
+                  variable: '{website.branding.primaryColor}',
+                  preview: getResolvedColor('{website.branding.primaryColor}'),
+                  description: 'Uses the website\'s primary color'
+                },
+                { 
+                  label: 'Site Accent', 
+                  variable: '{website.branding.accentColor}',
+                  preview: getResolvedColor('{website.branding.accentColor}'),
+                  description: 'Uses the website\'s accent color'
+                }
+              ]
+              
+              return (
+                <div className="space-y-4">
+                  {/* Info banner */}
+                  <div className="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
+                    <p className="text-xs font-medium text-indigo-700 mb-1 flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      Context-Aware Branding
+                    </p>
+                    <p className="text-xs text-indigo-600/80">
+                      Colors adapt to the current journal. Edit colors in <span className="font-medium">Design Console → Branding</span>.
+                    </p>
+                  </div>
+                  
+                  {/* Style toggle: Solid vs Gradient */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Branding Style</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          // Switch to solid - clear gradient, set color
+                          const colorToUse = currentColorVar.startsWith('{') ? currentColorVar : '{journal.branding.primaryColor}'
+                          updateSection({
+                            background: {
+                              type: 'color',
+                              color: colorToUse
+                              // Explicitly don't include gradient
+                            }
+                          })
+                        }}
+                        className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                          brandingStyle === 'solid' 
+                            ? 'bg-indigo-100 border-indigo-400 text-indigo-800' 
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Solid
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Switch to gradient - clear color, set gradient
+                          // Preserve existing gradient stops if they're context variables, otherwise use defaults
+                          const existingStops = section.background?.gradient?.stops
+                          const hasContextStops = existingStops?.some(
+                            (s: any) => s.color?.startsWith('{') && s.color?.endsWith('}')
+                          )
+                          updateSection({
+                            background: {
+                              type: 'gradient',
+                              gradient: {
+                                type: 'linear',
+                                direction: section.background?.gradient?.direction || 'to bottom',
+                                stops: (hasContextStops && existingStops) ? existingStops : [
+                                  { color: '{journal.branding.primaryColor}', position: '0%' },
+                                  { color: '{journal.branding.secondaryColor}', position: '100%' }
+                                ]
+                              }
+                              // Explicitly don't include color
+                            }
+                          })
+                        }}
+                        className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                          brandingStyle === 'gradient' 
+                            ? 'bg-indigo-100 border-indigo-400 text-indigo-800' 
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Gradient
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Solid color selection */}
+                  {brandingStyle === 'solid' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Color Source</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {contextColors.map((ctx) => (
+                          <button
+                            key={ctx.variable}
+                            onClick={() => updateSection({
+                              background: {
+                                type: 'color',
+                                color: ctx.variable
+                              }
+                            })}
+                            title={ctx.description}
+                            className={`
+                              flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all
+                              ${currentColorVar === ctx.variable 
+                                ? 'bg-indigo-100 border-indigo-400 text-indigo-800 ring-2 ring-indigo-200' 
+                                : 'bg-white border-gray-200 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'
+                              }
+                            `}
+                          >
+                            <span 
+                              className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0 shadow-sm"
+                              style={{ backgroundColor: ctx.preview }}
+                            />
+                            <span className="truncate font-medium">{ctx.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500 bg-gray-50 px-2 py-1.5 rounded font-mono">
+                        {currentColorVar} → <span style={{ color: getResolvedColor(currentColorVar) }} className="font-bold">{getResolvedColor(currentColorVar)}</span>
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Gradient configuration */}
+                  {brandingStyle === 'gradient' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Direction</label>
+                        <select
+                          value={section.background?.gradient?.direction || 'to bottom'}
+                          onChange={(e) => updateSection({
+                            background: {
+                              type: 'gradient',
+                              gradient: {
+                                ...section.background?.gradient,
+                                type: 'linear',
+                                direction: e.target.value,
+                                stops: section.background?.gradient?.stops || [
+                                  { color: '{journal.branding.primaryColor}', position: '0%' },
+                                  { color: '{journal.branding.secondaryColor}', position: '100%' }
+                                ]
+                              }
+                            }
+                          })}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
+                        >
+                          <option value="to bottom">↓ Top to Bottom</option>
+                          <option value="to top">↑ Bottom to Top</option>
+                          <option value="to right">→ Left to Right</option>
+                          <option value="to left">← Right to Left</option>
+                          <option value="to bottom right">↘ Diagonal</option>
+                          <option value="to top right">↗ Diagonal Up</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Gradient Stops</label>
+                        <div className="space-y-2">
+                          {(section.background?.gradient?.stops || [
+                            { color: '{journal.branding.primaryColor}', position: '0%' },
+                            { color: '{journal.branding.secondaryColor}', position: '100%' }
+                          ]).map((stop: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                              <span 
+                                className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+                                style={{ backgroundColor: getResolvedColor(stop.color) }}
+                              />
+                              <select
+                                value={stop.color}
+                                onChange={(e) => {
+                                  const stops = [...(section.background?.gradient?.stops || [])]
+                                  stops[idx] = { ...stops[idx], color: e.target.value }
+                                  updateSection({
+                                    background: {
+                                      type: 'gradient',
+                                      gradient: {
+                                        ...section.background?.gradient,
+                                        type: 'linear',
+                                        direction: section.background?.gradient?.direction || 'to bottom',
+                                        stops
+                                      }
+                                    }
+                                  })
+                                }}
+                                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded bg-white"
+                              >
+                                {contextColors.map((ctx) => (
+                                  <option key={ctx.variable} value={ctx.variable}>{ctx.label}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                value={stop.position}
+                                onChange={(e) => {
+                                  const stops = [...(section.background?.gradient?.stops || [])]
+                                  stops[idx] = { ...stops[idx], position: e.target.value }
+                                  updateSection({
+                                    background: {
+                                      type: 'gradient',
+                                      gradient: {
+                                        ...section.background?.gradient,
+                                        type: 'linear',
+                                        direction: section.background?.gradient?.direction || 'to bottom',
+                                        stops
+                                      }
+                                    }
+                                  })
+                                }}
+                                className="w-16 px-2 py-1 text-xs border border-gray-300 rounded text-center"
+                                placeholder="0%"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Preview */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Preview</label>
+                        <div 
+                          className="h-12 rounded-lg border border-gray-300"
+                          style={{
+                            background: `linear-gradient(${section.background?.gradient?.direction || 'to bottom'}, ${
+                              (section.background?.gradient?.stops || []).map(
+                                (s: any) => `${getResolvedColor(s.color)} ${s.position}`
+                              ).join(', ')
+                            })`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
             
             {backgroundType === 'color' && (() => {
               const { currentWebsiteId, websites, themes } = usePageStore.getState()
@@ -866,9 +1211,21 @@ export function PropertiesPanel({
               
               const isCarbonTheme = currentTheme?.id === 'ibm-carbon-ds'
               
+              // Check if current color is a context variable
+              const currentColor = section.background?.color || '#ffffff'
+              const isContextColor = currentColor.startsWith('{') && currentColor.endsWith('}')
+              
               return (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                  
+                  {/* Note: Context-aware colors are now in "Context Branding" option */}
+                  {isContextColor && (
+                    <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                      ⚠️ This section is using a context variable. Switch to "Context Branding" to edit it.
+                    </div>
+                  )}
+                  
                   {isCarbonTheme && (
                     <div className="mb-3">
                       <p className="text-xs text-gray-500 mb-2">Carbon Layers:</p>
@@ -897,10 +1254,13 @@ export function PropertiesPanel({
                       </div>
                     </div>
                   )}
+                  
+                  {/* Custom Color Picker */}
+                  <p className="text-xs text-gray-500 mb-2">Or choose a custom color:</p>
                   <div className="flex gap-2">
                     <input
                       type="color"
-                      value={section.background?.color || '#ffffff'}
+                      value={isContextColor ? '#6366f1' : currentColor}
                       onChange={(e) => updateSection({
                         background: {
                           ...section.background,
@@ -912,7 +1272,7 @@ export function PropertiesPanel({
                     />
                     <input
                       type="text"
-                      value={section.background?.color || '#ffffff'}
+                      value={currentColor}
                       onChange={(e) => updateSection({
                         background: {
                           ...section.background,
@@ -1110,76 +1470,108 @@ export function PropertiesPanel({
                     ]
                     const currentStops = section.background?.gradient?.stops || defaultStops
                     
+                    // Context color options for gradients
+                    const gradientContextColors = [
+                      { label: 'Journal Primary', variable: '{journal.branding.primaryColor}' },
+                      { label: 'Journal Secondary', variable: '{journal.branding.secondaryColor}' },
+                      { label: 'Site Primary', variable: '{website.branding.primaryColor}' },
+                      { label: 'Site Accent', variable: '{website.branding.accentColor}' }
+                    ]
+                    
                     return (
                       <>
-                        <div className="space-y-2">
-                          {currentStops.map((stop, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <input
-                                type="color"
-                                value={stop.color}
-                                onChange={(e) => {
-                                  const stops = [...currentStops]
-                                  stops[index] = { ...stops[index], color: e.target.value }
-                                  updateSection({
-                                    background: {
-                                      ...section.background,
-                                      type: 'gradient',
-                                      gradient: {
-                                        ...section.background?.gradient,
-                                        type: section.background?.gradient?.type || 'linear',
-                                        direction: section.background?.gradient?.direction || 'to right',
-                                        stops
+                        <div className="space-y-3">
+                          {currentStops.map((stop, index) => {
+                            const isContextColor = stop.color.startsWith('{') && stop.color.endsWith('}')
+                            return (
+                            <div key={index} className="p-2 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-xs font-medium text-gray-500 w-16">Stop {index + 1}</span>
+                                <input
+                                  type="text"
+                                  value={stop.position}
+                                  onChange={(e) => {
+                                    const stops = [...currentStops]
+                                    stops[index] = { ...stops[index], position: e.target.value }
+                                    updateSection({
+                                      background: {
+                                        ...section.background,
+                                        type: 'gradient',
+                                        gradient: {
+                                          ...section.background?.gradient,
+                                          type: section.background?.gradient?.type || 'linear',
+                                          direction: section.background?.gradient?.direction || 'to right',
+                                          stops
+                                        }
                                       }
-                                    }
-                                  })
-                                }}
-                                className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
-                              />
-                              <input
-                                type="text"
-                                value={stop.color}
-                                onChange={(e) => {
-                                  const stops = [...currentStops]
-                                  stops[index] = { ...stops[index], color: e.target.value }
-                                  updateSection({
-                                    background: {
-                                      ...section.background,
-                                      type: 'gradient',
-                                      gradient: {
-                                        ...section.background?.gradient,
-                                        type: section.background?.gradient?.type || 'linear',
-                                        direction: section.background?.gradient?.direction || 'to right',
-                                        stops
+                                    })
+                                  }}
+                                  className="w-16 px-2 py-1 border border-gray-300 rounded text-xs"
+                                  placeholder="0%"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={isContextColor ? '#6366f1' : stop.color}
+                                  onChange={(e) => {
+                                    const stops = [...currentStops]
+                                    stops[index] = { ...stops[index], color: e.target.value }
+                                    updateSection({
+                                      background: {
+                                        ...section.background,
+                                        type: 'gradient',
+                                        gradient: {
+                                          ...section.background?.gradient,
+                                          type: section.background?.gradient?.type || 'linear',
+                                          direction: section.background?.gradient?.direction || 'to right',
+                                          stops
+                                        }
                                       }
-                                    }
-                                  })
-                                }}
-                                className="w-20 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
-                                placeholder="#ffffff"
-                              />
-                              <input
-                                type="text"
-                                value={stop.position}
-                                onChange={(e) => {
-                                  const stops = [...currentStops]
-                                  stops[index] = { ...stops[index], position: e.target.value }
-                                  updateSection({
-                                    background: {
-                                      ...section.background,
-                                      type: 'gradient',
-                                      gradient: {
-                                        ...section.background?.gradient,
-                                        type: section.background?.gradient?.type || 'linear',
-                                        direction: section.background?.gradient?.direction || 'to right',
-                                        stops
+                                    })
+                                  }}
+                                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer flex-shrink-0"
+                                />
+                                <select
+                                  value={isContextColor ? stop.color : 'custom'}
+                                  onChange={(e) => {
+                                    if (e.target.value === 'custom') return
+                                    const stops = [...currentStops]
+                                    stops[index] = { ...stops[index], color: e.target.value }
+                                    updateSection({
+                                      background: {
+                                        ...section.background,
+                                        type: 'gradient',
+                                        gradient: {
+                                          ...section.background?.gradient,
+                                          type: section.background?.gradient?.type || 'linear',
+                                          direction: section.background?.gradient?.direction || 'to right',
+                                          stops
+                                        }
                                       }
-                                    }
-                                  })
-                                }}
-                                className="w-16 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
-                                placeholder="50%"
-                              />
+                                    })
+                                  }}
+                                  className={`flex-1 px-2 py-1.5 border rounded text-xs ${
+                                    isContextColor 
+                                      ? 'border-indigo-300 bg-indigo-50 text-indigo-700' 
+                                      : 'border-gray-300 bg-white'
+                                  }`}
+                                >
+                                  <option value="custom">{isContextColor ? '— Select —' : stop.color}</option>
+                                  <optgroup label="Context Colors">
+                                    {gradientContextColors.map(ctx => (
+                                      <option key={ctx.variable} value={ctx.variable}>
+                                        {ctx.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                </select>
+                              </div>
+                              {isContextColor && (
+                                <p className="mt-1 text-xs text-indigo-600">
+                                  ✓ {gradientContextColors.find(c => c.variable === stop.color)?.label || 'Context'}
+                                </p>
+                              )}
                               {currentStops.length > 2 && (
                                 <button
                                   onClick={() => {
@@ -1197,14 +1589,15 @@ export function PropertiesPanel({
                                       }
                                     })
                                   }}
-                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                  className="mt-1 px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded w-full text-center"
                                   title="Remove color stop"
                                 >
-                                  ✕
+                                  Remove Stop
                                 </button>
                               )}
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                         <button
                           onClick={() => {
@@ -2508,6 +2901,35 @@ export function PropertiesPanel({
               <option value="schema-objects">Schema Objects</option>
             </select>
           </div>
+          
+          {/* Context Source - Shows journal metadata from current page context */}
+          {(widget as PublicationDetailsWidget).contentSource === 'context' && (
+            <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium text-indigo-900">Journal Metadata</h4>
+                  <p className="text-sm text-indigo-700 mt-1">
+                    This widget will display metadata from the <strong>current journal context</strong>:
+                  </p>
+                  <ul className="mt-2 text-xs text-indigo-600 space-y-1">
+                    <li>• Journal name &amp; description</li>
+                    <li>• ISSN (print &amp; online)</li>
+                    <li>• Impact factor &amp; metrics</li>
+                    <li>• Open access status</li>
+                    <li>• Publisher information</li>
+                  </ul>
+                  <p className="text-xs text-indigo-500 mt-3 italic">
+                    💡 Place this widget on a journal page for automatic data binding
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {(widget as PublicationDetailsWidget).contentSource === 'doi' && (
             <div>

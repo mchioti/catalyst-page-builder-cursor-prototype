@@ -14,13 +14,9 @@ import { applyListPattern } from '../../utils/listPatternRenderer'
 import { SkinWrap } from './SkinWrap'
 import { WidgetLayoutWrapper } from './WidgetLayoutWrapper'
 
-// Import usePageStore for updating widget state
-declare global {
-  interface Window {
-    usePageStore: any
-  }
-}
-const usePageStore = window.usePageStore
+// Import usePageStore for updating widget state and accessing store data
+import { usePageStore } from '../../stores/pageStore'
+import { useBrandingStore } from '../../stores/brandingStore'
 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
@@ -906,7 +902,64 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
 }
 
 // Publication Details Widget Component - uses PublicationCard for all rendering
-const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects, sectionContentMode }) => {
+const PublicationDetailsWidgetRenderer: React.FC<{ 
+  widget: PublicationDetailsWidget; 
+  schemaObjects: any[]; 
+  sectionContentMode?: 'light' | 'dark';
+  journalContext?: string;
+}> = ({ widget, schemaObjects, sectionContentMode, journalContext }) => {
+  
+  // Get journal data from context for 'context' content source
+  // Priority: Branding Store (Design Console) → Page Store (V2 mock data)
+  const getJournalFromContext = (): any => {
+    if (!journalContext) return null
+    
+    // Get current website and find the journal from page store
+    const state = usePageStore.getState() as any
+    const { currentWebsiteId, websites } = state
+    const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
+    const journal = (currentWebsite as any)?.journals?.find((j: any) => j.id === journalContext)
+    
+    if (!journal) return null
+    
+    // Get branding from Design Console (branding store) - takes precedence
+    const brandingState = useBrandingStore.getState()
+    const websiteBranding = brandingState.getWebsiteBranding(currentWebsiteId)
+    const journalBranding = websiteBranding?.journals?.find(
+      (j: any) => j.id === journalContext || j.slug === journalContext
+    )
+    
+    // Merge branding: Design Console colors override V2 mock data
+    const mergedBranding = journalBranding?.colors 
+      ? {
+          primaryColor: journalBranding.colors.primary,
+          secondaryColor: journalBranding.colors.secondary,
+          accentColor: journalBranding.colors.accent
+        }
+      : journal.branding
+    
+    // Convert journal to schema.org Periodical format
+    return {
+      "@context": "https://schema.org",
+      "@type": "Periodical",
+      "name": journal.name,
+      "description": journal.description,
+      "issn": journal.issn,
+      "impactFactor": journal.impactFactor,
+      "isAccessibleForFree": journal.isOpenAccess,
+      "publisher": {
+        "@type": "Organization",
+        "name": currentWebsite?.name || "Publisher"
+      },
+      "image": journal.coverImageUrl,
+      "thumbnailUrl": journal.coverImageUrl,
+      // Custom fields for journal metrics
+      "numberOfIssues": journal.issueCount,
+      "numberOfArticles": journal.articleCount,
+      // Branding info (merged from Design Console and V2 data)
+      "_branding": mergedBranding
+    }
+  }
   
   // DOI lookup function - uses real citation data from our library
   const fetchPublicationByDOI = (doi: string): any => {
@@ -945,7 +998,19 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
   let publication: any = null
   
   try {
-    if (widget.contentSource === 'doi' && widget.doiSource?.doi) {
+    if (widget.contentSource === 'context') {
+      // Get journal data from current context
+      publication = getJournalFromContext()
+      if (!publication) {
+        return (
+          <div className="border border-dashed border-amber-300 bg-amber-50 rounded-lg p-6 text-center text-amber-700">
+            <p className="font-medium">Journal Context Required</p>
+            <p className="text-sm mt-2">This widget shows journal metadata. Place it on a journal page or select a specific content source.</p>
+            {!journalContext && <p className="text-xs mt-1 text-amber-500">Current context: No journal selected</p>}
+          </div>
+        )
+      }
+    } else if (widget.contentSource === 'doi' && widget.doiSource?.doi) {
       // Fetch publication by DOI (mock implementation)
       publication = fetchPublicationByDOI(widget.doiSource.doi)
     } else if (widget.contentSource === 'schema-objects' && widget.schemaSource?.selectedId) {
@@ -976,8 +1041,8 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
             publication = newContent
             
             // Update the widget in the store with new cached content
-            const { updateWidget: storeUpdateWidget } = usePageStore.getState()
-            storeUpdateWidget(widget.id, {
+            const storeState = usePageStore.getState() as any
+            storeState.updateWidget?.(widget.id, {
               aiSource: {
                 ...widget.aiSource,
                 generatedContent: newContent,
@@ -991,8 +1056,8 @@ const PublicationDetailsWidgetRenderer: React.FC<{ widget: PublicationDetailsWid
           publication = newContent
           
           // Update the widget in the store with new cached content
-          const { updateWidget: storeUpdateWidget } = usePageStore.getState()
-          storeUpdateWidget(widget.id, {
+          const storeState = usePageStore.getState() as any
+          storeState.updateWidget?.(widget.id, {
             aiSource: {
               ...widget.aiSource,
               generatedContent: newContent,
@@ -1112,8 +1177,8 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
           publications = newContent
           
           // Update the widget in the store with new cached content
-          const { updateWidget: storeUpdateWidget } = usePageStore.getState()
-          storeUpdateWidget(widget.id, {
+          const storeState2 = usePageStore.getState() as any
+          storeState2.updateWidget?.(widget.id, {
             aiSource: {
               ...widget.aiSource,
               generatedContent: newContent,
@@ -1127,8 +1192,8 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
         publications = newContent
         
         // Update the widget in the store with new cached content
-        const { updateWidget: storeUpdateWidget } = usePageStore.getState()
-        storeUpdateWidget(widget.id, {
+        const storeState3 = usePageStore.getState() as any
+        storeState3.updateWidget?.(widget.id, {
           aiSource: {
             ...widget.aiSource,
             generatedContent: newContent,
@@ -2173,7 +2238,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       case 'heading':
         return <HeadingWidgetRenderer widget={widget as HeadingWidget} />
       case 'publication-details':
-        return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
+        return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} journalContext={journalContext} />
       case 'publication-list':
         return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} />
       

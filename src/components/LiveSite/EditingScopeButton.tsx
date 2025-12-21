@@ -275,14 +275,13 @@ export function EditingScopeButton({
     }
   }, [isOpen])
 
-  const handleEditClick = (scope: EditingScope) => {
-    // Build the edit URL with scope context
-    const params = new URLSearchParams()
-    params.set('scope', scope)
-    if (ctx.journalId) params.set('journal', ctx.journalId)
-    if (ctx.issueType) params.set('issueType', ctx.issueType)
+  const handleEditClick = (_scope: EditingScope) => {
+    // Navigate to the edit URL - context is inferred from the route structure
+    // Note: When template editing is implemented, we may add scope params back
+    void _scope // Reserved for future template editing feature
     
-    navigate(`/edit/${websiteId}${route || '/home'}?${params.toString()}`)
+    const editRoute = route || '/home'
+    navigate(`/edit/${websiteId}${editRoute}`)
     setIsOpen(false)
   }
 

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { PageBuilder } from '../PageBuilder'
 import { DynamicBrandingCSS } from '../BrandingSystem/DynamicBrandingCSS'
 import { NotificationContainer, IssuesSidebar } from '../Notifications'
@@ -33,18 +33,16 @@ import {
 
 export function PageBuilderEditor() {
   const { websiteId, '*': pageRoute } = useParams<{ websiteId: string; '*': string }>()
-  const [searchParams] = useSearchParams()
   
-  // URL params for editing scope (kept for future template editing features)
-  const _scope = searchParams.get('scope') || 'individual'
-  const _journalId = searchParams.get('journal')
-  const _issueType = searchParams.get('issueType')
-  void _scope; void _journalId; void _issueType; // Suppress unused warnings
+  // Note: When template editing is implemented, we may add scope params:
+  // const [searchParams] = useSearchParams()
+  // const scope = searchParams.get('scope') || 'individual'
   
   const { 
     setCurrentWebsiteId, 
     setCurrentView, 
     setEditingContext,
+    setMockLiveSiteRoute,
     websites,
     replaceCanvasItems,
     setIsEditingLoadedWebsite,
@@ -67,7 +65,12 @@ export function PageBuilderEditor() {
     }
     setCurrentView('page-builder')
     setEditingContext('page')
-  }, [websiteId, setCurrentWebsiteId, setCurrentView, setEditingContext])
+    
+    // Set the mock live site route so PageBuilder knows the current page context
+    // This enables journal context detection for widgets
+    const route = pageRoute ? `/${pageRoute}` : '/'
+    setMockLiveSiteRoute(route)
+  }, [websiteId, pageRoute, setCurrentWebsiteId, setCurrentView, setEditingContext, setMockLiveSiteRoute])
   
   // Determine page type from route
   const getPageType = (route: string): PageType => {

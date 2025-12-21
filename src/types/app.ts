@@ -63,18 +63,17 @@ export type TemplateEditingContext = {
 
 export type IssueType = 'current' | 'ahead-of-print' | 'just-accepted' | 'archive'
 
-// Mock Live Site routing
-export type MockLiveSiteRoute = 
-  | '/' 
-  | '/toc/advma/current' 
-  | '/toc/embo/current'
-  | '/toc/advma/vol-35-issue-47'  
-  | '/toc/embo/vol-35-issue-47'
-  | '/article/advma/67/12/p45'
-  | '/journal/advma'
-  | '/journal/embo'
-  | '/about'
-  | '/search'
+// Mock Live Site routing - now accepts any route string for dynamic pages
+// Known routes are listed for documentation, but any string is valid
+export type MockLiveSiteRoute = string
+// Known routes include:
+// - '/' (homepage)
+// - '/journal/{journalId}' (journal home)
+// - '/journal/{journalId}/loi' (issue archive)
+// - '/journal/{journalId}/toc/{vol}/{issue}' (issue TOC)
+// - '/toc/{journalId}/current' (legacy format)
+// - '/article/{journalId}/{vol}/{issue}/{articleId}'
+// - '/about', '/search'
 
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 

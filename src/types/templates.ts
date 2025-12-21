@@ -66,9 +66,29 @@ export type Website = {
   branding: {
     primaryColor?: string
     secondaryColor?: string
+    accentColor?: string
     logoUrl?: string
     fontFamily?: string
   }
+  
+  // Journals associated with this website
+  journals?: Array<{
+    id: string
+    name: string
+    acronym?: string
+    description?: string
+    issn?: {
+      print?: string
+      online?: string
+    }
+    impactFactor?: number
+    isOpenAccess?: boolean
+    isDiscontinued?: boolean
+    branding?: {
+      primaryColor?: string
+      secondaryColor?: string
+    }
+  }>
   
   // Theme customizations specific to this website (overrides global theme)
   themeOverrides?: {

@@ -2994,103 +2994,77 @@ export function createSearchStub(): CanvasItemStub[] {
 
 /**
  * Journal Home Page Template
- * Pre-populated with actual journal data when provided
+ * Uses context-aware colors and publication-details with journal context
+ * Structure: Journal Banner → Navigation → Content (2/3 Articles + 1/3 Sidebar)
  */
 export function createJournalHomeTemplate(
   websiteId: string = 'catalyst-demo',
   context?: JournalContext
 ): CanvasItemStub[] {
-  // Use context data or placeholders
-  const journalName = context?.journal?.name || 'Journal Name'
-  const journalDescription = context?.journal?.description || 'Journal description will appear here.'
   const journalId = context?.journal?.id || 'journal-id'
-  const brandColor = context?.journal?.brandColor || '#6366f1'
-  const brandColorLight = context?.journal?.brandColorLight || '#818cf8'
   const articles = context?.articles || []
   
   return [
-    // Journal Hero
+    // Journal Banner with Publication Details (context source)
     {
       id: nanoid(),
-      name: 'Journal Hero',
-      type: 'hero',
-      layout: 'hero-with-buttons',
+      name: 'Journal Banner',
+      type: 'content-block',
+      layout: 'grid',
       areas: [
         {
           id: nanoid(),
-          name: 'Hero Content',
+          name: 'Grid Items',
           widgets: [
             {
               id: nanoid(),
-              type: 'heading',
-              sectionId: '',
               skin: 'minimal',
-              text: journalName,
-              level: 1,
-              align: 'center',
-              style: 'hero',
-              color: 'primary',
-              size: 'auto'
-            },
-            {
-              id: nanoid(),
-              type: 'text',
-              sectionId: '',
-              skin: 'minimal',
-              text: journalDescription,
-              align: 'center'
-            }
-          ]
-        },
-        {
-          id: nanoid(),
-          name: 'Button Row',
-          widgets: [
-            {
-              id: nanoid(),
-              type: 'button',
-              sectionId: '',
-              skin: 'minimal',
-              text: 'Current Issue',
-              href: `/live/${websiteId}/journal/${journalId}/toc/current`,
-              variant: 'primary',
-              size: 'large'
-            },
-            {
-              id: nanoid(),
-              type: 'button',
-              sectionId: '',
-              skin: 'minimal',
-              text: 'All Issues',
-              href: `/live/${websiteId}/journal/${journalId}/loi`,
-              variant: 'secondary',
-              size: 'large'
+              type: 'publication-details',
+              contentSource: 'context', // Uses journal from page context
+              publication: {}, // Empty - will be populated from context
+              cardConfig: {
+                showContentTypeLabel: false,
+                showTitle: true,
+                showSubtitle: false,
+                showThumbnail: false,
+                thumbnailPosition: 'left',
+                showPublicationTitle: false,
+                showVolumeIssue: false,
+                showBookSeriesTitle: false,
+                showChapterPages: false,
+                showNumberOfIssues: true,
+                showPublicationDate: true,
+                showDOI: false,
+                showISSN: true,
+                showISBN: false,
+                showAuthors: false,
+                authorStyle: 'full',
+                showAffiliations: false,
+                showAbstract: true,
+                abstractLength: 'medium',
+                showKeywords: false,
+                showAccessStatus: true,
+                showViewDownloadOptions: false,
+                showUsageMetrics: false,
+                titleStyle: 'medium'
+              },
+              layout: 'default',
+              sectionId: ''
             }
           ]
         }
       ],
+      gridConfig: {
+        columns: 1,
+        gap: '1rem',
+        alignItems: 'stretch',
+        justifyItems: 'stretch'
+      },
       background: {
-        type: 'gradient',
-        gradient: {
-          type: 'linear',
-          direction: 'to bottom',
-          stops: [
-            { color: brandColor, position: '0%' },
-            { color: brandColorLight, position: '100%' }
-          ]
-        },
-        opacity: 1
+        type: 'color',
+        color: '{journal.branding.primaryColor}' // Context-aware color
       },
-      styling: {
-        paddingTop: 'large',
-        paddingBottom: 'large',
-        paddingLeft: 'medium',
-        paddingRight: 'medium',
-        gap: 'medium',
-        variant: 'full-width',
-        textColor: 'white'
-      },
-      minHeight: '350px'
+      contentMode: 'dark'
     },
     // Journal Navigation
     {
@@ -3113,16 +3087,17 @@ export function createJournalHomeTemplate(
               style: 'horizontal',
               align: 'left',
               items: [
-                { id: nanoid(), label: 'Home', url: '/live/catalyst-demo/journal/{journal.id}', target: '_self', order: 0 },
-                { id: nanoid(), label: 'Current Issue', url: '/live/catalyst-demo/journal/{journal.id}/toc/current', target: '_self', order: 1 },
-                { id: nanoid(), label: 'All Issues', url: '/live/catalyst-demo/journal/{journal.id}/loi', target: '_self', order: 2 },
-                { id: nanoid(), label: 'About', url: '/live/catalyst-demo/journal/{journal.id}/about', target: '_self', order: 3 }
+                { id: nanoid(), label: 'Journal Home', url: `/live/${websiteId}/journal/{journal.id}`, target: '_self', order: 0 },
+                { id: nanoid(), label: 'Current Issue', url: `/live/${websiteId}/journal/{journal.id}/toc/current`, target: '_self', order: 1 },
+                { id: nanoid(), label: 'All Issues', url: `/live/${websiteId}/journal/{journal.id}/loi`, target: '_self', order: 2 },
+                { id: nanoid(), label: 'Submit', url: `/live/${websiteId}/journal/{journal.id}/submit`, target: '_self', order: 3 },
+                { id: nanoid(), label: 'About', url: `/live/${websiteId}/journal/{journal.id}/about`, target: '_self', order: 4 }
               ]
             }
           ]
         }
       ],
-      background: { type: 'color', color: '#f1f5f9', opacity: 1 },
+      background: { type: 'color', color: '#1E2939', opacity: 1 },
       styling: {
         paddingTop: 'small',
         paddingBottom: 'small',
@@ -3131,28 +3106,32 @@ export function createJournalHomeTemplate(
         gap: 'small',
         variant: 'full-width',
         textColor: 'default'
-      }
+      },
+      contentMode: 'dark'
     },
-    // Latest Articles Section
+    // Main Content: Articles (2/3) + Sidebar (1/3)
     {
       id: nanoid(),
-      name: 'Latest Articles',
+      name: 'Main Content',
       type: 'content-block',
-      layout: 'one-column',
+      layout: 'one-third-right',
       areas: [
         {
           id: nanoid(),
-          name: 'Content',
+          name: 'Left (2/3)',
           widgets: [
             {
               id: nanoid(),
-              type: 'heading',
-              sectionId: '',
               skin: 'minimal',
+              type: 'heading',
               text: 'Latest Articles',
               level: 2,
               align: 'left',
-              style: 'default'
+              style: 'default',
+              color: 'default',
+              size: 'auto',
+              icon: { enabled: false, position: 'left', emoji: '🎯' },
+              sectionId: ''
             },
             {
               id: nanoid(),
@@ -3183,18 +3162,30 @@ export function createJournalHomeTemplate(
               sectionId: ''
             }
           ]
+        },
+        {
+          id: nanoid(),
+          name: 'Right (1/3)',
+          widgets: [
+            {
+              id: nanoid(),
+              skin: 'minimal',
+              type: 'text',
+              text: '[Cover Image Placeholder]',
+              align: 'left',
+              sectionId: ''
+            },
+            {
+              id: nanoid(),
+              skin: 'minimal',
+              type: 'text',
+              text: '[Journal Metrics Placeholder]',
+              align: 'left',
+              sectionId: ''
+            }
+          ]
         }
-      ],
-      background: { type: 'color', color: '#ffffff', opacity: 1 },
-      styling: {
-        paddingTop: 'large',
-        paddingBottom: 'large',
-        paddingLeft: 'medium',
-        paddingRight: 'medium',
-        gap: 'medium',
-        variant: 'full-width',
-        textColor: 'default'
-      }
+      ]
     }
   ]
 }

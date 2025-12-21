@@ -194,17 +194,35 @@ export function PageBuilder({
   const isGlobalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'global'
   const isJournalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'journal'
   
-  const getJournalCode = (route: string): string | null => {
-    const match = route.match(/\/(toc|journal)\/([^\/]+)/)
-    return match ? match[2] : null // Return null for non-journal pages (like homepage)
-  }
-  const journalCode = getJournalCode(mockLiveSiteRoute)
-  const journalName = journalCode === 'advma' ? 'Advanced Materials' : journalCode === 'embo' ? 'EMBO Journal' : 'Journal'
-  
-  // Get current theme name
+  // Get current website and theme (needed for journal context and theme name)
   const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
   const currentTheme = themes.find((t: any) => t.id === currentWebsite?.themeId)
   const themeName = currentTheme?.name || 'No Theme'
+  
+  // Extract journal code from route - handles multiple formats:
+  // - /journal/jas (journal home)
+  // - /journal/jas/loi (issue archive)
+  // - /journal/jas/toc/1/2 (issue TOC)
+  // - /toc/advma (legacy format)
+  const getJournalCode = (route: string): string | null => {
+    if (!route) return null
+    // Try new format first: /journal/{journalId}/...
+    const journalMatch = route.match(/\/journal\/([^\/]+)/)
+    if (journalMatch) return journalMatch[1]
+    // Try legacy format: /toc/{journalId}/...
+    const tocMatch = route.match(/\/toc\/([^\/]+)/)
+    if (tocMatch) return tocMatch[1]
+    return null
+  }
+  const journalCode = getJournalCode(mockLiveSiteRoute)
+  
+  // Get journal name from website data
+  const getJournalName = (code: string | null): string => {
+    if (!code) return 'Journal'
+    const journal = (currentWebsite as any)?.journals?.find((j: any) => j.id === code)
+    return journal?.name || code.toUpperCase()
+  }
+  const journalName = getJournalName(journalCode)
   
   // Get site layout for global header/footer
   const siteLayout = (currentWebsite as any)?.siteLayout
@@ -1778,22 +1796,16 @@ export function PageBuilder({
                 <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      // Check if we're in a routed context (URL-based editing) or V1 internal
-                      if (window.location.pathname.startsWith('/edit/')) {
-                        // Extract websiteId from URL: /edit/:websiteId/:pageId
-                        const pathParts = window.location.pathname.split('/')
-                        const websiteId = pathParts[2] || 'catalyst-demo'
-                        const pageId = pathParts[3] || ''
-                        // Use client-side navigation to preserve state
-                        // Homepage is at /live/:websiteId (not /live/:websiteId/home)
-                        const livePath = pageId === 'home' || pageId === '' 
-                          ? `/live/${websiteId}` 
-                          : `/live/${websiteId}/${pageId}`
-                        navigate(livePath)
-                      } else {
-                        const { setCurrentView } = usePageStore.getState()
-                        setCurrentView('mock-live-site')
-                      }
+                      // Always navigate to the proper live URL based on what we're editing
+                      // Use store state for the website ID and current route
+                      const websiteId = currentWebsiteId || 'catalyst-demo'
+                      // Get the route from mockLiveSiteRoute (e.g., '/journal/jas', '/home', '/')
+                      const route = mockLiveSiteRoute?.replace(/^\//, '') || ''
+                      // Homepage is at /live/:websiteId (not /live/:websiteId/home)
+                      const livePath = route === 'home' || route === '' 
+                        ? `/live/${websiteId}` 
+                        : `/live/${websiteId}/${route}`
+                      navigate(livePath)
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
@@ -1893,7 +1905,43 @@ export function PageBuilder({
                     const currentWebsiteId = usePageStore.getState().currentWebsiteId
                     const websites = usePageStore.getState().websites
                     const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
-                    return currentWebsite ? `${currentWebsite.name} Homepage` : 'Homepage'
+                    
+                    // Derive page name from URL path
+                    const getPageTitle = () => {
+                      const pathname = window.location.pathname
+                      // Extract path after /edit/:websiteId/
+                      const pathParts = pathname.split('/')
+                      const pageRoute = pathParts.slice(3).join('/')
+                      
+                      if (!pageRoute || pageRoute === '' || pageRoute === 'home') {
+                        return 'Homepage'
+                      }
+                      if (pageRoute === 'journals') return 'Journals Browse'
+                      if (pageRoute === 'about') return 'About Page'
+                      if (pageRoute === 'search') return 'Search Page'
+                      if (pageRoute.startsWith('journal/') && pageRoute.includes('/loi')) {
+                        const journalId = pageRoute.split('/')[1]?.toUpperCase()
+                        return `${journalId} Issue Archive`
+                      }
+                      if (pageRoute.startsWith('journal/') && pageRoute.includes('/toc/')) {
+                        const journalId = pageRoute.split('/')[1]?.toUpperCase()
+                        return `${journalId} Issue TOC`
+                      }
+                      if (pageRoute.startsWith('journal/') && pageRoute.includes('/article/')) {
+                        const journalId = pageRoute.split('/')[1]?.toUpperCase()
+                        return `${journalId} Article`
+                      }
+                      if (pageRoute.startsWith('journal/')) {
+                        const journalId = pageRoute.split('/')[1]?.toUpperCase()
+                        return `${journalId} Journal Home`
+                      }
+                      // Fallback: capitalize the route
+                      return pageRoute.charAt(0).toUpperCase() + pageRoute.slice(1)
+                    }
+                    
+                    const siteName = currentWebsite?.name || ''
+                    const pageTitle = getPageTitle()
+                    return siteName ? `${siteName} - ${pageTitle}` : pageTitle
                   })()}</strong>
                 </div>
                 <button

@@ -152,34 +152,49 @@ interface BrandingStore {
   generateCSSVariables: (branding: ResolvedBranding) => Record<string, string>;
 }
 
+// DEFAULT_JOURNALS - Synced with V2 mockWebsites for catalyst-demo
 const DEFAULT_JOURNALS: JournalBranding[] = [
   {
-    id: nanoid(),
-    name: 'Advanced Materials',
-    slug: 'advma',
+    id: 'jas',
+    name: 'Journal of Advanced Science',
+    slug: 'jas',
     priority: 1,
     colors: {
-      primary: '#dc2626',     // Red-600 (matches CSS --journal-primary)
-      secondary: '#fecaca',   // Red-200
-      accent: '#991b1b',      // Red-800 (matches CSS --journal-primary-dark)
-      text: '#ffffff',        // White text (matches CSS --journal-text)
-      background: '#fef2f2'   // Red-50
+      primary: '#1e40af',     // Deep blue (matches V2 journalOfScience)
+      secondary: '#3b82f6',   // Blue-500
+      accent: '#1e3a8a',      // Blue-900
+      text: '#ffffff',        // White text
+      background: '#eff6ff'   // Blue-50
     },
-    description: 'Materials science and engineering journal'
+    description: 'Publishing groundbreaking research in all fields of science since 1985'
   },
   {
-    id: nanoid(),
-    name: 'EMBO Journal',
-    slug: 'embo',
+    id: 'oab',
+    name: 'Open Access Biology',
+    slug: 'oab',
     priority: 1,
     colors: {
-      primary: '#ea580c',     // Orange-600 (matches CSS --journal-primary)
-      secondary: '#7c3aed',   // Purple-600 (matches CSS --journal-secondary)
-      accent: '#c2410c',      // Orange-700 (matches CSS --journal-primary-dark)
-      text: '#ffffff',        // White text (matches CSS --journal-text)
-      background: '#fff7ed'   // Orange-50
+      primary: '#059669',     // Emerald-600 (matches V2 openAccessBiology)
+      secondary: '#10b981',   // Emerald-500
+      accent: '#047857',      // Emerald-700
+      text: '#ffffff',        // White text
+      background: '#ecfdf5'   // Emerald-50
     },
-    description: 'European Molecular Biology Organization journal'
+    description: 'Freely accessible research in biological sciences'
+  },
+  {
+    id: 'hcq',
+    name: 'Historical Chemistry Quarterly',
+    slug: 'hcq',
+    priority: 1,
+    colors: {
+      primary: '#78716c',     // Stone-500 (matches V2 historicalChemistry - discontinued)
+      secondary: '#a8a29e',   // Stone-400
+      accent: '#57534e',      // Stone-600
+      text: '#ffffff',        // White text
+      background: '#f5f5f4'   // Stone-100
+    },
+    description: 'Archive of chemical research from 1920-2020 (discontinued)'
   }
 ];
 

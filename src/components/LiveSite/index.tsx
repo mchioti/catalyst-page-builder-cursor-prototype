@@ -18,6 +18,7 @@ import { AlertCircle } from 'lucide-react'
 import { CanvasRenderer } from './CanvasRenderer'
 import { usePageStore } from '../../stores'
 import { usePrototypeStore } from '../../stores/prototypeStore'
+import { useBrandingStore } from '../../stores/brandingStore'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { EditingScopeButton } from './EditingScopeButton'
 import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
@@ -72,6 +73,37 @@ function useAllWebsites() {
     
     return Array.from(websiteMap.values())
   }, [v1Websites])
+}
+
+// Helper hook to get journal branding from the Design Console branding store
+// This ensures changes made in Design Console are reflected in the Live Site
+function useJournalBranding(websiteId: string, journalId: string | undefined) {
+  const getWebsiteBranding = useBrandingStore(state => state.getWebsiteBranding)
+  const initializeWebsiteBranding = useBrandingStore(state => state.initializeWebsiteBranding)
+  
+  // Ensure branding is initialized for this website
+  useEffect(() => {
+    if (websiteId) {
+      const existing = getWebsiteBranding(websiteId)
+      if (!existing) {
+        initializeWebsiteBranding(websiteId)
+      }
+    }
+  }, [websiteId, getWebsiteBranding, initializeWebsiteBranding])
+  
+  return useMemo(() => {
+    if (!journalId) return null
+    
+    const websiteBranding = getWebsiteBranding(websiteId)
+    if (!websiteBranding) return null
+    
+    // Find journal branding by id or slug
+    const journalBranding = websiteBranding.journals.find(
+      j => j.id === journalId || j.slug === journalId
+    )
+    
+    return journalBranding || null
+  }, [websiteId, journalId, getWebsiteBranding])
 }
 import { 
   getHomepageStubForWebsite,
@@ -314,7 +346,7 @@ function JournalHomePage() {
   
   return (
     <div>
-      <JournalBanner journal={journal} variant="full" />
+      <JournalBanner journal={journal} variant="full" websiteId={websiteId} />
       <JournalNav journalId={journalId!} />
       <div className="py-12 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
@@ -396,7 +428,7 @@ function IssueArchivePage() {
   
   return (
     <div>
-      <JournalBanner journal={journal} variant="archive" />
+      <JournalBanner journal={journal} variant="archive" websiteId={websiteId} />
       <JournalNav journalId={journalId!} activeTab="archive" />
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
@@ -455,7 +487,7 @@ function IssueTocPage() {
   
   return (
     <div>
-      <JournalBanner journal={journal} variant="issue" issue={issue} />
+      <JournalBanner journal={journal} variant="issue" issue={issue} websiteId={websiteId} />
       <JournalNav journalId={journalId!} activeTab="toc" />
       <div className="bg-gray-100 py-3 px-6 border-b">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -521,7 +553,7 @@ function ArticlePage() {
   
   return (
     <div>
-      <JournalBanner journal={journal} variant="minimal" />
+      <JournalBanner journal={journal} variant="minimal" websiteId={websiteId} />
       <JournalNav journalId={journalId!} />
       <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
@@ -687,8 +719,12 @@ function _JournalCard({ journal, showFullDescription }: { journal: Journal; show
   )
 }
 
-function JournalBanner({ journal, variant, issue }: { journal: Journal; variant: 'full' | 'archive' | 'issue' | 'minimal'; issue?: Issue }) {
-  const bgColor = journal.branding?.primaryColor || '#1e40af'
+function JournalBanner({ journal, variant, issue, websiteId }: { journal: Journal; variant: 'full' | 'archive' | 'issue' | 'minimal'; issue?: Issue; websiteId: string }) {
+  // Get branding from Design Console - this takes precedence over V2 mock data
+  const journalBranding = useJournalBranding(websiteId, journal.id)
+  
+  // Priority: Design Console branding → V2 mock data → fallback
+  const bgColor = journalBranding?.colors?.primary || journal.branding?.primaryColor || '#1e40af'
   
   return (
     <section 

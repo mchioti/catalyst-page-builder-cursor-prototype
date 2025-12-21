@@ -22,6 +22,101 @@ import { generateAIContent } from '../../utils/aiContentGeneration'
 const DEBUG = false
 const debugLog = createDebugLogger(DEBUG)
 
+// Helper function to resolve context-aware color variables
+// Resolves {journal.branding.primaryColor}, {website.branding.accentColor}, etc.
+// Priority: Branding Store (Design Console) → Page Store (V2 mock data) → fallback
+function resolveContextColor(
+  color: string | undefined, 
+  usePageStore: any,
+  journalContext?: string
+): string | undefined {
+  if (!color) return undefined
+  
+  // Check if it's a template variable
+  if (!color.startsWith('{') || !color.endsWith('}')) {
+    return color // Return as-is if not a variable
+  }
+  
+  // Parse the variable path
+  const variablePath = color.slice(1, -1) // Remove { and }
+  const parts = variablePath.split('.')
+  
+  if (parts.length < 2) return color
+  
+  const [objectName, ...propertyParts] = parts
+  const propertyPath = propertyParts.join('.')
+  
+  // Get store data
+  const { currentWebsiteId, websites } = usePageStore.getState()
+  const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
+  
+  // Try to get branding from the Design Console branding store first
+  const brandingStore = useBrandingStore.getState()
+  const websiteBranding = brandingStore.getWebsiteBranding(currentWebsiteId)
+  
+  if (objectName === 'website') {
+    // Priority: Branding Store → Page Store → fallback
+    if (websiteBranding?.website?.colors) {
+      // Map propertyPath like 'branding.primaryColor' to 'colors.primary'
+      if (propertyPath === 'branding.primaryColor') {
+        return websiteBranding.website.colors.primary || getNestedValue(currentWebsite, propertyPath) || color
+      }
+      if (propertyPath === 'branding.secondaryColor') {
+        return websiteBranding.website.colors.secondary || getNestedValue(currentWebsite, propertyPath) || color
+      }
+      if (propertyPath === 'branding.accentColor') {
+        return websiteBranding.website.colors.accent || getNestedValue(currentWebsite, propertyPath) || color
+      }
+    }
+    // Fallback to page store
+    return getNestedValue(currentWebsite, propertyPath) || color
+  }
+  
+  if (objectName === 'journal') {
+    // Priority: Branding Store → Page Store → fallback
+    // First try to find journal branding from Design Console
+    if (journalContext && websiteBranding?.journals) {
+      const journalBranding = websiteBranding.journals.find(
+        (j: any) => j.id === journalContext || j.slug === journalContext
+      )
+      if (journalBranding?.colors) {
+        // Map propertyPath like 'branding.primaryColor' to 'colors.primary'
+        if (propertyPath === 'branding.primaryColor') {
+          return journalBranding.colors.primary
+        }
+        if (propertyPath === 'branding.secondaryColor') {
+          return journalBranding.colors.secondary
+        }
+        if (propertyPath === 'branding.accentColor') {
+          return journalBranding.colors.accent
+        }
+      }
+    }
+    
+    // Fallback: try to find journal from page store
+    if (journalContext && currentWebsite?.journals) {
+      const journal = currentWebsite.journals.find((j: any) => j.id === journalContext)
+      if (journal) {
+        const resolved = getNestedValue(journal, propertyPath)
+        return resolved || color
+      }
+    }
+    // Fallback to first journal or website branding
+    const firstJournal = currentWebsite?.journals?.[0]
+    return getNestedValue(firstJournal, propertyPath) || 
+           getNestedValue(currentWebsite, propertyPath.replace('branding', 'branding')) || 
+           color
+  }
+  
+  return color
+}
+
+// Helper to get nested property value (e.g., 'branding.primaryColor' from object)
+function getNestedValue(obj: any, path: string): string | undefined {
+  if (!obj) return undefined
+  return path.split('.').reduce((current, key) => current?.[key], obj)
+}
+
 // Helper function to resolve spacing token references (e.g., 'semantic.lg' → '24px')
 function resolveSpacingToken(tokenRef: string | undefined, usePageStore: any): string | undefined {
   if (!tokenRef) return undefined
@@ -555,7 +650,9 @@ export function SectionRenderer({
     switch (background.type) {
       case 'color':
         if (background.color) {
-          styles.backgroundColor = background.color
+          // Resolve context-aware colors (e.g., {journal.branding.primaryColor})
+          const resolvedColor = resolveContextColor(background.color, usePageStore, journalContext)
+          styles.backgroundColor = resolvedColor || background.color
           styles.opacity = opacity
         }
         break
@@ -573,7 +670,12 @@ export function SectionRenderer({
       case 'gradient':
         if (background.gradient?.stops && background.gradient.stops.length >= 2) {
           const { type, direction, stops } = background.gradient
-          const gradientStops = stops.map(stop => `${stop.color} ${stop.position}`).join(', ')
+          // Resolve context-aware colors in gradient stops
+          const resolvedStops = stops.map(stop => {
+            const resolvedStopColor = resolveContextColor(stop.color, usePageStore, journalContext)
+            return `${resolvedStopColor || stop.color} ${stop.position}`
+          })
+          const gradientStops = resolvedStops.join(', ')
           
           if (type === 'linear') {
             styles.backgroundImage = `linear-gradient(${direction || 'to right'}, ${gradientStops})`

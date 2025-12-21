@@ -100,6 +100,55 @@ export const mockWebsites: Website[] = [
       logoUrl: '/catalyst-logo.svg',
       fontFamily: 'Inter'
     },
+    // Journals for this website
+    journals: [
+      {
+        id: 'jas',
+        name: 'Journal of Advanced Science',
+        acronym: 'JAS',
+        description: 'Publishing groundbreaking research in all fields of science since 1985',
+        issn: {
+          print: '1234-5678',
+          online: '8765-4321'
+        },
+        impactFactor: 12.5,
+        isOpenAccess: false,
+        branding: {
+          primaryColor: '#1e40af',
+          secondaryColor: '#3b82f6'
+        }
+      },
+      {
+        id: 'oab',
+        name: 'Open Access Biology',
+        acronym: 'OAB',
+        description: 'Freely accessible research in biological sciences',
+        issn: {
+          online: '2234-5678'
+        },
+        impactFactor: 8.3,
+        isOpenAccess: true,
+        branding: {
+          primaryColor: '#059669',
+          secondaryColor: '#10b981'
+        }
+      },
+      {
+        id: 'hcq',
+        name: 'Historical Chemistry Quarterly',
+        acronym: 'HCQ',
+        description: 'Archive of chemical research from 1920-2020',
+        issn: {
+          print: '0001-2345'
+        },
+        isOpenAccess: false,
+        isDiscontinued: true,
+        branding: {
+          primaryColor: '#78716c',
+          secondaryColor: '#a8a29e'
+        }
+      }
+    ],
     purpose: {
       contentTypes: ['journals', 'books'],
       hasSubjectOrganization: true,
@@ -127,6 +176,56 @@ export const mockWebsites: Website[] = [
       logoUrl: '/febs-logo.svg',
       fontFamily: '"Open Sans", icomoon, sans-serif'
     },
+    // FEBS Journals
+    journals: [
+      {
+        id: 'febs-journal',
+        name: 'The FEBS Journal',
+        acronym: 'FEBSJ',
+        description: 'Publishing high-quality research in molecular life sciences since 1967',
+        issn: {
+          print: '1742-464X',
+          online: '1742-4658'
+        },
+        impactFactor: 5.5,
+        isOpenAccess: false,
+        branding: {
+          primaryColor: '#00B5FF',
+          secondaryColor: '#0077CC'
+        }
+      },
+      {
+        id: 'febs-letters',
+        name: 'FEBS Letters',
+        acronym: 'FEBSL',
+        description: 'Rapid publication of short reports in molecular biosciences',
+        issn: {
+          print: '0014-5793',
+          online: '1873-3468'
+        },
+        impactFactor: 3.9,
+        isOpenAccess: false,
+        branding: {
+          primaryColor: '#7B1FA2',
+          secondaryColor: '#9C27B0'
+        }
+      },
+      {
+        id: 'mol-oncology',
+        name: 'Molecular Oncology',
+        acronym: 'MO',
+        description: 'Research on molecular and cellular mechanisms of cancer',
+        issn: {
+          online: '1878-0261'
+        },
+        impactFactor: 6.6,
+        isOpenAccess: true,
+        branding: {
+          primaryColor: '#00B5FF',
+          secondaryColor: '#E91E63'
+        }
+      }
+    ],
     // Theme overrides applied via ThemeEditor (simulates user customization)
     themeOverrides: {
       colors: {
