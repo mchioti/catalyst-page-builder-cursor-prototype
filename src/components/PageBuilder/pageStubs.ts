@@ -17,6 +17,7 @@
  */
 
 import { nanoid } from 'nanoid'
+import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
 
 // Use 'any' for canvas items since the types are complex and we're building stubs
 // The runtime validation happens in the renderers
@@ -3139,12 +3140,58 @@ export function createJournalHomeTemplate(
               type: 'publication-list',
               contentSource: 'journal-latest',
               journalId: journalId,
-              publications: articles.map(article => ({
-                doi: article.doi,
-                title: article.title,
-                authors: article.authors,
-                isOpenAccess: article.isOpenAccess || false
-              })),
+              // Convert articles to schema.org format as per PageBuilder-Widgets-Skill.md Rule 4
+              // Publications must be in schema.org format (ScholarlyArticle with @type, headline, author array, etc.)
+              publications: articles.map(article => {
+                // Get citation data to convert to schema.org format
+                const citation = getCitationByDOI(article.doi)
+                if (citation) {
+                  // Use citationToSchemaOrg for proper schema.org conversion
+                  const schemaOrg = citationToSchemaOrg(citation)
+                  // Enhance with additional metadata from article
+                  return {
+                    ...schemaOrg,
+                    datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : schemaOrg.datePublished,
+                    isAccessibleForFree: article.isOpenAccess || false,
+                    // Add page range if available
+                    ...(article.pageRange && (() => {
+                      const pages = article.pageRange.split('-')
+                      return pages.length === 2 
+                        ? { pageStart: pages[0].trim(), pageEnd: pages[1].trim() }
+                        : {}
+                    })()),
+                    // Additional metadata (not part of schema.org but useful)
+                    citations: article.citations,
+                    downloads: article.downloads
+                  }
+                }
+                // Fallback: create schema.org object from article data
+                return {
+                  '@context': 'https://schema.org',
+                  '@type': 'ScholarlyArticle',
+                  headline: article.title,
+                  name: article.title,
+                  author: Array.isArray(article.authors) 
+                    ? article.authors.map((name: string) => ({ '@type': 'Person', name }))
+                    : article.authors ? [{ '@type': 'Person', name: article.authors }] : [],
+                  abstract: article.abstract,
+                  datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : undefined,
+                  identifier: article.doi ? {
+                    '@type': 'PropertyValue',
+                    propertyID: 'DOI',
+                    value: article.doi
+                  } : undefined,
+                  ...(article.pageRange && (() => {
+                    const pages = article.pageRange.split('-')
+                    return pages.length === 2 
+                      ? { pageStart: pages[0].trim(), pageEnd: pages[1].trim() }
+                      : {}
+                  })()),
+                  isAccessibleForFree: article.isOpenAccess || false,
+                  citations: article.citations,
+                  downloads: article.downloads
+                }
+              }),
               cardConfig: {
                 showContentTypeLabel: true,
                 showTitle: true,
@@ -3499,12 +3546,58 @@ export function createIssueTocTemplate(
               type: 'publication-list',
               contentSource: 'issue-articles',
               issueId: context?.issue?.id || 'issue-id',
-              publications: articles.map(article => ({
-                doi: article.doi,
-                title: article.title,
-                authors: article.authors,
-                isOpenAccess: article.isOpenAccess || false
-              })),
+              // Convert articles to schema.org format as per PageBuilder-Widgets-Skill.md Rule 4
+              // Publications must be in schema.org format (ScholarlyArticle with @type, headline, author array, etc.)
+              publications: articles.map(article => {
+                // Get citation data to convert to schema.org format
+                const citation = getCitationByDOI(article.doi)
+                if (citation) {
+                  // Use citationToSchemaOrg for proper schema.org conversion
+                  const schemaOrg = citationToSchemaOrg(citation)
+                  // Enhance with additional metadata from article
+                  return {
+                    ...schemaOrg,
+                    datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : schemaOrg.datePublished,
+                    isAccessibleForFree: article.isOpenAccess || false,
+                    // Add page range if available
+                    ...(article.pageRange && (() => {
+                      const pages = article.pageRange.split('-')
+                      return pages.length === 2 
+                        ? { pageStart: pages[0].trim(), pageEnd: pages[1].trim() }
+                        : {}
+                    })()),
+                    // Additional metadata (not part of schema.org but useful)
+                    citations: article.citations,
+                    downloads: article.downloads
+                  }
+                }
+                // Fallback: create schema.org object from article data
+                return {
+                  '@context': 'https://schema.org',
+                  '@type': 'ScholarlyArticle',
+                  headline: article.title,
+                  name: article.title,
+                  author: Array.isArray(article.authors) 
+                    ? article.authors.map((name: string) => ({ '@type': 'Person', name }))
+                    : article.authors ? [{ '@type': 'Person', name: article.authors }] : [],
+                  abstract: article.abstract,
+                  datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : undefined,
+                  identifier: article.doi ? {
+                    '@type': 'PropertyValue',
+                    propertyID: 'DOI',
+                    value: article.doi
+                  } : undefined,
+                  ...(article.pageRange && (() => {
+                    const pages = article.pageRange.split('-')
+                    return pages.length === 2 
+                      ? { pageStart: pages[0].trim(), pageEnd: pages[1].trim() }
+                      : {}
+                  })()),
+                  isAccessibleForFree: article.isOpenAccess || false,
+                  citations: article.citations,
+                  downloads: article.downloads
+                }
+              }),
               cardConfig: {
                 showContentTypeLabel: true,
                 showTitle: true,
@@ -3760,7 +3853,12 @@ export interface JournalContext {
     doi: string
     title: string
     authors: string[]
+    abstract?: string
+    publishedAt?: Date | string
+    pageRange?: string
     isOpenAccess?: boolean
+    citations?: number
+    downloads?: number
   }>
 }
 

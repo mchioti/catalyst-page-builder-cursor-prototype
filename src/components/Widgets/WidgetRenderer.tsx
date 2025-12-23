@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import type { Widget, ButtonWidget, TextWidget, ImageWidget, NavbarWidget, HTMLWidget, CodeWidget, HeadingWidget, PublicationListWidget, PublicationDetailsWidget, MenuWidget, MenuItem, TabsWidget, CollapseWidget, CollapsePanel, EditorialCardWidget, BreadcrumbsWidget, BreadcrumbItem } from '../../types'
 import { Home, ChevronRight } from 'lucide-react'
 import { PublicationCard } from '../Publications/PublicationCard'
@@ -316,6 +317,80 @@ const NavbarWidgetRenderer: React.FC<{ widget: NavbarWidget }> = ({ widget }) =>
 
 // Menu Widget Component - Context-aware navigation menu
 const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string; sectionContentMode?: 'light' | 'dark' }> = ({ widget, journalContext, sectionContentMode }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if URL is an internal route (should use Link/navigate instead of <a>)
+  const isInternalRoute = (url: string): boolean => {
+    if (!url) return false;
+    // Internal routes start with /live/ or /edit/ (our app routes)
+    // External URLs start with http://, https://, mailto:, tel:, etc.
+    return url.startsWith('/live/') || url.startsWith('/edit/') || (url.startsWith('/') && !url.startsWith('//'));
+  };
+  
+  // Convert internal route URL to React Router path
+  // For nested routes under /live/:websiteId/*, we need relative paths for navigate()
+  const getRouterPath = (url: string): string => {
+    if (!url) return '#';
+    
+    // For /live/ routes: Calculate relative path from current location
+    if (url.startsWith('/live/')) {
+      const targetParts = url.split('/').filter(p => p);
+      // targetParts = ['live', 'websiteId', 'journal', 'jas', 'toc', 'current']
+      
+      // Get current location parts
+      const currentParts = location.pathname.split('/').filter(p => p);
+      // currentParts = ['live', 'catalyst-demo', 'journal', 'jas']
+      
+      // If we're in a /live/ route, calculate relative path
+      if (currentParts.length >= 2 && currentParts[0] === 'live' && targetParts[0] === 'live') {
+        // Both are /live/ routes, check if same websiteId
+        if (currentParts[1] === targetParts[1]) {
+          // Same websiteId - calculate relative path
+          const currentPath = currentParts.slice(2).join('/'); // 'journal/jas'
+          const targetPath = targetParts.slice(2).join('/'); // 'journal/jas/toc/current'
+          
+          if (targetPath.startsWith(currentPath + '/')) {
+            // Target is a child of current - use relative path (no leading slash)
+            return targetPath.slice(currentPath.length + 1); // 'toc/current'
+          } else if (targetPath === currentPath) {
+            // Same path - stay here
+            return '.';
+          } else {
+            // Different path - need to go up and then down
+            // Calculate how many levels up we need to go
+            const currentDepth = currentPath.split('/').length;
+            const commonPrefix = currentPath.split('/').filter((part, i) => 
+              targetPath.split('/')[i] === part
+            ).join('/');
+            const upLevels = currentPath.split('/').length - commonPrefix.split('/').length;
+            const downPath = targetPath.split('/').slice(commonPrefix.split('/').length).join('/');
+            return '../'.repeat(upLevels) + downPath;
+          }
+        }
+      }
+      
+      // Not in /live/ route or different websiteId - use absolute path within nested router
+      // This will work if we're navigating from outside the nested router
+      if (targetParts.length > 2) {
+        return '/' + targetParts.slice(2).join('/');
+      }
+      return '/';
+    }
+    
+    // For /edit/ routes: Keep as is (they're handled by editor router at root level)
+    if (url.startsWith('/edit/')) {
+      return url;
+    }
+    
+    // For other internal routes starting with /, use as is
+    if (url.startsWith('/')) {
+      return url;
+    }
+    
+    // Relative paths: return as-is
+    return url;
+  };
   
   // Get text color classes based on content mode
   // ALL menus respect contentMode for readability
@@ -426,39 +501,61 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
     );
   }
   
+  // Render menu item (Link for internal routes, <a> for external)
+  const renderMenuItem = (item: any, className: string) => {
+    const isInternal = isInternalRoute(item.url);
+    const routerPath = isInternal ? getRouterPath(item.url) : item.url;
+    
+    if (isInternal) {
+      // Use navigate for client-side navigation (preserves Zustand store)
+      // For nested routes, use relative paths when possible
+      return (
+        <button
+          key={item.id}
+          type="button"
+          className={className}
+          onClick={() => {
+            navigate(routerPath);
+          }}
+        >
+          {item.label}
+          {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
+        </button>
+      );
+    } else {
+      // Use <a> for external URLs (full page navigation)
+      return (
+        <a 
+          key={item.id}
+          href={item.url}
+          target={item.target || '_blank'}
+          rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+          className={className}
+        >
+          {item.label}
+          {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
+        </a>
+      );
+    }
+  };
+  
   // Render based on style
   switch (widget.style) {
     case 'horizontal':
       return (
         <nav className={`flex items-center gap-6 flex-wrap ${getAlignmentClasses()}`}>
-          {visibleItems.map((item) => (
-            <a 
-              key={item.id}
-              href={item.url}
-              target={item.target}
-              className={`${textColorClasses} hover:opacity-75 transition-opacity whitespace-nowrap`}
-            >
-              {item.label}
-              {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
-            </a>
-          ))}
+          {visibleItems.map((item) => 
+            renderMenuItem(item, `${textColorClasses} hover:opacity-75 transition-opacity whitespace-nowrap`)
+          )}
         </nav>
       );
       
     case 'vertical':
       return (
         <nav className={`flex flex-col gap-2 ${getVerticalAlignmentClasses()}`}>
-          {visibleItems.map((item) => (
-            <a 
-              key={item.id}
-              href={item.url}
-              target={item.target}
-              className={`block px-4 py-2 ${textColorClasses} hover:bg-black/5 transition-colors rounded`}
-            >
-              {item.label}
-              {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
-            </a>
-          ))}
+          {visibleItems.map((item) => 
+            renderMenuItem(item, `block px-4 py-2 ${textColorClasses} hover:bg-black/5 transition-colors rounded`)
+          )}
         </nav>
       );
       
@@ -469,17 +566,9 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
             ☰ Menu
           </button>
           <div className="absolute left-0 top-full mt-2 bg-white border border-gray-200 rounded shadow-lg hidden group-hover:block min-w-[200px] z-50">
-            {visibleItems.map((item) => (
-              <a 
-                key={item.id}
-                href={item.url}
-                target={item.target}
-                className="block px-4 py-2 text-gray-900 hover:bg-gray-100 transition-colors"
-              >
-                {item.label}
-                {item.isContextGenerated && <span className="ml-1 text-xs opacity-50" title="Context-generated">*</span>}
-              </a>
-            ))}
+            {visibleItems.map((item) => 
+              renderMenuItem(item, "block px-4 py-2 text-gray-900 hover:bg-gray-100 transition-colors")
+            )}
           </div>
         </div>
       );
@@ -487,16 +576,9 @@ const MenuWidgetRenderer: React.FC<{ widget: MenuWidget; journalContext?: string
     case 'footer-links':
       return (
         <nav className={`flex items-center gap-4 flex-wrap text-sm ${getAlignmentClasses()}`}>
-          {visibleItems.map((item) => (
-            <a 
-              key={item.id}
-              href={item.url}
-              target={item.target}
-              className={`${textColorClasses} hover:underline`}
-            >
-              {item.label}
-            </a>
-          ))}
+          {visibleItems.map((item) => 
+            renderMenuItem(item, `${textColorClasses} hover:underline`)
+          )}
         </nav>
       );
       

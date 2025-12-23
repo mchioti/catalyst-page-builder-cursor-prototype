@@ -32,6 +32,9 @@ const createDefaultSiteLayout = () => ({
   footer: [createStandardFooterPrefab()]
 })
 
+// Stable empty array reference to prevent infinite loops in selectors
+const EMPTY_CANVAS: any[] = []
+
 // Helper hook to get all websites from V1 store (includes user-created websites)
 function useAllWebsites() {
   const v1Websites = usePageStore(state => state.websites)
@@ -109,7 +112,9 @@ import {
   getHomepageStubForWebsite,
   createJournalsBrowseStub,
   createAboutStub,
-  createSearchStub
+  createSearchStub,
+  createJournalHomeTemplate,
+  createIssueTocTemplate
 } from '../PageBuilder/pageStubs'
 // PrototypeDrawer replaced with unified EscapeHatch component
 import { 
@@ -335,66 +340,117 @@ function JournalHomePage() {
   const website = websites.find(w => w.id === websiteId)
   const journal = website?.journals?.find((j: any) => j.id === journalId)
   
+  // Get canvas data from store (saved by editor)
+  // Editor saves to pageCanvasData with key: "websiteId:pageName" (e.g., "catalyst-demo:journal/jas")
+  // Editor also loads from routeCanvasItems with key: "/journal/jas"
+  // We need to check BOTH locations to find saved data
+  const route = `/journal/${journalId}`
+  const pageName = `journal/${journalId}` // Format used by editor for pageCanvasData key
+  const getPageCanvas = usePageStore(state => state.getPageCanvas)
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  const setCanvasItemsForRoute = usePageStore(state => state.setCanvasItemsForRoute)
+  
+  // Use separate selectors to avoid creating new arrays on every call
+  // This prevents infinite loops from getSnapshot not being cached
+  const pageKey = useMemo(() => `${websiteId}:${pageName}`, [websiteId, pageName])
+  const savedPageCanvas = usePageStore(state => state.pageCanvasData[pageKey])
+  const savedRouteCanvas = usePageStore(state => state.routeCanvasItems[route])
+  
+  // Combine with useMemo to ensure stable reference
+  // Use stable EMPTY_CANVAS constant to prevent creating new arrays
+  const pageCanvas = useMemo(() => {
+    // Prefer pageCanvasData (what editor saves to), fallback to routeCanvasItems
+    return savedPageCanvas || savedRouteCanvas || EMPTY_CANVAS
+  }, [savedPageCanvas, savedRouteCanvas])
+  
+  // Get dynamic content for this journal (for template context)
+  const currentIssue = getCurrentIssue(journalId!)
+  const latestArticles = currentIssue ? getArticlesForIssue(currentIssue.id).slice(0, 5) : []
+  
   if (!journal) {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
-  // Get dynamic content for this journal
-  const currentIssue = getCurrentIssue(journalId!)
-  const issues = getIssuesByJournal(journalId!)
-  const latestArticles = currentIssue ? getArticlesForIssue(currentIssue.id).slice(0, 5) : []
+  // Auto-initialize canvas data ONLY if route has no saved data (first time viewing)
+  useEffect(() => {
+    // Check if route has saved data in EITHER storage location (check store directly)
+    // Use getState() to read current state without subscribing
+    const storeState = usePageStore.getState()
+    const pageCanvasFromStore = storeState.pageCanvasData[pageKey]
+    const routeCanvasFromStore = storeState.routeCanvasItems[route]
+    
+    const hasSavedData = (pageCanvasFromStore && pageCanvasFromStore.length > 0) || 
+                         (routeCanvasFromStore && routeCanvasFromStore.length > 0)
+    
+    // Only initialize if there's no saved data in either store
+    // This prevents re-initialization when navigating back to the page
+    if (!hasSavedData) {
+      // Get fresh articles data for template context
+      const currentIssueForInit = getCurrentIssue(journalId!)
+      const articlesForInit = currentIssueForInit ? getArticlesForIssue(currentIssueForInit.id).slice(0, 5) : []
+      
+      // Create journal context for template
+      const journalContext = {
+        journal: {
+          id: journal.id,
+          name: journal.name,
+          description: journal.description,
+          brandColor: journal.branding?.primaryColor || '#1e40af',
+          brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+        },
+        articles: articlesForInit.map(article => ({
+          doi: article.doi,
+          title: article.title,
+          authors: article.authors,
+          abstract: article.abstract,
+          publishedAt: article.publishedAt,
+          pageRange: article.pageRange,
+          isOpenAccess: article.isOpenAccess || false,
+          citations: article.citations,
+          downloads: article.downloads
+        }))
+      }
+      
+      // Initialize with template stub
+      const template = createJournalHomeTemplate(websiteId, journalContext)
+      // Save to both locations for consistency
+      setPageCanvas(websiteId, pageName, template)
+      setCanvasItemsForRoute(route, template)
+    }
+    // Note: We check both storage locations to see if route has saved data.
+    // This prevents re-initialization when navigating back to the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [websiteId, journalId, route, pageName]) // Only re-run if route changes, not when canvas updates
   
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    // Create template context for variable replacement
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description,
+        brandColor: journal.branding?.primaryColor || '#1e40af',
+        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+      },
+      articles: latestArticles
+    }
+    
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext}
+      />
+    )
+  }
+  
+  // Fallback loading state
   return (
-    <div>
-      <JournalBanner journal={journal} variant="full" websiteId={websiteId} />
-      <JournalNav journalId={journalId!} />
-      <div className="py-12 px-6">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <section className="mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">About {journal.name}</h2>
-              <p className="text-gray-600 mb-4">{journal.description}</p>
-            </section>
-            <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Latest Articles</h2>
-              {latestArticles.length > 0 ? (
-                <div className="space-y-6">
-                  {latestArticles.map(article => (
-                    <ArticleCard key={article.doi} article={article} journalId={journalId!} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">No articles available.</p>
-              )}
-            </section>
-          </div>
-          <div className="lg:col-span-1">
-            {currentIssue && (
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="font-bold text-gray-900 mb-4">Current Issue</h3>
-                <Link to={`/live/${websiteId}/journal/${journalId}/toc/${currentIssue.volume}/${currentIssue.issue}`}>
-                  <p className="text-center font-medium text-gray-900">{formatVolumeIssue(currentIssue)}</p>
-                </Link>
-              </div>
-            )}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Journal Metrics</h3>
-              <div className="space-y-3 text-sm">
-                {journal.impactFactor && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Impact Factor</span>
-                    <span className="font-semibold">{journal.impactFactor}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Issues</span>
-                  <span className="font-semibold">{issues.length}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-gray-500">Loading journal home page...</div>
     </div>
   )
 }
@@ -479,49 +535,139 @@ function IssueTocPage() {
     return <NotFoundPage message={`Issue not found`} />
   }
   
-  const articles = getArticlesForIssue(issue.id)
-  const allIssues = getIssuesByJournal(journalId!)
-  const currentIndex = allIssues.findIndex(i => i.id === issue!.id)
-  const prevIssue = currentIndex > 0 ? allIssues[currentIndex - 1] : null
-  const nextIssue = currentIndex < allIssues.length - 1 ? allIssues[currentIndex + 1] : null
+  // Build route for this issue TOC page
+  // Editor uses format: "journal/jas/toc/current" or "journal/jas/toc/5/3"
+  const route = vol === 'current' 
+    ? `/journal/${journalId}/toc/current`
+    : `/journal/${journalId}/toc/${vol}/${issueNum}`
+  const pageName = vol === 'current'
+    ? `journal/${journalId}/toc/current`
+    : `journal/${journalId}/toc/${vol}/${issueNum}`
   
+  // Get canvas data from store (saved by editor)
+  // Editor saves to pageCanvasData with key: "websiteId:pageName"
+  // Editor also loads from routeCanvasItems with key: "/journal/jas/toc/current"
+  const getPageCanvas = usePageStore(state => state.getPageCanvas)
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  const setCanvasItemsForRoute = usePageStore(state => state.setCanvasItemsForRoute)
+  
+  // Use separate selectors to avoid creating new arrays on every call
+  // This prevents infinite loops from getSnapshot not being cached
+  const pageKey = useMemo(() => `${websiteId}:${pageName}`, [websiteId, pageName])
+  const savedPageCanvas = usePageStore(state => state.pageCanvasData[pageKey])
+  const savedRouteCanvas = usePageStore(state => state.routeCanvasItems[route])
+  
+  // Combine with useMemo to ensure stable reference
+  // Use stable EMPTY_CANVAS constant to prevent creating new arrays
+  const pageCanvas = useMemo(() => {
+    // Prefer pageCanvasData (what editor saves to), fallback to routeCanvasItems
+    return savedPageCanvas || savedRouteCanvas || EMPTY_CANVAS
+  }, [savedPageCanvas, savedRouteCanvas])
+  
+  const articles = getArticlesForIssue(issue.id)
+  
+  // Auto-initialize canvas data ONLY if route has no saved data (first time viewing)
+  useEffect(() => {
+    // Check if route has saved data in EITHER storage location (check store directly)
+    // Use getState() to read current state without subscribing
+    const storeState = usePageStore.getState()
+    const pageCanvasFromStore = storeState.pageCanvasData[pageKey]
+    const routeCanvasFromStore = storeState.routeCanvasItems[route]
+    
+    const hasSavedData = (pageCanvasFromStore && pageCanvasFromStore.length > 0) || 
+                         (routeCanvasFromStore && routeCanvasFromStore.length > 0)
+    
+    // Only initialize if there's no saved data in either store
+    // This prevents re-initialization when navigating back to the page
+    if (!hasSavedData) {
+      // Get fresh articles data for template context
+      const articlesForInit = getArticlesForIssue(issue.id)
+      
+      // Create journal context for template
+      const journalContext = {
+        journal: {
+          id: journal.id,
+          name: journal.name,
+          description: journal.description,
+          brandColor: journal.branding?.primaryColor || '#1e40af',
+          brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+        },
+        issue: {
+          id: issue.id,
+          volume: issue.volume,
+          issue: issue.issue,
+          year: issue.year
+        },
+        articles: articlesForInit.map(article => ({
+          doi: article.doi,
+          title: article.title,
+          authors: article.authors,
+          abstract: article.abstract,
+          publishedAt: article.publishedAt,
+          pageRange: article.pageRange,
+          isOpenAccess: article.isOpenAccess || false,
+          citations: article.citations,
+          downloads: article.downloads
+        }))
+      }
+      
+      // Initialize with template stub
+      const template = createIssueTocTemplate(websiteId, journalContext)
+      // Save to both locations for consistency
+      setPageCanvas(websiteId, pageName, template)
+      setCanvasItemsForRoute(route, template)
+    }
+    // Note: We check both storage locations to see if route has saved data.
+    // This prevents re-initialization when navigating back to the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [websiteId, journalId, route, pageName, issue.id]) // Only re-run if route or issue changes
+  
+  // Render canvas content if available
+  if (pageCanvas && pageCanvas.length > 0) {
+    // Create template context for variable replacement
+    const templateContext = {
+      journal: {
+        id: journal.id,
+        name: journal.name,
+        description: journal.description,
+        brandColor: journal.branding?.primaryColor || '#1e40af',
+        brandColorLight: journal.branding?.secondaryColor || '#3b82f6'
+      },
+      issue: {
+        id: issue.id,
+        volume: issue.volume,
+        issue: issue.issue,
+        year: issue.year
+      },
+      articles: articles.map(article => ({
+        doi: article.doi,
+        title: article.title,
+        authors: article.authors,
+        abstract: article.abstract,
+        publishedAt: article.publishedAt,
+        pageRange: article.pageRange,
+        isOpenAccess: article.isOpenAccess || false,
+        citations: article.citations,
+        downloads: article.downloads
+      }))
+    }
+    
+    return (
+      <CanvasRenderer 
+        items={pageCanvas} 
+        websiteId={websiteId} 
+        themeId={website?.themeId}
+        brandMode={website?.brandMode}
+        templateContext={templateContext}
+      />
+    )
+  }
+  
+  // Fallback: show loading or empty state
   return (
-    <div>
-      <JournalBanner journal={journal} variant="issue" issue={issue} websiteId={websiteId} />
-      <JournalNav journalId={journalId!} activeTab="toc" />
-      <div className="bg-gray-100 py-3 px-6 border-b">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="text-sm">
-            <span className="font-medium">{formatVolumeIssue(issue)}</span>
-            <span className="text-gray-500 ml-2">• {formatIssueDate(issue)}</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            {prevIssue && (
-              <Link to={`/live/${websiteId}/journal/${journalId}/toc/${prevIssue.volume}/${prevIssue.issue}`} className="text-blue-600 hover:text-blue-700">
-                ← Previous
-              </Link>
-            )}
-            {nextIssue && (
-              <Link to={`/live/${websiteId}/journal/${journalId}/toc/${nextIssue.volume}/${nextIssue.issue}`} className="text-blue-600 hover:text-blue-700">
-                Next →
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Articles ({articles.length})</h2>
-          {articles.length > 0 ? (
-            <div className="space-y-6">
-              {articles.map(article => (
-                <ArticleCard key={article.doi} article={article} journalId={journalId!} showAbstract />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-12">No articles in this issue.</p>
-          )}
-        </div>
+    <div className="py-12 px-6">
+      <div className="max-w-4xl mx-auto">
+        <p className="text-gray-500 text-center">Loading issue content...</p>
       </div>
     </div>
   )

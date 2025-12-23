@@ -48,7 +48,9 @@ export function PageBuilderEditor() {
     setIsEditingLoadedWebsite,
     getPageCanvas,
     setPageCanvas,
-    canvasItems
+    canvasItems,
+    getCanvasItemsForRoute,
+    setCanvasItemsForRoute
   } = usePageStore()
   
   // Get drawer state for content pushing
@@ -223,14 +225,29 @@ export function PageBuilderEditor() {
       return
     }
     
-    // For journal pages, always regenerate with fresh data (don't use cached templates)
+    // For journal pages, first check if we have saved route data
     if (isJournalPage && journalIdFromRoute) {
+      // Build the route path (e.g., /journal/jas)
+      const route = `/${pageName}`
+      const savedRouteData = getCanvasItemsForRoute(route)
+      const savedPageCanvasData = getPageCanvas(websiteId!, pageName)
+      
+      // Prefer pageCanvasData (what we save to), then routeCanvasItems
+      const savedData = savedPageCanvasData || savedRouteData
+      
+      if (savedData && savedData.length > 0) {
+        // Load saved data (user's edits)
+        replaceCanvasItems(savedData)
+        setIsEditingLoadedWebsite(true)
+        loadedPageRef.current = pageKey
+        return
+      }
+      // No saved data - generate from template
       const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
       const journalContext = buildJournalContext(pageType, journalIdFromRoute)
       const defaultContent = getPageStub(pageType, websiteId!, designId, journals, journalContext)
       
       replaceCanvasItems(defaultContent)
-      setPageCanvas(websiteId!, pageName, defaultContent)
       setIsEditingLoadedWebsite(true)
       loadedPageRef.current = pageKey
       return
@@ -259,15 +276,23 @@ export function PageBuilderEditor() {
     loadedPageRef.current = pageKey
   }, [websiteId, pageName, journalCount, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, setPageCanvas, currentWebsite, journals])
   
-  // Auto-save canvas changes to pageCanvasData
+  // Auto-save canvas changes to pageCanvasData (and routeCanvasItems for journal pages)
   useEffect(() => {
     // Use startsWith to handle pageKeys with suffixes (e.g., journals page: "websiteId:journals:journals-5")
     const baseKey = `${websiteId}:${pageName}`
     if (websiteId && pageName && canvasItems.length > 0 && loadedPageRef.current?.startsWith(baseKey)) {
-      // Save canvas changes
+      // Save canvas changes to pageCanvasData (used by Live Site)
       setPageCanvas(websiteId, pageName, canvasItems)
+      
+      // Also save to routeCanvasItems for journal pages (for consistency with loading logic)
+      const pageType = getPageType(pageName)
+      const isJournalPage = ['journal-home', 'issue-archive', 'issue-toc', 'article'].includes(pageType)
+      if (isJournalPage) {
+        const route = `/${pageName}`
+        setCanvasItemsForRoute(route, canvasItems)
+      }
     }
-  }, [canvasItems, websiteId, pageName, setPageCanvas])
+  }, [canvasItems, websiteId, pageName, setPageCanvas, setCanvasItemsForRoute])
   
   const website = websites.find(w => w.id === websiteId)
   

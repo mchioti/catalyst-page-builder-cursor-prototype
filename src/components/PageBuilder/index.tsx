@@ -318,6 +318,9 @@ export function PageBuilder({
     return () => clearTimeout(timer)
   }, []) // Only run once on mount
   
+  // Detect if editing a journal home page (route like /journal/jas)
+  const isJournalHomeEdit = editingContext === 'page' && mockLiveSiteRoute?.startsWith('/journal/') && !mockLiveSiteRoute.includes('/toc/') && !mockLiveSiteRoute.includes('/loi')
+  
   // Route-specific canvas saving for individual issue edits
   useEffect(() => {
     // Save canvas changes to route-specific storage when editing individual issues
@@ -338,6 +341,16 @@ export function PageBuilder({
       debugLog('log','⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
     }
   }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackModification])
+  
+  // Route-specific canvas saving for journal home pages
+  useEffect(() => {
+    // Save canvas changes to route-specific storage when editing journal home pages
+    if (isJournalHomeEdit && canvasItems.length > 0 && mockLiveSiteRoute) {
+      debugLog('log','💾 Saving journal home changes to route:', mockLiveSiteRoute)
+      debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
+      setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
+    }
+  }, [canvasItems, isJournalHomeEdit, mockLiveSiteRoute, setCanvasItemsForRoute])
   
   // Global template canvas saving
   useEffect(() => {

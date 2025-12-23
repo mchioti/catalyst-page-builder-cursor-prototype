@@ -102,7 +102,7 @@ interface CanvasRendererProps {
 }
 
 // Render a single canvas item (section or widget)
-function renderItem(item: CanvasItem, idx: number, websiteId: string) {
+function renderItem(item: CanvasItem, idx: number, websiteId: string, journalContext?: string) {
   if (isSection(item)) {
     return (
       <SectionRenderer
@@ -120,6 +120,7 @@ function renderItem(item: CanvasItem, idx: number, websiteId: string) {
         usePageStore={usePageStore}
         isLiveMode={true} // Key: renders in live/preview mode
         websiteId={websiteId}
+        journalContext={journalContext} // Pass journal context for widgets
       />
     )
   } else {
@@ -129,6 +130,7 @@ function renderItem(item: CanvasItem, idx: number, websiteId: string) {
         <WidgetRenderer 
           widget={item as Widget} 
           isLiveMode={true}
+          journalContext={journalContext} // Pass journal context
         />
       </div>
     )
@@ -140,6 +142,9 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
   if (!items || items.length === 0) {
     return null
   }
+  
+  // Extract journalId from templateContext for passing to widgets
+  const journalContext = templateContext?.journal?.id
   
   // Process items with template context
   const processedItems = templateContext 
@@ -167,13 +172,13 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
       <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId} themeId={themeId} brandMode={brandMode}>
         <div className="canvas-renderer-live">
           {/* Page-level headers (sections with role='header') */}
-          {headerItems.map((item, idx) => renderItem(item, idx, websiteId))}
+          {headerItems.map((item, idx) => renderItem(item, idx, websiteId, journalContext))}
           
           {/* Main content */}
-          {contentItems.map((item, idx) => renderItem(item, idx + headerItems.length, websiteId))}
+          {contentItems.map((item, idx) => renderItem(item, idx + headerItems.length, websiteId, journalContext))}
           
           {/* Page-level footers (sections with role='footer') */}
-          {footerItems.map((item, idx) => renderItem(item, idx + headerItems.length + contentItems.length, websiteId))}
+          {footerItems.map((item, idx) => renderItem(item, idx + headerItems.length + contentItems.length, websiteId, journalContext))}
         </div>
       </CanvasThemeProvider>
     </>
