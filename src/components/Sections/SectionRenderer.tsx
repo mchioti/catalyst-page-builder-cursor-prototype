@@ -25,7 +25,7 @@ const debugLog = createDebugLogger(DEBUG)
 // Helper function to resolve context-aware color variables
 // Resolves {journal.branding.primaryColor}, {website.branding.accentColor}, etc.
 // Priority: Branding Store (Design Console) → Page Store (V2 mock data) → fallback
-function resolveContextColor(
+export function resolveContextColor(
   color: string | undefined, 
   usePageStore: any,
   journalContext?: string

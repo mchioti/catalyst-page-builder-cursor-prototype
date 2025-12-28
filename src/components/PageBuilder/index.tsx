@@ -177,6 +177,11 @@ export function PageBuilder({
   // Navigation for preview
   const navigate = useNavigate()
   
+  // Page Settings - when button is clicked, deselect widget to show page settings in properties panel
+  const handlePageSettingsClick = () => {
+    selectWidget(null) // Deselect any widget to show page settings
+  }
+  
   // Track active drag item for DragOverlay
   const [activeDragItem, setActiveDragItem] = useState<{ widget?: Widget; type?: string; item?: any } | null>(null)
   
@@ -1957,65 +1962,86 @@ export function PageBuilder({
                     return siteName ? `${siteName} - ${pageTitle}` : pageTitle
                   })()}</strong>
                 </div>
-                <button
-                  onClick={() => {
-                    const currentWebsiteId = usePageStore.getState().currentWebsiteId
-                    const currentWebsite = usePageStore.getState().websites.find((w: any) => w.id === currentWebsiteId)
-                    
-                    if (canvasItems.length === 0) {
-                      showToast('Cannot save empty page as stub', 'error')
-                      return
-                    }
-
-                    const starterName = prompt('Enter a name for this stub:')
-                    if (!starterName?.trim()) return
-
-                    const starterDescription = prompt('Enter a description (optional):') || 'Custom stub'
-
-                    // Deep clone and regenerate IDs for canvas items to avoid conflicts
-                    const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
-                      if (isSection(item)) {
-                        const newSectionId = nanoid()
-                        return {
-                          ...item,
-                          id: newSectionId,
-                          areas: (item as WidgetSection).areas.map((area: any) => ({
-                            ...area,
-                            id: nanoid(),
-                            widgets: area.widgets.map((widget: any) => ({
-                              ...widget,
-                              id: nanoid(),
-                              sectionId: newSectionId
-                            }))
-                          }))
-                        }
-                      } else {
-                        return {
-                          ...item,
-                          id: nanoid()
-                        }
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const currentWebsiteId = usePageStore.getState().currentWebsiteId
+                      const currentWebsite = usePageStore.getState().websites.find((w: any) => w.id === currentWebsiteId)
+                      
+                      if (canvasItems.length === 0) {
+                        showToast('Cannot save empty page as stub', 'error')
+                        return
                       }
-                    })
 
-                    // Create the custom starter page
-                    const newStarterPage = {
-                      id: nanoid(),
-                      name: starterName.trim(),
-                      description: starterDescription,
-                      source: 'user' as const,
-                      websiteId: currentWebsiteId,
-                      websiteName: currentWebsite?.name || 'Unknown',
-                      createdAt: new Date(),
-                      canvasItems: clonedCanvasItems
-                    }
+                      const starterName = prompt('Enter a name for this stub:')
+                      if (!starterName?.trim()) return
 
-                    addCustomStarterPage(newStarterPage)
-                    showToast(`Stub "${starterName.trim()}" saved!`, 'success')
-                  }}
-                  className="ml-3 text-xs text-green-600 hover:text-green-800 underline"
-                >
-                  Save as Stub
-                </button>
+                      const starterDescription = prompt('Enter a description (optional):') || 'Custom stub'
+
+                      // Deep clone and regenerate IDs for canvas items to avoid conflicts
+                      const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
+                        if (isSection(item)) {
+                          const newSectionId = nanoid()
+                          return {
+                            ...item,
+                            id: newSectionId,
+                            areas: (item as WidgetSection).areas.map((area: any) => ({
+                              ...area,
+                              id: nanoid(),
+                              widgets: area.widgets.map((widget: any) => ({
+                                ...widget,
+                                id: nanoid(),
+                                sectionId: newSectionId
+                              }))
+                            }))
+                          }
+                        } else {
+                          return {
+                            ...item,
+                            id: nanoid()
+                          }
+                        }
+                      })
+
+                      // Create the custom starter page
+                      const newStarterPage = {
+                        id: nanoid(),
+                        name: starterName.trim(),
+                        description: starterDescription,
+                        source: 'user' as const,
+                        websiteId: currentWebsiteId,
+                        websiteName: currentWebsite?.name || 'Unknown',
+                        createdAt: new Date(),
+                        canvasItems: clonedCanvasItems
+                      }
+
+                      addCustomStarterPage(newStarterPage)
+                      showToast(`Stub "${starterName.trim()}" saved!`, 'success')
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors border border-green-200"
+                    title="Save as Stub"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                    </svg>
+                    Save as Stub
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePageSettingsClick()
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors border border-gray-200"
+                    title="Page Settings"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Page Settings
+                  </button>
+                </div>
               </div>
             )}
             

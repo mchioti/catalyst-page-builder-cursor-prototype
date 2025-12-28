@@ -32,31 +32,45 @@ type CanvasItemStub = any
  * @param websiteId - The website ID
  * @param designId - Optional design/theme ID to determine which stub to use
  */
-export function getHomepageStubForWebsite(websiteId: string, designId?: string): CanvasItemStub[] {
-  // Check known websites first
-  switch (websiteId) {
-    case 'febs-press':
-      return createFebsHomepageStub()
-    case 'catalyst-demo':
-      return createCatalystHomepageStub()
-  }
-  
-  // Check by design/theme ID for user-created websites
+export function getHomepageStubForWebsite(websiteId: string, designId?: string, journals?: JournalStubData[]): CanvasItemStub[] {
+  // Check by design/theme ID first (this allows bypassing hardcoded website stubs)
+  // This is important for reset functionality - we want theme defaults, not website-specific stubs
   if (designId) {
     const normalizedDesignId = designId.toLowerCase()
     if (normalizedDesignId.includes('wiley')) {
       return createWileyHomepageStub()  // Original Wiley homepage
     }
     if (normalizedDesignId.includes('febs')) {
+      // FEBS theme check - but if designId is explicitly 'classic-ux3-theme', use Classic stub instead
+      // This allows reset to bypass FEBS hardcoded stub
+      if (designId === 'classic-ux3-theme') {
+        return createCatalystHomepageStub(websiteId, journals) // Classic theme's default website homepage
+      }
       return createFebsHomepageStub()
     }
     if (normalizedDesignId.includes('carbon')) {
       return createCarbonHomepageStub()
     }
+    // Check for Classic theme explicitly
+    if (normalizedDesignId.includes('classic') || normalizedDesignId === 'classic-ux3-theme') {
+      return createCatalystHomepageStub(websiteId, journals) // Classic theme's default website homepage
+    }
   }
   
-  // Default to Catalyst
-  return createCatalystHomepageStub()
+  // Check known websites (only if designId didn't match)
+  switch (websiteId) {
+    case 'febs-press':
+      return createFebsHomepageStub()
+    case 'catalyst-demo':
+      return createCatalystHomepageStub(websiteId, journals) // Classic theme's default website homepage
+    case '__classic-default__':
+      // Explicit request for Classic theme's default website homepage (legacy support)
+      return createCatalystHomepageStub(websiteId, journals)
+  }
+  
+  // Default to Classic theme's default website homepage
+  // This is what Classic-themed websites (and unknown themes) should use
+  return createCatalystHomepageStub(websiteId, journals)
 }
 
 /**
@@ -1820,9 +1834,24 @@ a.febspresshighlights:hover { color: #e5412c; }
 // =============================================================================
 
 /**
- * Catalyst Demo Homepage Stub - Based on Catalyst-home-maria
+ * Classic Theme Default Website Homepage Stub
+ * This is the default homepage stub for the Classic theme (classic-ux3-theme)
+ * Used as the base template for Classic-themed websites
+ * @param websiteId - The website ID for generating correct URLs
+ * @param journals - Optional array of journals to display in Featured Journals section
  */
-export function createCatalystHomepageStub(): CanvasItemStub[] {
+export function createCatalystHomepageStub(websiteId: string = 'catalyst-demo', journals: JournalStubData[] = []): CanvasItemStub[] {
+  // Default to Catalyst journals if none provided
+  const defaultJournals: JournalStubData[] = [
+    { id: 'jas', name: 'Journal of Advanced Science', description: 'Publishing groundbreaking research across all scientific disciplines since 1985. Impact Factor: 4.5', issn: { print: '1234-5678' } },
+    { id: 'oab', name: 'Open Access Biology', description: 'Freely accessible research in biological sciences, genomics, and ecology. All articles are Gold Open Access.', issn: { online: '2345-6789' }, isOpenAccess: true },
+    { id: 'hcq', name: 'Historical Chemistry Quarterly', description: 'Complete archive of chemical research publications from 1920-2020. A valuable historical resource.', issn: { print: '3456-7890' }, isDiscontinued: true }
+  ]
+  
+  const journalsToUse = journals.length > 0 ? journals : defaultJournals
+  // Take up to 3 journals for Featured Journals section
+  const featuredJournals = journalsToUse.slice(0, 3)
+  const featuredJournalsSectionId = nanoid()
   return [
     // Hero Section
     {
@@ -1870,7 +1899,7 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
               sectionId: '',
               skin: 'minimal',
               text: 'Browse Journals',
-              href: '/live/catalyst-demo/journals',
+              href: `/live/${websiteId}/journals`,
               variant: 'primary',
               size: 'large',
               style: 'outline',
@@ -1883,7 +1912,7 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
               sectionId: '',
               skin: 'minimal',
               text: 'Search Articles',
-              href: '/live/catalyst-demo/search',
+              href: `/live/${websiteId}/search`,
               variant: 'secondary',
               size: 'large',
               color: 'color1'
@@ -1916,7 +1945,7 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
     },
     // Featured Journals Section
     {
-      id: nanoid(),
+      id: featuredJournalsSectionId,
       name: 'Featured Journals',
       type: 'content-block',
       layout: 'header-plus-grid',
@@ -1940,69 +1969,45 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
             }
           ]
         },
-        {
-          id: nanoid(),
-          name: 'Left Card',
-          widgets: [
-            {
-              id: nanoid(),
-              skin: 'minimal',
-              type: 'editorial-card',
-              layout: 'split',
-              content: {
-                preheader: { enabled: false, text: '' },
-                headline: { enabled: true, text: 'Journal of Advanced Science (JAS)' },
-                description: { enabled: true, text: 'Publishing groundbreaking research in all fields of science since 1985...' },
-                callToAction: { enabled: true, text: 'Explore Journal', url: '/live/catalyst-demo/journal/jas', type: 'link' }
-              },
-              image: { src: 'https://picsum.photos/800/600?random=jas', alt: 'JAS Cover' },
-              config: { contentAlignment: 'left', imagePosition: 'top', overlayOpacity: 60, useAccentColor: true },
-              sectionId: ''
-            }
-          ]
-        },
-        {
-          id: nanoid(),
-          name: 'Center Card',
-          widgets: [
-            {
-              id: nanoid(),
-              skin: 'minimal',
-              type: 'editorial-card',
-              layout: 'split',
-              content: {
-                preheader: { enabled: true, text: 'Open Access' },
-                headline: { enabled: true, text: 'Open Access Biology (OAB)' },
-                description: { enabled: true, text: 'Freely accessible research in biological sciences...' },
-                callToAction: { enabled: true, text: 'Explore Journal', url: '/live/catalyst-demo/journal/oab', type: 'link' }
-              },
-              image: { src: 'https://picsum.photos/800/600?random=oab', alt: 'OAB Cover' },
-              config: { contentAlignment: 'left', imagePosition: 'top', overlayOpacity: 60, useAccentColor: true },
-              sectionId: ''
-            }
-          ]
-        },
-        {
-          id: nanoid(),
-          name: 'Right Card',
-          widgets: [
-            {
-              id: nanoid(),
-              skin: 'minimal',
-              type: 'editorial-card',
-              layout: 'split',
-              content: {
-                preheader: { enabled: true, text: 'Archive' },
-                headline: { enabled: true, text: 'Historical Chemistry Quarterly (HCQ)' },
-                description: { enabled: true, text: 'Archive of chemical research from 1920-2020...' },
-                callToAction: { enabled: true, text: 'Explore Journal', url: '/live/catalyst-demo/journal/hcq', type: 'link' }
-              },
-              image: { src: 'https://picsum.photos/800/600?random=hcq', alt: 'HCQ Cover' },
-              config: { contentAlignment: 'left', imagePosition: 'top', overlayOpacity: 60, useAccentColor: true },
-              sectionId: ''
-            }
-          ]
-        }
+        // Dynamically generate journal cards (up to 3)
+        ...featuredJournals.map((journal, index) => {
+          const areaNames = ['Left Card', 'Center Card', 'Right Card']
+          return {
+            id: nanoid(),
+            name: areaNames[index] || `Journal Card ${index + 1}`,
+            widgets: [
+              {
+                id: nanoid(),
+                skin: 'minimal',
+                type: 'editorial-card',
+                layout: 'split',
+                content: {
+                  preheader: { 
+                    enabled: Boolean(journal.isOpenAccess || journal.isDiscontinued), 
+                    text: journal.isOpenAccess ? 'Open Access' : (journal.isDiscontinued ? 'Archive' : '') 
+                  },
+                  headline: { enabled: true, text: journal.name },
+                  description: { 
+                    enabled: true, 
+                    text: journal.description || `Research journal.${journal.impactFactor ? ` Impact Factor: ${journal.impactFactor}` : ''}`
+                  },
+                  callToAction: { 
+                    enabled: true, 
+                    text: journal.isDiscontinued ? 'View Archive →' : 'Explore Journal', 
+                    url: `/live/${websiteId}/journal/${journal.id}`, 
+                    type: 'link' 
+                  }
+                },
+                image: { 
+                  src: `https://picsum.photos/800/600?random=${journal.id}-home`, 
+                  alt: `${journal.name} Cover` 
+                },
+                config: { contentAlignment: 'left', imagePosition: 'top', overlayOpacity: 60, useAccentColor: true },
+                sectionId: ''
+              }
+            ]
+          }
+        })
       ],
       background: { type: 'color', color: '#f8fafc', opacity: 1 },
       styling: {
@@ -2433,8 +2438,8 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
                 showContentTypeLabel: true,
                 showTitle: true,
                 showSubtitle: true,
-                showThumbnail: true,
-                thumbnailPosition: 'top',
+                showThumbnail: false,
+                thumbnailPosition: 'left',
                 showPublicationTitle: true,
                 showVolumeIssue: true,
                 showNumberOfIssues: true,
@@ -2446,13 +2451,13 @@ export function createCatalystHomepageStub(): CanvasItemStub[] {
                 showISBN: false,
                 showAuthors: true,
                 authorStyle: 'full',
-                showAffiliations: true,
-                showAbstract: true,
+                showAffiliations: false,
+                showAbstract: false,
                 abstractLength: 'medium',
-                showKeywords: true,
+                showKeywords: false,
                 showAccessStatus: true,
                 showViewDownloadOptions: true,
-                showUsageMetrics: true,
+                showUsageMetrics: false,
                 titleStyle: 'large'
               },
               cardVariantId: 'compact-variant',
@@ -3021,8 +3026,8 @@ export function createJournalHomeTemplate(
               id: nanoid(),
               skin: 'minimal',
               type: 'publication-details',
-              contentSource: 'context', // Uses journal from page context
-              publication: {}, // Empty - will be populated from context
+              contentSource: 'context',
+              publication: {},
               cardConfig: {
                 showContentTypeLabel: false,
                 showTitle: true,
@@ -3063,7 +3068,7 @@ export function createJournalHomeTemplate(
       },
       background: {
         type: 'color',
-        color: '{journal.branding.primaryColor}' // Context-aware color
+        color: '{journal.branding.primaryColor}'
       },
       contentMode: 'dark'
     },
@@ -3867,6 +3872,7 @@ export interface JournalContext {
  * Homepage is website-specific, other pages use generic stubs
  * Pass journals array for the journals browse page
  * Pass journalContext for journal-specific pages (journal-home, issue-archive, etc.)
+ * Pass customStarterPages for journal pages that need base layer lookup
  */
 export function getPageStub(
   pageType: PageType, 
@@ -3877,7 +3883,7 @@ export function getPageStub(
 ): CanvasItemStub[] {
   switch (pageType) {
     case 'home':
-      return getHomepageStubForWebsite(websiteId, designId)
+      return getHomepageStubForWebsite(websiteId, designId, journals)
     case 'journals':
       return createJournalsBrowseStub(websiteId, journals || [])
     case 'about':
@@ -3893,13 +3899,13 @@ export function getPageStub(
     case 'article':
       return createArticleTemplate(websiteId, journalContext)
     default:
-      return getHomepageStubForWebsite(websiteId, designId)
+      return getHomepageStubForWebsite(websiteId, designId, journals)
   }
 }
 
 // Legacy alias for backward compatibility
 export function createHomepageStub(): CanvasItemStub[] {
-  return createCatalystHomepageStub()
+  return createCatalystHomepageStub('catalyst-demo', [])
 }
 
 // =============================================================================

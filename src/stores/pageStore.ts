@@ -268,6 +268,10 @@ export const usePageStore = create<PageState>((set, get) => ({
     headerOverride?: 'global' | 'hide' | 'page-edit'
     footerOverride?: 'global' | 'hide' | 'page-edit' 
   }>,
+  
+  // Per-page layout settings (full, left, right)
+  // Key format: "websiteId:pageId" -> 'full' | 'left' | 'right'
+  pageLayouts: {} as Record<string, 'full' | 'left' | 'right'>,
   customSections: initializeCustomSections(),
   customStarterPages: initializeCustomStarterPages(),
   templates: [],
@@ -290,6 +294,7 @@ export const usePageStore = create<PageState>((set, get) => ({
         showAffiliations: false,
         showKeywords: false,
         showUsageMetrics: false,
+        showThumbnail: false,
         thumbnailPosition: 'left'
       },
       createdAt: new Date()
@@ -305,6 +310,7 @@ export const usePageStore = create<PageState>((set, get) => ({
         showAffiliations: true,
         showKeywords: true,
         showUsageMetrics: true,
+        showThumbnail: true,
         thumbnailPosition: 'top'
       },
       createdAt: new Date()
@@ -503,6 +509,23 @@ export const usePageStore = create<PageState>((set, get) => ({
           ...existing,
           [type === 'header' ? 'headerOverride' : 'footerOverride']: mode
         }
+      }
+    }
+  }),
+  
+  // Page layout getter/setter (full, left, right)
+  getPageLayout: (websiteId: string, pageId: string) => {
+    const state = get()
+    const key = `${websiteId}:${pageId}`
+    return state.pageLayouts[key] || 'full'
+  },
+  
+  setPageLayout: (websiteId: string, pageId: string, layout: 'full' | 'left' | 'right') => set((state) => {
+    const key = `${websiteId}:${pageId}`
+    return {
+      pageLayouts: {
+        ...state.pageLayouts,
+        [key]: layout
       }
     }
   }),

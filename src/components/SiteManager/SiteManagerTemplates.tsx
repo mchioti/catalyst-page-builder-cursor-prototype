@@ -999,7 +999,7 @@ function StubPreviewModal({ template, themeId, onClose }: StubPreviewModalProps)
     switch (template.id) {
       // Website Pages
       case 'website-homepage':
-        return getHomepageStubForWebsite('catalyst-demo', themeId)
+        return getHomepageStubForWebsite('catalyst-demo', themeId, [])
       case 'search-results':
       case 'advanced-search':
         return createSearchStub()

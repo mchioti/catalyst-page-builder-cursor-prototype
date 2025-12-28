@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { NewBadge } from '../shared/NewBadge'
+import { getHomepageStubForWebsite, getPageStub } from '../PageBuilder/pageStubs'
 
 // Stub types that come from the Design
 type DesignStub = {
@@ -78,6 +79,27 @@ export function WebsiteInheritedStubs({
     }
   ], [v2Website])
   
+  // Deep comparison helper to check if canvas differs from base stub
+  const canvasDiffersFromBase = (savedCanvas: any[], baseStub: any[]): boolean => {
+    if (!savedCanvas || savedCanvas.length === 0) return false
+    if (savedCanvas.length !== baseStub.length) return true
+    
+    // Compare structure by checking type and name in order
+    // We do a simplified comparison - if structure matches, consider it the same
+    // (Full deep comparison would be expensive and may have false positives due to ID regeneration)
+    // Order matters - sections in different order = modification
+    for (let i = 0; i < savedCanvas.length; i++) {
+      const saved = savedCanvas[i]
+      const base = baseStub[i]
+      
+      if (!saved || !base) return true
+      if (saved.type !== base.type) return true
+      if (saved.name !== base.name) return true
+    }
+    
+    return false
+  }
+
   // Calculate modification status for each stub
   // "Modified" means the TEMPLATE STRUCTURE itself is different, not just the dynamic content
   // Stubs that use template variables to show different content are NOT modified
@@ -85,9 +107,34 @@ export function WebsiteInheritedStubs({
     // Websites with custom homepage stubs defined (actual structural changes)
     const websitesWithCustomHomepage = ['febs-press']
     
+    // Get website info for base stub generation
+    const website = mockWebsites.find(w => w.id === websiteId)
+    const designId = (website as any)?.themeId || (website as any)?.designId || website?.name
+    
     return designStubs.filter(stub => stub.isAvailable).map(stub => {
       // Get saved canvas for this page (from editor changes)
       const savedCanvas = getPageCanvas(websiteId, stub.slug)
+      
+      // Get the base stub for this page type
+      let baseStub: any[] = []
+      try {
+        switch (stub.id) {
+          case 'homepage':
+            baseStub = getHomepageStubForWebsite(websiteId, designId)
+            break
+          case 'about':
+            baseStub = getPageStub('about', websiteId, designId)
+            break
+          case 'search':
+            baseStub = getPageStub('search', websiteId, designId)
+            break
+          case 'journals':
+            baseStub = getPageStub('journals', websiteId, designId, website?.journals || [])
+            break
+        }
+      } catch (error) {
+        console.warn(`Could not get base stub for ${stub.id}:`, error)
+      }
       
       // Determine if website has a custom stub defined (structural modification)
       let hasCustomStub = false
@@ -114,11 +161,13 @@ export function WebsiteInheritedStubs({
       }
       
       // Determine if editor has modifications saved (user made changes)
-      const hasEditorChanges = savedCanvas && savedCanvas.length > 0
+      // Only consider it modified if the saved canvas actually differs from the base stub
+      const hasEditorChanges = savedCanvas && savedCanvas.length > 0 && 
+        canvasDiffersFromBase(savedCanvas, baseStub)
       
       // Website is modified if either:
       // 1. It has a custom predefined stub (different template structure)
-      // 2. OR user has made changes via the editor
+      // 2. OR user has made changes via the editor that differ from base
       const isModified = hasCustomStub || hasEditorChanges
       
       return {
@@ -140,6 +189,57 @@ export function WebsiteInheritedStubs({
            stub.description.toLowerCase().includes(searchLower)
   })
   
+  // Get website info for theme-based stub
+  const website = mockWebsites.find(w => w.id === websiteId)
+  
+  // Get theme's default stub (ignoring website-specific overrides)
+  // This is used for reset - we want the theme's base stub, not the website's custom stub
+  // We pass the actual websiteId so URLs are generated correctly, but bypass hardcoded stubs via designId
+  const getThemeDefaultStub = (stubId: string, designId?: string): any[] => {
+    switch (stubId) {
+      case 'homepage':
+        // Get stub based on theme only, not websiteId
+        // This bypasses website-specific hardcoded stubs (like FEBS) by checking designId first
+        // We use the actual websiteId so URLs are generated correctly
+        // Pass the website's journals so Featured Journals section shows correct journals
+        if (designId) {
+          const normalizedDesignId = designId.toLowerCase()
+          if (normalizedDesignId.includes('wiley')) {
+            // For Wiley theme, use actual websiteId but force Wiley stub via designId
+            return getHomepageStubForWebsite(websiteId, designId, website?.journals || [])
+          }
+          if (normalizedDesignId.includes('febs')) {
+            // For FEBS theme, we want the theme's default, not the website's custom stub
+            // Since FEBS website has a hardcoded stub, we bypass it by using designId
+            // FEBS uses foundation-theme-v1, which defaults to Classic theme's default website homepage
+            // Use actual websiteId so URLs are correct
+            return getHomepageStubForWebsite(websiteId, 'classic-ux3-theme', website?.journals || [])
+          }
+          if (normalizedDesignId.includes('carbon')) {
+            // For Carbon theme, use actual websiteId but force Carbon stub via designId
+            return getHomepageStubForWebsite(websiteId, designId, website?.journals || [])
+          }
+          // Check for Classic theme explicitly
+          if (normalizedDesignId.includes('classic') || normalizedDesignId === 'classic-ux3-theme') {
+            // Use actual websiteId so URLs are correct
+            return getHomepageStubForWebsite(websiteId, 'classic-ux3-theme', website?.journals || [])
+          }
+        }
+        // Default to Classic theme's default website homepage for unknown themes (like foundation-theme-v1)
+        // This is the base stub that Classic-themed websites should use
+        // Use actual websiteId so URLs are correct
+        return getHomepageStubForWebsite(websiteId, 'classic-ux3-theme', website?.journals || [])
+      case 'about':
+        return getPageStub('about', '', designId)
+      case 'search':
+        return getPageStub('search', '', designId)
+      case 'journals':
+        return getPageStub('journals', '', designId, website?.journals || [])
+      default:
+        return []
+    }
+  }
+
   // Handle reset to base
   const handleResetToBase = (stubId: string, stubName: string) => {
     if (!window.confirm(
@@ -153,8 +253,17 @@ export function WebsiteInheritedStubs({
     const setPageCanvas = usePageStore.getState().setPageCanvas
     const addNotification = usePageStore.getState().addNotification
     
-    // Clear the saved canvas to fall back to base
-    setPageCanvas(websiteId, filteredStubs.find(s => s.id === stubId)?.slug || '', [])
+    // Get website info for theme-based stub
+    const website = mockWebsites.find(w => w.id === websiteId)
+    const designId = (website as any)?.themeId || (website as any)?.designId || website?.name
+    
+    // Get the theme's default stub (ignoring website-specific overrides)
+    const themeDefaultStub = getThemeDefaultStub(stubId, designId)
+    const stubSlug = filteredStubs.find(s => s.id === stubId)?.slug || ''
+    
+    // Save the theme's default stub to canvas
+    // This overrides any hardcoded website-specific stubs
+    setPageCanvas(websiteId, stubSlug, themeDefaultStub)
     
     addNotification?.({
       type: 'success',

@@ -472,6 +472,18 @@ export function citationToSchemaOrg(citation: Citation): any {
     }
   }
 
+  // Add thumbnail images for visual display
+  // Generate deterministic image URLs based on DOI or title for consistency
+  const imageSeed = citation.doi 
+    ? citation.doi.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10)
+    : citation.title.substring(0, 10).replace(/[^a-zA-Z0-9]/g, '')
+  const thumbnailUrl = `https://picsum.photos/160/200?random=${imageSeed}`
+  const thumbnailUrlWide = `https://picsum.photos/880/200?random=${imageSeed}`
+  
+  baseSchemaOrg.image = thumbnailUrl
+  baseSchemaOrg.thumbnailUrl = thumbnailUrl
+  baseSchemaOrg.thumbnailUrlWide = thumbnailUrlWide
+
   return baseSchemaOrg
 }
 

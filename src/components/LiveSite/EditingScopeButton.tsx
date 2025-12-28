@@ -63,7 +63,7 @@ export function EditingScopeButton({
     const isArchive = route.includes('/loi')
     
     // Determine page type
-    const isHomepage = route === '' || route === '/'
+    const isHomepage = route === '' || route === '/' || route === '/home'
     const isJournalHome = journalId && !tocMatch && !articleMatch && !isArchive
     const isIssueToc = !!tocMatch
     const isArticle = !!doi

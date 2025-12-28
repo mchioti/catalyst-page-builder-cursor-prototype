@@ -133,14 +133,9 @@ export function PropertiesPanel({
     }
   }
   
+  // Show page settings when nothing is selected
   if (!selectedWidget) {
-    return (
-      <div className="p-4">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Select a widget or section to edit its properties</p>
-        </div>
-      </div>
-    )
+    return <PageSettingsView usePageStore={usePageStore} currentWebsiteId={currentWebsiteId} currentPageId={currentPageId} />
   }
 
   // Find selected widget/section - check both canvas items and widgets within sections
@@ -516,7 +511,7 @@ export function PropertiesPanel({
           <select
             value={section.role || 'content'}
             onChange={(e) => updateSection({ role: e.target.value as 'header' | 'footer' | 'content' })}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
             <option value="content">Content (normal flow)</option>
             <option value="header">Page Header (renders at top)</option>
@@ -2452,6 +2447,8 @@ export function PropertiesPanel({
                 const newContentSource = e.target.value as 'dynamic-query' | 'doi-list' | 'ai-generated' | 'schema-objects'
                 updateWidget({ 
                   contentSource: newContentSource,
+                  // Clear publications when switching to AI-generated (force user to write prompt)
+                  ...(newContentSource === 'ai-generated' ? { publications: [] } : {}),
                   // Reset source-specific config when changing content source
                   ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
                     schemaSource: {
@@ -2822,7 +2819,26 @@ export function PropertiesPanel({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
             <select
-              value={(widget as PublicationListWidget).cardVariantId || 'default'}
+              value={(() => {
+                const widgetVariantId = (widget as PublicationListWidget).cardVariantId
+                if (widgetVariantId) return widgetVariantId
+                // If no variant ID, try to match the widget's cardConfig to a variant
+                const widgetConfig = (widget as PublicationListWidget).cardConfig
+                const matchingVariant = publicationCardVariants.find((v: any) => {
+                  // Compare key properties to see if config matches variant
+                  const variantConfig = v.config
+                  return (
+                    variantConfig.showTitle === widgetConfig?.showTitle &&
+                    variantConfig.showAbstract === widgetConfig?.showAbstract &&
+                    variantConfig.showAffiliations === widgetConfig?.showAffiliations &&
+                    variantConfig.showKeywords === widgetConfig?.showKeywords &&
+                    variantConfig.showUsageMetrics === widgetConfig?.showUsageMetrics &&
+                    variantConfig.showThumbnail === widgetConfig?.showThumbnail &&
+                    variantConfig.thumbnailPosition === widgetConfig?.thumbnailPosition
+                  )
+                })
+                return matchingVariant?.id || 'default'
+              })()}
               onChange={(e) => {
                 const variantId = e.target.value === 'default' ? undefined : e.target.value
                 const selectedVariant = publicationCardVariants.find((v: any) => v.id === variantId)
@@ -2877,6 +2893,8 @@ export function PropertiesPanel({
                 const newContentSource = e.target.value as 'doi' | 'ai-generated' | 'schema-objects' | 'context'
                 updateWidget({ 
                   contentSource: newContentSource,
+                  // Clear publication when switching to AI-generated (force user to write prompt)
+                  ...(newContentSource === 'ai-generated' ? { publication: undefined } : {}),
                   // Reset source-specific config when changing content source
                   ...(newContentSource !== 'schema-objects' ? { schemaSource: undefined } : {
                     schemaSource: { selectedId: '' }
@@ -3143,7 +3161,26 @@ export function PropertiesPanel({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Publication Card Variant</label>
             <select
-              value={(widget as PublicationDetailsWidget).cardVariantId || 'default'}
+              value={(() => {
+                const widgetVariantId = (widget as PublicationDetailsWidget).cardVariantId
+                if (widgetVariantId) return widgetVariantId
+                // If no variant ID, try to match the widget's cardConfig to a variant
+                const widgetConfig = (widget as PublicationDetailsWidget).cardConfig
+                const matchingVariant = publicationCardVariants.find((v: any) => {
+                  // Compare key properties to see if config matches variant
+                  const variantConfig = v.config
+                  return (
+                    variantConfig.showTitle === widgetConfig?.showTitle &&
+                    variantConfig.showAbstract === widgetConfig?.showAbstract &&
+                    variantConfig.showAffiliations === widgetConfig?.showAffiliations &&
+                    variantConfig.showKeywords === widgetConfig?.showKeywords &&
+                    variantConfig.showUsageMetrics === widgetConfig?.showUsageMetrics &&
+                    variantConfig.showThumbnail === widgetConfig?.showThumbnail &&
+                    variantConfig.thumbnailPosition === widgetConfig?.thumbnailPosition
+                  )
+                })
+                return matchingVariant?.id || 'default'
+              })()}
               onChange={(e) => {
                 const variantId = e.target.value === 'default' ? undefined : e.target.value
                 const selectedVariant = publicationCardVariants.find((v: any) => v.id === variantId)
@@ -3182,6 +3219,210 @@ export function PropertiesPanel({
       )}
         </div>
       )}
+    </div>
+  )
+}
+
+// Page Settings View Component
+function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { usePageStore: any; currentWebsiteId?: string; currentPageId?: string }) {
+  const { websites, getPageLayout, setPageLayout } = usePageStore()
+  const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
+  
+  const [pageName, setPageName] = useState('')
+  const [urlSlug, setUrlSlug] = useState('')
+  const [pageLayout, setPageLayoutState] = useState<'full' | 'left' | 'right'>('full')
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [seoImage, setSeoImage] = useState('')
+
+  // Load initial values
+  useEffect(() => {
+    const getPageTitle = () => {
+      const pathname = window.location.pathname
+      if (pathname.includes('/edit/')) {
+        const parts = pathname.split('/edit/')[1]?.split('/') || []
+        const pageRoute = parts.slice(1).join('/') || 'home'
+        
+        if (pageRoute.startsWith('journal/')) {
+          const journalId = pageRoute.split('/')[1]?.toUpperCase()
+          return `${journalId} Journal Home`
+        }
+        return pageRoute.charAt(0).toUpperCase() + pageRoute.slice(1)
+      }
+      return 'Homepage'
+    }
+
+    const siteName = currentWebsite?.name || ''
+    const pageTitle = getPageTitle()
+    setPageName(siteName ? `${siteName} - ${pageTitle}` : pageTitle)
+    setUrlSlug(currentPageId || 'home')
+    
+    // Load page layout from store
+    const savedLayout = getPageLayout?.(currentWebsiteId || 'catalyst-demo', currentPageId || 'home')
+    if (savedLayout) {
+      setPageLayoutState(savedLayout)
+    }
+  }, [currentWebsiteId, currentPageId, currentWebsite, getPageLayout])
+
+  const handleLayoutSelect = (layout: 'full' | 'left' | 'right') => {
+    setPageLayoutState(layout)
+    if (setPageLayout) {
+      setPageLayout(currentWebsiteId || 'catalyst-demo', currentPageId || 'home', layout)
+    }
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      <h3 className="font-semibold text-gray-900">Page Properties</h3>
+
+      {/* PAGE IDENTITY */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Page Identity</h4>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Label</label>
+          <input
+            type="text"
+            value={pageName}
+            onChange={(e) => setPageName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="e.g. Journal Home"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
+          <div className="flex">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">/</span>
+            <input
+              type="text"
+              value={urlSlug}
+              onChange={(e) => setUrlSlug(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md text-sm"
+              placeholder="page-slug"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* PAGE LAYOUT */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Page Layout</h4>
+        <div className="grid grid-cols-3 gap-3">
+          {/* Full Width */}
+          <div
+            onClick={() => handleLayoutSelect('full')}
+            className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
+              pageLayout === 'full'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="aspect-video bg-white border border-gray-200 rounded mb-2 flex flex-col gap-1 p-1">
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+              <div className="flex-1 bg-blue-100 rounded w-full flex items-center justify-center text-[8px] text-blue-600 font-medium">
+                Main
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+            </div>
+            <div className="font-medium text-xs text-gray-900 text-center">Full Width</div>
+            {pageLayout === 'full' && (
+              <div className="absolute top-1 right-1 text-blue-600">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+
+          {/* Left Rail */}
+          <div
+            onClick={() => handleLayoutSelect('left')}
+            className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
+              pageLayout === 'left'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="aspect-video bg-white border border-gray-200 rounded mb-2 flex flex-col gap-1 p-1">
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+              <div className="flex-1 flex gap-1">
+                <div className="w-1/4 bg-gray-200 rounded border border-dashed border-gray-300"></div>
+                <div className="w-3/4 bg-gray-100 rounded"></div>
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+            </div>
+            <div className="font-medium text-xs text-gray-900 text-center">Left Rail</div>
+            {pageLayout === 'left' && (
+              <div className="absolute top-1 right-1 text-blue-600">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+
+          {/* Right Rail */}
+          <div
+            onClick={() => handleLayoutSelect('right')}
+            className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
+              pageLayout === 'right'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="aspect-video bg-white border border-gray-200 rounded mb-2 flex flex-col gap-1 p-1">
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+              <div className="flex-1 flex gap-1">
+                <div className="w-3/4 bg-gray-100 rounded"></div>
+                <div className="w-1/4 bg-gray-200 rounded border border-dashed border-gray-300"></div>
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded w-full"></div>
+            </div>
+            <div className="font-medium text-xs text-gray-900 text-center">Right Rail</div>
+            {pageLayout === 'right' && (
+              <div className="absolute top-1 right-1 text-blue-600">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* SEO & METADATA */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-gray-900 border-b pb-2">SEO & Metadata</h4>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title Tag</label>
+          <input
+            type="text"
+            value={seoTitle}
+            onChange={(e) => setSeoTitle(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="Enter page title for SEO..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+          <textarea
+            rows={3}
+            value={seoDescription}
+            onChange={(e) => setSeoDescription(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="Enter meta description..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Open Graph Image</label>
+          <input
+            type="text"
+            value={seoImage}
+            onChange={(e) => setSeoImage(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            placeholder="Enter image URL..."
+          />
+        </div>
+      </div>
     </div>
   )
 }

@@ -276,10 +276,12 @@ function HomePage() {
   
   // Auto-initialize canvas data if not present
   // Pass the website's themeId to determine which design stub to use
+  // Pass the website's journals so Featured Journals section shows correct journals
   useEffect(() => {
     if (!pageCanvas || pageCanvas.length === 0) {
       const designId = website?.themeId || website?.designId || website?.name
-      setPageCanvas(websiteId, 'home', getHomepageStubForWebsite(websiteId, designId))
+      const journals = website?.journals || []
+      setPageCanvas(websiteId, 'home', getHomepageStubForWebsite(websiteId, designId, journals))
     }
   }, [websiteId, pageCanvas, setPageCanvas, website])
   

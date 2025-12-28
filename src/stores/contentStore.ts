@@ -134,6 +134,7 @@ const initialPublicationCardVariants: PublicationCardVariant[] = [
       showAffiliations: false,
       showKeywords: false,
       showUsageMetrics: false,
+      showThumbnail: false,
       thumbnailPosition: 'left'
     },
     createdAt: new Date()
@@ -149,6 +150,7 @@ const initialPublicationCardVariants: PublicationCardVariant[] = [
       showAffiliations: true,
       showKeywords: true,
       showUsageMetrics: true,
+      showThumbnail: true,
       thumbnailPosition: 'top'
     },
     createdAt: new Date()

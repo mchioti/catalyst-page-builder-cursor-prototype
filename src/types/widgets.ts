@@ -251,7 +251,17 @@ export type DividerWidget = WidgetBase & {
   type: 'divider'
   style: 'solid' | 'dashed' | 'dotted'
   thickness: string // e.g., '1px', '2px', '3px'
-  color: string // e.g., '#e5e7eb', '#000000'
+  // Color system: supports solid color and contextual/branding (same as sections)
+  color?: string // Hex color or context variable like {journal.branding.primaryColor}
+  // Background system for contextual/branding colors (same structure as sections)
+  background?: {
+    type: 'color' | 'branding'
+    color?: string // Hex color or context variable
+    branding?: {
+      source: 'journal' | 'website'
+      property: 'primaryColor' | 'secondaryColor' | 'accentColor'
+    }
+  }
   marginTop: string // e.g., '1rem', '16px'
   marginBottom: string // e.g., '1rem', '16px'
 }

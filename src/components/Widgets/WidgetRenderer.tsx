@@ -18,6 +18,8 @@ import { WidgetLayoutWrapper } from './WidgetLayoutWrapper'
 // Import usePageStore for updating widget state and accessing store data
 import { usePageStore } from '../../stores/pageStore'
 import { useBrandingStore } from '../../stores/brandingStore'
+// Import resolveContextColor helper from SectionRenderer
+import { resolveContextColor } from '../Sections/SectionRenderer'
 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
@@ -990,6 +992,11 @@ const PublicationDetailsWidgetRenderer: React.FC<{
   sectionContentMode?: 'light' | 'dark';
   journalContext?: string;
 }> = ({ widget, schemaObjects, sectionContentMode, journalContext }) => {
+  // Resolve variant ID to get latest config (ensures variant changes are reflected)
+  const publicationCardVariants = usePageStore.getState().publicationCardVariants
+  const resolvedConfig = widget.cardVariantId 
+    ? (publicationCardVariants.find((v: any) => v.id === widget.cardVariantId)?.config || widget.cardConfig)
+    : widget.cardConfig
   
   // Get journal data from context for 'context' content source
   // Priority: Branding Store (Design Console) → Page Store (V2 mock data)
@@ -1055,6 +1062,10 @@ const PublicationDetailsWidgetRenderer: React.FC<{
     
     // Fallback: return a mock publication if DOI not in our database
     // In production, this would make an API call to CrossRef or similar
+    const imageSeed = doi.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10)
+    const thumbnailUrl = `https://picsum.photos/160/200?random=${imageSeed}`
+    const thumbnailUrlWide = `https://picsum.photos/880/200?random=${imageSeed}`
+    
     return {
       "@context": "https://schema.org",
       "@type": "ScholarlyArticle",
@@ -1072,7 +1083,10 @@ const PublicationDetailsWidgetRenderer: React.FC<{
       "publisher": {
         "@type": "Organization",
         "name": "Unknown Publisher"
-      }
+      },
+      "image": thumbnailUrl,
+      "thumbnailUrl": thumbnailUrl,
+      "thumbnailUrlWide": thumbnailUrlWide
     }
   }
 
@@ -1147,6 +1161,16 @@ const PublicationDetailsWidgetRenderer: React.FC<{
             }
           })
         }
+        
+        // Ensure AI-generated content always has thumbnails (generateAIContent should include them, but double-check)
+        if (publication && !publication.thumbnailUrl && !publication.image) {
+          const imageSeed = publication.doi 
+            ? publication.doi.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10)
+            : (publication.headline || publication.name || 'ai-generated').substring(0, 10).replace(/[^a-zA-Z0-9]/g, '') || 'default'
+          publication.image = `https://picsum.photos/160/200?random=${imageSeed}`
+          publication.thumbnailUrl = publication.image
+          publication.thumbnailUrlWide = `https://picsum.photos/880/200?random=${imageSeed}`
+        }
       } catch (error) {
         console.error('Error generating AI content for publication details:', error)
         publication = widget.publication // Fallback to default
@@ -1175,7 +1199,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{
   return (
     <PublicationCard 
       article={publication}
-      config={widget.cardConfig}
+      config={resolvedConfig}
       align={widget.align}
       contentMode={sectionContentMode}
     />
@@ -1184,6 +1208,12 @@ const PublicationDetailsWidgetRenderer: React.FC<{
 
 // Publication List Widget with full implementation
 const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark' }> = ({ widget, schemaObjects, sectionContentMode }) => {
+  // Resolve variant ID to get latest config (ensures variant changes are reflected)
+  const publicationCardVariants = usePageStore.getState().publicationCardVariants
+  const resolvedConfig = widget.cardVariantId 
+    ? (publicationCardVariants.find((v: any) => v.id === widget.cardVariantId)?.config || widget.cardConfig)
+    : widget.cardConfig
+  
   // Get publications based on content source
   let publications: any[] = []
   
@@ -1349,7 +1379,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
             >
               <PublicationCard
                 article={article}
-                config={widget.cardConfig}
+                config={resolvedConfig}
                 align={widget.align}
                 contentMode={sectionContentMode}
               />
@@ -1374,7 +1404,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
           <PublicationCard
             key={`${widget.id}-${index}`}
             article={article}
-            config={widget.cardConfig}
+            config={resolvedConfig}
             align={widget.align}
             contentMode={sectionContentMode}
           />
@@ -2332,6 +2362,8 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       
       case 'divider': {
         const divider = widget as any // DividerWidget
+        const borderColor = divider.color || '#e5e7eb'
+        
         return (
           <div 
             style={{ 
@@ -2343,7 +2375,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
               style={{
                 borderStyle: divider.style || 'solid',
                 borderWidth: divider.thickness || '1px',
-                borderColor: divider.color || '#e5e7eb',
+                borderColor: borderColor,
                 margin: 0
               }}
             />

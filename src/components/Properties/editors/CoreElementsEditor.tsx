@@ -52,19 +52,21 @@ export function DividerEditor({ widget, updateWidget }: CoreElementEditorProps) 
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-        <input
-          type="color"
-          value={dividerWidget.color || '#e5e7eb'}
-          onChange={(e) => updateWidget({ color: e.target.value })}
-          className="w-full h-10 border border-gray-300 rounded-md cursor-pointer"
-        />
-        <input
-          type="text"
-          value={dividerWidget.color || '#e5e7eb'}
-          onChange={(e) => updateWidget({ color: e.target.value })}
-          placeholder="#e5e7eb"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md mt-2 text-sm font-mono"
-        />
+        <div className="flex gap-2">
+          <input
+            type="color"
+            value={dividerWidget.color || '#e5e7eb'}
+            onChange={(e) => updateWidget({ color: e.target.value })}
+            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+          />
+          <input
+            type="text"
+            value={dividerWidget.color || '#e5e7eb'}
+            onChange={(e) => updateWidget({ color: e.target.value })}
+            placeholder="#e5e7eb"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+          />
+        </div>
       </div>
       
       <div>
