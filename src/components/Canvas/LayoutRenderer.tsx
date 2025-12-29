@@ -1,9 +1,11 @@
 import React from 'react'
 import type { CanvasItem } from '../../types/widgets'
-import { isSection } from '../../types/widgets'
+import { isSection, type WidgetSection } from '../../types/widgets'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { WidgetRenderer } from '../Widgets/WidgetRenderer'
 import { SortableItem } from './SortableItem'
+import type { PageConfig } from '../../types/archetypes'
+import { PageLayoutWrapper } from '../ArchetypeEditor/PageLayoutWrapper'
 
 interface LayoutRendererProps {
   canvasItems: CanvasItem[]
@@ -22,11 +24,14 @@ interface LayoutRendererProps {
   activeDropZone?: string | null
   showToast?: (message: string, type: 'success' | 'error') => void
   usePageStore?: any
+  showMockData?: boolean
   // Editor-specific functions
   handleAddSection?: (itemId: string, position: 'above' | 'below') => void
   handleSectionClick?: (id: string) => void
   selectedWidget?: string | null
   InteractiveWidgetRenderer?: any
+  // Archetype page layout config
+  pageConfig?: PageConfig
 }
 
 export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
@@ -45,12 +50,47 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   activeDropZone = null,
   showToast = () => {},
   usePageStore,
+  showMockData = true,
   // Editor-specific functions
   handleAddSection,
   handleSectionClick = () => {},
   selectedWidget = null,
-  InteractiveWidgetRenderer
+  InteractiveWidgetRenderer,
+  pageConfig
 }) => {
+  
+  // If pageConfig is provided and layout is not full_width, use PageLayoutWrapper
+  // This applies the rail layout structure (works in both editor and live mode)
+  if (pageConfig && pageConfig.layout !== 'full_width') {
+    // Extract only sections (filter out standalone widgets)
+    const sections = canvasItems.filter(isSection) as WidgetSection[]
+    
+    return (
+      <PageLayoutWrapper
+        sections={sections}
+        pageConfig={pageConfig}
+        showMockData={showMockData}
+        onWidgetClick={onWidgetClick}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
+        activeSectionToolbar={activeSectionToolbar}
+        setActiveSectionToolbar={setActiveSectionToolbar}
+        activeWidgetToolbar={activeWidgetToolbar}
+        setActiveWidgetToolbar={setActiveWidgetToolbar}
+        activeDropZone={activeDropZone}
+        showToast={showToast}
+        usePageStore={usePageStore}
+        journalContext={journalContext}
+        websiteId={websiteId}
+        isLiveMode={isLiveMode}
+        // Editor mode props
+        handleAddSection={handleAddSection}
+        handleSectionClick={handleSectionClick}
+        selectedWidget={selectedWidget}
+        InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+      />
+    )
+  }
   
   return (
     <div>
@@ -58,6 +98,11 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         if (isLiveMode) {
           // Live mode: render directly
           if (isSection(item)) {
+            console.log('🔍 LayoutRenderer - Rendering section:', {
+              sectionId: item.id,
+              sectionName: (item as any).name,
+              showMockData
+            })
             return (
               <SectionRenderer
                 key={item.id}
@@ -75,13 +120,14 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 isLiveMode={isLiveMode}
                 journalContext={journalContext}
                 websiteId={websiteId}
+                showMockData={showMockData}
               />
             )
           } else {
             // Standalone widget
             return (
               <div key={item.id} className="w-full">
-                <WidgetRenderer widget={item} schemaObjects={schemaObjects} journalContext={journalContext} isLiveMode={isLiveMode} />
+                <WidgetRenderer widget={item} schemaObjects={schemaObjects} journalContext={journalContext} isLiveMode={isLiveMode} showMockData={showMockData} />
               </div>
             )
           }
@@ -120,6 +166,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 usePageStore={usePageStore}
                 InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                 journalContext={journalContext}
+                showMockData={showMockData}
               />
               
               {/* Add Section Button Below */}

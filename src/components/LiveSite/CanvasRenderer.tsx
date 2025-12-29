@@ -13,6 +13,8 @@ import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { DynamicBrandingCSS } from '../BrandingSystem/DynamicBrandingCSS'
 import { usePageStore } from '../../stores'
 import type { CanvasItem, WidgetSection, Widget } from '../../types/widgets'
+import type { PageConfig } from '../../types/archetypes'
+import { PageLayoutWrapper } from '../ArchetypeEditor/PageLayoutWrapper'
 
 // Check if item is a section
 function isSection(item: CanvasItem): item is WidgetSection {
@@ -99,10 +101,12 @@ interface CanvasRendererProps {
   themeId?: string // Optional: Pass the website's theme ID directly
   brandMode?: 'wiley' | 'wt' | 'dummies' // Optional: Pass the website's brand mode directly
   templateContext?: TemplateContext
+  showMockData?: boolean // For archetype preview/editor - controls mock data generation
+  pageConfig?: PageConfig // Page layout configuration for archetypes
 }
 
 // Render a single canvas item (section or widget)
-function renderItem(item: CanvasItem, idx: number, websiteId: string, journalContext?: string) {
+function renderItem(item: CanvasItem, idx: number, websiteId: string, journalContext?: string, showMockData?: boolean) {
   if (isSection(item)) {
     return (
       <SectionRenderer
@@ -121,6 +125,7 @@ function renderItem(item: CanvasItem, idx: number, websiteId: string, journalCon
         isLiveMode={true} // Key: renders in live/preview mode
         websiteId={websiteId}
         journalContext={journalContext} // Pass journal context for widgets
+        showMockData={showMockData}
       />
     )
   } else {
@@ -131,6 +136,7 @@ function renderItem(item: CanvasItem, idx: number, websiteId: string, journalCon
           widget={item as Widget} 
           isLiveMode={true}
           journalContext={journalContext} // Pass journal context
+          showMockData={showMockData}
         />
       </div>
     )
@@ -138,7 +144,7 @@ function renderItem(item: CanvasItem, idx: number, websiteId: string, journalCon
 }
 
 // Main Canvas Renderer - Uses V1's actual renderers for proper theming
-export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, brandMode, templateContext }: CanvasRendererProps) {
+export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, brandMode, templateContext, showMockData = true, pageConfig }: CanvasRendererProps) {
   if (!items || items.length === 0) {
     return null
   }
@@ -166,19 +172,52 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
     }
   })
   
+  // Extract sections from contentItems for PageLayoutWrapper
+  const contentSections = contentItems.filter(isSection) as WidgetSection[]
+  
+  // Debug: Log pageConfig usage
+  if (pageConfig) {
+    console.log('🔍 CanvasRenderer - Using PageLayoutWrapper:', {
+      layout: pageConfig.layout,
+      contentSectionsCount: contentSections.length,
+      zoneSlugs: contentSections.map(s => s.zoneSlug).filter(Boolean)
+    })
+  }
+  
   return (
     <>
       <DynamicBrandingCSS websiteId={websiteId} usePageStore={usePageStore} />
       <CanvasThemeProvider usePageStore={usePageStore} websiteId={websiteId} themeId={themeId} brandMode={brandMode}>
         <div className="canvas-renderer-live">
           {/* Page-level headers (sections with role='header') */}
-          {headerItems.map((item, idx) => renderItem(item, idx, websiteId, journalContext))}
+          {headerItems.map((item, idx) => renderItem(item, idx, websiteId, journalContext, showMockData))}
           
-          {/* Main content */}
-          {contentItems.map((item, idx) => renderItem(item, idx + headerItems.length, websiteId, journalContext))}
+          {/* Main content - use PageLayoutWrapper if pageConfig is provided */}
+          {pageConfig && pageConfig.layout !== 'full_width' && contentSections.length > 0 ? (
+            <PageLayoutWrapper
+              sections={contentSections}
+              pageConfig={pageConfig}
+              showMockData={showMockData}
+              onWidgetClick={() => {}}
+              dragAttributes={{}}
+              dragListeners={{}}
+              activeSectionToolbar={null}
+              setActiveSectionToolbar={() => {}}
+              activeWidgetToolbar={null}
+              setActiveWidgetToolbar={() => {}}
+              activeDropZone={null}
+              showToast={() => {}}
+              usePageStore={usePageStore}
+              journalContext={journalContext}
+              websiteId={websiteId}
+              isLiveMode={true}
+            />
+          ) : (
+            contentItems.map((item, idx) => renderItem(item, idx + headerItems.length, websiteId, journalContext, showMockData))
+          )}
           
           {/* Page-level footers (sections with role='footer') */}
-          {footerItems.map((item, idx) => renderItem(item, idx + headerItems.length + contentItems.length, websiteId, journalContext))}
+          {footerItems.map((item, idx) => renderItem(item, idx + headerItems.length + contentItems.length, websiteId, journalContext, showMockData))}
         </div>
       </CanvasThemeProvider>
     </>

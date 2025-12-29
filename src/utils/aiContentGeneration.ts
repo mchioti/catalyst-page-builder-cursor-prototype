@@ -295,3 +295,41 @@ export function generateAISingleContent(prompt: string): any {
   const articles = generateAIContent(prompt)
   return articles[0] || null
 }
+
+/**
+ * Generate journal metadata (Periodical schema.org object)
+ * Used for publication-details widgets that show journal information
+ */
+export function generateJournalMetadata(prompt: string): any {
+  // Parse prompt to extract journal name if present
+  const lowerPrompt = prompt.toLowerCase()
+  let journalName = 'Sample Journal'
+  
+  // Try to extract journal name from prompt
+  const nameMatch = prompt.match(/journal[:\s]+([^,\n]+)/i)
+  if (nameMatch && nameMatch[1]) {
+    journalName = nameMatch[1].trim()
+  }
+  
+  // Generate journal metadata in schema.org format
+  return {
+    "@context": "https://schema.org",
+    "@type": "Periodical",
+    "name": journalName,
+    "description": `A leading academic journal publishing cutting-edge research in ${lowerPrompt.includes('science') ? 'science' : lowerPrompt.includes('engineering') ? 'engineering' : 'various fields'}.`,
+    "issn": `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
+    "publisher": {
+      "@type": "Organization",
+      "name": "Academic Press"
+    },
+    "datePublished": new Date().toISOString().split('T')[0],
+    "numberOfIssues": Math.floor(Math.random() * 200) + 50,
+    "about": [
+      {
+        "@type": "DefinedTerm",
+        "name": "Academic Research",
+        "inDefinedTermSet": "Research Areas"
+      }
+    ]
+  }
+}

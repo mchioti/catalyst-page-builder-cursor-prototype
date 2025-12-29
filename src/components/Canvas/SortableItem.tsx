@@ -30,6 +30,7 @@ interface SortableItemProps {
   journalContext?: string // Journal code for branding (advma, embo, etc.)
   sidebarHeight?: React.CSSProperties // Height styles for sidebar
   isInSidebarGroup?: boolean // If true, section is part of sidebar group
+  showMockData?: boolean // For archetype editing - controls mock data generation
 }
 
 export function SortableItem({ 
@@ -47,7 +48,8 @@ export function SortableItem({
   InteractiveWidgetRenderer,
   journalContext,
   sidebarHeight,
-  isInSidebarGroup = false
+  isInSidebarGroup = false,
+  showMockData = true
 }: SortableItemProps) {
   const {
     attributes,
@@ -114,6 +116,7 @@ export function SortableItem({
             journalContext={journalContext}
             sidebarHeight={sidebarHeight}
             isInSidebarGroup={isInSidebarGroup}
+            showMockData={showMockData}
           />
         </div>
       ) : (

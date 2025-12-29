@@ -159,6 +159,18 @@ interface PageBuilderProps {
   }>
   InteractiveWidgetRenderer: React.ComponentType<{ widget: Widget }>
   isSection: (item: any) => boolean
+  archetypeMode?: boolean // If true, editing an archetype (master template)
+  showMockData?: boolean // If true, show mock data in publication widgets
+  pageConfig?: import('../../types/archetypes').PageConfig // Page layout configuration for archetypes
+  // Archetype-specific props
+  archetypeName?: string // Archetype name for header display
+  archetypeInstanceCount?: number // Count of journals using this archetype
+  archetypeId?: string // Archetype ID for preview navigation
+  designId?: string // Design ID for preview navigation
+  onSaveArchetype?: () => void // Handler for Save Archetype button
+  onPageSettingsClick?: () => void // Handler for Page Settings button
+  onShowMockDataChange?: (show: boolean) => void // Handler for Show Mock Data toggle
+  onPageConfigChange?: (pageConfig: import('../../types/archetypes').PageConfig) => void // Handler for Page Config changes in archetype mode
 }
 
 type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
@@ -169,7 +181,18 @@ export function PageBuilder({
   // SchemaFormEditor,
   TemplateCanvas,
   InteractiveWidgetRenderer,
-  isSection
+  isSection,
+  archetypeMode = false,
+  showMockData = true,
+  pageConfig,
+  archetypeName,
+  archetypeInstanceCount = 0,
+  archetypeId,
+  designId,
+  onSaveArchetype,
+  onPageSettingsClick,
+  onShowMockDataChange,
+  onPageConfigChange
 }: PageBuilderProps) {
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
   const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage } = usePageStore()
@@ -177,10 +200,23 @@ export function PageBuilder({
   // Navigation for preview
   const navigate = useNavigate()
   
-  // Page Settings - when button is clicked, deselect widget to show page settings in properties panel
+  // Page Settings - when button is clicked, show page settings
   const handlePageSettingsClick = () => {
+    // Always set showPageSettings to true when Page Settings is clicked
+    setShowPageSettings(true)
     selectWidget(null) // Deselect any widget to show page settings
+    // Call the provided handler if it exists (for archetype mode)
+    if (onPageSettingsClick) {
+      onPageSettingsClick()
+    }
   }
+  
+  // Hide Page Settings when a widget is selected
+  useEffect(() => {
+    if (selectedWidget) {
+      setShowPageSettings(false)
+    }
+  }, [selectedWidget])
   
   // Track active drag item for DragOverlay
   const [activeDragItem, setActiveDragItem] = useState<{ widget?: Widget; type?: string; item?: any } | null>(null)
@@ -266,6 +302,7 @@ export function PageBuilder({
 
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [isPropertiesPanelExpanded, setIsPropertiesPanelExpanded] = useState(false)
+  const [showPageSettings, setShowPageSettings] = useState(false) // Track if Page Settings is explicitly opened
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
@@ -1814,6 +1851,15 @@ export function PageBuilder({
                 <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      // If in archetype mode, navigate to archetype preview
+                      if (archetypeMode && archetypeId) {
+                        const previewPath = designId 
+                          ? `/preview/archetype/${archetypeId}?designId=${designId}`
+                          : `/preview/archetype/${archetypeId}`
+                        navigate(previewPath)
+                        return
+                      }
+                      // Otherwise, use normal preview logic
                       // Always navigate to the proper live URL based on what we're editing
                       // Use store state for the website ID and current route
                       const websiteId = currentWebsiteId || 'catalyst-demo'
@@ -1914,6 +1960,69 @@ export function PageBuilder({
               mockLiveSiteRoute={mockLiveSiteRoute}
               onSectionsLoad={handleTemplateSectionsLoad}
             />
+            
+            {/* Archetype Editing Context - Show archetype header with yellow background */}
+            {archetypeMode && archetypeName && (
+              <div className="mb-2 flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-md px-4 py-2">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-700">
+                    Editing: <strong>{archetypeName} Archetype</strong>
+                  </div>
+                  {archetypeInstanceCount > 0 && (
+                    <span className="text-sm text-gray-600">
+                      Used by {archetypeInstanceCount} {archetypeInstanceCount === 1 ? 'journal' : 'journals'}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {onSaveArchetype && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSaveArchetype()
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors border border-green-200"
+                      title="Save Archetype"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                      </svg>
+                      Save Archetype
+                    </button>
+                  )}
+                  {onShowMockDataChange && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showMockData}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          onShowMockDataChange(e.target.checked)
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      Show Mock Data
+                    </label>
+                  )}
+                  {onPageSettingsClick && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePageSettingsClick()
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors border border-gray-200"
+                      title="Page Settings"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      Page Settings
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             
             {/* Regular Page Editing Context - Show minimal info (only when canvas has content) */}
             {usePageStore((state: any) => state.editingContext) === 'page' && canvasItems.length > 0 && (
@@ -2073,27 +2182,37 @@ export function PageBuilder({
               ) : (
                 <SortableContext items={canvasItems} strategy={verticalListSortingStrategy}>
                   <div className="relative">
-                    <LayoutRenderer
-                      canvasItems={canvasItems}
-                      schemaObjects={schemaObjects || []}
-                      isLiveMode={false}
-                      journalContext={journalCode || undefined}
-                      onWidgetClick={handleWidgetClick}
-                      dragAttributes={{}}
-                      dragListeners={{}}
-                      activeSectionToolbar={activeSectionToolbar}
-                      setActiveSectionToolbar={handleSetActiveSectionToolbar}
-                      activeWidgetToolbar={activeWidgetToolbar}
-                      setActiveWidgetToolbar={setActiveWidgetToolbar}
-                      activeDropZone={activeDropZone}
-                      showToast={showToast}
-                      usePageStore={usePageStore}
-                      // Editor-specific props
-                      handleAddSection={handleAddSection}
-                      handleSectionClick={(id: string) => handleSectionClick(id, {} as React.MouseEvent)}
-                      selectedWidget={selectedWidget}
-                      InteractiveWidgetRenderer={InteractiveWidgetRenderer}
-                    />
+                    {(() => {
+                      console.log('🔍 PageBuilder - Passing to LayoutRenderer:', {
+                        showMockData,
+                        canvasItemsCount: canvasItems.length
+                      })
+                      return (
+                        <LayoutRenderer
+                          canvasItems={canvasItems}
+                          schemaObjects={schemaObjects || []}
+                          isLiveMode={false}
+                          journalContext={journalCode || undefined}
+                          onWidgetClick={handleWidgetClick}
+                          dragAttributes={{}}
+                          dragListeners={{}}
+                          activeSectionToolbar={activeSectionToolbar}
+                          setActiveSectionToolbar={handleSetActiveSectionToolbar}
+                          activeWidgetToolbar={activeWidgetToolbar}
+                          setActiveWidgetToolbar={setActiveWidgetToolbar}
+                          activeDropZone={activeDropZone}
+                          showToast={showToast}
+                          usePageStore={usePageStore}
+                          showMockData={showMockData}
+                          pageConfig={pageConfig}
+                          // Editor-specific props
+                          handleAddSection={handleAddSection}
+                          handleSectionClick={(id: string) => handleSectionClick(id, {} as React.MouseEvent)}
+                          selectedWidget={selectedWidget}
+                          InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+                        />
+                      )
+                    })()}
                   </div>
                 </SortableContext>
               )}
@@ -2118,48 +2237,40 @@ export function PageBuilder({
           </div>
         </div>
 
-      {/* Right Sidebar - Properties Panel - Sticky */}
-      <div className={`${isPropertiesPanelExpanded ? 'w-[1000px]' : 'w-80'} transition-all duration-300 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen`}>
-        <div className="border-b border-slate-200 p-4 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800">Properties</h2>
-          {isPropertiesPanelExpanded && (
-            <button
-              onClick={() => setIsPropertiesPanelExpanded(false)}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-              title="Collapse panel"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              Collapse
-            </button>
-          )}
+      {/* Right Sidebar - Properties Panel - Only show when widget is selected or Page Settings is open */}
+      {(selectedWidget || showPageSettings) ? (
+        <div className="w-80 transition-all duration-300 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen">
+          <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+            <h2 className="font-semibold text-slate-800">Properties</h2>
+          </div>
+          <div 
+            className="flex-1 overflow-y-auto" 
+            style={{ 
+              scrollBehavior: 'auto'
+            }}
+          >
+            <PropertiesPanel 
+              creatingSchemaType={creatingSchemaType}
+              selectedSchemaObject={selectedSchemaObject}
+              onSaveSchema={handleSaveSchema}
+              onCancelSchema={handleCancelSchema}
+              usePageStore={usePageStore}
+              SchemaFormEditor={SchemaFormEditor}
+              onExpandedChange={setIsPropertiesPanelExpanded}
+              isExpanded={isPropertiesPanelExpanded}
+              globalSections={[...headerSections, ...footerSections]}
+              headerSections={headerSections}
+              footerSections={footerSections}
+              currentWebsiteId={currentWebsiteId}
+              currentPageId={currentPageId}
+              headerEditMode={headerOverrideMode}
+              footerEditMode={footerOverrideMode}
+              pageConfig={archetypeMode ? pageConfig : undefined}
+              onPageConfigChange={archetypeMode ? onPageConfigChange : undefined}
+            />
+          </div>
         </div>
-        <div 
-          className="flex-1 overflow-y-auto" 
-          style={{ 
-            scrollBehavior: 'auto'
-          }}
-        >
-          <PropertiesPanel 
-            creatingSchemaType={creatingSchemaType}
-            selectedSchemaObject={selectedSchemaObject}
-            onSaveSchema={handleSaveSchema}
-            onCancelSchema={handleCancelSchema}
-            usePageStore={usePageStore}
-            SchemaFormEditor={SchemaFormEditor}
-            onExpandedChange={setIsPropertiesPanelExpanded}
-            isExpanded={isPropertiesPanelExpanded}
-            globalSections={[...headerSections, ...footerSections]}
-            headerSections={headerSections}
-            footerSections={footerSections}
-            currentWebsiteId={currentWebsiteId}
-            currentPageId={currentPageId}
-            headerEditMode={headerOverrideMode}
-            footerEditMode={footerOverrideMode}
-          />
-        </div>
-      </div>
+      ) : null}
 
       {/* Layout Picker Modal */}
       {showLayoutPicker && (

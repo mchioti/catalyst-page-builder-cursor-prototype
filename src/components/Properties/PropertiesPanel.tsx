@@ -72,6 +72,9 @@ interface PropertiesPanelProps {
   // Edit mode for header/footer ('global' edits site-wide, 'page-edit' creates page-specific copy)
   headerEditMode?: 'global' | 'hide' | 'page-edit'
   footerEditMode?: 'global' | 'hide' | 'page-edit'
+  // Archetype-specific props
+  pageConfig?: import('../../types/archetypes').PageConfig // For archetype mode
+  onPageConfigChange?: (pageConfig: import('../../types/archetypes').PageConfig) => void // Callback to save pageConfig in archetype mode
 }
 
 export function PropertiesPanel({ 
@@ -89,9 +92,12 @@ export function PropertiesPanel({
   currentWebsiteId = '',
   currentPageId = '',
   headerEditMode = 'global',
-  footerEditMode = 'global'
+  footerEditMode = 'global',
+  pageConfig,
+  onPageConfigChange
 }: PropertiesPanelProps) {
-  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects, updateSiteLayoutWidget, setPageCanvas, getPageCanvas } = usePageStore()
+  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects, updateSiteLayoutWidget, setPageCanvas, getPageCanvas, editingContext } = usePageStore()
+  const isArchetypeMode = editingContext === 'archetype'
   const pageCanvasData = usePageStore((state: any) => state.pageCanvasData || {})
   const navigate = useNavigate()
   
@@ -135,7 +141,14 @@ export function PropertiesPanel({
   
   // Show page settings when nothing is selected
   if (!selectedWidget) {
-    return <PageSettingsView usePageStore={usePageStore} currentWebsiteId={currentWebsiteId} currentPageId={currentPageId} />
+    return <PageSettingsView 
+      usePageStore={usePageStore} 
+      currentWebsiteId={currentWebsiteId} 
+      currentPageId={currentPageId}
+      isArchetypeMode={isArchetypeMode}
+      pageConfig={pageConfig}
+      onPageConfigChange={onPageConfigChange}
+    />
   }
 
   // Find selected widget/section - check both canvas items and widgets within sections
@@ -2886,10 +2899,16 @@ export function PropertiesPanel({
       {widget.type === 'publication-details' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Content Source
+              {isArchetypeMode && (
+                <span className="ml-2 text-xs text-gray-500">(Archetype configuration - read-only)</span>
+              )}
+            </label>
             <select
               value={(widget as PublicationDetailsWidget).contentSource}
               onChange={(e) => {
+                if (isArchetypeMode) return // Disabled in archetype mode
                 const newContentSource = e.target.value as 'doi' | 'ai-generated' | 'schema-objects' | 'context'
                 updateWidget({ 
                   contentSource: newContentSource,
@@ -2911,13 +2930,19 @@ export function PropertiesPanel({
                   })
                 })
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              disabled={isArchetypeMode}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md ${isArchetypeMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             >
               <option value="context">Page Context</option>
               <option value="doi">DOI</option>
               <option value="ai-generated">AI Generated</option>
               <option value="schema-objects">Schema Objects</option>
             </select>
+            {isArchetypeMode && (
+              <p className="mt-1 text-xs text-gray-500">
+                Content source is defined in the archetype. Use the "Show Mock Data" toggle to preview content.
+              </p>
+            )}
           </div>
           
           {/* Context Source - Shows journal metadata from current page context */}
@@ -3224,13 +3249,29 @@ export function PropertiesPanel({
 }
 
 // Page Settings View Component
-function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { usePageStore: any; currentWebsiteId?: string; currentPageId?: string }) {
+function PageSettingsView({ 
+  usePageStore, 
+  currentWebsiteId, 
+  currentPageId,
+  isArchetypeMode = false,
+  pageConfig,
+  onPageConfigChange
+}: { 
+  usePageStore: any
+  currentWebsiteId?: string
+  currentPageId?: string
+  isArchetypeMode?: boolean
+  pageConfig?: import('../../types/archetypes').PageConfig
+  onPageConfigChange?: (pageConfig: import('../../types/archetypes').PageConfig) => void
+}) {
   const { websites, getPageLayout, setPageLayout } = usePageStore()
   const currentWebsite = websites?.find((w: any) => w.id === currentWebsiteId)
   
   const [pageName, setPageName] = useState('')
   const [urlSlug, setUrlSlug] = useState('')
-  const [pageLayout, setPageLayoutState] = useState<'full' | 'left' | 'right'>('full')
+  // For normal pages: 'full' | 'left' | 'right'
+  // For archetypes: 'full_width' | 'left_rail' | 'right_rail' (stored in pageConfig)
+  const [pageLayout, setPageLayoutState] = useState<'full' | 'left' | 'right' | 'full_width' | 'left_rail' | 'right_rail'>('full')
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
   const [seoImage, setSeoImage] = useState('')
@@ -3247,6 +3288,10 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
           const journalId = pageRoute.split('/')[1]?.toUpperCase()
           return `${journalId} Journal Home`
         }
+        if (pageRoute.startsWith('archetype/')) {
+          const archetypeId = pageRoute.split('/')[1]
+          return `${archetypeId} Archetype`
+        }
         return pageRoute.charAt(0).toUpperCase() + pageRoute.slice(1)
       }
       return 'Homepage'
@@ -3257,19 +3302,45 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
     setPageName(siteName ? `${siteName} - ${pageTitle}` : pageTitle)
     setUrlSlug(currentPageId || 'home')
     
-    // Load page layout from store
-    const savedLayout = getPageLayout?.(currentWebsiteId || 'catalyst-demo', currentPageId || 'home')
-    if (savedLayout) {
-      setPageLayoutState(savedLayout)
+    // Load page layout - different logic for archetype vs normal pages
+    if (isArchetypeMode && pageConfig) {
+      // Archetype mode: use pageConfig
+      setPageLayoutState(pageConfig.layout || 'full_width')
+    } else {
+      // Normal page mode: use store
+      const savedLayout = getPageLayout?.(currentWebsiteId || 'catalyst-demo', currentPageId || 'home')
+      if (savedLayout) {
+        setPageLayoutState(savedLayout)
+      }
     }
-  }, [currentWebsiteId, currentPageId, currentWebsite, getPageLayout])
+  }, [currentWebsiteId, currentPageId, currentWebsite, getPageLayout, isArchetypeMode, pageConfig])
 
-  const handleLayoutSelect = (layout: 'full' | 'left' | 'right') => {
+  const handleLayoutSelect = (layout: 'full' | 'left' | 'right' | 'full_width' | 'left_rail' | 'right_rail') => {
     setPageLayoutState(layout)
-    if (setPageLayout) {
-      setPageLayout(currentWebsiteId || 'catalyst-demo', currentPageId || 'home', layout)
+    
+    if (isArchetypeMode && onPageConfigChange) {
+      // Archetype mode: save to pageConfig
+      const newPageConfig: import('../../types/archetypes').PageConfig = {
+        ...pageConfig,
+        layout: layout as 'full_width' | 'left_rail' | 'right_rail'
+      }
+      onPageConfigChange(newPageConfig)
+    } else if (setPageLayout) {
+      // Normal page mode: save to store
+      const normalLayout = layout === 'full_width' ? 'full' : layout === 'left_rail' ? 'left' : layout === 'right_rail' ? 'right' : layout
+      setPageLayout(currentWebsiteId || 'catalyst-demo', currentPageId || 'home', normalLayout as 'full' | 'left' | 'right')
     }
   }
+  
+  // Convert between old and new layout values for display
+  const getDisplayLayout = (): 'full' | 'left' | 'right' => {
+    if (pageLayout === 'full_width') return 'full'
+    if (pageLayout === 'left_rail') return 'left'
+    if (pageLayout === 'right_rail') return 'right'
+    return pageLayout as 'full' | 'left' | 'right'
+  }
+  
+  const displayLayout = getDisplayLayout()
 
   return (
     <div className="p-4 space-y-4">
@@ -3309,9 +3380,9 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
         <div className="grid grid-cols-3 gap-3">
           {/* Full Width */}
           <div
-            onClick={() => handleLayoutSelect('full')}
+            onClick={() => handleLayoutSelect(isArchetypeMode ? 'full_width' : 'full')}
             className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
-              pageLayout === 'full'
+              displayLayout === 'full'
                 ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-200 hover:bg-gray-50'
             }`}
@@ -3324,7 +3395,7 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
               <div className="h-1.5 bg-gray-200 rounded w-full"></div>
             </div>
             <div className="font-medium text-xs text-gray-900 text-center">Full Width</div>
-            {pageLayout === 'full' && (
+            {displayLayout === 'full' && (
               <div className="absolute top-1 right-1 text-blue-600">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -3335,9 +3406,9 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
 
           {/* Left Rail */}
           <div
-            onClick={() => handleLayoutSelect('left')}
+            onClick={() => handleLayoutSelect(isArchetypeMode ? 'left_rail' : 'left')}
             className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
-              pageLayout === 'left'
+              displayLayout === 'left'
                 ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-200 hover:bg-gray-50'
             }`}
@@ -3351,7 +3422,7 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
               <div className="h-1.5 bg-gray-200 rounded w-full"></div>
             </div>
             <div className="font-medium text-xs text-gray-900 text-center">Left Rail</div>
-            {pageLayout === 'left' && (
+            {displayLayout === 'left' && (
               <div className="absolute top-1 right-1 text-blue-600">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -3362,9 +3433,9 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
 
           {/* Right Rail */}
           <div
-            onClick={() => handleLayoutSelect('right')}
+            onClick={() => handleLayoutSelect(isArchetypeMode ? 'right_rail' : 'right')}
             className={`cursor-pointer relative border-2 rounded-lg p-3 hover:border-blue-400 transition-all ${
-              pageLayout === 'right'
+              displayLayout === 'right'
                 ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-200 hover:bg-gray-50'
             }`}
@@ -3378,7 +3449,7 @@ function PageSettingsView({ usePageStore, currentWebsiteId, currentPageId }: { u
               <div className="h-1.5 bg-gray-200 rounded w-full"></div>
             </div>
             <div className="font-medium text-xs text-gray-900 text-center">Right Rail</div>
-            {pageLayout === 'right' && (
+            {displayLayout === 'right' && (
               <div className="absolute top-1 right-1 text-blue-600">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

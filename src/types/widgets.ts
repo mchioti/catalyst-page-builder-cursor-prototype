@@ -502,6 +502,10 @@ export type WidgetSection = {
   // Section behavior configuration
   behavior?: 'auto' | 'full-width' // Controls content width behavior
   
+  // Zone inheritance (for Master/Instance architecture)
+  zoneSlug?: string // Semantic identifier for zone mapping (e.g., "hero_primary", "body_feed")
+  locked?: boolean // If true, this zone cannot be overridden by child instances
+  
   // Content mode (text color adaptation)
   contentMode?: 'light' | 'dark' // Light = dark text (light bg), Dark = white text (dark bg)
   

@@ -50,7 +50,7 @@ export type DesignConsoleView =
   | 'designs'
   | 'settings'
 
-export type EditingContext = 'template' | 'page' | 'website'
+export type EditingContext = 'template' | 'page' | 'website' | 'archetype'
 
 export type TemplateEditingContext = {
   scope: 'global' | 'issue-type' | 'journal' | 'individual'

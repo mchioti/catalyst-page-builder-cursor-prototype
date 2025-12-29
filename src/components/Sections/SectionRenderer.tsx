@@ -183,6 +183,9 @@ interface SectionRendererProps {
   canDeleteSection?: boolean
   canReorderSection?: boolean
   canDuplicateSection?: boolean
+  
+  // Mock data toggle for archetype editing
+  showMockData?: boolean
 }
 
 // Component for draggable widgets within sections
@@ -199,7 +202,8 @@ export function DraggableWidgetInSection({
   isLiveMode = false,
   journalContext,
   sectionContentMode,
-  onDeleteWidget // Callback injection for custom delete behavior
+  onDeleteWidget, // Callback injection for custom delete behavior
+  showMockData = true
 }: {
   widget: Widget
   sectionId: string
@@ -214,6 +218,7 @@ export function DraggableWidgetInSection({
   journalContext?: string
   sectionContentMode?: 'light' | 'dark'
   onDeleteWidget?: (widgetId: string) => void
+  showMockData?: boolean
 }) {
   // Use draggable to allow movement between areas and sections
   const widgetDrag = useDraggable({
@@ -446,13 +451,24 @@ export function DraggableWidgetInSection({
         position: 'relative', 
         zIndex: 1 
       }}>
-        <WidgetRenderer 
-          widget={widget}
-          schemaObjects={usePageStore.getState().schemaObjects || []}
-          journalContext={journalContext}
-          sectionContentMode={sectionContentMode}
-          isLiveMode={isLiveMode}
-        />
+        {(() => {
+          console.log('🔍 DraggableWidgetInSection - Passing to WidgetRenderer:', {
+            widgetId: widget.id,
+            widgetType: widget.type,
+            showMockData,
+            receivedShowMockData: showMockData
+          })
+          return (
+            <WidgetRenderer 
+              widget={widget}
+              schemaObjects={usePageStore.getState().schemaObjects || []}
+              journalContext={journalContext}
+              sectionContentMode={sectionContentMode}
+              isLiveMode={isLiveMode}
+              showMockData={showMockData}
+            />
+          )
+        })()}
       </div>
       </div>
     </div>
@@ -487,8 +503,16 @@ export function SectionRenderer({
   // Permission flags (default to true for backward compatibility)
   canDeleteSection = true,
   canReorderSection = true,
-  canDuplicateSection = true
+  canDuplicateSection = true,
+  showMockData = true
 }: SectionRendererProps) {
+  console.log('🔍 SectionRenderer - Entry:', {
+    sectionId: section.id,
+    sectionName: section.name,
+    showMockData,
+    receivedShowMockData: showMockData
+  })
+  
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
   const [sectionDescription, setSectionDescription] = useState('')
@@ -1216,6 +1240,7 @@ export function SectionRenderer({
                           journalContext={journalContext}
                           sectionContentMode={section.contentMode}
                           onDeleteWidget={onDeleteWidget}
+                          showMockData={showMockData}
                         />
                       )
                     }
@@ -1846,6 +1871,7 @@ export function SectionRenderer({
                           journalContext={journalContext}
                           sectionContentMode={section.contentMode}
                           onDeleteWidget={onDeleteWidget}
+                          showMockData={showMockData}
                         />
                       ))}
                     </div>

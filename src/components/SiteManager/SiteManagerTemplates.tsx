@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Filter, X, RefreshCw } from 'lucide-react'
 import { TemplateRow } from './TemplateRow'
 import { CanvasRenderer } from '../LiveSite/CanvasRenderer'
@@ -1137,6 +1138,7 @@ interface SiteManagerTemplatesProps {
 }
 
 export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: SiteManagerTemplatesProps) {
+  const navigate = useNavigate()
   // If libraryType is provided via navigation, lock to that type; otherwise allow manual switching
   const [selectedType, setSelectedType] = useState<'templates' | 'starters' | 'sections'>(libraryType || 'templates')
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>(libraryType === 'templates' ? 'publication' : libraryType === 'starters' ? 'website' : 'global')
@@ -1264,6 +1266,15 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
   }
 
   const handlePreviewTemplate = (template: Template) => {
+    // For archetypes, navigate to preview route instead of modal
+    if (template.id === 'journal-home') {
+      const archetypeId = 'modern-journal-home'
+      const designId = themeId || 'classic-ux3-theme'
+      navigate(`/preview/archetype/${archetypeId}?designId=${designId}`)
+      return
+    }
+    
+    // For other templates, use modal
     setSelectedTemplate(template)
     setShowPreview(true)
   }
