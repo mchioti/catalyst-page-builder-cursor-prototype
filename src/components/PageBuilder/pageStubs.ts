@@ -3143,7 +3143,8 @@ export function createJournalHomeTemplate(
               id: nanoid(),
               skin: 'minimal',
               type: 'publication-list',
-              contentSource: 'journal-latest',
+              contentSource: 'dynamic-query',
+              // journalId is kept for reference but journal context comes from page context at runtime
               journalId: journalId,
               // Convert articles to schema.org format as per PageBuilder-Widgets-Skill.md Rule 4
               // Publications must be in schema.org format (ScholarlyArticle with @type, headline, author array, etc.)

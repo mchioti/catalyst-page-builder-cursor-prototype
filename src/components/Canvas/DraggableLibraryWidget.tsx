@@ -5,6 +5,11 @@ import { nanoid } from 'nanoid'
 import type { LibraryItem as SpecItem } from '../../library'
 import type { WidgetSection } from '../../types/widgets'
 import { NewBadge } from '../shared/NewBadge'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // We need to import usePageStore and buildWidget - for now we'll declare them as passed props
 interface DraggableLibraryWidgetProps {
@@ -44,7 +49,7 @@ export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buil
       return
     }
     
-    console.log('🎯 Widget clicked - auto-creating section with widget!', {
+    debugLog('log', '🎯 Widget clicked - auto-creating section with widget!', {
       widgetLabel: item.label,
       widgetType: item.type
     })
@@ -81,7 +86,7 @@ export function DraggableLibraryWidget({ item, isDIY = false, usePageStore, buil
     // Add section to end of canvas
     const newCanvasItems = [...canvasItems, newSection]
     
-    console.log('✅ Created new section with widget via click:', {
+    debugLog('log', '✅ Created new section with widget via click:', {
       sectionId: newSectionId,
       widgetType: newWidget.type,
       widgetId: newWidget.id,

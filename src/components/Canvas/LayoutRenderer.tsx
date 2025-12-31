@@ -32,6 +32,10 @@ interface LayoutRendererProps {
   InteractiveWidgetRenderer?: any
   // Archetype page layout config
   pageConfig?: PageConfig
+  // Page Instance props (for inheritance system)
+  pageInstanceMode?: boolean
+  pageInstance?: import('../../types/archetypes').PageInstance
+  onPageInstanceChange?: () => void
 }
 
 export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
@@ -56,7 +60,10 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   handleSectionClick = () => {},
   selectedWidget = null,
   InteractiveWidgetRenderer,
-  pageConfig
+  pageConfig,
+  pageInstanceMode = false,
+  pageInstance,
+  onPageInstanceChange
 }) => {
   
   // If pageConfig is provided and layout is not full_width, use PageLayoutWrapper
@@ -88,6 +95,10 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         handleSectionClick={handleSectionClick}
         selectedWidget={selectedWidget}
         InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+        // Page Instance props
+        pageInstanceMode={pageInstanceMode}
+        pageInstance={pageInstance}
+        onPageInstanceChange={onPageInstanceChange}
       />
     )
   }
@@ -98,11 +109,6 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         if (isLiveMode) {
           // Live mode: render directly
           if (isSection(item)) {
-            console.log('🔍 LayoutRenderer - Rendering section:', {
-              sectionId: item.id,
-              sectionName: (item as any).name,
-              showMockData
-            })
             return (
               <SectionRenderer
                 key={item.id}
@@ -121,6 +127,9 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 journalContext={journalContext}
                 websiteId={websiteId}
                 showMockData={showMockData}
+                pageInstanceMode={pageInstanceMode}
+                pageInstance={pageInstance}
+                onPageInstanceChange={onPageInstanceChange}
               />
             )
           } else {
@@ -167,6 +176,8 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 InteractiveWidgetRenderer={InteractiveWidgetRenderer}
                 journalContext={journalContext}
                 showMockData={showMockData}
+                pageInstanceMode={pageInstanceMode}
+                pageInstance={pageInstance}
               />
               
               {/* Add Section Button Below */}

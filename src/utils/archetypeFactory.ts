@@ -6,6 +6,11 @@ import type { Archetype, PageConfig } from '../types/archetypes'
 import type { WidgetSection } from '../types/widgets'
 import { createJournalHomeTemplate } from '../components/PageBuilder/pageStubs'
 import { getArchetypeById, saveArchetype } from '../stores/archetypeStore'
+import { createDebugLogger } from './logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 /**
  * Create Journal Home archetype from the existing template
@@ -44,7 +49,7 @@ export function createJournalHomeArchetype(designId: string = 'classic-ux3-theme
         
         // Ensure both areas are preserved
         if (!cleanedSection.areas || cleanedSection.areas.length !== 2) {
-          console.warn('⚠️ Main Content section should have 2 areas (Left 2/3 and Right 1/3)')
+          debugLog('warn', '⚠️ Main Content section should have 2 areas (Left 2/3 and Right 1/3)')
         }
         
         archetypeSections.push({
@@ -121,12 +126,7 @@ function cleanWidgetForArchetype(widget: any): any {
   // Remove publications array from publication-list widgets
   if (widget.type === 'publication-list' && 'publications' in widget) {
     delete cleaned.publications
-    
-    // Convert journal-latest to dynamic-query for archetypes
-    // This ensures archetypes generate AI mock data instead of requiring real journal data
-    if (cleaned.contentSource === 'journal-latest') {
-      cleaned.contentSource = 'dynamic-query'
-    }
+    // Note: contentSource should already be 'dynamic-query' - journal context comes from page context at runtime
   }
   
   // Remove publication object from publication-details widgets (keep empty object for structure)
@@ -148,9 +148,9 @@ function migrateSplitStructureToCombined(archetype: Archetype): Archetype {
   
   // If we have both split sections, combine them back into one section
   if (bodyFeedSection && sidebarSection) {
-    console.log('🔄 Migrating archetype: Combining split sections (body_feed + sidebar_primary) into body_main')
-    console.log('  - body_feed widgets:', bodyFeedSection.areas?.[0]?.widgets?.length || 0)
-    console.log('  - sidebar_primary widgets:', sidebarSection.areas?.[0]?.widgets?.length || 0)
+    debugLog('log', '🔄 Migrating archetype: Combining split sections (body_feed + sidebar_primary) into body_main')
+    debugLog('log', '  - body_feed widgets:', bodyFeedSection.areas?.[0]?.widgets?.length || 0)
+    debugLog('log', '  - sidebar_primary widgets:', sidebarSection.areas?.[0]?.widgets?.length || 0)
     
     // Get widgets from both sections
     const leftAreaWidgets = bodyFeedSection.areas?.[0]?.widgets || []
@@ -184,9 +184,9 @@ function migrateSplitStructureToCombined(archetype: Archetype): Archetype {
       ]
     }
     
-    console.log('  - Combined section areas:', combinedSection.areas.length)
-    console.log('  - Left area widgets:', combinedSection.areas[0].widgets.length)
-    console.log('  - Right area widgets:', combinedSection.areas[1].widgets.length)
+    debugLog('log', '  - Combined section areas:', combinedSection.areas.length)
+    debugLog('log', '  - Left area widgets:', combinedSection.areas[0].widgets.length)
+    debugLog('log', '  - Right area widgets:', combinedSection.areas[1].widgets.length)
     
     // Replace the split sections with the combined section
     const newCanvasItems = archetype.canvasItems.filter(
@@ -230,7 +230,7 @@ export function initializeJournalHomeArchetype(designId: string = 'classic-ux3-t
   
   // Migrate: Remove deprecated 'theme' field (now using designId only)
   if ('theme' in migrated) {
-    console.log(`🔄 Migrating archetype: Removing deprecated 'theme' field (using designId: ${migrated.designId} instead)`)
+    debugLog('log', `🔄 Migrating archetype: Removing deprecated 'theme' field (using designId: ${migrated.designId} instead)`)
     const { theme, ...rest } = migrated as any
     migrated = rest as Archetype
     needsSave = true
@@ -247,7 +247,7 @@ export function initializeJournalHomeArchetype(designId: string = 'classic-ux3-t
   
   // Migrate existing archetype to include pageConfig if missing
   if (!migrated.pageConfig) {
-    console.log('🔄 Migrating archetype to include pageConfig')
+    debugLog('log', '🔄 Migrating archetype to include pageConfig')
     const defaultPageConfig: PageConfig = {
       layout: 'right_rail',
       width: 'max_xl',

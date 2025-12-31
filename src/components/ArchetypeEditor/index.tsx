@@ -26,6 +26,11 @@ import {
   initializeJournalHomeArchetype
 } from '../../utils/archetypeFactory'
 import type { Archetype } from '../../types/archetypes'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 export function ArchetypeEditor() {
   const { archetypeId } = useParams<{ archetypeId: string }>()
@@ -75,7 +80,7 @@ export function ArchetypeEditor() {
     if (loaded) {
       setArchetype(loaded)
     } else {
-      console.error(`Archetype not found: ${archetypeId}`)
+      debugLog('error', `Archetype not found: ${archetypeId}`)
     }
   }, [archetypeId, designId])
   

@@ -162,7 +162,8 @@ export type PageState = {
   routeCanvasItems: Record<string, CanvasItem[]> // Route-specific canvas storage
   globalTemplateCanvas: CanvasItem[] // Global template changes that apply to all TOC routes
   journalTemplateCanvas: Record<string, CanvasItem[]> // Journal-specific template storage (journalCode -> template)
-  pageCanvasData: Record<string, CanvasItem[]> // Per-website, per-page canvas storage (key: "websiteId:pageId")
+  pageCanvasData: Record<string, CanvasItem[]> // Per-website, per-page canvas storage (key: "websiteId:pageId") - PUBLISHED
+  pageDraftData: Record<string, CanvasItem[]> // Per-website, per-page draft storage (key: "websiteId:pageId") - DRAFT (previewable, not published)
   customSections: CustomSection[]
   customStarterPages: CustomStarterPage[]
   publicationCardVariants: PublicationCardVariant[]
@@ -194,9 +195,13 @@ export type PageState = {
   clearCanvasItemsForRoute: (route: string) => void
   
   // Per-website, per-page canvas management (for Live Site integration)
-  getPageCanvas: (websiteId: string, pageId: string) => CanvasItem[] | null
-  setPageCanvas: (websiteId: string, pageId: string, items: CanvasItem[]) => void
+  getPageCanvas: (websiteId: string, pageId: string) => CanvasItem[] | null // Get published canvas
+  setPageCanvas: (websiteId: string, pageId: string, items: CanvasItem[]) => void // Set published canvas
   clearPageCanvas: (websiteId: string, pageId: string) => void
+  // Draft management (for preview and editing)
+  getPageDraft: (websiteId: string, pageId: string) => CanvasItem[] | null // Get draft canvas
+  setPageDraft: (websiteId: string, pageId: string, items: CanvasItem[]) => void // Set draft canvas
+  getPageCanvasForPreview: (websiteId: string, pageId: string) => CanvasItem[] | null // Get canvas for preview (draft first, then published)
   
   // Per-page header/footer overrides
   pageLayoutOverrides: Record<string, { 

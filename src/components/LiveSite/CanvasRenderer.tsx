@@ -15,6 +15,11 @@ import { usePageStore } from '../../stores'
 import type { CanvasItem, WidgetSection, Widget } from '../../types/widgets'
 import type { PageConfig } from '../../types/archetypes'
 import { PageLayoutWrapper } from '../ArchetypeEditor/PageLayoutWrapper'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Check if item is a section
 function isSection(item: CanvasItem): item is WidgetSection {
@@ -150,7 +155,15 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
   }
   
   // Extract journalId from templateContext for passing to widgets
+  // This allows widgets to fetch journal-specific content instead of generating AI content
   const journalContext = templateContext?.journal?.id
+  
+  debugLog('log', '🔍 [CanvasRenderer] journalContext extraction:', {
+    hasTemplateContext: !!templateContext,
+    journalId: templateContext?.journal?.id,
+    journalContext,
+    templateContextKeys: templateContext ? Object.keys(templateContext) : []
+  })
   
   // Process items with template context
   const processedItems = templateContext 
@@ -177,11 +190,6 @@ export function CanvasRenderer({ items, websiteId = 'catalyst-demo', themeId, br
   
   // Debug: Log pageConfig usage
   if (pageConfig) {
-    console.log('🔍 CanvasRenderer - Using PageLayoutWrapper:', {
-      layout: pageConfig.layout,
-      contentSectionsCount: contentSections.length,
-      zoneSlugs: contentSections.map(s => s.zoneSlug).filter(Boolean)
-    })
   }
   
   return (

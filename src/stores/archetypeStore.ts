@@ -7,6 +7,11 @@
 
 import type { Archetype, PageInstance } from '../types/archetypes'
 import type { WidgetSection } from '../types/widgets'
+import { createDebugLogger } from '../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 const STORAGE_KEYS = {
   DESIGNS: 'catalyst-designs', // Stores designs with nested archetypes
@@ -32,7 +37,7 @@ export function loadDesignsWithArchetypes(): Record<string, { archetypes: Archet
       return value
     })
   } catch (error) {
-    console.error('Failed to load designs with archetypes:', error)
+    debugLog('error', 'Failed to load designs with archetypes:', error)
     return {}
   }
 }
@@ -44,7 +49,7 @@ export function saveDesignsWithArchetypes(designs: Record<string, { archetypes: 
   try {
     localStorage.setItem(STORAGE_KEYS.DESIGNS, JSON.stringify(designs))
   } catch (error) {
-    console.error('Failed to save designs with archetypes:', error)
+    debugLog('error', 'Failed to save designs with archetypes:', error)
   }
 }
 
@@ -117,7 +122,7 @@ export function loadPageInstances(): Record<string, PageInstance> {
       return value
     })
   } catch (error) {
-    console.error('Failed to load page instances:', error)
+    debugLog('error', 'Failed to load page instances:', error)
     return {}
   }
 }
@@ -129,7 +134,7 @@ export function savePageInstances(instances: Record<string, PageInstance>) {
   try {
     localStorage.setItem(STORAGE_KEYS.PAGE_INSTANCES, JSON.stringify(instances))
   } catch (error) {
-    console.error('Failed to save page instances:', error)
+    debugLog('error', 'Failed to save page instances:', error)
   }
 }
 
@@ -184,19 +189,105 @@ export function countPageInstancesByArchetype(archetypeId: string): number {
   return getPageInstancesByArchetype(archetypeId).length
 }
 
+/**
+ * Override a zone in a Page Instance
+ * Creates or updates the override for the specified zone
+ */
+export function overrideZone(instance: PageInstance, zoneSlug: string, section: WidgetSection): PageInstance {
+  const updated: PageInstance = {
+    ...instance,
+    overrides: {
+      ...instance.overrides,
+      [zoneSlug]: section
+    },
+    updatedAt: new Date()
+  }
+  savePageInstance(updated)
+  return updated
+}
+
+/**
+ * Remove an override from a Page Instance (revert to archetype)
+ */
+export function inheritZone(instance: PageInstance, zoneSlug: string): PageInstance {
+  const updated: PageInstance = {
+    ...instance,
+    overrides: Object.fromEntries(
+      Object.entries(instance.overrides).filter(([key]) => key !== zoneSlug)
+    ),
+    updatedAt: new Date()
+  }
+  savePageInstance(updated)
+  return updated
+}
+
+/**
+ * Create a new Page Instance from an archetype
+ * Initializes with empty overrides - all zones inherit from archetype
+ */
+export function createPageInstanceFromArchetype(
+  websiteId: string,
+  pageId: string,
+  archetypeId: string,
+  designId?: string // Optional, used for validation but not stored
+): PageInstance {
+  const instance: PageInstance = {
+    id: `${websiteId}-${pageId}-${Date.now()}`, // Unique ID
+    type: 'page',
+    websiteId,
+    pageId,
+    templateId: archetypeId, // Reference to archetype
+    overrides: {}, // Start with no overrides - all zones inherit
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+  
+  // Save the instance
+  savePageInstance(instance)
+  
+  return instance
+}
+
+/**
+ * Get or create a Page Instance for a journal home page
+ * If instance doesn't exist and archetype exists, creates one automatically
+ * Returns null if no archetype exists
+ */
+export function getOrCreatePageInstance(
+  websiteId: string,
+  pageId: string,
+  archetypeId: string,
+  designId: string
+): PageInstance | null {
+  // Check if instance already exists
+  const existing = getPageInstance(websiteId, pageId)
+  if (existing) {
+    return existing
+  }
+  
+  // Check if archetype exists
+  const archetype = getArchetypeById(archetypeId, designId)
+  if (!archetype) {
+    // No archetype exists - return null (fallback to old template system)
+    return null
+  }
+  
+  // Create new instance from archetype
+  return createPageInstanceFromArchetype(websiteId, pageId, archetypeId, designId)
+}
+
 // =============================================================================
 // Zone Resolution (merge archetype + instance overrides)
 // =============================================================================
 
 /**
  * Migrate widget contentSource for archetypes
- * Converts journal-latest to dynamic-query so widgets generate mock data
+ * Note: contentSource should already be 'dynamic-query' - journal context comes from page context at runtime
  */
 function migrateWidgetContentSource(widget: any): any {
   const migrated = { ...widget }
   
-  // Convert journal-latest to dynamic-query for publication-list widgets
-  // This allows archetypes to generate mock data in preview/editor
+  // Legacy migration: Convert old journal-latest to dynamic-query (should not be needed anymore)
   if (migrated.type === 'publication-list' && migrated.contentSource === 'journal-latest') {
     migrated.contentSource = 'dynamic-query'
   }

@@ -186,6 +186,10 @@ interface SectionRendererProps {
   
   // Mock data toggle for archetype editing
   showMockData?: boolean
+  // Page Instance props (for inheritance system)
+  pageInstanceMode?: boolean
+  pageInstance?: import('../../types/archetypes').PageInstance
+  onPageInstanceChange?: () => void
 }
 
 // Component for draggable widgets within sections
@@ -452,12 +456,6 @@ export function DraggableWidgetInSection({
         zIndex: 1 
       }}>
         {(() => {
-          console.log('🔍 DraggableWidgetInSection - Passing to WidgetRenderer:', {
-            widgetId: widget.id,
-            widgetType: widget.type,
-            showMockData,
-            receivedShowMockData: showMockData
-          })
           return (
             <WidgetRenderer 
               widget={widget}
@@ -504,14 +502,12 @@ export function SectionRenderer({
   canDeleteSection = true,
   canReorderSection = true,
   canDuplicateSection = true,
-  showMockData = true
+  showMockData = true,
+  // Page Instance props (for inheritance system)
+  pageInstanceMode = false,
+  pageInstance,
+  onPageInstanceChange
 }: SectionRendererProps) {
-  console.log('🔍 SectionRenderer - Entry:', {
-    sectionId: section.id,
-    sectionName: section.name,
-    showMockData,
-    receivedShowMockData: showMockData
-  })
   
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [sectionName, setSectionName] = useState('')
@@ -1008,6 +1004,22 @@ export function SectionRenderer({
         {!isLiveMode && activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
+              {/* Page Instance: Zone inheritance badge and actions */}
+              {pageInstanceMode && section.zoneSlug && pageInstance && (
+                <>
+                  {/* Zone inheritance badge - only show when actual override exists (not drafts) */}
+                  {pageInstance.overrides[section.zoneSlug] ? (
+                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded border border-blue-200">
+                      Local
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded border border-gray-200">
+                      Inherited
+                    </span>
+                  )}
+                </>
+              )}
+              
               {/* Drag handle - only if reordering allowed */}
               {canReorderSection && (
                 <div 
@@ -1280,7 +1292,7 @@ export function SectionRenderer({
                             .filter((pub: any) => pub !== null)
                         }
                       } catch (error) {
-                        console.error('Error loading schema objects in pattern mode:', error)
+                        debugLog('error', 'Error loading schema objects in pattern mode:', error)
                         publications = []
                       }
                     } else if (pubWidget.contentSource === 'doi-list' && pubWidget.doiSource?.dois && pubWidget.doiSource.dois.length > 0) {
@@ -1295,7 +1307,7 @@ export function SectionRenderer({
                           })
                           .filter((pub: any) => pub !== null)
                       } catch (error) {
-                        console.error('Error loading DOI publications in pattern mode:', error)
+                        debugLog('error', 'Error loading DOI publications in pattern mode:', error)
                         publications = []
                       }
                     } else if (pubWidget.contentSource === 'ai-generated' && pubWidget.aiSource?.prompt) {
@@ -1314,7 +1326,7 @@ export function SectionRenderer({
                           publications = generateAIContent(pubWidget.aiSource.prompt)
                         }
                       } catch (error) {
-                        console.error('Error generating AI content in pattern mode:', error)
+                        debugLog('error', 'Error generating AI content in pattern mode:', error)
                         publications = pubWidget.publications || []
                       }
                     } else if (pubWidget.contentSource === 'dynamic-query') {
@@ -1324,7 +1336,7 @@ export function SectionRenderer({
                         const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
                         publications = generateAIContent(defaultPrompt)
                       } catch (error) {
-                        console.error('Error generating dynamic query content in pattern mode:', error)
+                        debugLog('error', 'Error generating dynamic query content in pattern mode:', error)
                         publications = pubWidget.publications || []
                       }
                     } else {

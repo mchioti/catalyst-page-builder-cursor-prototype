@@ -1,3 +1,9 @@
+import { createDebugLogger } from './logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
+
 // AI Content Generation Functions
 export function generateAIContent(prompt: string): any[] {
   // Parse the prompt to extract key information
@@ -78,7 +84,7 @@ export function generateAIContent(prompt: string): any[] {
   }
   
   // Debug logging to help with AI parsing issues
-  console.log('🤖 AI Parsing Results:', {
+  debugLog('log', '🤖 AI Parsing Results:', {
     prompt,
     articleCount,
     subject,

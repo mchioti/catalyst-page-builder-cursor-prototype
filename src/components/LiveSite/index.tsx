@@ -23,6 +23,16 @@ import { mockWebsites } from '../../v2/data/mockWebsites'
 import { EditingScopeButton } from './EditingScopeButton'
 import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
 import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../PageBuilder/prefabSections'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
+import { 
+  getOrCreatePageInstance, 
+  getArchetypeById, 
+  resolveCanvasFromArchetype 
+} from '../../stores/archetypeStore'
 
 // Create default site layout for websites that don't have one
 const createDefaultSiteLayout = () => ({
@@ -270,11 +280,40 @@ function HomePage() {
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
-  // Check for stored canvas data from the Page Builder
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'home'))
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
+  // Subscribe to store state changes so component re-renders when canvas is updated
+  const pageCanvasData = usePageStore(state => state.pageCanvasData[`${websiteId}:home`])
+  const pageDraftData = usePageStore(state => state.pageDraftData[`${websiteId}:home`])
   
-  // Auto-initialize canvas data if not present
+  // Get canvas for preview (checks draft first, then published)
+  // Re-compute when store state changes
+  // Also check sessionStorage directly since it's not reactive
+  const pageCanvas = useMemo(() => {
+    const key = `${websiteId}:home`
+    // Check sessionStorage draft first (not reactive, but checked on each render)
+    try {
+      const sessionStorageKey = `draft:${key}`
+      const stored = sessionStorage.getItem(sessionStorageKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          debugLog('log', '📖 [HomePage] Loaded draft from sessionStorage:', { websiteId, pageId: 'home', itemCount: parsed.length })
+          return parsed
+        }
+      }
+    } catch (error) {
+      // Ignore errors
+    }
+    // Use store function which checks in-memory draft and published
+    const canvas = getPageCanvasForPreview(websiteId, 'home')
+    if (canvas) {
+      debugLog('log', '📖 [HomePage] Loaded canvas for preview:', { websiteId, pageId: 'home', itemCount: canvas.length })
+    }
+    return canvas
+  }, [websiteId, getPageCanvasForPreview, pageCanvasData, pageDraftData])
+  
+  // Auto-initialize canvas data if not present (only if no draft or published exists)
   // Pass the website's themeId to determine which design stub to use
   // Pass the website's journals so Featured Journals section shows correct journals
   useEffect(() => {
@@ -343,19 +382,27 @@ function JournalHomePage() {
   const journal = website?.journals?.find((j: any) => j.id === journalId)
   
   // Get canvas data from store (saved by editor)
-  // Editor saves to pageCanvasData with key: "websiteId:pageName" (e.g., "catalyst-demo:journal/jas")
-  // Editor also loads from routeCanvasItems with key: "/journal/jas"
-  // We need to check BOTH locations to find saved data
+  // Editor saves DRAFTS to pageDraftData and PUBLISHED to pageCanvasData
+  // Preview should check draft first, then published
   const route = `/journal/${journalId}`
   const pageName = `journal/${journalId}` // Format used by editor for pageCanvasData key
-  const getPageCanvas = usePageStore(state => state.getPageCanvas)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
   const setCanvasItemsForRoute = usePageStore(state => state.setCanvasItemsForRoute)
   
   // Use separate selectors to avoid creating new arrays on every call
   // This prevents infinite loops from getSnapshot not being cached
   const pageKey = useMemo(() => `${websiteId}:${pageName}`, [websiteId, pageName])
-  const savedPageCanvas = usePageStore(state => state.pageCanvasData[pageKey])
+  
+  // Get canvas for preview (checks draft first, then published)
+  const savedPageCanvas = useMemo(() => {
+    const canvas = getPageCanvasForPreview(websiteId, pageName)
+    if (canvas) {
+      debugLog('log', '📖 [JournalHomePage] Loaded canvas for preview:', { websiteId, pageName, itemCount: canvas.length })
+    }
+    return canvas
+  }, [websiteId, pageName, getPageCanvasForPreview])
+  
   const savedRouteCanvas = usePageStore(state => state.routeCanvasItems[route])
   
   // Combine with useMemo to ensure stable reference
@@ -373,6 +420,16 @@ function JournalHomePage() {
     return <NotFoundPage message={`Journal "${journalId}" not found`} />
   }
   
+  // Determine designId from website theme
+  const designId = useMemo(() => {
+    const websiteThemeId = website?.themeId || website?.designId || ''
+    // Classic theme: classic-ux3-theme or foundation-theme-v1 (which defaults to Classic)
+    if (websiteThemeId.includes('classic') || websiteThemeId === 'foundation-theme-v1') {
+      return 'classic-ux3-theme'
+    }
+    return websiteThemeId || 'classic-ux3-theme'
+  }, [website])
+  
   // Auto-initialize canvas data ONLY if route has no saved data (first time viewing)
   useEffect(() => {
     // Check if route has saved data in EITHER storage location (check store directly)
@@ -387,6 +444,23 @@ function JournalHomePage() {
     // Only initialize if there's no saved data in either store
     // This prevents re-initialization when navigating back to the page
     if (!hasSavedData) {
+      // Try to get or create Page Instance from archetype
+      const archetypeId = 'modern-journal-home'
+      const instance = getOrCreatePageInstance(websiteId, pageName, archetypeId, designId)
+      
+      if (instance) {
+        // Page Instance exists - load archetype and resolve with instance
+        const archetype = getArchetypeById(archetypeId, designId)
+        if (archetype) {
+          const resolvedCanvas = resolveCanvasFromArchetype(archetype, instance)
+          // Save resolved canvas to both locations for consistency
+          setPageCanvas(websiteId, pageName, resolvedCanvas)
+          setCanvasItemsForRoute(route, resolvedCanvas)
+          return // Exit early - archetype system handles initialization
+        }
+      }
+      
+      // Fallback: Use old template system if no archetype/instance
       // Get fresh articles data for template context
       const currentIssueForInit = getCurrentIssue(journalId!)
       const articlesForInit = currentIssueForInit ? getArticlesForIssue(currentIssueForInit.id).slice(0, 5) : []
@@ -413,8 +487,11 @@ function JournalHomePage() {
         }))
       }
       
-      // Initialize with template stub
+      // Initialize with template stub (old system)
       const template = createJournalHomeTemplate(websiteId, journalContext)
+      // Save to both locations for consistency
+      setPageCanvas(websiteId, pageName, template)
+      setCanvasItemsForRoute(route, template)
       // Save to both locations for consistency
       setPageCanvas(websiteId, pageName, template)
       setCanvasItemsForRoute(route, template)
@@ -422,14 +499,31 @@ function JournalHomePage() {
     // Note: We check both storage locations to see if route has saved data.
     // This prevents re-initialization when navigating back to the page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [websiteId, journalId, route, pageName]) // Only re-run if route changes, not when canvas updates
+  }, [websiteId, journalId, route, pageName, designId]) // Only re-run if route changes, not when canvas updates
+  
+  // Check if this page uses a Page Instance (archetype system)
+  const pageInstance = useMemo(() => {
+    return getOrCreatePageInstance(websiteId, pageName, 'modern-journal-home', designId)
+  }, [websiteId, pageName, designId])
+  
+  // If using Page Instance, resolve from archetype + instance
+  const resolvedCanvas = useMemo(() => {
+    if (pageInstance && pageCanvas.length === 0) {
+      // No saved canvas yet, but instance exists - resolve from archetype
+      const archetype = getArchetypeById('modern-journal-home', designId)
+      if (archetype) {
+        return resolveCanvasFromArchetype(archetype, pageInstance)
+      }
+    }
+    return pageCanvas
+  }, [pageCanvas, pageInstance, designId])
   
   // Render canvas content if available
-  if (pageCanvas && pageCanvas.length > 0) {
+  if (resolvedCanvas && resolvedCanvas.length > 0) {
     // Create template context for variable replacement
     const templateContext = {
       journal: {
-        id: journal.id,
+        id: journalId, // Use journalId from URL params, not journal.id (which might be different)
         name: journal.name,
         description: journal.description,
         brandColor: journal.branding?.primaryColor || '#1e40af',
@@ -438,13 +532,26 @@ function JournalHomePage() {
       articles: latestArticles
     }
     
+    debugLog('log', '🔍 [JournalHomePage] templateContext created:', {
+      journalId,
+      journalFromWebsite: journal?.id,
+      journalName: journal?.name,
+      templateContext,
+      journalContextInTemplate: templateContext.journal.id
+    })
+    
+    // Get archetype for pageConfig if using instance
+    const archetype = pageInstance ? getArchetypeById('modern-journal-home', designId) : null
+    
     return (
       <CanvasRenderer 
-        items={pageCanvas} 
+        items={resolvedCanvas} 
         websiteId={websiteId} 
         themeId={website?.themeId}
         brandMode={website?.brandMode}
         templateContext={templateContext}
+        showMockData={true} // Show journal content (not placeholders) - widgets will use journalContext
+        pageConfig={archetype?.pageConfig}
       />
     )
   }
@@ -547,22 +654,31 @@ function IssueTocPage() {
     : `journal/${journalId}/toc/${vol}/${issueNum}`
   
   // Get canvas data from store (saved by editor)
-  // Editor saves to pageCanvasData with key: "websiteId:pageName"
-  // Editor also loads from routeCanvasItems with key: "/journal/jas/toc/current"
-  const getPageCanvas = usePageStore(state => state.getPageCanvas)
+  // Editor saves DRAFTS to pageDraftData and PUBLISHED to pageCanvasData
+  // Preview should check draft first, then published
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
   const setCanvasItemsForRoute = usePageStore(state => state.setCanvasItemsForRoute)
   
   // Use separate selectors to avoid creating new arrays on every call
   // This prevents infinite loops from getSnapshot not being cached
   const pageKey = useMemo(() => `${websiteId}:${pageName}`, [websiteId, pageName])
-  const savedPageCanvas = usePageStore(state => state.pageCanvasData[pageKey])
+  
+  // Get canvas for preview (checks draft first, then published)
+  const savedPageCanvas = useMemo(() => {
+    const canvas = getPageCanvasForPreview(websiteId, pageName)
+    if (canvas) {
+      debugLog('log', '📖 [IssueTocPage] Loaded canvas for preview:', { websiteId, pageName, itemCount: canvas.length })
+    }
+    return canvas
+  }, [websiteId, pageName, getPageCanvasForPreview])
+  
   const savedRouteCanvas = usePageStore(state => state.routeCanvasItems[route])
   
   // Combine with useMemo to ensure stable reference
   // Use stable EMPTY_CANVAS constant to prevent creating new arrays
   const pageCanvas = useMemo(() => {
-    // Prefer pageCanvasData (what editor saves to), fallback to routeCanvasItems
+    // Prefer draft/published canvas, fallback to routeCanvasItems
     return savedPageCanvas || savedRouteCanvas || EMPTY_CANVAS
   }, [savedPageCanvas, savedRouteCanvas])
   
@@ -739,9 +855,18 @@ function AboutPage() {
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'about'))
+  // Get canvas for preview (checks draft first, then published)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Get canvas for preview (checks draft first, then published)
+  const pageCanvas = useMemo(() => {
+    const canvas = getPageCanvasForPreview(websiteId, 'about')
+    if (canvas) {
+      debugLog('log', '📖 [AboutPage] Loaded canvas for preview:', { websiteId, pageId: 'about', itemCount: canvas.length })
+    }
+    return canvas
+  }, [websiteId, getPageCanvasForPreview])
   
   // Auto-initialize canvas data if not present
   useEffect(() => {
@@ -782,9 +907,18 @@ function SearchPage() {
   const websites = useAllWebsites()
   const website = websites.find(w => w.id === websiteId)
   
-  // Check for stored canvas data
-  const pageCanvas = usePageStore(state => state.getPageCanvas(websiteId, 'search'))
+  // Get canvas for preview (checks draft first, then published)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
   const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Get canvas for preview (checks draft first, then published)
+  const pageCanvas = useMemo(() => {
+    const canvas = getPageCanvasForPreview(websiteId, 'search')
+    if (canvas) {
+      debugLog('log', '📖 [SearchPage] Loaded canvas for preview:', { websiteId, pageId: 'search', itemCount: canvas.length })
+    }
+    return canvas
+  }, [websiteId, getPageCanvasForPreview])
   
   // Auto-initialize canvas data if not present
   useEffect(() => {

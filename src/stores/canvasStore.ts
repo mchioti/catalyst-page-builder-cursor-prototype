@@ -18,6 +18,11 @@ import type {
 } from '../types/widgets'
 import { mockStarterPages } from '../data/mockStarterPages'
 import { mockSections } from '../data/mockSections'
+import { createDebugLogger } from '../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // =============================================================================
 // LocalStorage Helpers
@@ -41,7 +46,7 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T[]): T[] => {
     if (!stored) return defaultValue
     return JSON.parse(stored, dateReviver)
   } catch (error) {
-    console.error(`Failed to load ${key} from localStorage:`, error)
+    debugLog('error', `Failed to load ${key} from localStorage:`, error)
     return defaultValue
   }
 }
@@ -50,7 +55,7 @@ const saveToLocalStorage = <T,>(key: string, data: T[]) => {
   try {
     localStorage.setItem(key, JSON.stringify(data))
   } catch (error) {
-    console.error(`Failed to save ${key} to localStorage:`, error)
+    debugLog('error', `Failed to save ${key} to localStorage:`, error)
   }
 }
 

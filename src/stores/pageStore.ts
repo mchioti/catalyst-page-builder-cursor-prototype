@@ -8,6 +8,7 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid'
 import { arrayMove } from '@dnd-kit/sortable'
+import { createDebugLogger } from '../utils/logger'
 
 // Types
 import type { 
@@ -29,13 +30,12 @@ import { mockThemes } from '../data/mockThemes'
 import { mockStarterPages } from '../data/mockStarterPages'
 import { mockSections } from '../data/mockSections'
 
-// Constants
-import { DEFAULT_PUBLICATION_CARD_CONFIG } from '../constants'
-
-// Debug logger
-import { createDebugLogger } from '../utils/logger'
+// Control logging for this file
 const DEBUG = false
 const debugLog = createDebugLogger(DEBUG)
+
+// Constants
+import { DEFAULT_PUBLICATION_CARD_CONFIG } from '../constants'
 
 // =============================================================================
 // LocalStorage Persistence
@@ -60,7 +60,7 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T[]): T[] => {
     if (!stored) return defaultValue
     return JSON.parse(stored, dateReviver)
   } catch (error) {
-    console.error(`Failed to load ${key} from localStorage:`, error)
+    debugLog('error', `Failed to load ${key} from localStorage:`, error)
     return defaultValue
   }
 }
@@ -69,7 +69,7 @@ const saveToLocalStorage = <T,>(key: string, data: T[]) => {
   try {
     localStorage.setItem(key, JSON.stringify(data))
   } catch (error) {
-    console.error(`Failed to save ${key} to localStorage:`, error)
+    debugLog('error', `Failed to save ${key} to localStorage:`, error)
   }
 }
 
@@ -260,7 +260,11 @@ export const usePageStore = create<PageState>((set, get) => ({
   
   // Per-website, per-page canvas storage (for Live Site integration)
   // Key format: "websiteId:pageId" -> CanvasItem[]
-  pageCanvasData: {} as Record<string, CanvasItem[]>,
+  pageCanvasData: {} as Record<string, CanvasItem[]>, // PUBLISHED
+  
+  // Per-website, per-page draft storage (for preview and editing)
+  // Key format: "websiteId:pageId" -> CanvasItem[]
+  pageDraftData: {} as Record<string, CanvasItem[]>, // DRAFT (previewable, not published)
   
   // Per-page header/footer overrides
   // Key format: "websiteId:pageId" -> { headerOverride, footerOverride }
@@ -362,6 +366,79 @@ export const usePageStore = create<PageState>((set, get) => ({
     const { [key]: _, ...rest } = state.pageCanvasData
     return { pageCanvasData: rest }
   }),
+  
+  // Draft management (for preview and editing)
+  getPageDraft: (websiteId: string, pageId: string) => {
+    const state = get()
+    const key = `${websiteId}:${pageId}`
+    // Check sessionStorage first (for session persistence), then in-memory store
+    const sessionStorageKey = `draft:${key}`
+    try {
+      const stored = sessionStorage.getItem(sessionStorageKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return parsed
+      }
+    } catch (error) {
+      debugLog('error', 'Failed to load draft from sessionStorage:', error)
+    }
+    return state.pageDraftData[key] || null
+  },
+  setPageDraft: (websiteId: string, pageId: string, items: CanvasItem[]) => {
+    const key = `${websiteId}:${pageId}`
+    const sessionStorageKey = `draft:${key}`
+    
+    // Save to sessionStorage for session persistence
+    try {
+      sessionStorage.setItem(sessionStorageKey, JSON.stringify(items))
+    } catch (error) {
+      debugLog('error', 'Failed to save draft to sessionStorage:', error)
+    }
+    
+    // Also save to in-memory store
+    return set((state) => ({
+      pageDraftData: {
+        ...state.pageDraftData,
+        [key]: items
+      }
+    }))
+  },
+  // Get page canvas for preview (checks draft first, then published)
+  getPageCanvasForPreview: (websiteId: string, pageId: string) => {
+    const state = get()
+    const key = `${websiteId}:${pageId}`
+    const sessionStorageKey = `draft:${key}`
+    
+    // Check sessionStorage draft first (for session persistence)
+    // Only return if it has content (length > 0)
+    try {
+      const stored = sessionStorage.getItem(sessionStorageKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        // Only return draft if it has actual content
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          debugLog('log', '📖 [getPageCanvasForPreview] Using draft from sessionStorage:', sessionStorageKey, { itemCount: parsed.length })
+          return parsed
+        }
+      }
+    } catch (error) {
+      debugLog('error', 'Failed to load draft from sessionStorage:', error)
+    }
+    
+    // Then check in-memory draft (only if it has content)
+    if (state.pageDraftData[key] && Array.isArray(state.pageDraftData[key]) && state.pageDraftData[key].length > 0) {
+      debugLog('log', '📖 [getPageCanvasForPreview] Using draft from memory:', key, { itemCount: state.pageDraftData[key].length })
+      return state.pageDraftData[key]
+    }
+    
+    // Finally fallback to published
+    if (state.pageCanvasData[key]) {
+      debugLog('log', '📖 [getPageCanvasForPreview] Using published canvas:', key, { itemCount: state.pageCanvasData[key].length })
+      return state.pageCanvasData[key]
+    }
+    
+    return null
+  },
   
   // Add a widget to a website's global header/footer
   // Insert a widget BEFORE a target widget in siteLayout (for precise positioning)
@@ -882,7 +959,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     }
     
     if (!customizedCanvas || customizedCanvas.length === 0) {
-      console.warn(`No customized canvas found for route ${route}`)
+      debugLog('warn', `No customized canvas found for route ${route}`)
       return
     }
     
@@ -910,7 +987,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     const customizedCanvas = routeCanvasItems[route]
     
     if (!customizedCanvas) {
-      console.warn(`No customized canvas found for route ${route}`)
+      debugLog('warn', `No customized canvas found for route ${route}`)
       return
     }
     
@@ -939,7 +1016,7 @@ export const usePageStore = create<PageState>((set, get) => ({
     const { globalTemplateCanvas } = state
     
     if (!globalTemplateCanvas || globalTemplateCanvas.length === 0) {
-      console.warn(`No base template found to promote to publisher theme`)
+      debugLog('warn', `No base template found to promote to publisher theme`)
       return
     }
     

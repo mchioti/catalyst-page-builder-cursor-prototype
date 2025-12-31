@@ -5,11 +5,14 @@ import { Home, ChevronRight } from 'lucide-react'
 import { PublicationCard } from '../Publications/PublicationCard'
 import { generateAIContent, generateAISingleContent, generateJournalMetadata } from '../../utils/aiContentGeneration'
 import { getCitationByDOI, citationToSchemaOrg } from '../../utils/citationData'
+import { getCurrentIssue, getArticlesForIssue } from '../../v2/data/mockIssues'
+import { getJournalPublications, getJournalMetadata } from '../../data/journalMockPublications'
 import { useDroppable } from '@dnd-kit/core'
 import { nanoid } from 'nanoid'
 import { Edit, Trash2, Copy } from 'lucide-react'
 import { EditorialCardRenderer } from './EditorialCardRenderer'
 import { applyListPattern } from '../../utils/listPatternRenderer'
+import { createDebugLogger } from '../../utils/logger'
 
 // Extracted components
 import { SkinWrap } from './SkinWrap'
@@ -20,6 +23,10 @@ import { usePageStore } from '../../stores/pageStore'
 import { useBrandingStore } from '../../stores/brandingStore'
 // Import resolveContextColor helper from SectionRenderer
 import { resolveContextColor } from '../Sections/SectionRenderer'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Button Widget Component
 const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?: 'light' | 'dark' }> = ({ widget, sectionContentMode }) => {
@@ -84,7 +91,7 @@ const ButtonWidgetRenderer: React.FC<{ widget: ButtonWidget; sectionContentMode?
     <button 
       type="button"
       className={buttonClasses}
-      onClick={() => console.log('Button clicked:', widget.text)}
+      onClick={() => debugLog('log', 'Button clicked:', widget.text)}
     >
       {renderContent()}
     </button>
@@ -682,7 +689,7 @@ const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
         // Enhanced click handling for better interactivity
         document.addEventListener('click', function(e) {
           // Ensure clicks work properly and don't get blocked
-          console.log('HTML Widget Click:', e.target);
+          debugLog('log', 'HTML Widget Click:', e.target);
         }, true);
         
         // Enable proper event bubbling
@@ -693,7 +700,7 @@ const HTMLWidgetRenderer: React.FC<{ widget: HTMLWidget }> = ({ widget }) => {
             el.style.cursor = 'pointer';
             if (!el.onclick && !el.getAttribute('onclick') && !el.href) {
               el.addEventListener('click', function(e) {
-                console.log('Interactive element clicked:', this);
+                debugLog('log', 'Interactive element clicked:', this);
               });
             }
           });
@@ -993,14 +1000,6 @@ const PublicationDetailsWidgetRenderer: React.FC<{
   journalContext?: string;
   showMockData?: boolean;
 }> = ({ widget, schemaObjects, sectionContentMode, journalContext, showMockData = true }) => {
-  console.log('🔍 PublicationDetailsWidgetRenderer:', {
-    widgetId: widget.id,
-    widgetType: widget.type,
-    contentSource: widget.contentSource,
-    showMockData,
-    receivedShowMockData: showMockData
-  })
-  
   // Resolve variant ID to get latest config (ensures variant changes are reflected)
   const publicationCardVariants = usePageStore.getState().publicationCardVariants
   const resolvedConfig = widget.cardVariantId 
@@ -1103,19 +1102,12 @@ const PublicationDetailsWidgetRenderer: React.FC<{
   // In archetype mode, all contentSources should generate mock data or show placeholder
   // regardless of the actual contentSource value
   
-  console.log('🔍 PublicationDetailsWidgetRenderer - showMockData check:', {
-    showMockData,
-    contentSource: widget.contentSource,
-    willShowPlaceholder: !showMockData && (widget.contentSource === 'dynamic-query' || widget.contentSource === 'ai-generated' || widget.contentSource === 'context')
-  })
-  
   // Handle showMockData toggle - show placeholder when false (don't generate)
   if (!showMockData) {
     // For any dynamic content source, show placeholder
     if (widget.contentSource === 'dynamic-query' || 
         widget.contentSource === 'ai-generated' || 
         widget.contentSource === 'context') {
-      console.log('✅ PublicationDetailsWidgetRenderer - Returning placeholder (showMockData=false)')
       return (
         <div className="border border-dashed border-blue-300 bg-blue-50 rounded-lg p-6 text-center text-blue-700">
           <p className="font-medium">Dynamic Content</p>
@@ -1135,19 +1127,30 @@ const PublicationDetailsWidgetRenderer: React.FC<{
   
   try {
     if (widget.contentSource === 'context') {
-      console.log('🔍 PublicationDetailsWidgetRenderer - context source, showMockData:', showMockData)
-      // In archetype mode with showMockData=true, generate journal metadata
-      // Otherwise, try to get from context (for non-archetype pages)
-      if (showMockData) {
-        // Generate mock journal metadata for archetype preview/editor (memoized)
-        console.log('✅ PublicationDetailsWidgetRenderer - Generating journal metadata (showMockData=true)')
+      
+      // If we have journal context, use journal-specific mock metadata (not AI-generated)
+      if (journalContext) {
+        try {
+          const journalMeta = getJournalMetadata(journalContext)
+          if (journalMeta) {
+            publication = journalMeta
+          } else {
+            // Fallback to context function
+            publication = getJournalFromContext()
+          }
+        } catch (error) {
+          debugLog('error', 'Error fetching journal metadata:', error)
+          publication = getJournalFromContext()
+        }
+      } else if (showMockData) {
+        // No journal context but showMockData=true: Generate AI metadata for archetype preview/editor
         isAIGenerated = true
         const memoizedJournal = useMemo(() => {
           return generateJournalMetadata('Generate journal metadata for a scientific journal')
         }, [widget.id]) // Only regenerate if widget ID changes
         publication = memoizedJournal
       } else {
-        // Try to get journal data from current context (for actual page instances)
+        // Try to get journal data from current context (for actual page instances without journalContext prop)
         publication = getJournalFromContext()
         if (!publication) {
           return (
@@ -1169,7 +1172,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{
         try {
           publication = JSON.parse(schemaObj.jsonLD)
         } catch (e) {
-          console.error('Failed to parse JSON-LD for publication details:', schemaObj.id, e)
+          debugLog('error', 'Failed to parse JSON-LD for publication details:', schemaObj.id, e)
           publication = null
         }
       }
@@ -1211,7 +1214,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{
           publication.thumbnailUrlWide = `https://picsum.photos/880/200?random=${imageSeed}`
         }
       } catch (error) {
-        console.error('Error generating AI content for publication details:', error)
+        debugLog('error', 'Error generating AI content for publication details:', error)
         publication = widget.publication // Fallback to default
       }
     } else {
@@ -1219,7 +1222,7 @@ const PublicationDetailsWidgetRenderer: React.FC<{
       publication = widget.publication
     }
   } catch (error) {
-    console.error('Error loading publication details:', error)
+    debugLog('error', 'Error loading publication details:', error)
     publication = widget.publication
   }
 
@@ -1256,7 +1259,8 @@ const PublicationDetailsWidgetRenderer: React.FC<{
 }
 
 // Publication List Widget with full implementation
-const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark'; showMockData?: boolean }> = ({ widget, schemaObjects, sectionContentMode, showMockData = true }) => {
+const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; schemaObjects: any[]; sectionContentMode?: 'light' | 'dark'; journalContext?: string; showMockData?: boolean }> = ({ widget, schemaObjects, sectionContentMode, journalContext, showMockData = true }) => {
+  
   // Resolve variant ID to get latest config (ensures variant changes are reflected)
   const publicationCardVariants = usePageStore.getState().publicationCardVariants
   const resolvedConfig = widget.cardVariantId 
@@ -1265,19 +1269,18 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
   
   // OPTION A: Control generation AND display based on showMockData
   // Handle showMockData toggle - show placeholder when false (don't generate)
-  console.log('🔍 PublicationListWidgetRenderer - showMockData check:', {
-    widgetId: widget.id,
-    showMockData,
-    contentSource: widget.contentSource,
-    willShowPlaceholder: !showMockData && (widget.contentSource === 'dynamic-query' || widget.contentSource === 'ai-generated' || widget.contentSource === 'context')
-  })
+  // BUT: If we have journalContext, we should show journal articles even if showMockData is false
+  // IMPORTANT: In Page Instance mode, 'dynamic-query' should be treated as "Page Context" 
+  // (use journal in context), not as "generate random AI content"
   
-  if (!showMockData) {
-    // For any dynamic content source, show placeholder
+  // Only show placeholder if showMockData is false AND we don't have journal context
+  // If we have journal context, we should show journal articles even if showMockData is false
+  // Also: 'dynamic-query' with journalContext should be treated as page context (not placeholder)
+  if (!showMockData && !journalContext) {
+    // For any dynamic content source, show placeholder (only if no journal context)
     if (widget.contentSource === 'dynamic-query' || 
         widget.contentSource === 'ai-generated' || 
         widget.contentSource === 'context') {
-      console.log('✅ PublicationListWidgetRenderer - Returning placeholder (showMockData=false)')
       return (
         <div className="border border-dashed border-blue-300 bg-blue-50 rounded-lg p-6 text-center text-blue-700">
           <p className="font-medium">Dynamic Content</p>
@@ -1289,9 +1292,9 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
   
   // Get publications based on content source
   let publications: any[] = []
-  let isAIGenerated = false
-  
-  console.log('🔍 PublicationListWidgetRenderer - Continuing to generate content (showMockData=true)')
+  // Initialize isAIGenerated based on whether we have journal context
+  // If we have journalContext, we'll use journal-specific data (not AI)
+  let isAIGenerated = !journalContext
   
   if (widget.contentSource === 'schema-objects' && widget.schemaSource) {
     const { selectionType, selectedIds, selectedType } = widget.schemaSource
@@ -1306,7 +1309,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
             try {
               return JSON.parse(obj.jsonLD)
             } catch (e) {
-              console.error('Failed to parse JSON-LD for object:', obj.id, e)
+              debugLog('error', 'Failed to parse JSON-LD for object:', obj.id, e)
               return null
             }
           })
@@ -1321,14 +1324,14 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
             try {
               return JSON.parse(obj!.jsonLD)
             } catch (e) {
-              console.error('Failed to parse JSON-LD for object:', obj!.id, e)
+              debugLog('error', 'Failed to parse JSON-LD for object:', obj!.id, e)
               return null
             }
           })
           .filter(pub => pub !== null)
       }
     } catch (error) {
-      console.error('Error loading schema objects:', error)
+      debugLog('error', 'Error loading schema objects:', error)
       publications = []
     }
   } else if (widget.contentSource === 'doi-list' && widget.doiSource?.dois && widget.doiSource.dois.length > 0) {
@@ -1344,7 +1347,7 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
         })
         .filter(pub => pub !== null)
     } catch (error) {
-      console.error('Error loading DOI publications:', error)
+      debugLog('error', 'Error loading DOI publications:', error)
       publications = []
     }
   } else if (widget.contentSource === 'ai-generated' && widget.aiSource?.prompt) {
@@ -1369,39 +1372,56 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
         }, [widget.id, widget.aiSource.prompt])
         publications = memoizedContent
       } catch (error) {
-        console.error('Error generating AI content:', error)
+        debugLog('error', 'Error generating AI content:', error)
         publications = widget.publications || [] // Fallback to default
       }
   } else if (widget.contentSource === 'dynamic-query') {
-    console.log('🔍 PublicationListWidgetRenderer - dynamic-query source, showMockData:', showMockData)
-    // OPTION A: Only generate if showMockData is true
-    if (!showMockData) {
-      // Should have been caught by early return, but double-check
-      console.log('⚠️ PublicationListWidgetRenderer - showMockData=false but reached dynamic-query generation (should have returned earlier)')
+    // CRITICAL: In Page Instance mode, 'dynamic-query' should be treated as "Page Context"
+    // The archetype stores 'dynamic-query' as config, but at runtime it should use the journal in context
+    // This is NOT "generate random AI articles" - it's "fetch articles for the current journal"
+    if (journalContext) {
+      // Page Instance mode: Use journal-specific mock data (treat dynamic-query as page context)
+      // IMPORTANT: Do NOT set isAIGenerated = true here - this is real journal data, not AI
+      // Use useMemo to cache journal-specific publications based on journalContext
+      const journalPubs = useMemo(() => {
+        try {
+          const result = getJournalPublications(journalContext, widget.maxItems || 5)
+          return result
+        } catch (error) {
+          debugLog('error', '❌ [PublicationListWidgetRenderer] Error fetching journal publications:', error)
+          return []
+        }
+      }, [journalContext, widget.maxItems]) // Re-compute when journalContext changes
+      
+      if (journalPubs.length > 0) {
+        publications = journalPubs
+        isAIGenerated = false // Explicitly set to false - this is journal-specific data, not AI
+      } else {
+        publications = []
+      }
+    } else if (showMockData) {
+      // Archetype preview mode (no journal context): Generate AI content for preview
+      // This is only for archetype editor/preview where there's no specific journal context
+      isAIGenerated = true
+      try {
+        const itemCount = widget.maxItems || 5
+        const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
+        const memoizedContent = useMemo(() => {
+          return generateAIContent(defaultPrompt)
+        }, [widget.id, widget.maxItems]) // Only regenerate if widget ID or maxItems changes
+        publications = memoizedContent
+      } catch (error) {
+        debugLog('error', 'Error generating dynamic query content:', error)
+        publications = widget.publications || []
+      }
+    } else {
+      // No journal context and showMockData is false - show placeholder
       return (
         <div className="border border-dashed border-blue-300 bg-blue-50 rounded-lg p-6 text-center text-blue-700">
           <p className="font-medium">Dynamic Content</p>
           <p className="text-sm mt-2">This widget will fetch the latest articles at runtime.</p>
         </div>
       )
-    }
-    
-    // Dynamic query - in prototype, generate mock content based on maxItems
-    // In production, this would fetch from a backend API
-    // Memoized to prevent regeneration on every render
-    console.log('✅ PublicationListWidgetRenderer - Generating AI content for dynamic-query (showMockData=true)')
-    isAIGenerated = true
-    try {
-      const itemCount = widget.maxItems || 5
-      const defaultPrompt = `Generate ${itemCount} articles on chemical engineering and materials science`
-      const memoizedContent = useMemo(() => {
-        return generateAIContent(defaultPrompt)
-      }, [widget.id, widget.maxItems]) // Only regenerate if widget ID or maxItems changes
-      publications = memoizedContent
-      console.log('✅ PublicationListWidgetRenderer - Generated', publications.length, 'publications')
-    } catch (error) {
-      console.error('Error generating dynamic query content:', error)
-      publications = widget.publications || []
     }
   } else {
     // Use default publications for other content sources
@@ -1467,9 +1487,12 @@ const PublicationListWidgetRenderer: React.FC<{ widget: PublicationListWidget; s
   }
 
   // Standard Mode: Render with widget's own layout
+  const shouldShowBadge = isAIGenerated && showMockData && !journalContext
+  
   return (
     <div className="space-y-6 relative">
-      {isAIGenerated && showMockData && (
+      {/* Only show AI badge if content is actually AI-generated (not journal-specific data) */}
+      {shouldShowBadge && (
         <div className="absolute top-0 right-0 z-10">
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-md border border-purple-300">
             <span>🤖</span>
@@ -1528,33 +1551,28 @@ const ClickableWidgetInTabPanel: React.FC<{
   const handleWidgetClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    console.log('🖱️ Widget in tab panel clicked:', widget.id, widget.type)
     setActiveWidgetToolbar(activeWidgetToolbar === widget.id ? null : widget.id)
     
     // Update selected widget in store - access from window directly
     const store = window.usePageStore || usePageStore
-    console.log('🔍 Store exists?', !!store)
     if (store) {
       try {
         const state = store.getState()
-        console.log('🔍 Store state:', { hasSelectWidget: !!state.selectWidget })
         if (state.selectWidget) {
           state.selectWidget(widget.id)
-          console.log('✅ Selected widget in store:', widget.id)
         } else {
-          console.error('❌ selectWidget function not found in store')
+          debugLog('error', '❌ selectWidget function not found in store')
         }
       } catch (error) {
-        console.error('❌ Error selecting widget:', error)
+        debugLog('error', '❌ Error selecting widget:', error)
       }
     } else {
-      console.error('❌ Store is undefined (neither window.usePageStore nor module usePageStore available)')
+      debugLog('error', '❌ Store is undefined (neither window.usePageStore nor module usePageStore available)')
     }
   }
 
   const handleDuplicate = (e: React.MouseEvent) => {
     e.stopPropagation()
-    console.log('📋 Duplicating widget in tab panel:', widget.id)
     
     const store = window.usePageStore || usePageStore
     if (!store) return
@@ -1606,7 +1624,6 @@ const ClickableWidgetInTabPanel: React.FC<{
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    console.log('🗑️ Deleting widget from tab panel:', widget.id)
     
     const store = window.usePageStore || usePageStore
     if (!store) return
@@ -1728,12 +1745,6 @@ const DroppableTabPanel: React.FC<{
     }
   })
   
-  // Debug logging
-  React.useEffect(() => {
-    if (isOver) {
-      console.log('🎯 Tab panel hover detected:', { tabId, widgetId })
-    }
-  }, [isOver, tabId, widgetId])
   
   return (
     <div
@@ -1824,16 +1835,12 @@ const TabsWidgetRenderer: React.FC<{
   // Sync activeIndex with widget's activeTabIndex when widget updates from external source
   React.useEffect(() => {
     const widgetIndex = widget.activeTabIndex !== undefined ? widget.activeTabIndex : 0
-    console.log('🔄 Widget prop changed, setting activeIndex to:', widgetIndex)
     setActiveIndex(widgetIndex)
   }, [widget.activeTabIndex, widget.id]) // Watch both activeTabIndex and widget ID
   
   // Update widget's activeTabIndex when local state changes
   const handleTabChange = (index: number) => {
-    console.log('🔘 Tab clicked! Switching from', activeIndex, 'to', index)
-    console.log('📊 Tabs available:', widget.tabs.map((t, i) => ({ index: i, label: t.label, id: t.id, widgetCount: t.widgets?.length || 0 })))
     setActiveIndex(index)
-    console.log('✅ Local activeIndex updated to:', index)
     
     // We need to update the widget in the store so the activeTabIndex persists
     const store = window.usePageStore || usePageStore
@@ -1842,7 +1849,6 @@ const TabsWidgetRenderer: React.FC<{
       const updatedItems = canvasItems.map((item: any) => {
         // Update standalone tabs widget
         if (item.id === widget.id && item.type === 'tabs') {
-          console.log('🔧 Updating standalone tabs widget in store, setting activeTabIndex to:', index)
           return { ...item, activeTabIndex: index }
         }
         // Update tabs widget inside sections
@@ -1853,7 +1859,6 @@ const TabsWidgetRenderer: React.FC<{
               ...area,
               widgets: area.widgets.map((w: any) => {
                 if (w.id === widget.id && w.type === 'tabs') {
-                  console.log('🔧 Updating tabs widget in section, setting activeTabIndex to:', index)
                   return { ...w, activeTabIndex: index }
                 }
                 return w
@@ -1864,9 +1869,8 @@ const TabsWidgetRenderer: React.FC<{
         return item
       })
       replaceCanvasItems(updatedItems)
-      console.log('💾 Store updated with activeTabIndex:', index)
     } else {
-      console.error('❌ Store not available in handleTabChange - tab switching will not persist')
+      debugLog('error', '❌ Store not available in handleTabChange - tab switching will not persist')
     }
   }
   
@@ -1886,7 +1890,6 @@ const TabsWidgetRenderer: React.FC<{
       if (target.closest('.tab-button') || target.closest('.droppable-tab-panel')) {
         return
       }
-      console.log('📋 Tabs widget background clicked')
     }}>
       {/* Tab Navigation */}
       <div className={getTabNavClasses()} style={{ pointerEvents: 'auto', position: 'relative', zIndex: 30 }}>
@@ -1896,7 +1899,6 @@ const TabsWidgetRenderer: React.FC<{
             onClick={(e) => {
               e.stopPropagation()
               e.preventDefault()
-              console.log('🔘 Tab button clicked:', index, 'label:', tab.label)
               handleTabChange(index)
             }}
             className={`tab-button ${activeIndex === index ? 'active' : ''}`}
@@ -1913,7 +1915,6 @@ const TabsWidgetRenderer: React.FC<{
       <div className="tab-panel mt-4">
         {(() => {
           const currentTab = widget.tabs[activeIndex]
-          console.log('🖼️ Rendering tab panel for index:', activeIndex, 'tab:', currentTab?.label, 'id:', currentTab?.id, 'widgets:', currentTab?.widgets?.length || 0)
           return currentTab ? (
             <DroppableTabPanel
               tabId={currentTab.id}
@@ -2435,7 +2436,7 @@ export const WidgetRenderer: React.FC<{ widget: Widget; schemaObjects?: any[]; j
       case 'publication-details':
         return <PublicationDetailsWidgetRenderer widget={widget as PublicationDetailsWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} journalContext={journalContext} showMockData={showMockData} />
       case 'publication-list':
-        return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} showMockData={showMockData} />
+        return <PublicationListWidgetRenderer widget={widget as PublicationListWidget} schemaObjects={schemaObjects} sectionContentMode={sectionContentMode} journalContext={journalContext} showMockData={showMockData} />
       
       case 'collapse':
         return <CollapseWidgetRenderer widget={widget as CollapseWidget} schemaObjects={schemaObjects} journalContext={journalContext} sectionContentMode={sectionContentMode} isLiveMode={isLiveMode} />

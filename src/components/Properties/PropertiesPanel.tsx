@@ -308,19 +308,19 @@ export function PropertiesPanel({
       
       if (editMode === 'page-edit' && currentPageId) {
         // PAGE-SPECIFIC EDIT: Update page-specific copy
-        console.log(`📝 [PAGE-EDIT] Updating ${sectionType} widget:`, selectedWidget, 'with:', updates)
-        console.log(`📝 [PAGE-EDIT] Website: ${currentWebsiteId}, Page: ${currentPageId}`)
+        debugLog('log', `📝 [PAGE-EDIT] Updating ${sectionType} widget:`, selectedWidget, 'with:', updates)
+        debugLog('log', `📝 [PAGE-EDIT] Website: ${currentWebsiteId}, Page: ${currentPageId}`)
         
         // Get or create page-specific sections
         const pageKey = `${sectionType}-${currentPageId}`
         let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
         
-        console.log(`📝 [PAGE-EDIT] Existing page sections for key "${pageKey}":`, pageSections ? 'found' : 'none')
+        debugLog('log', `📝 [PAGE-EDIT] Existing page sections for key "${pageKey}":`, pageSections ? 'found' : 'none')
         
         // If no page-specific copy exists, create one from global
         if (!pageSections) {
           pageSections = JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
-          console.log(`📋 [PAGE-EDIT] Created page-specific copy from global ${sectionType}`)
+          debugLog('log', `📋 [PAGE-EDIT] Created page-specific copy from global ${sectionType}`)
         }
         
         // Update the widget in the page-specific copy
@@ -336,10 +336,10 @@ export function PropertiesPanel({
         
         // Save to page canvas
         if (setPageCanvas) {
-          console.log(`💾 [PAGE-EDIT] Saving to pageCanvasData with key: ${currentWebsiteId}:${pageKey}`)
+          debugLog('log', `💾 [PAGE-EDIT] Saving to pageCanvasData with key: ${currentWebsiteId}:${pageKey}`)
           setPageCanvas(currentWebsiteId, pageKey, updatedSections)
         } else {
-          console.error('❌ [PAGE-EDIT] setPageCanvas not available!')
+          debugLog('error', '❌ [PAGE-EDIT] setPageCanvas not available!')
         }
         return
       } else if (updateSiteLayoutWidget) {
@@ -434,7 +434,7 @@ export function PropertiesPanel({
       
       if (editMode === 'page-edit' && currentPageId) {
         // Update page-specific copy
-        console.log(`📝 [PAGE-EDIT] Updating ${sectionType} section:`, selectedWidget, updates)
+        debugLog('log', `📝 [PAGE-EDIT] Updating ${sectionType} section:`, selectedWidget, updates)
         
         const pageKey = `${sectionType}-${currentPageId}`
         let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
@@ -453,7 +453,7 @@ export function PropertiesPanel({
         return
       } else {
         // Update global site layout
-        console.log(`📝 [GLOBAL] Updating ${sectionType} section:`, selectedWidget, updates)
+        debugLog('log', `📝 [GLOBAL] Updating ${sectionType} section:`, selectedWidget, updates)
         const updateSiteLayoutSection = (usePageStore.getState() as any).updateSiteLayoutSection
         if (updateSiteLayoutSection) {
           updateSiteLayoutSection(currentWebsiteId, sectionType, selectedWidget, updates)

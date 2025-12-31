@@ -26,6 +26,11 @@ import type {
   PublicationDetailsWidget 
 } from '../../types/widgets'
 import { isSection } from '../../types/widgets'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // =============================================================================
 // Props Interface
@@ -606,7 +611,7 @@ export function InteractiveWidgetRenderer({
                 try {
                   return JSON.parse(obj.jsonLD)
                 } catch (e) {
-                  console.error('Failed to parse JSON-LD for object:', obj.id, e)
+                  debugLog('error', 'Failed to parse JSON-LD for object:', obj.id, e)
                   return null
                 }
               })
@@ -627,7 +632,7 @@ export function InteractiveWidgetRenderer({
               .filter(pub => pub !== null)
           }
         } catch (error) {
-          console.error('Error loading schema objects:', error)
+          debugLog('error', 'Error loading schema objects:', error)
           publications = []
         }
       } else if (publicationWidget.contentSource === 'ai-generated' && publicationWidget.aiSource?.prompt) {
@@ -643,7 +648,7 @@ export function InteractiveWidgetRenderer({
             publications = generateAIContent(publicationWidget.aiSource.prompt)
           }
         } catch (error) {
-          console.error('Error generating AI content:', error)
+          debugLog('error', 'Error generating AI content:', error)
           publications = publicationWidget.publications
         }
       } else {
@@ -721,7 +726,7 @@ export function InteractiveWidgetRenderer({
           publication = publicationDetailsWidget.publication || MOCK_SCHOLARLY_ARTICLES[0]
         }
       } catch (error) {
-        console.error('Error loading publication details:', error)
+        debugLog('error', 'Error loading publication details:', error)
         publication = MOCK_SCHOLARLY_ARTICLES[0]
       }
 

@@ -6,6 +6,11 @@ import { Copy, Edit, Trash2 } from 'lucide-react'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { StandaloneWidgetDragHandle } from './StandaloneWidgetDragHandle'
 import type { WidgetSection, CanvasItem } from '../../types/widgets'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 // Helper function to check if item is a section
 // Sections have BOTH layout AND areas properties
@@ -31,6 +36,10 @@ interface SortableItemProps {
   sidebarHeight?: React.CSSProperties // Height styles for sidebar
   isInSidebarGroup?: boolean // If true, section is part of sidebar group
   showMockData?: boolean // For archetype editing - controls mock data generation
+  // Page Instance props (for inheritance system)
+  pageInstanceMode?: boolean
+  pageInstance?: import('../../types/archetypes').PageInstance
+  onPageInstanceChange?: () => void
 }
 
 export function SortableItem({ 
@@ -49,7 +58,10 @@ export function SortableItem({
   journalContext,
   sidebarHeight,
   isInSidebarGroup = false,
-  showMockData = true
+  showMockData = true,
+  pageInstanceMode = false,
+  pageInstance,
+  onPageInstanceChange
 }: SortableItemProps) {
   const {
     attributes,
@@ -117,6 +129,9 @@ export function SortableItem({
             sidebarHeight={sidebarHeight}
             isInSidebarGroup={isInSidebarGroup}
             showMockData={showMockData}
+            pageInstanceMode={pageInstanceMode}
+            pageInstance={pageInstance}
+            onPageInstanceChange={onPageInstanceChange}
           />
         </div>
       ) : (
@@ -136,7 +151,7 @@ export function SortableItem({
               }
               
               e.stopPropagation()
-              console.log('🎯 Standalone overlay click detected:', { 
+              debugLog('log', '🎯 Standalone overlay click detected:', { 
                 widgetId: item.id, 
                 widgetType: item.type 
               })

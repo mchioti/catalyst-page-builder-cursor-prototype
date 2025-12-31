@@ -9,6 +9,11 @@ import type { WidgetSection } from '../../types/widgets'
 import type { PageConfig } from '../../types/archetypes'
 import { SectionRenderer } from '../Sections/SectionRenderer'
 import { SortableItem } from '../Canvas/SortableItem'
+import { createDebugLogger } from '../../utils/logger'
+
+// Control logging for this file
+const DEBUG = false
+const debugLog = createDebugLogger(DEBUG)
 
 interface PageLayoutWrapperProps {
   sections: WidgetSection[]
@@ -33,6 +38,10 @@ interface PageLayoutWrapperProps {
   handleSectionClick?: (id: string) => void
   selectedWidget?: string | null
   InteractiveWidgetRenderer?: any
+  // Page Instance props (for inheritance system)
+  pageInstanceMode?: boolean
+  pageInstance?: import('../../types/archetypes').PageInstance
+  onPageInstanceChange?: () => void
 }
 
 /**
@@ -70,16 +79,13 @@ export function PageLayoutWrapper({
   handleAddSection,
   handleSectionClick,
   selectedWidget,
-  InteractiveWidgetRenderer
+  InteractiveWidgetRenderer,
+  pageInstanceMode = false,
+  pageInstance,
+  onPageInstanceChange
 }: PageLayoutWrapperProps) {
   const layout = pageConfig?.layout || 'full_width'
   
-  console.log('🔍 PageLayoutWrapper - Rendering:', {
-    layout,
-    sectionsCount: sections.length,
-    pageConfig,
-    zoneSlugs: sections.map(s => ({ id: s.id, name: s.name, zoneSlug: s.zoneSlug }))
-  })
   
   // Separate sections by zone type
   const fullWidthSections: WidgetSection[] = []
@@ -105,14 +111,16 @@ export function PageLayoutWrapper({
     }
   })
   
-  console.log('🔍 PageLayoutWrapper - Separated sections:', {
-    fullWidth: fullWidthSections.length,
-    mainContent: mainContentSections.length,
-    sidebar: sidebarSections.length
-  })
   
   // Render a single section (with SortableItem wrapper in editor mode)
   const renderSection = (section: WidgetSection) => {
+    debugLog('log', '🔍 [PageLayoutWrapper.renderSection] Called:', {
+      sectionId: section.id,
+      sectionName: section.name,
+      isLiveMode,
+      journalContext
+    })
+    
     if (isLiveMode) {
       // Live mode: render directly
       return (
@@ -133,6 +141,9 @@ export function PageLayoutWrapper({
           websiteId={websiteId}
           isLiveMode={isLiveMode}
           showMockData={showMockData}
+          pageInstanceMode={pageInstanceMode}
+          pageInstance={pageInstance}
+          onPageInstanceChange={onPageInstanceChange}
         />
       )
     } else {
@@ -171,6 +182,9 @@ export function PageLayoutWrapper({
             InteractiveWidgetRenderer={InteractiveWidgetRenderer}
             journalContext={journalContext}
             showMockData={showMockData}
+            pageInstanceMode={pageInstanceMode}
+            pageInstance={pageInstance}
+            onPageInstanceChange={onPageInstanceChange}
           />
           
           {/* Add Section Button Below */}

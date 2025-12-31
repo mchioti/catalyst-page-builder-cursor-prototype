@@ -76,14 +76,14 @@
  * ============================================================================
  */
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 import { PREFAB_SECTIONS } from './prefabSections'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file
-const DEBUG = false // Set to true to see PageBuilder canvas state
+const DEBUG = true // Set to true to see PageBuilder canvas state
 const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
@@ -112,7 +112,8 @@ import {
   CheckCircle, 
   Settings, 
   Check, 
-  X 
+  X,
+  Save
 } from 'lucide-react'
 
 // Component imports
@@ -125,6 +126,7 @@ import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { LayoutRenderer } from '../Canvas/LayoutRenderer'
 import { NotificationBell } from '../Notifications/NotificationBell'
 import { NewBadge } from '../shared/NewBadge'
+import { PublishReviewModal } from './PublishReviewModal'
 
 // Type imports
 import type { 
@@ -141,6 +143,7 @@ import type {
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 import { GlobalSectionBar } from './GlobalSectionBar'
+import { overrideZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes } from '../../stores/archetypeStore'
 
 // Component props interface
 interface PageBuilderProps {
@@ -163,7 +166,7 @@ interface PageBuilderProps {
   showMockData?: boolean // If true, show mock data in publication widgets
   pageConfig?: import('../../types/archetypes').PageConfig // Page layout configuration for archetypes
   // Archetype-specific props
-  archetypeName?: string // Archetype name for header display
+  archetypeName?: string // Archetype name for header display (used for both archetype and instance modes)
   archetypeInstanceCount?: number // Count of journals using this archetype
   archetypeId?: string // Archetype ID for preview navigation
   designId?: string // Design ID for preview navigation
@@ -171,6 +174,16 @@ interface PageBuilderProps {
   onPageSettingsClick?: () => void // Handler for Page Settings button
   onShowMockDataChange?: (show: boolean) => void // Handler for Show Mock Data toggle
   onPageConfigChange?: (pageConfig: import('../../types/archetypes').PageConfig) => void // Handler for Page Config changes in archetype mode
+  // Page Instance props (for inheritance system)
+  pageInstanceMode?: boolean // If true, editing a Page Instance (inherits from archetype)
+  overrideCount?: number // Number of overridden zones
+  totalZones?: number // Total number of zones
+  journalName?: string // Journal name (when editing instance)
+  pageInstance?: import('../../types/archetypes').PageInstance // Page Instance data for override detection
+  onPageInstanceChange?: () => void // Callback to trigger pageInstance refresh
+  dirtyZones?: Set<string> // Zones that have drifted from archetype (draft state)
+  websiteId?: string // Website ID for saving published state
+  pageName?: string // Page name/ID for saving published state
 }
 
 type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
@@ -185,20 +198,189 @@ export function PageBuilder({
   archetypeMode = false,
   showMockData = true,
   pageConfig,
-  archetypeName,
+  archetypeName: archetypeNameProp,
   archetypeInstanceCount = 0,
   archetypeId,
   designId,
   onSaveArchetype,
   onPageSettingsClick,
   onShowMockDataChange,
-  onPageConfigChange
+  onPageConfigChange,
+  pageInstanceMode = false,
+  overrideCount = 0,
+  totalZones = 0,
+  journalName: journalNameProp,
+  pageInstance,
+  onPageInstanceChange,
+  dirtyZones = new Set(),
+  websiteId: websiteIdProp,
+  pageName: pageNameProp
 }: PageBuilderProps) {
+  // Use archetypeName prop (renamed from prop to avoid confusion)
+  const displayArchetypeName = archetypeNameProp
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage, setPageCanvas, setPageDraft } = usePageStore()
+  
+  // Get websiteId and pageName (from props or store)
+  const websiteId = websiteIdProp || currentWebsiteId || 'catalyst-demo'
+  const pageName = pageNameProp || (mockLiveSiteRoute ? mockLiveSiteRoute.replace(/^\//, '') : 'home')
   
   // Navigation for preview
   const navigate = useNavigate()
+  
+  // Build zoneSections map from canvasItems for the modal
+  const zoneSections = React.useMemo(() => {
+    const map = new Map<string, WidgetSection>()
+    canvasItems.forEach(item => {
+      if (isSection(item) && item.zoneSlug) {
+        map.set(item.zoneSlug, item)
+      }
+    })
+    return map
+  }, [canvasItems])
+  
+  // Helper function to navigate to live site
+  const navigateToLiveSite = () => {
+    const route = mockLiveSiteRoute?.replace(/^\//, '') || ''
+    // Homepage is at /live/:websiteId (not /live/:websiteId/home)
+    const livePath = route === 'home' || route === '' 
+      ? `/live/${websiteId}` 
+      : `/live/${websiteId}/${route}`
+    navigate(livePath)
+  }
+  
+  // Handle Save & Publish
+  const handleSaveAndPublish = () => {
+    debugLog('log', '🚀 [PageBuilder] Save & Publish clicked:', {
+      pageInstanceMode,
+      dirtyZonesSize: dirtyZones.size,
+      dirtyZones: Array.from(dirtyZones),
+      showPublishModalBefore: showPublishModal
+    })
+    
+    // IMPORTANT: Check for dirty zones BEFORE saving, because saving might trigger
+    // a recalculation that clears dirty zones
+    const hasDirtyZones = pageInstanceMode && dirtyZones.size > 0
+    
+    // 1. Save current draft to published state
+    setPageCanvas(websiteId, pageName, canvasItems)
+    debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
+    
+    // 2. Clear draft (published now)
+    setPageDraft(websiteId, pageName, [])
+    debugLog('log', '🗑️ [PageBuilder] Cleared draft')
+    
+    // 3. If pageInstanceMode and dirtyZones exist, show modal
+    if (hasDirtyZones) {
+      debugLog('log', '📋 [PageBuilder] Showing publish modal (pageInstanceMode + dirty zones)')
+      setShowPublishModal(true)
+      debugLog('log', '✅ [PageBuilder] setShowPublishModal(true) called')
+      return
+    }
+    
+    // 4. Otherwise, publish directly and navigate to live site
+    debugLog('log', '🚀 [PageBuilder] Publishing directly (no modal needed)')
+    handlePublishDirectly()
+  }
+  
+  // Handle direct publish (no dirty zones or not in pageInstanceMode)
+  const handlePublishDirectly = () => {
+    // Trigger page instance refresh if in pageInstanceMode
+    if (pageInstanceMode && onPageInstanceChange) {
+      onPageInstanceChange()
+    }
+    
+    // Navigate to live site
+    navigateToLiveSite()
+  }
+  
+  // Handle publish with choices from modal
+  const handlePublishWithChoices = (choices: Map<string, 'local' | 'archetype'>, stayInEditor: boolean = false) => {
+    debugLog('log', '📋 [PageBuilder] handlePublishWithChoices called:', {
+      choices: Array.from(choices.entries()),
+      stayInEditor,
+      pageInstanceTemplateId: pageInstance?.templateId,
+      designIdProp: designId
+    })
+    
+    if (!pageInstance) {
+      debugLog('error', 'Cannot publish: no pageInstance available')
+      return
+    }
+    
+    // Calculate designId the same way PageBuilderEditor does
+    const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+    const calculatedDesignId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name || designId || ''
+    const normalizedDesignId = calculatedDesignId.toLowerCase()
+    const archetypeDesignId = normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1' 
+      ? 'classic-ux3-theme' 
+      : calculatedDesignId || 'classic-ux3-theme'
+    
+    debugLog('log', '📋 [PageBuilder] Looking up archetype:', {
+      templateId: pageInstance.templateId,
+      calculatedDesignId,
+      archetypeDesignId
+    })
+    
+    const archetype = getArchetypeById(pageInstance.templateId, archetypeDesignId)
+    if (!archetype) {
+      debugLog('error', 'Cannot publish: archetype not found', {
+        templateId: pageInstance.templateId,
+        designId: archetypeDesignId,
+        availableDesigns: Object.keys(loadDesignsWithArchetypes())
+      })
+      return
+    }
+    
+    let updatedInstance = pageInstance
+    let updatedArchetype = archetype
+    
+    // Process each choice
+    choices.forEach((choice, zoneSlug) => {
+      const section = zoneSections.get(zoneSlug)
+      if (!section) {
+        debugLog('warn', `⚠️ [PageBuilder] No section found for zone ${zoneSlug}`)
+        return
+      }
+      
+      if (choice === 'local') {
+        // Keep Local: Create override in page instance (overrideZone automatically saves it)
+        debugLog('log', `💾 [PageBuilder] Saving zone ${zoneSlug} as local override`)
+        updatedInstance = overrideZone(updatedInstance, zoneSlug, section)
+      } else {
+        // Save to Archetype: Update archetype canvas
+        debugLog('log', `📐 [PageBuilder] Saving zone ${zoneSlug} to archetype`)
+        const archetypeSectionIndex = updatedArchetype.canvasItems.findIndex(
+          s => isSection(s) && s.zoneSlug === zoneSlug
+        )
+        if (archetypeSectionIndex !== -1) {
+          updatedArchetype.canvasItems[archetypeSectionIndex] = section
+        } else {
+          debugLog('warn', `⚠️ [PageBuilder] Zone ${zoneSlug} not found in archetype canvas`)
+        }
+      }
+    })
+    
+    // Save updated archetype if any changes were made
+    const hasArchetypeChanges = Array.from(choices.values()).some(c => c === 'archetype')
+    if (hasArchetypeChanges) {
+      debugLog('log', '💾 [PageBuilder] Saving updated archetype')
+      updatedArchetype.updatedAt = new Date()
+      saveArchetype(updatedArchetype)
+    }
+    
+    // Note: overrideZone already saves the page instance, so we don't need to save it again here
+    
+    // Trigger refresh to reload page instance
+    if (onPageInstanceChange) {
+      debugLog('log', '🔄 [PageBuilder] Triggering page instance refresh')
+      onPageInstanceChange()
+    }
+    
+    // Always navigate to live site (stayInEditor is no longer used)
+    debugLog('log', '🚀 [PageBuilder] Navigating to live site')
+    navigateToLiveSite()
+  }
   
   // Page Settings - when button is clicked, show page settings
   const handlePageSettingsClick = () => {
@@ -220,6 +402,19 @@ export function PageBuilder({
   
   // Track active drag item for DragOverlay
   const [activeDragItem, setActiveDragItem] = useState<{ widget?: Widget; type?: string; item?: any } | null>(null)
+  
+  // Publish Review Modal state
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  
+  // Debug: Track modal state changes
+  useEffect(() => {
+    debugLog('log', '📋 [PageBuilder] showPublishModal changed:', {
+      showPublishModal,
+      pageInstanceMode,
+      dirtyZonesSize: dirtyZones.size,
+      modalShouldBeVisible: showPublishModal && pageInstanceMode
+    })
+  }, [showPublishModal, pageInstanceMode, dirtyZones.size])
   
   // Debug: Log canvas state on render
   debugLog('log', '🎨 PageBuilder render - Canvas items:', canvasItems.length)
@@ -363,62 +558,66 @@ export function PageBuilder({
   // Detect if editing a journal home page (route like /journal/jas)
   const isJournalHomeEdit = editingContext === 'page' && mockLiveSiteRoute?.startsWith('/journal/') && !mockLiveSiteRoute.includes('/toc/') && !mockLiveSiteRoute.includes('/loi')
   
+  // AUTO-SAVE DISABLED: User must explicitly save via Save & Publish button
   // Route-specific canvas saving for individual issue edits
-  useEffect(() => {
-    // Save canvas changes to route-specific storage when editing individual issues
-    if (isIndividualIssueEdit && canvasItems.length > 0) {
-      debugLog('log','💾 Saving individual issue changes to route:', mockLiveSiteRoute)
-      debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
-      setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
-      
-      // Track modification for divergence management
-      if (journalCode && trackModification) {
-        debugLog('log','📊 Tracking template modification for:', journalName, '(', journalCode, ')')
-        debugLog('log','📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
-        trackModification(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
-      } else {
-        debugLog('warn','⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackModification })
-      }
-    } else {
-      debugLog('log','⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
-    }
-  }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackModification])
+  // useEffect(() => {
+  //   // Save canvas changes to route-specific storage when editing individual issues
+  //   if (isIndividualIssueEdit && canvasItems.length > 0) {
+  //     debugLog('log','💾 Saving individual issue changes to route:', mockLiveSiteRoute)
+  //     debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
+  //     setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
+  //     
+  //     // Track modification for divergence management
+  //     if (journalCode && trackModification) {
+  //       debugLog('log','📊 Tracking template modification for:', journalName, '(', journalCode, ')')
+  //       debugLog('log','📊 Route:', mockLiveSiteRoute, 'Template ID: table-of-contents')
+  //       trackModification(mockLiveSiteRoute, journalCode, journalName, 'table-of-contents')
+  //     } else {
+  //       debugLog('warn','⚠️ Tracking skipped:', { journalCode, hasTrackFn: !!trackModification })
+  //     }
+  //   } else {
+  //     debugLog('log','⏭️ Save skipped:', { isIndividualIssueEdit, canvasItemsLength: canvasItems.length })
+  //   }
+  // }, [canvasItems, isIndividualIssueEdit, mockLiveSiteRoute, setCanvasItemsForRoute, journalCode, journalName, trackModification])
   
+  // AUTO-SAVE DISABLED: User must explicitly save via Save & Publish button
   // Route-specific canvas saving for journal home pages
-  useEffect(() => {
-    // Save canvas changes to route-specific storage when editing journal home pages
-    if (isJournalHomeEdit && canvasItems.length > 0 && mockLiveSiteRoute) {
-      debugLog('log','💾 Saving journal home changes to route:', mockLiveSiteRoute)
-      debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
-      setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
-    }
-  }, [canvasItems, isJournalHomeEdit, mockLiveSiteRoute, setCanvasItemsForRoute])
+  // useEffect(() => {
+  //   // Save canvas changes to route-specific storage when editing journal home pages
+  //   if (isJournalHomeEdit && canvasItems.length > 0 && mockLiveSiteRoute) {
+  //     debugLog('log','💾 Saving journal home changes to route:', mockLiveSiteRoute)
+  //     debugLog('log','📦 Canvas items being saved:', canvasItems.length, 'items')
+  //     setCanvasItemsForRoute(mockLiveSiteRoute, canvasItems)
+  //   }
+  // }, [canvasItems, isJournalHomeEdit, mockLiveSiteRoute, setCanvasItemsForRoute])
   
+  // AUTO-SAVE DISABLED: User must explicitly save via Save & Publish button
   // Global template canvas saving
-  useEffect(() => {
-    // Save canvas changes to global template storage when editing global templates
-    if (isGlobalTemplateEdit && canvasItems.length > 0) {
-      debugLog('log','🌍 Saving global template changes:', canvasItems.length, 'items')
-      setGlobalTemplateCanvas(canvasItems)
-    }
-  }, [canvasItems, isGlobalTemplateEdit, setGlobalTemplateCanvas])
+  // useEffect(() => {
+  //   // Save canvas changes to global template storage when editing global templates
+  //   if (isGlobalTemplateEdit && canvasItems.length > 0) {
+  //     debugLog('log','🌍 Saving global template changes:', canvasItems.length, 'items')
+  //     setGlobalTemplateCanvas(canvasItems)
+  //   }
+  // }, [canvasItems, isGlobalTemplateEdit, setGlobalTemplateCanvas])
   
+  // AUTO-SAVE DISABLED: User must explicitly save via Save & Publish button
   // Journal template canvas saving
-  useEffect(() => {
-    // Save canvas changes to journal template storage when editing journal templates
-    if (isJournalTemplateEdit && templateEditingContext?.journalCode && canvasItems.length > 0) {
-      debugLog('log','📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
-      setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
-      
-      // Track journal template modification for divergence management
-      if (trackModification) {
-        const route = `journal/${templateEditingContext.journalCode}`
-        debugLog('log','📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
-        debugLog('log','📊 Route:', route, 'Template ID: table-of-contents')
-        trackModification(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
-      }
-    }
-  }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas, journalName, trackModification])
+  // useEffect(() => {
+  //   // Save canvas changes to journal template storage when editing journal templates
+  //   if (isJournalTemplateEdit && templateEditingContext?.journalCode && canvasItems.length > 0) {
+  //     debugLog('log','📚 Saving journal template changes for', templateEditingContext.journalCode + ':', canvasItems.length, 'items')
+  //     setJournalTemplateCanvas(templateEditingContext.journalCode, canvasItems)
+  //     
+  //     // Track journal template modification for divergence management
+  //     if (trackModification) {
+  //       const route = `journal/${templateEditingContext.journalCode}`
+  //       debugLog('log','📊 Tracking journal template modification for:', journalName, '(', templateEditingContext.journalCode, ')')
+  //       debugLog('log','📊 Route:', route, 'Template ID: table-of-contents')
+  //       trackModification(route, templateEditingContext.journalCode, journalName, 'table-of-contents')
+  //     }
+  //   }
+  // }, [canvasItems, isJournalTemplateEdit, templateEditingContext?.journalCode, setJournalTemplateCanvas, journalName, trackModification])
   
   const handleCreateSchema = (type: SchemaOrgType) => {
     setCreatingSchemaType(type)
@@ -1848,11 +2047,28 @@ export function PageBuilder({
                   </button>
                 )}
                 
+                {/* Save & Publish Button - Only show when not in template edit mode */}
+                {!isTemplateEdit && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleSaveAndPublish()
+                    }}
+                    className="relative z-10 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-colors cursor-pointer"
+                    type="button"
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <Save className="w-4 h-4" />
+                    Save & Publish
+                  </button>
+                )}
+                
                 <button
                     onClick={(e) => {
-                      e.stopPropagation()
-                      // If in archetype mode, navigate to archetype preview
-                      if (archetypeMode && archetypeId) {
+                    e.stopPropagation()
+                    // If in archetype mode, navigate to archetype preview
+                    if (archetypeMode && archetypeId) {
                         const previewPath = designId 
                           ? `/preview/archetype/${archetypeId}?designId=${designId}`
                           : `/preview/archetype/${archetypeId}`
@@ -1961,12 +2177,26 @@ export function PageBuilder({
               onSectionsLoad={handleTemplateSectionsLoad}
             />
             
+            {/* Page Instance Editing Context - Show inheritance header with blue background */}
+            {pageInstanceMode && !archetypeMode && (
+              <div className="mb-2 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-md px-4 py-2">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-blue-800">
+                    Editing: <strong>{journalNameProp || 'Journal'}</strong> - Inherits from <strong>{displayArchetypeName || 'Archetype'}</strong>
+                  </div>
+                  <span className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                    {overrideCount} of {totalZones} zones overridden
+                  </span>
+                </div>
+              </div>
+            )}
+            
             {/* Archetype Editing Context - Show archetype header with yellow background */}
-            {archetypeMode && archetypeName && (
+            {archetypeMode && displayArchetypeName && (
               <div className="mb-2 flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-md px-4 py-2">
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-gray-700">
-                    Editing: <strong>{archetypeName} Archetype</strong>
+                    Editing: <strong>{displayArchetypeName} Archetype</strong>
                   </div>
                   {archetypeInstanceCount > 0 && (
                     <span className="text-sm text-gray-600">
@@ -2182,17 +2412,18 @@ export function PageBuilder({
               ) : (
                 <SortableContext items={canvasItems} strategy={verticalListSortingStrategy}>
                   <div className="relative">
-                    {(() => {
-                      console.log('🔍 PageBuilder - Passing to LayoutRenderer:', {
-                        showMockData,
-                        canvasItemsCount: canvasItems.length
-                      })
-                      return (
-                        <LayoutRenderer
+                    <LayoutRenderer
                           canvasItems={canvasItems}
                           schemaObjects={schemaObjects || []}
                           isLiveMode={false}
-                          journalContext={journalCode || undefined}
+                          journalContext={(() => {
+                            debugLog('log', '🔍 [PageBuilder] Passing journalContext to LayoutRenderer:', {
+                              journalCode,
+                              mockLiveSiteRoute,
+                              pageInstanceMode
+                            })
+                            return journalCode || undefined
+                          })()}
                           onWidgetClick={handleWidgetClick}
                           dragAttributes={{}}
                           dragListeners={{}}
@@ -2203,16 +2434,18 @@ export function PageBuilder({
                           activeDropZone={activeDropZone}
                           showToast={showToast}
                           usePageStore={usePageStore}
-                          showMockData={showMockData}
+                          showMockData={showMockData} // Keep showMockData as-is - journal context will override AI generation
                           pageConfig={pageConfig}
                           // Editor-specific props
                           handleAddSection={handleAddSection}
                           handleSectionClick={(id: string) => handleSectionClick(id, {} as React.MouseEvent)}
                           selectedWidget={selectedWidget}
                           InteractiveWidgetRenderer={InteractiveWidgetRenderer}
+                          // Page Instance props
+                          pageInstanceMode={pageInstanceMode}
+                          pageInstance={pageInstance}
+                          onPageInstanceChange={onPageInstanceChange}
                         />
-                      )
-                    })()}
                   </div>
                 </SortableContext>
               )}
@@ -2316,6 +2549,22 @@ export function PageBuilder({
           </div>
         ) : null}
       </DragOverlay>
+      
+      {/* Publish Review Modal - Only show when pageInstanceMode and modal is open */}
+      {showPublishModal && pageInstanceMode && (
+        <PublishReviewModal
+          isOpen={true}
+          onClose={() => {
+            debugLog('log', '📋 [PageBuilder] Modal onClose called')
+            setShowPublishModal(false)
+          }}
+          dirtyZones={dirtyZones}
+          zoneSections={zoneSections}
+          onPublish={handlePublishWithChoices}
+          archetypeName={displayArchetypeName}
+          journalName={journalNameProp}
+        />
+      )}
     </DndContext>
   )
 }

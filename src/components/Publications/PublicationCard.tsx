@@ -147,6 +147,7 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
   
   // Helper to get identifier (DOI, ISBN, etc.) from schema.org
   const getIdentifier = (item: any, type: string) => {
+    // Check identifier array (schema.org format)
     if (Array.isArray(item.identifier)) {
       const found = item.identifier.find((id: any) => 
         id.propertyID === type || id.name?.includes(type.toLowerCase())
@@ -157,11 +158,23 @@ export function PublicationCard({ article, config, align = 'left', contentMode }
       }
       return null
     }
-    // Handle single identifier
+    // Handle single identifier object (schema.org format)
     if (typeof item.identifier === 'object' && item.identifier !== null) {
-      return item.identifier.value || item.identifier.identifier || String(item.identifier)
+      // Check if this identifier matches the requested type
+      if (item.identifier.propertyID === type || item.identifier.name?.includes(type.toLowerCase())) {
+        return item.identifier.value || item.identifier.identifier || String(item.identifier)
+      }
+      // If no propertyID/name match, but it's a single identifier, return it (for simple string identifiers)
+      if (!item.identifier.propertyID && !item.identifier.name) {
+        return item.identifier.value || item.identifier.identifier || String(item.identifier)
+      }
+      return null
     }
-    return item.identifier || null
+    // Handle string identifier (simple case)
+    if (typeof item.identifier === 'string') {
+      return item.identifier
+    }
+    return null
   }
 
   // Helper to format authors from schema.org Person objects

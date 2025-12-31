@@ -59,19 +59,12 @@ export function ArchetypePreview() {
   }, [archetypeId, designId])
   
   // Create template context for variable replacement (minimal - just for template variables)
-  // We don't pass articles here because widgets should generate AI mock data
+  // IMPORTANT: Do NOT include journal in templateContext - this would cause widgets to try to fetch
+  // journal-specific data instead of generating AI mock content. We want AI content in archetype preview.
   const templateContext = useMemo(() => {
-    // Use a generic journal name for template variable replacement
-    // Actual content will come from AI-generated mock data
-    return {
-      journal: {
-        id: 'sample-journal',
-        name: 'Sample Journal',
-        description: 'A sample journal for archetype preview',
-        brandColor: '#1e40af',
-        brandColorLight: '#3b82f6'
-      }
-    }
+    // Empty context - widgets will generate AI mock data when journalContext is undefined
+    // Template variables (if any) can be replaced here, but no journal data
+    return {}
   }, [])
   
   // Resolve canvas from archetype
@@ -79,14 +72,6 @@ export function ArchetypePreview() {
     if (!archetype) return
     
     // Debug: Log archetype and pageConfig
-    console.log('🔍 ArchetypePreview - Archetype loaded:', {
-      id: archetype.id,
-      name: archetype.name,
-      hasPageConfig: !!archetype.pageConfig,
-      pageConfig: archetype.pageConfig,
-      canvasItemsCount: archetype.canvasItems.length,
-      zoneSlugs: archetype.canvasItems.map(s => s.zoneSlug).filter(Boolean)
-    })
     
     const resolved = resolveCanvasFromArchetype(archetype)
     setCanvasItems(resolved)
