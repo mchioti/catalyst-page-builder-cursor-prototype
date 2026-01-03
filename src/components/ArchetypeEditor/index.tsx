@@ -20,7 +20,8 @@ import {
   getArchetypeById, 
   saveArchetype,
   resolveCanvasFromArchetype,
-  countPageInstancesByArchetype
+  countPageInstancesByArchetype,
+  getPagesUsingArchetype
 } from '../../stores/archetypeStore'
 import { 
   initializeJournalHomeArchetype
@@ -45,6 +46,9 @@ export function ArchetypeEditor() {
     canvasItems,
     setPageCanvas,
     getPageCanvas,
+    clearPageCanvas,
+    clearCanvasItemsForRoute,
+    clearPageDraft,
     addNotification
   } = usePageStore()
   
@@ -165,10 +169,23 @@ export function ArchetypeEditor() {
     // Save to page canvas (Zustand store update - happens after React state update)
     setPageCanvas('archetype', archetypeId!, cleanedCanvas)
     
+    // Clear cached canvas for all pages using this archetype
+    // This ensures they re-resolve from the updated archetype on next load
+    // Need to clear BOTH pageCanvasData, routeCanvasItems, AND drafts
+    const pagesUsingArchetype = getPagesUsingArchetype(currentArchetype.id)
+    pagesUsingArchetype.forEach(({ websiteId, pageId }) => {
+      clearPageCanvas(websiteId, pageId)
+      // Also clear routeCanvasItems (LiveSite uses both storage locations)
+      const route = `/${pageId}`
+      clearCanvasItemsForRoute(route)
+      // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
+      clearPageDraft(websiteId, pageId)
+    })
+    
     // Update ref to track this save
     lastSavedCanvasRef.current = canvasKey
     isSavingRef.current = false
-  }, [canvasItems, archetypeId, setPageCanvas]) // Don't include archetype to prevent loops
+  }, [canvasItems, archetypeId, setPageCanvas, clearPageCanvas, clearCanvasItemsForRoute, clearPageDraft]) // Don't include archetype to prevent loops
   
   
   // Clean canvas items for archetype storage (remove data, keep config)
@@ -228,14 +245,36 @@ export function ArchetypeEditor() {
     saveArchetype(updatedArchetype)
     setArchetype(updatedArchetype)
     
-    // Show success message with journal count
-    const journalText = instanceCount === 1 ? 'journal' : 'journals'
+    // Clear cached canvas for all pages using this archetype
+    // This ensures they re-resolve from the updated archetype on next load
+    // Need to clear BOTH pageCanvasData and routeCanvasItems
+    const pagesUsingArchetype = getPagesUsingArchetype(archetype.id)
+    const clearedCount = pagesUsingArchetype.length
+    
+    pagesUsingArchetype.forEach(({ websiteId, pageId }) => {
+      debugLog('log', `🗑️ [ArchetypeEditor] Clearing cached canvas for: ${websiteId}:${pageId}`)
+      clearPageCanvas(websiteId, pageId)
+      // Also clear routeCanvasItems (LiveSite uses both storage locations)
+      const route = `/${pageId}`
+      clearCanvasItemsForRoute(route)
+      // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
+      clearPageDraft(websiteId, pageId)
+      debugLog('log', `🗑️ [ArchetypeEditor] Cleared all caches (canvas, route, draft) for: ${route}`)
+    })
+    
+    // Show success message with actual journal count cleared
+    const journalText = clearedCount === 1 ? 'journal' : 'journals'
     addNotification({
       type: 'success',
       title: 'Archetype Saved',
-      message: `Changes will affect ${instanceCount} ${journalText} using this template.`,
+      message: clearedCount > 0 
+        ? `Changes will affect ${clearedCount} ${journalText} using this template.`
+        : 'Archetype saved successfully.',
       closeAfter: 5000
     })
+    
+    // Update instance count state to match actual
+    setInstanceCount(clearedCount)
   }
   
   // Handle page settings click - deselect widget to show page settings in Properties Panel

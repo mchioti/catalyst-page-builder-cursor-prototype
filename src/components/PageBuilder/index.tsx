@@ -83,7 +83,7 @@ import { PREFAB_SECTIONS } from './prefabSections'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file
-const DEBUG = true // Set to true to see PageBuilder canvas state
+const DEBUG = false // Set to true to see PageBuilder canvas state
 const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
@@ -143,7 +143,7 @@ import type {
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 import { GlobalSectionBar } from './GlobalSectionBar'
-import { overrideZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes } from '../../stores/archetypeStore'
+import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype } from '../../stores/archetypeStore'
 
 // Component props interface
 interface PageBuilderProps {
@@ -219,7 +219,7 @@ export function PageBuilder({
   // Use archetypeName prop (renamed from prop to avoid confusion)
   const displayArchetypeName = archetypeNameProp
   // const instanceId = useMemo(() => Math.random().toString(36).substring(7), [])
-  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage, setPageCanvas, setPageDraft } = usePageStore()
+  const { canvasItems, setCurrentView, selectWidget, selectedWidget, setInsertPosition, createContentBlockWithLayout, selectedSchemaObject, addSchemaObject, updateSchemaObject, selectSchemaObject, addNotification, replaceCanvasItems, editingContext, mockLiveSiteRoute, templateEditingContext, setCanvasItemsForRoute, clearCanvasItemsForRoute, setGlobalTemplateCanvas, setJournalTemplateCanvas, schemaObjects, trackModification, currentWebsiteId, websites, themes, isEditingLoadedWebsite, setIsEditingLoadedWebsite, addCustomStarterPage, setPageCanvas, setPageDraft, clearPageCanvas, clearPageDraft } = usePageStore()
   
   // Get websiteId and pageName (from props or store)
   const websiteId = websiteIdProp || currentWebsiteId || 'catalyst-demo'
@@ -348,13 +348,21 @@ export function PageBuilder({
         debugLog('log', `💾 [PageBuilder] Saving zone ${zoneSlug} as local override`)
         updatedInstance = overrideZone(updatedInstance, zoneSlug, section)
       } else {
-        // Save to Archetype: Update archetype canvas
-        debugLog('log', `📐 [PageBuilder] Saving zone ${zoneSlug} to archetype`)
+        // Save to Archetype: Update archetype canvas AND remove override from page instance
+        debugLog('log', `📐 [PageBuilder] Promoting zone ${zoneSlug} to archetype`)
         const archetypeSectionIndex = updatedArchetype.canvasItems.findIndex(
           s => isSection(s) && s.zoneSlug === zoneSlug
         )
         if (archetypeSectionIndex !== -1) {
           updatedArchetype.canvasItems[archetypeSectionIndex] = section
+          debugLog('log', `✅ [PageBuilder] Updated archetype section at index ${archetypeSectionIndex}`)
+          
+          // Remove override from page instance so it inherits from archetype
+          // (inheritZone automatically saves the updated instance)
+          if (updatedInstance.overrides[zoneSlug]) {
+            debugLog('log', `🔄 [PageBuilder] Removing override for zone ${zoneSlug} from page instance`)
+            updatedInstance = inheritZone(updatedInstance, zoneSlug)
+          }
         } else {
           debugLog('warn', `⚠️ [PageBuilder] Zone ${zoneSlug} not found in archetype canvas`)
         }
@@ -367,6 +375,30 @@ export function PageBuilder({
       debugLog('log', '💾 [PageBuilder] Saving updated archetype')
       updatedArchetype.updatedAt = new Date()
       saveArchetype(updatedArchetype)
+      
+      // Invalidate cached canvas for all pages using this archetype (except current page)
+      // This ensures they re-resolve from the updated archetype on next load
+      const pagesUsingArchetype = getPagesUsingArchetype(updatedArchetype.id)
+      const currentPageKey = `${currentWebsiteId}:${pageName}`
+      
+      pagesUsingArchetype.forEach(({ websiteId: pageWebsiteId, pageId }) => {
+        const pageKey = `${pageWebsiteId}:${pageId}`
+        // Don't clear the current page we're editing (it will be saved fresh)
+        if (pageKey !== currentPageKey) {
+          debugLog('log', `🗑️ [PageBuilder] Clearing cached canvas for: ${pageKey}`)
+          clearPageCanvas(pageWebsiteId, pageId)
+          // Also clear routeCanvasItems (LiveSite uses both storage locations)
+          const route = `/${pageId}`
+          clearCanvasItemsForRoute(route)
+          // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
+          clearPageDraft(pageWebsiteId, pageId)
+        }
+      })
+      
+      debugLog('log', '✅ [PageBuilder] Archetype promoted and caches invalidated:', {
+        archetypeId: updatedArchetype.id,
+        pagesAffected: pagesUsingArchetype.length - 1 // Minus current page
+      })
     }
     
     // Note: overrideZone already saves the page instance, so we don't need to save it again here
@@ -682,15 +714,15 @@ export function PageBuilder({
   const customCollisionDetection = (args: any) => {
     const activeType = args.active?.data?.current?.type
     
-    // DEBUG: Log all available droppable containers
-    if (activeType === 'library-widget') {
-      debugLog('log', '📍 ALL DROPPABLE CONTAINERS:', args.droppableContainers.map((c: any) => ({
-        id: c.id,
-        type: c.data?.current?.type,
-        sectionId: c.data?.current?.sectionId,
-        areaId: c.data?.current?.areaId
-      })))
-    }
+    // DEBUG: Log all available droppable containers (disabled - too noisy)
+    // if (activeType === 'library-widget') {
+    //   debugLog('log', '📍 ALL DROPPABLE CONTAINERS:', args.droppableContainers.map((c: any) => ({
+    //     id: c.id,
+    //     type: c.data?.current?.type,
+    //     sectionId: c.data?.current?.sectionId,
+    //     areaId: c.data?.current?.areaId
+    //   })))
+    // }
     
     // FIRST: Try to find tab-panel or collapse-panel collisions (most specific, highest priority)
     const containerPanelCollisions = rectIntersection({
@@ -2047,8 +2079,8 @@ export function PageBuilder({
                   </button>
                 )}
                 
-                {/* Save & Publish Button - Only show when not in template edit mode */}
-                {!isTemplateEdit && (
+                {/* Save & Publish Button - Only show when not in template edit mode and not in archetype mode */}
+                {!isTemplateEdit && !archetypeMode && (
                   <button
                     onClick={(e) => {
                       e.preventDefault()
@@ -2562,6 +2594,7 @@ export function PageBuilder({
           zoneSections={zoneSections}
           onPublish={handlePublishWithChoices}
           archetypeName={displayArchetypeName}
+          archetypeId={pageInstance?.templateId}
           journalName={journalNameProp}
         />
       )}

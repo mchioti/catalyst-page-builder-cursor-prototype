@@ -403,6 +403,25 @@ export const usePageStore = create<PageState>((set, get) => ({
       }
     }))
   },
+  // Clear draft for a specific page (used when propagating archetype changes)
+  clearPageDraft: (websiteId: string, pageId: string) => {
+    const key = `${websiteId}:${pageId}`
+    const sessionStorageKey = `draft:${key}`
+    
+    // Clear from sessionStorage
+    try {
+      sessionStorage.removeItem(sessionStorageKey)
+    } catch (error) {
+      debugLog('error', 'Failed to clear draft from sessionStorage:', error)
+    }
+    
+    // Clear from in-memory store
+    return set((state) => {
+      const newDraftData = { ...state.pageDraftData }
+      delete newDraftData[key]
+      return { pageDraftData: newDraftData }
+    })
+  },
   // Get page canvas for preview (checks draft first, then published)
   getPageCanvasForPreview: (websiteId: string, pageId: string) => {
     const state = get()

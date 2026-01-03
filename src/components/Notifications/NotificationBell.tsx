@@ -4,13 +4,41 @@ import { Bell, X, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, Chev
 // Mock notification data for visual prototype
 const MOCK_NOTIFICATIONS = [
   {
+    id: '0a',
+    type: 'feature' as const,
+    category: 'release',
+    title: 'Archetype System Improvements',
+    description: 'Promote to Archetype now properly propagates changes to all journals. Fixed draft conflicts when editing multiple journals.',
+    createdAt: '2026-01-03T14:00:00Z',
+    read: false,
+    action: { label: 'Try it', path: '/edit/catalyst-demo/journal/jas' }
+  },
+  {
+    id: '0b',
+    type: 'success' as const,
+    category: 'bugfix',
+    title: 'Page Navigation Fixed',
+    description: 'Fixed issue where editing a journal after navigating from another page showed wrong content. Stale content is now properly cleared.',
+    createdAt: '2026-01-03T13:30:00Z',
+    read: false,
+  },
+  {
+    id: '0c',
+    type: 'feature' as const,
+    category: 'release',
+    title: 'Save & Publish Review Modal',
+    description: 'When publishing journal changes, you can now choose to save locally or promote to archetype (affects all journals).',
+    createdAt: '2026-01-03T13:00:00Z',
+    read: false,
+  },
+  {
     id: '1',
     type: 'feature' as const,
     category: 'release',
     title: 'Breadcrumbs widget now available',
     description: 'New navigation widget with multiple separator styles',
     createdAt: '2024-12-18T10:00:00Z',
-    read: false,
+    read: true,
     action: { label: 'Try it', path: '/widgets' }
   },
   {
@@ -20,7 +48,7 @@ const MOCK_NOTIFICATIONS = [
     title: 'Global header/footer controls',
     description: 'Hide headers globally from the 3-dot menu',
     createdAt: '2024-12-18T09:30:00Z',
-    read: false,
+    read: true,
   },
   {
     id: '3',
@@ -29,7 +57,7 @@ const MOCK_NOTIFICATIONS = [
     title: '2 accessibility issues detected',
     description: 'Images missing alt text on Homepage',
     createdAt: '2024-12-18T08:00:00Z',
-    read: false,
+    read: true,
     action: { label: 'View issues', path: '/issues' }
   },
   {

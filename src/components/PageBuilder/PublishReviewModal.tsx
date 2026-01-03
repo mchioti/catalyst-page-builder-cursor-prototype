@@ -6,12 +6,13 @@
  * - "Save to Archetype": Update the archetype (affects all pages using this archetype)
  */
 
-import React, { useState } from 'react'
-import { X, Save, Layers } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import { X, Save, Layers, AlertTriangle } from 'lucide-react'
 import type { WidgetSection } from '../../types/widgets'
 import { createDebugLogger } from '../../utils/logger'
+import { countPageInstancesByArchetype } from '../../stores/archetypeStore'
 
-const DEBUG = true // Set to true to see modal debug logs
+const DEBUG = false // Set to true to see modal debug logs
 const debugLog = createDebugLogger(DEBUG)
 
 interface PublishReviewModalProps {
@@ -21,6 +22,7 @@ interface PublishReviewModalProps {
   zoneSections: Map<string, WidgetSection> // Map of zoneSlug -> section
   onPublish: (choices: Map<string, 'local' | 'archetype'>, stayInEditor: boolean) => void
   archetypeName?: string
+  archetypeId?: string // Used to count affected pages
   journalName?: string
 }
 
@@ -31,6 +33,7 @@ export function PublishReviewModal({
   zoneSections,
   onPublish,
   archetypeName,
+  archetypeId,
   journalName
 }: PublishReviewModalProps) {
   // Log every render
@@ -41,6 +44,12 @@ export function PublishReviewModal({
   })
   
   const [choices, setChoices] = useState<Map<string, 'local' | 'archetype'>>(new Map())
+  
+  // Count how many pages use this archetype (for warning message)
+  const affectedPagesCount = useMemo(() => {
+    if (!archetypeId) return 0
+    return countPageInstancesByArchetype(archetypeId)
+  }, [archetypeId])
   
   // Debug: Log modal props
   React.useEffect(() => {
@@ -200,13 +209,23 @@ export function PublishReviewModal({
                   
                   {/* Choice Description */}
                   <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500">
-                      {choice === 'local' ? (
-                        <>This change will only affect <strong>this page</strong>. Other pages using this archetype will not be affected.</>
-                      ) : (
-                        <>This change will update the <strong>archetype template</strong>. All pages using this archetype will inherit this change.</>
-                      )}
-                    </p>
+                    {choice === 'local' ? (
+                      <p className="text-xs text-gray-500">
+                        This change will only affect <strong>this page</strong>. Other pages using this archetype will not be affected.
+                      </p>
+                    ) : (
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-700">
+                          This change will update the <strong>archetype template</strong>.
+                          {affectedPagesCount > 0 ? (
+                            <> <strong>{affectedPagesCount}</strong> other page{affectedPagesCount !== 1 ? 's' : ''} using this archetype will also inherit this change.</>
+                          ) : (
+                            <> All pages using this archetype will inherit this change.</>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -216,9 +235,19 @@ export function PublishReviewModal({
         
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">{localCount}</span> will be kept local,{' '}
-            <span className="font-medium">{archetypeCount}</span> will be saved to archetype
+          <div className="text-sm">
+            <div className="text-gray-600">
+              <span className="font-medium">{localCount}</span> will be kept local,{' '}
+              <span className="font-medium">{archetypeCount}</span> will be saved to archetype
+            </div>
+            {archetypeCount > 0 && affectedPagesCount > 0 && (
+              <div className="flex items-center gap-1 text-amber-600 mt-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span className="text-xs">
+                  {affectedPagesCount} other page{affectedPagesCount !== 1 ? 's' : ''} will be affected
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button

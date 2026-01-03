@@ -7,7 +7,7 @@ import type { WidgetSection } from '../types/widgets'
 import { createDebugLogger } from './logger'
 
 // Control logging for this file - Set to true to debug zone comparisons
-const DEBUG = true
+const DEBUG = false
 const debugLog = createDebugLogger(DEBUG)
 
 /**
@@ -27,11 +27,9 @@ export function compareSectionWithArchetype(
     archetypeName: archetypeSection.name
   })
   
-  // Quick check: if IDs match, they're the same reference (shouldn't happen, but safe check)
-  if (currentSection.id === archetypeSection.id) {
-    debugLog('log', `✅ [compareSection] Zone ${zoneSlug}: IDs match, sections identical`)
-    return false
-  }
+  // Note: We do NOT skip comparison just because IDs match.
+  // When canvas is loaded from archetype, sections share the same ID,
+  // but content can still be modified (e.g., adding widgets).
 
   // Compare basic properties
   if (currentSection.name !== archetypeSection.name) {

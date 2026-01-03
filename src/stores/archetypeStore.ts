@@ -190,6 +190,19 @@ export function countPageInstancesByArchetype(archetypeId: string): number {
 }
 
 /**
+ * Get page instance details that need their cached canvas invalidated
+ * Returns array of { websiteId, pageId } for pages using the archetype
+ * The caller should use pageStore.clearPageCanvas() or similar to actually clear them
+ */
+export function getPagesUsingArchetype(archetypeId: string): Array<{ websiteId: string; pageId: string }> {
+  const instances = getPageInstancesByArchetype(archetypeId)
+  return instances.map(instance => ({
+    websiteId: instance.websiteId,
+    pageId: instance.pageId
+  }))
+}
+
+/**
  * Override a zone in a Page Instance
  * Creates or updates the override for the specified zone
  */

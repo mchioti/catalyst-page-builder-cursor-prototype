@@ -5,7 +5,7 @@
  * Query params: scope, journal, issueType
  */
 
-import { useEffect, useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo, useState, useLayoutEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { PageBuilder } from '../PageBuilder'
 import { DynamicBrandingCSS } from '../BrandingSystem/DynamicBrandingCSS'
@@ -21,7 +21,7 @@ import type { CanvasItem } from '../../types/widgets'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file - Set to true to debug dirty zones
-const DEBUG = true
+const DEBUG = false
 const debugLog = createDebugLogger(DEBUG)
 import { 
   getPageStub,
@@ -111,7 +111,41 @@ export function PageBuilderEditor() {
   const loadedPageRef = useRef<string | null>(null)
   // Track previous canvasItems to detect actual changes (not just initial load)
   const previousCanvasItemsRef = useRef<CanvasItem[] | null>(null)
+  // Track which page the current canvasItems belong to (for save effect safeguard)
+  const canvasOwnerPageRef = useRef<string | null>(null)
+  // Track if we're in a page transition (blocks draft saves)
+  const isTransitioningRef = useRef<boolean>(false)
+  // Track the current page for synchronous page change detection
+  const currentPageRef = useRef<string | null>(null)
   const pageName = pageRoute?.replace(/^\//, '') || 'home'
+  
+  // CRITICAL: Use useLayoutEffect to clear stale content SYNCHRONOUSLY on mount
+  // This runs BEFORE regular effects and before the browser paints
+  // Key insight: canvasItems in Zustand store persists across page navigations
+  useLayoutEffect(() => {
+    const pageKey = `${websiteId}:${pageName}`
+    const currentCanvasItems = usePageStore.getState().canvasItems
+    
+    const isFreshMount = currentPageRef.current === null
+    const isActualPageSwitch = !isFreshMount && currentPageRef.current !== pageKey
+    
+    // If canvas has content and it's either fresh mount or page switch, clear it
+    if (currentCanvasItems.length > 0 && (isFreshMount || isActualPageSwitch)) {
+      // Mark as transitioning - this blocks ALL draft saves and dirty zone processing
+      isTransitioningRef.current = true
+      
+      // Clear stale content IMMEDIATELY
+      replaceCanvasItems([])
+      
+      // Reset all tracking refs
+      loadedPageRef.current = null
+      previousCanvasItemsRef.current = null
+      canvasOwnerPageRef.current = null
+    }
+    
+    // Update current page ref
+    currentPageRef.current = pageKey
+  }, [websiteId, pageName, replaceCanvasItems])
   
   // Get current website to determine design ID (must be before useMemo hooks)
   const v1Website = websites.find(w => w.id === websiteId)
@@ -201,8 +235,27 @@ export function PageBuilderEditor() {
   
   // Track dirty zones when canvas changes (only in page instance mode)
   useEffect(() => {
+    // CRITICAL: Skip if we're in a page transition - the canvasItems might be stale from previous render
+    if (isTransitioningRef.current) {
+      return
+    }
+    
+    // CRITICAL: Read current canvas items from store directly, not from captured closure
+    // This ensures we see the actual current state after useLayoutEffect may have cleared it
+    const actualCanvasItems = usePageStore.getState().canvasItems
+    if (actualCanvasItems.length === 0) {
+      setDirtyZones(prev => prev.size === 0 ? prev : new Set())
+      return
+    }
+    
+    // Verify canvas belongs to current page
+    const expectedOwner = `${websiteId}:${pageName}`
+    if (canvasOwnerPageRef.current && canvasOwnerPageRef.current !== expectedOwner) {
+      return
+    }
+    
     if (pageInstance && archetypeInfo?.archetype) {
-      let currentSections = canvasItems.filter((item): item is WidgetSection => 
+      let currentSections = actualCanvasItems.filter((item): item is WidgetSection => 
         'areas' in item && 'layout' in item
       )
       
@@ -217,19 +270,22 @@ export function PageBuilderEditor() {
         
         // Update canvasItems with restored zoneSlugs (only if we actually restored some)
         const needsUpdate = currentSections.some((s, i) => {
-          const original = canvasItems.filter((item): item is WidgetSection => 'areas' in item && 'layout' in item)[i]
+          const original = actualCanvasItems.filter((item): item is WidgetSection => 'areas' in item && 'layout' in item)[i]
           return original && !original.zoneSlug && s.zoneSlug
         })
         
         if (needsUpdate) {
           debugLog('log', '💾 [PageBuilderEditor] Updating canvasItems with restored zoneSlugs')
-          // Update the sections in canvasItems
-          const updatedCanvasItems = canvasItems.map(item => {
+          // Update the sections in actualCanvasItems
+          const updatedCanvasItems = actualCanvasItems.map(item => {
             if (!('areas' in item && 'layout' in item)) return item
             const restored = currentSections.find(s => s.id === item.id)
             return restored || item
           })
           replaceCanvasItems(updatedCanvasItems)
+          // CRITICAL: Also update previousCanvasItemsRef to prevent auto-save from
+          // treating this internal update as a user change
+          previousCanvasItemsRef.current = updatedCanvasItems
         }
       }
       
@@ -404,34 +460,112 @@ export function PageBuilderEditor() {
     const isJournalPage = ['journal-home', 'issue-archive', 'issue-toc', 'article'].includes(pageType)
     const journalIdFromRoute = extractJournalId(pageName)
     
+    // Get designId early - needed for pageKey to ensure we reload when theme info becomes available
+    const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
+    const hasDesignId = !!designId
+    
+    // Include hasDesignId in pageKey so we reload when theme/design info becomes available
+    // This prevents loading with incomplete data and then skipping reload when data arrives
     const pageKey = isJournalsPage 
-      ? `${websiteId}:${pageName}:${journalCount}` 
-      : `${websiteId}:${pageName}`
+      ? `${websiteId}:${pageName}:${journalCount}:${hasDesignId}` 
+      : `${websiteId}:${pageName}:${hasDesignId}`
     
     // Skip if already loaded this exact page (with same journal count for journals page)
     if (loadedPageRef.current === pageKey) {
       return
     }
     
-    // Reset previous canvas items when switching pages
-    previousCanvasItemsRef.current = null
+    // Check if we're navigating between different pages while editor is still mounted
+    // This is DIFFERENT from a fresh mount - on fresh mount, we should load the draft
+    const currentLoadedPage = loadedPageRef.current?.split(':').slice(0, 2).join(':') // e.g., "catalyst-demo:journal/jas"
+    const newPage = `${websiteId}:${pageName}`
+    // IMPORTANT: Only consider it a "page switch" if we were previously editing a DIFFERENT page
+    // If loadedPageRef.current is null, this is a fresh mount - not a page switch
+    const isFreshMount = loadedPageRef.current === null
+    const isPageSwitch = !isFreshMount && currentLoadedPage !== newPage
+    
+    // If we might have stale content and we're going to wait for more data, clear canvas first
+    if (isPageSwitch && !hasDesignId && isJournalPage) {
+      debugLog('log', '🗑️ [PageBuilderEditor] Clearing stale canvas while waiting for design info:', {
+        pageName,
+        previousPage: currentLoadedPage || 'none (fresh mount)'
+      })
+      // Mark as transitioning and clear stale content
+      isTransitioningRef.current = true
+      replaceCanvasItems([]) // Clear to show empty state instead of wrong content
+      previousCanvasItemsRef.current = null
+      canvasOwnerPageRef.current = null
+      return
+    }
+    
+    // If switching pages but we have all the data we need, clear and proceed
+    if (isPageSwitch) {
+      debugLog('log', '🔄 [PageBuilderEditor] Page switch detected, will load new content:', {
+        from: currentLoadedPage || 'none (fresh mount)',
+        to: newPage,
+        previousCanvasOwner: canvasOwnerPageRef.current
+      })
+      // CRITICAL: Mark as transitioning to block ALL draft saves until new content is loaded
+      isTransitioningRef.current = true
+      // Reset refs - will be set when new content loads
+      previousCanvasItemsRef.current = null
+      canvasOwnerPageRef.current = null
+      // NOTE: Don't call replaceCanvasItems([]) here - it will be called when new content loads
+      // The transitioning flag will block any draft saves in the meantime
+    }
     
     // PRIORITY 1: Check for draft first (highest priority - user's unsaved work)
+    // On fresh mount: Load draft if it exists AND it looks valid for this page
+    // On page switch: Skip draft (might contain stale content from previous page)
     const draft = getPageDraft(websiteId!, pageName)
     if (draft && draft.length > 0) {
-      debugLog('log', '📝 [PageBuilderEditor] Loading from draft:', { websiteId, pageName, itemCount: draft.length })
-      const migratedDraft = migrateCanvasItems(draft)
-      replaceCanvasItems(migratedDraft)
-      setIsEditingLoadedWebsite(true)
-      loadedPageRef.current = pageKey
-      // Set previous canvas items to prevent auto-save on initial load
-      previousCanvasItemsRef.current = migratedDraft
-      return
+      // For journal pages, validate that draft content looks correct
+      // A draft might be polluted with content from another page (e.g., website home)
+      let draftIsValid = true
+      if (isJournalPage && pageType === 'journal-home') {
+        // Check if draft sections look like journal content (not website home)
+        // Journal home should have sections like "Journal Banner", not "Hero Section"
+        const firstSection = draft[0] as any
+        const firstSectionName = firstSection?.name || ''
+        const looksLikeWebsiteHome = ['Hero Section', 'Hero', 'Featured Journals'].includes(firstSectionName)
+        if (looksLikeWebsiteHome) {
+          debugLog('warn', '⚠️ [PageBuilderEditor] Draft appears to contain website home content, not journal content:', {
+            pageName,
+            firstSectionName,
+            draftItemCount: draft.length
+          })
+          draftIsValid = false
+        }
+      }
+      
+      if (isPageSwitch || !draftIsValid) {
+        // Clear the stale/invalid draft and load fresh from source
+        debugLog('log', '🗑️ [PageBuilderEditor] Clearing invalid draft:', { 
+          websiteId, pageName, 
+          reason: isPageSwitch ? 'page switch' : 'invalid content',
+          draftItemCount: draft.length 
+        })
+        setPageDraft(websiteId!, pageName, [])
+        // Don't return - continue to load fresh content from source
+      } else {
+        // Fresh mount with valid draft - load it
+        debugLog('log', '📝 [PageBuilderEditor] Loading from draft (fresh mount):', { websiteId, pageName, itemCount: draft.length })
+        const migratedDraft = migrateCanvasItems(draft)
+        replaceCanvasItems(migratedDraft)
+        setIsEditingLoadedWebsite(true)
+        loadedPageRef.current = pageKey
+        // Set previous canvas items to prevent auto-save on initial load
+        previousCanvasItemsRef.current = migratedDraft
+        // Mark which page this canvas belongs to
+        canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+        // Clear transitioning flag - content loaded successfully
+        isTransitioningRef.current = false
+        return
+      }
     }
     
     // For journals page, always regenerate to ensure correct journals are shown
     if (isJournalsPage && journalCount > 0) {
-      const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
       const defaultContent = getPageStub(pageType, websiteId!, designId, journals)
       
       replaceCanvasItems(defaultContent)
@@ -440,6 +574,10 @@ export function PageBuilderEditor() {
       loadedPageRef.current = pageKey
       // Set previous canvas items to prevent auto-save on initial load
       previousCanvasItemsRef.current = defaultContent
+      // Mark which page this canvas belongs to
+      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      // Clear transitioning flag - content loaded successfully
+      isTransitioningRef.current = false
       return
     }
     
@@ -454,17 +592,46 @@ export function PageBuilderEditor() {
       const savedData = savedPageCanvasData || savedRouteData
       
       if (savedData && savedData.length > 0) {
-        // Load saved data (user's published edits)
-        replaceCanvasItems(savedData)
-        setIsEditingLoadedWebsite(true)
-        loadedPageRef.current = pageKey
-        // Set previous canvas items to prevent auto-save on initial load
-        previousCanvasItemsRef.current = savedData
-        return
+        // Validate saved data for journal-home pages
+        let savedDataIsValid = true
+        if (pageType === 'journal-home') {
+          const firstSection = savedData[0] as any
+          const firstSectionName = firstSection?.name || ''
+          const looksLikeWebsiteHome = ['Hero Section', 'Hero', 'Featured Journals'].includes(firstSectionName)
+          if (looksLikeWebsiteHome) {
+            debugLog('warn', '⚠️ [PageBuilderEditor] Saved canvas appears polluted with website home content:', {
+              pageName,
+              firstSectionName,
+              source: savedPageCanvasData ? 'pageCanvasData' : 'routeCanvasItems'
+            })
+            savedDataIsValid = false
+            // Clear the polluted data
+            if (savedPageCanvasData) {
+              setPageCanvas(websiteId!, pageName, [])
+            }
+            if (savedRouteData) {
+              setCanvasItemsForRoute(route, [])
+            }
+          }
+        }
+        
+        if (savedDataIsValid) {
+          // Load valid saved data (user's published edits)
+          replaceCanvasItems(savedData)
+          setIsEditingLoadedWebsite(true)
+          loadedPageRef.current = pageKey
+          // Set previous canvas items to prevent auto-save on initial load
+          previousCanvasItemsRef.current = savedData
+          // Mark which page this canvas belongs to
+          canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+          // Clear transitioning flag - content loaded successfully
+          isTransitioningRef.current = false
+          return
+        }
+        // If saved data is invalid, continue to load from archetype
       }
       
       // Check for Page Instance (archetype system)
-      const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
       const normalizedDesignId = designId?.toLowerCase() || ''
       const isClassicTheme = normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1'
       const archetypeDesignId = isClassicTheme ? 'classic-ux3-theme' : designId
@@ -482,6 +649,10 @@ export function PageBuilderEditor() {
             loadedPageRef.current = pageKey
             // Set previous canvas items to prevent auto-save on initial load
             previousCanvasItemsRef.current = resolvedCanvas
+            // Mark which page this canvas belongs to
+            canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+            // Clear transitioning flag - content loaded successfully
+            isTransitioningRef.current = false
             return
           }
         }
@@ -496,6 +667,10 @@ export function PageBuilderEditor() {
       loadedPageRef.current = pageKey
       // Set previous canvas items to prevent auto-save on initial load
       previousCanvasItemsRef.current = defaultContent
+      // Mark which page this canvas belongs to
+      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      // Clear transitioning flag - content loaded successfully
+      isTransitioningRef.current = false
       return
     }
     
@@ -510,13 +685,15 @@ export function PageBuilderEditor() {
       loadedPageRef.current = pageKey
       // Set previous canvas items to prevent auto-save on initial load
       previousCanvasItemsRef.current = migratedSavedCanvas
+      // Mark which page this canvas belongs to
+      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      // Clear transitioning flag - content loaded successfully
+      isTransitioningRef.current = false
       return
     }
     
     // No saved data - load default content based on page type and website
-    // Pass the website's themeId/designId to determine which design stub to use
-    const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
-    
+    // designId already defined at the top of this useEffect
     const defaultContent = getPageStub(pageType, websiteId!, designId, journals)
     
     replaceCanvasItems(defaultContent)
@@ -525,6 +702,10 @@ export function PageBuilderEditor() {
     loadedPageRef.current = pageKey
     // Set previous canvas items to prevent auto-save on initial load
     previousCanvasItemsRef.current = defaultContent
+    // Mark which page this canvas belongs to
+    canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+    // Clear transitioning flag - content loaded successfully
+    isTransitioningRef.current = false
   }, [websiteId, pageName, journalCount, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, getPageDraft, setPageCanvas, currentWebsite, journals])
   
   // Auto-save canvas changes to DRAFT storage (for preview)
@@ -535,6 +716,12 @@ export function PageBuilderEditor() {
     // Use startsWith to handle pageKeys with suffixes (e.g., journals page: "websiteId:journals:journals-5")
     const baseKey = `${websiteId}:${pageName}`
     
+    // CRITICAL: Skip if we're in a page transition - prevents saving stale content
+    if (isTransitioningRef.current) {
+      debugLog('log', '⏭️ [PageBuilderEditor] Skipping draft save - page transition in progress')
+      return
+    }
+    
     // Skip if page hasn't been loaded yet
     if (!loadedPageRef.current?.startsWith(baseKey)) {
       return
@@ -542,6 +729,16 @@ export function PageBuilderEditor() {
     
     // Skip if canvasItems is empty
     if (!websiteId || !pageName || canvasItems.length === 0) {
+      return
+    }
+    
+    // SAFEGUARD: Skip if canvasItems belong to a different page (during page transitions)
+    // This prevents saving stale content from previous page to the new page
+    if (canvasOwnerPageRef.current && canvasOwnerPageRef.current !== baseKey) {
+      debugLog('log', '⏭️ [PageBuilderEditor] Skipping draft save - canvas belongs to different page:', {
+        canvasOwner: canvasOwnerPageRef.current,
+        currentPage: baseKey
+      })
       return
     }
     
@@ -575,8 +772,9 @@ export function PageBuilderEditor() {
         setCanvasItemsForRoute(route, canvasItems)
       }
       
-      // Update previous reference
+      // Update previous reference and mark canvas owner
       previousCanvasItemsRef.current = canvasItems
+      canvasOwnerPageRef.current = baseKey
     }
   }, [canvasItems, websiteId, pageName, setPageDraft, setCanvasItemsForRoute, pageInstance])
   

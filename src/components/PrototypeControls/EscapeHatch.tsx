@@ -171,9 +171,11 @@ export function EscapeHatch({
                 {(() => {
                   const isDisabled = context !== 'live-site' || !websiteId
                   const disabledReason = context === 'editor' ? 'Already editing' : context === 'design-console' ? 'Go to Live Site first' : 'No website selected'
+                  // Use pageId if provided, otherwise extract from current URL path
+                  const currentPage = pageId || location.pathname.replace(`/live/${websiteId}`, '').replace(/^\//, '') || 'home'
                   return (
                     <button 
-                      onClick={() => !isDisabled && navigateTo(`/edit/${websiteId}/home?scope=individual`)}
+                      onClick={() => !isDisabled && navigateTo(`/edit/${websiteId}/${currentPage}?scope=individual`)}
                       disabled={isDisabled}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                         isDisabled 
