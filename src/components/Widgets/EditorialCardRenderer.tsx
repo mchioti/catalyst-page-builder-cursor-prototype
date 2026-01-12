@@ -50,7 +50,7 @@ export const EditorialCardRenderer: React.FC<EditorialCardRendererProps> = ({ wi
       {content.callToAction.enabled && content.callToAction.text && (
         <div className="mt-2">
           {content.callToAction.type === 'button' ? (
-            <button className={`btn btn-solid-color1 ${isDarkOverlay || isDarkColorBlock ? 'on-dark-bg' : 'on-light-bg'}`}>
+            <button className={`btn btn-large btn-solid-color1 ${isDarkOverlay || isDarkColorBlock ? 'on-dark-bg' : 'on-light-bg'}`}>
               {content.callToAction.text}
             </button>
           ) : (

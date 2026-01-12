@@ -4,6 +4,8 @@ import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { createDebugLogger } from '../../utils/logger'
 import { useBrandingStore } from '../../stores/brandingStore'
+import { PageStatus } from './PageStatus'
+import type { PageInstance, Archetype } from '../../types/archetypes'
 
 // 🐛 DEBUG FLAG - Set to true to enable detailed properties panel logs
 const DEBUG_PROPERTIES_PANEL = false
@@ -75,6 +77,15 @@ interface PropertiesPanelProps {
   // Archetype-specific props
   pageConfig?: import('../../types/archetypes').PageConfig // For archetype mode
   onPageConfigChange?: (pageConfig: import('../../types/archetypes').PageConfig) => void // Callback to save pageConfig in archetype mode
+  // Page Status props (for showing page-archetype relationship)
+  pageInstance?: PageInstance | null
+  archetype?: Archetype | null
+  archetypeName?: string
+  dirtyZones?: Set<string>
+  onPageInstanceChange?: () => void
+  designId?: string // Design ID for archetype link
+  onResetToArchetype?: () => void // Preview reset to archetype (loads archetype content into editor)
+  onRevertZoneToArchetype?: (zoneSlug: string) => void // Preview zone revert (loads zone from archetype)
 }
 
 export function PropertiesPanel({ 
@@ -94,7 +105,15 @@ export function PropertiesPanel({
   headerEditMode = 'global',
   footerEditMode = 'global',
   pageConfig,
-  onPageConfigChange
+  onPageConfigChange,
+  pageInstance,
+  archetype,
+  archetypeName,
+  dirtyZones = new Set(),
+  onPageInstanceChange,
+  designId,
+  onResetToArchetype,
+  onRevertZoneToArchetype
 }: PropertiesPanelProps) {
   const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects, updateSiteLayoutWidget, setPageCanvas, getPageCanvas, editingContext } = usePageStore()
   const isArchetypeMode = editingContext === 'archetype'
@@ -139,16 +158,53 @@ export function PropertiesPanel({
     }
   }
   
-  // Show page settings when nothing is selected
+  // Show Page Status + Page Settings when nothing is selected
   if (!selectedWidget) {
-    return <PageSettingsView 
-      usePageStore={usePageStore} 
-      currentWebsiteId={currentWebsiteId} 
-      currentPageId={currentPageId}
-      isArchetypeMode={isArchetypeMode}
-      pageConfig={pageConfig}
-      onPageConfigChange={onPageConfigChange}
-    />
+    // When editing an archetype, only show Page Settings (no PageStatus - archetypes don't inherit)
+    if (isArchetypeMode) {
+      return (
+        <PageSettingsView 
+          usePageStore={usePageStore} 
+          currentWebsiteId={currentWebsiteId} 
+          currentPageId={currentPageId}
+          isArchetypeMode={isArchetypeMode}
+          pageConfig={pageConfig}
+          onPageConfigChange={onPageConfigChange}
+        />
+      )
+    }
+    
+    // When editing a page (instance), show Page Status + Page Settings
+    return (
+      <div className="flex flex-col h-full">
+        {/* Page Status Section */}
+        <PageStatus
+          websiteId={currentWebsiteId}
+          pageName={currentPageId}
+          pageInstance={pageInstance || null}
+          archetype={archetype || null}
+          archetypeName={archetypeName}
+          dirtyZones={dirtyZones}
+          onPageInstanceChange={onPageInstanceChange}
+          designId={designId}
+          onResetToArchetype={onResetToArchetype}
+          onRevertZoneToArchetype={onRevertZoneToArchetype}
+        />
+        
+        {/* Divider */}
+        <div className="border-t border-gray-200 mx-4" />
+        
+        {/* Page Settings Section */}
+        <PageSettingsView 
+          usePageStore={usePageStore} 
+          currentWebsiteId={currentWebsiteId} 
+          currentPageId={currentPageId}
+          isArchetypeMode={isArchetypeMode}
+          pageConfig={pageConfig}
+          onPageConfigChange={onPageConfigChange}
+        />
+      </div>
+    )
   }
 
   // Find selected widget/section - check both canvas items and widgets within sections
@@ -249,38 +305,26 @@ export function PropertiesPanel({
     })
   }
   
+  // If widget is selected but not found, show Page Status as fallback
   if (!selectedItem) {
-    debugLog('log', '🔍 Properties Panel - Selected item not found:', { 
-      selectedWidget, 
-      canvasItemIds: canvasItems.map((item: CanvasItem) => item.id),
-      sectionWidgetIds: canvasItems.flatMap((item: CanvasItem) => 
-        isSection(item) ? item.areas.flatMap(area => area.widgets.map(w => w.id)) : []
-      ),
-      tabsWidgetIds: canvasItems.flatMap((item: CanvasItem) => {
-        if (item.type === 'tabs') {
-          const tabsWidget = item as any
-          return tabsWidget.tabs.flatMap((tab: any) => tab.widgets.map((w: any) => w.id))
-        }
-        if (isSection(item)) {
-          return item.areas.flatMap(area => 
-            area.widgets.flatMap(w => {
-              if (w.type === 'tabs') {
-                const tabsWidget = w as any
-                return tabsWidget.tabs.flatMap((tab: any) => tab.widgets.map((tw: any) => tw.id))
-              }
-              return []
-            })
-          )
-        }
-        return []
-      })
+    debugLog('log', '⚠️ Properties Panel - Widget selected but not found, showing Page Status:', { 
+      selectedWidget,
+      websiteId: currentWebsiteId,
+      pageId: currentPageId
     })
     return (
-      <div className="p-4">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Selected item not found</p>
-        </div>
-      </div>
+      <PageStatus
+        websiteId={currentWebsiteId}
+        pageName={currentPageId}
+        pageInstance={pageInstance || null}
+        archetype={archetype || null}
+        archetypeName={archetypeName}
+        dirtyZones={dirtyZones}
+        onPageInstanceChange={onPageInstanceChange}
+        designId={designId}
+        onResetToArchetype={onResetToArchetype}
+        onRevertZoneToArchetype={onRevertZoneToArchetype}
+      />
     )
   }
 
@@ -513,6 +557,30 @@ export function PropertiesPanel({
             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section ID</span>
             <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{section.id}</p>
           </div>
+          {/* Zone Slug - for archetype/page instance inheritance */}
+          {section.zoneSlug && (
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Zone Slug</span>
+              <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200">{section.zoneSlug}</p>
+            </div>
+          )}
+          {/* Inheritance Status - only show when editing a page instance */}
+          {pageInstance && section.zoneSlug && (
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                {pageInstance.overrides[section.zoneSlug] ? (
+                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                    Local Override
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
+                    Inherited
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Section Role - for marking sections as page header/footer */}
@@ -730,6 +798,7 @@ export function PropertiesPanel({
                   <option value="2">2 Columns</option>
                   <option value="3">3 Columns</option>
                   <option value="4">4 Columns</option>
+                  <option value="5">5 Columns</option>
                   <option value="6">6 Columns</option>
                   <option value="12">12 Columns</option>
                   <option value="auto-fit">Auto-fit (Responsive)</option>
@@ -1689,7 +1758,35 @@ export function PropertiesPanel({
               ? themes.find((t: any) => t.id === currentWebsite.themeId)
               : null
             
-            const hasSpacingTokens = currentTheme?.id === 'wiley-figma-ds-v2' && currentTheme?.spacing?.semantic
+            // Get spacing tokens from theme - check both direct spacing.semantic and foundation.spacing.semantic
+            const semanticSpacing = currentTheme?.spacing?.semantic || currentTheme?.foundation?.spacing?.semantic
+            const hasSpacingTokens = !!semanticSpacing
+            
+            // Build uniform padding presets from theme tokens
+            const uniformPresets = semanticSpacing ? Object.entries(semanticSpacing).map(([key, value]) => ({
+              label: key.toUpperCase(),
+              value: value as string
+            })).sort((a, b) => {
+              // Sort by pixel value
+              const aVal = parseInt(a.value) || 0
+              const bVal = parseInt(b.value) || 0
+              return aVal - bVal
+            }) : []
+            
+            // Build pattern presets dynamically from theme tokens
+            // Use semantic tokens for pattern values where possible
+            const getTokenValue = (tokenName: string): string => {
+              return (semanticSpacing as Record<string, string>)?.[tokenName] || '16px'
+            }
+            
+            const patternPresets = semanticSpacing ? [
+              { label: 'Card', value: `${getTokenValue('md')} ${getTokenValue('lg')}`, desc: 'vertical | horizontal' },
+              { label: 'Banner', value: `${getTokenValue('xl')} ${getTokenValue('lg')}`, desc: 'tall sides' },
+              { label: 'Hero', value: `${getTokenValue('2xl') || getTokenValue('xl')} ${getTokenValue('lg')}`, desc: 'extra tall' },
+              { label: 'Compact', value: `${getTokenValue('sm')} ${getTokenValue('md')}`, desc: 'tight fit' },
+              { label: 'Asymmetric', value: `${getTokenValue('lg')} ${getTokenValue('xl')} ${getTokenValue('md')} ${getTokenValue('xl')}`, desc: 'less bottom' },
+              { label: 'Header', value: `${getTokenValue('sm')} ${getTokenValue('lg')}`, desc: 'nav style' }
+            ] : []
             
             return (
               <div className="space-y-3">
@@ -1715,32 +1812,50 @@ export function PropertiesPanel({
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Section Padding</label>
                       {hasSpacingTokens && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-2">Quick presets (Wiley DS):</p>
-                          <div className="grid grid-cols-4 gap-2">
-                            {[
-                              { label: 'None', value: '0px' },
-                              { label: 'SM', value: '8px' },
-                              { label: 'MD', value: '16px' },
-                              { label: 'LG', value: '24px' },
-                              { label: 'XL', value: '32px' },
-                              { label: '2XL', value: '40px' },
-                              { label: '3XL', value: '64px' }
-                            ].map((preset) => (
-                              <button
-                                key={preset.value}
-                                onClick={() => updateSection({
-                                  padding: preset.value
-                                })}
-                                className={`px-2 py-1 text-xs border rounded transition-colors ${
-                                  (section.padding === preset.value || (!section.padding && displayValue === preset.value))
-                                    ? 'bg-blue-100 border-blue-500 text-blue-700 font-medium' 
-                                    : 'border-gray-300 hover:bg-blue-50'
-                                }`}
-                              >
-                                {preset.label}
-                              </button>
-                            ))}
+                        <div className="mb-3 space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-2">
+                              Uniform padding <span className="text-gray-400">(from {currentTheme?.name || 'theme'} design tokens)</span>:
+                            </p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {uniformPresets.map((preset) => (
+                                <button
+                                  key={preset.value}
+                                  onClick={() => updateSection({
+                                    padding: preset.value
+                                  })}
+                                  title={preset.value}
+                                  className={`px-2 py-1 text-xs border rounded transition-colors ${
+                                    (section.padding === preset.value || (!section.padding && displayValue === preset.value))
+                                      ? 'bg-blue-100 border-blue-500 text-blue-700 font-medium' 
+                                      : 'border-gray-300 hover:bg-blue-50'
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-2">Common patterns:</p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {patternPresets.map((preset) => (
+                                <button
+                                  key={preset.value}
+                                  onClick={() => updateSection({
+                                    padding: preset.value
+                                  })}
+                                  title={`${preset.desc} (${preset.value})`}
+                                  className={`px-2 py-1 text-xs border rounded transition-colors ${
+                                    section.padding === preset.value
+                                      ? 'bg-blue-100 border-blue-500 text-blue-700 font-medium' 
+                                      : 'border-gray-300 hover:bg-blue-50'
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       )}
@@ -1748,7 +1863,7 @@ export function PropertiesPanel({
                         type="text"
                         value={displayValue}
                         onChange={(e) => updateSection({ padding: e.target.value || undefined })}
-                        placeholder="e.g., 24px, 1.5rem, 2em"
+                        placeholder="e.g., 24px or 16px 32px or 16px 32px 8px 32px"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       />
                       {!section.padding && legacyPaddingTop && (
@@ -1756,9 +1871,14 @@ export function PropertiesPanel({
                           ⚠️ Using legacy padding ({legacyPaddingTop}). Set a value to migrate.
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Use presets above or custom values (e.g., 24px, 1.5rem)
-                      </p>
+                      <div className="text-xs text-gray-500 mt-2 space-y-1 bg-gray-50 p-2 rounded">
+                        <p className="font-medium text-gray-600">CSS Shorthand (clockwise from top):</p>
+                        <ul className="space-y-0.5 text-gray-500">
+                          <li><code className="bg-gray-100 px-1 rounded">24px</code> — all sides</li>
+                          <li><code className="bg-gray-100 px-1 rounded">16px 32px</code> — vertical | horizontal</li>
+                          <li><code className="bg-gray-100 px-1 rounded">16px 32px 8px 32px</code> — top | right | bottom | left</li>
+                        </ul>
+                      </div>
                     </div>
                   )
                 })()}
@@ -1991,6 +2111,30 @@ export function PropertiesPanel({
                 <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
                 <span className="text-xs px-2 py-1 rounded-full font-medium bg-purple-100 text-purple-700">Menu</span>
               </div>
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget ID</span>
+                <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{widget.id}</p>
+              </div>
+              {/* Inheritance Status for Menu Widget */}
+              {pageInstance && parentSection?.zoneSlug && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                    {pageInstance.overrides[parentSection.zoneSlug] ? (
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                        Local (via zone)
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
+                        Inherited
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Zone: <code className="font-mono bg-white px-1 rounded">{parentSection.zoneSlug}</code>
+                  </p>
+                </div>
+              )}
             </div>
             
             <div>
@@ -2241,6 +2385,44 @@ export function PropertiesPanel({
           <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget ID</span>
           <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{widget.id}</p>
         </div>
+        {/* Inheritance Status - derived from parent section's zone status */}
+        {(() => {
+          // Find parent section and its zone status
+          const parentSection = canvasItems.find((item: CanvasItem): item is WidgetSection => 
+            isSection(item) && item.areas.some(area => area.widgets.some(w => w.id === widget.id))
+          )
+          // Also search in global sections
+          const parentGlobalSection = !parentSection 
+            ? globalSections.find((item: CanvasItem): item is WidgetSection => 
+                isSection(item) && item.areas.some(area => area.widgets.some((w: any) => w.id === widget.id))
+              )
+            : null
+          const effectiveParent = parentSection || parentGlobalSection
+          
+          if (pageInstance && effectiveParent?.zoneSlug) {
+            const isLocal = !!pageInstance.overrides[effectiveParent.zoneSlug]
+            return (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                  {isLocal ? (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                      Local (via zone)
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
+                      Inherited
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Zone: <code className="font-mono bg-white px-1 rounded">{effectiveParent.zoneSlug}</code>
+                </p>
+              </div>
+            )
+          }
+          return null
+        })()}
       </div>
       
       {/* Flex Properties (only show if parent section has flexible layout) */}
@@ -2441,6 +2623,8 @@ export function PropertiesPanel({
                 updateWidget={updateWidget}
                 isExpanded={isEditingMenuItems}
                 onExpandedChange={setIsEditingMenuItems}
+                pageInstance={pageInstance}
+                parentZoneSlug={parentSection?.zoneSlug}
               />
             )
           }

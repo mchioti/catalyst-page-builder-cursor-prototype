@@ -67,15 +67,24 @@ export function ArchetypePreview() {
     return {}
   }, [])
   
-  // Resolve canvas from archetype
+  // Get pageCanvas accessor from store
+  const getPageCanvas = usePageStore(state => state.getPageCanvas)
+  
+  // Load canvas - first check for draft (unsaved changes), then fall back to archetype
   useEffect(() => {
-    if (!archetype) return
+    if (!archetype || !archetypeId) return
     
-    // Debug: Log archetype and pageConfig
+    // Check for draft canvas first (unsaved changes from editor)
+    const draftCanvas = getPageCanvas('archetype', archetypeId)
+    if (draftCanvas && draftCanvas.length > 0) {
+      setCanvasItems(draftCanvas)
+      return
+    }
     
+    // Fall back to resolved archetype canvas
     const resolved = resolveCanvasFromArchetype(archetype)
     setCanvasItems(resolved)
-  }, [archetype])
+  }, [archetype, archetypeId, getPageCanvas])
   
   // Create default header/footer for preview (must be before early return)
   const headerSections = useMemo(() => [createStandardHeaderPrefab()], [])
@@ -96,7 +105,7 @@ export function ArchetypePreview() {
       className="min-h-screen bg-white flex flex-col transition-all duration-300 ease-in-out"
       style={{ marginRight: drawerOpen ? '288px' : '0' }}
     >
-      {/* Archetype Preview Banner */}
+      {/* Archetype Preview Banner - Yellow sticky header */}
       <div className="bg-yellow-100 border-b border-yellow-300 px-4 py-3 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -118,12 +127,6 @@ export function ArchetypePreview() {
               />
               Show Mock Data
             </label>
-            <button
-              onClick={() => navigate(`/edit/archetype/${archetypeId}?designId=${designId}`)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
-            >
-              Edit Archetype
-            </button>
           </div>
         </div>
       </div>
@@ -156,6 +159,25 @@ export function ArchetypePreview() {
           websiteId="archetype"
           themeId={archetype.designId}
         />
+      </div>
+      
+      {/* Floating Edit Button - Matches page editing pattern */}
+      <div 
+        className="fixed bottom-6 z-50 flex flex-col gap-2 items-end transition-all duration-300 ease-in-out"
+        style={{ right: drawerOpen ? 'calc(288px + 5rem)' : '5rem' }}
+      >
+        <button
+          onClick={() => navigate(`/edit/archetype/${archetypeId}?designId=${designId}`)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-lg"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit Archetype
+        </button>
+        <div className="text-xs text-gray-500 text-center bg-white/90 px-2 py-1 rounded shadow">
+          🏛️ Master Template
+        </div>
       </div>
       
       {/* Escape Hatch - Always available for prototype user (meta layer) */}

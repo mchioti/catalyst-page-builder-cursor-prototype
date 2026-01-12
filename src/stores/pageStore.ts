@@ -254,6 +254,7 @@ export const usePageStore = create<PageState>((set, get) => ({
   
   // Page Builder
   canvasItems: [],
+  canvasOwnerId: null as string | null, // Tracks which page the canvasItems belong to (e.g., "catalyst-demo:home")
   routeCanvasItems: {},
   globalTemplateCanvas: [],
   journalTemplateCanvas: {},
@@ -326,6 +327,7 @@ export const usePageStore = create<PageState>((set, get) => ({
   addSection: (section) => set((s) => ({ canvasItems: [...s.canvasItems, section] })),
   moveItem: (fromIndex, toIndex) => set((s) => ({ canvasItems: arrayMove(s.canvasItems, fromIndex, toIndex) })),
   replaceCanvasItems: (items) => set({ canvasItems: items }),
+  setCanvasOwnerId: (ownerId: string | null) => set({ canvasOwnerId: ownerId }),
   isEditingLoadedWebsite: false,
   setIsEditingLoadedWebsite: (value) => set({ isEditingLoadedWebsite: value }),
   selectWidget: (id) => set({ selectedWidget: id }),

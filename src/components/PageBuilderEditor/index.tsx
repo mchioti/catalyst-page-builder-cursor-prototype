@@ -101,7 +101,8 @@ export function PageBuilderEditor() {
     setPageDraft,
     canvasItems,
     getCanvasItemsForRoute,
-    setCanvasItemsForRoute
+    setCanvasItemsForRoute,
+    setCanvasOwnerId
   } = usePageStore()
   
   // Get drawer state for content pushing
@@ -141,6 +142,7 @@ export function PageBuilderEditor() {
       loadedPageRef.current = null
       previousCanvasItemsRef.current = null
       canvasOwnerPageRef.current = null
+      setCanvasOwnerId(null)
     }
     
     // Update current page ref
@@ -211,15 +213,19 @@ export function PageBuilderEditor() {
     return null
   }, [websiteId, pageName, currentWebsite, pageInstanceRefreshKey])
   
+  // Calculate designId for archetype lookup
+  const currentDesignId = useMemo(() => {
+    const rawDesignId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
+    const normalizedDesignId = rawDesignId?.toLowerCase() || ''
+    return normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1' 
+      ? 'classic-ux3-theme' 
+      : rawDesignId
+  }, [currentWebsite])
+  
   // Get archetype info if using Page Instance
   const archetypeInfo = useMemo(() => {
     if (!pageInstance) return null
-    const designId = currentWebsite?.themeId || (currentWebsite as any)?.designId || currentWebsite?.name
-    const normalizedDesignId = designId?.toLowerCase() || ''
-    const archetypeDesignId = normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1' 
-      ? 'classic-ux3-theme' 
-      : designId
-    const archetype = getArchetypeById(pageInstance.templateId, archetypeDesignId)
+    const archetype = getArchetypeById(pageInstance.templateId, currentDesignId)
     if (archetype) {
       const overrideCount = Object.keys(pageInstance.overrides).length
       const totalZones = archetype.canvasItems.filter(s => s.zoneSlug).length
@@ -231,7 +237,7 @@ export function PageBuilderEditor() {
       }
     }
     return null
-  }, [pageInstance, currentWebsite, journals, pageName])
+  }, [pageInstance, currentDesignId, journals, pageName])
   
   // Track dirty zones when canvas changes (only in page instance mode)
   useEffect(() => {
@@ -289,23 +295,29 @@ export function PageBuilderEditor() {
         }
       }
       
-      debugLog('log', '🔍 [PageBuilderEditor] Calculating dirty zones:', {
+      // CRITICAL: Compare against COMMITTED STATE (archetype + overrides), not raw archetype
+      // If a zone has a committed override, compare current canvas against the override
+      // Only show as "dirty" if current differs from committed state
+      const committedSections = resolveCanvasFromArchetype(archetypeInfo.archetype, pageInstance)
+      
+      debugLog('log', '🔍 [PageBuilderEditor] Calculating dirty zones (vs committed state):', {
         currentSectionsCount: currentSections.length,
-        archetypeSectionsCount: archetypeInfo.archetype.canvasItems.length,
+        committedSectionsCount: committedSections.length,
         currentZoneSlugs: currentSections.map(s => s.zoneSlug).filter(Boolean),
-        archetypeZoneSlugs: archetypeInfo.archetype.canvasItems.map((s: any) => s.zoneSlug).filter(Boolean)
+        committedZoneSlugs: committedSections.map((s: any) => s.zoneSlug).filter(Boolean),
+        existingOverrides: Object.keys(pageInstance.overrides)
       })
       
-      const dirty = getDirtyZones(currentSections, archetypeInfo.archetype.canvasItems)
+      // Compare against committed state (archetype + overrides), not raw archetype
+      const dirty = getDirtyZones(currentSections, committedSections)
       
-      // Also include zones that have explicit overrides in pageInstance
-      const overrideZones = new Set(Object.keys(pageInstance.overrides))
-      const allDirtyZones = new Set([...dirty, ...overrideZones])
+      // DON'T automatically include override zones - they're only dirty if current differs from committed
+      const allDirtyZones = dirty
       
       debugLog('log', '🔍 [PageBuilderEditor] Dirty zones calculated:', {
         dirtyFromComparison: Array.from(dirty),
-        explicitOverrides: Array.from(overrideZones),
-        allDirtyZones: Array.from(allDirtyZones),
+        existingOverrides: Object.keys(pageInstance.overrides),
+        finalDirtyZones: Array.from(allDirtyZones),
         previousDirtyZones: Array.from(dirtyZones)
       })
       
@@ -495,6 +507,7 @@ export function PageBuilderEditor() {
       replaceCanvasItems([]) // Clear to show empty state instead of wrong content
       previousCanvasItemsRef.current = null
       canvasOwnerPageRef.current = null
+      setCanvasOwnerId(null)
       return
     }
     
@@ -510,6 +523,7 @@ export function PageBuilderEditor() {
       // Reset refs - will be set when new content loads
       previousCanvasItemsRef.current = null
       canvasOwnerPageRef.current = null
+      setCanvasOwnerId(null)
       // NOTE: Don't call replaceCanvasItems([]) here - it will be called when new content loads
       // The transitioning flag will block any draft saves in the meantime
     }
@@ -558,6 +572,7 @@ export function PageBuilderEditor() {
         previousCanvasItemsRef.current = migratedDraft
         // Mark which page this canvas belongs to
         canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+        setCanvasOwnerId(`${websiteId}:${pageName}`)
         // Clear transitioning flag - content loaded successfully
         isTransitioningRef.current = false
         return
@@ -576,23 +591,95 @@ export function PageBuilderEditor() {
       previousCanvasItemsRef.current = defaultContent
       // Mark which page this canvas belongs to
       canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      setCanvasOwnerId(`${websiteId}:${pageName}`)
       // Clear transitioning flag - content loaded successfully
       isTransitioningRef.current = false
       return
     }
     
-    // For journal pages, check if we have saved route data or published canvas
+    // For journal pages, check archetype system FIRST (it's the source of truth for journal-home)
     if (isJournalPage && journalIdFromRoute) {
-      // Build the route path (e.g., /journal/jas)
+      // Check for Page Instance (archetype system) - THIS MUST COME FIRST for journal-home
+      const normalizedDesignId = designId?.toLowerCase() || ''
+      const isClassicTheme = normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1'
+      const archetypeDesignId = isClassicTheme ? 'classic-ux3-theme' : designId
+      
+      debugLog('log', '🔍 [PageBuilderEditor] Loading journal page:', {
+        pageName,
+        pageType,
+        isClassicTheme,
+        archetypeDesignId,
+        websiteId
+      })
+      
+      if (isClassicTheme && pageType === 'journal-home') {
+        // For journal-home pages with archetype system, PageInstance is THE source of truth
+        const pageInstance = getPageInstance(websiteId!, pageName)
+        
+        debugLog('log', '🔍 [PageBuilderEditor] PageInstance lookup:', {
+          found: !!pageInstance,
+          templateId: pageInstance?.templateId,
+          overrideCount: pageInstance ? Object.keys(pageInstance.overrides).length : 0,
+          overrideZones: pageInstance ? Object.keys(pageInstance.overrides) : []
+        })
+        
+        if (pageInstance) {
+          const archetype = getArchetypeById(pageInstance.templateId, archetypeDesignId)
+          
+          debugLog('log', '🔍 [PageBuilderEditor] Archetype lookup:', {
+            found: !!archetype,
+            archetypeId: archetype?.id,
+            sectionCount: archetype?.canvasItems.length
+          })
+          
+          if (archetype) {
+            // Resolve canvas from archetype + instance overrides
+            const resolvedCanvas = resolveCanvasFromArchetype(archetype, pageInstance)
+            
+            debugLog('log', '✅ [PageBuilderEditor] Resolved canvas from archetype + overrides:', {
+              resolvedSectionCount: resolvedCanvas.length,
+              resolvedSectionNames: resolvedCanvas.map((s: any) => s.name || 'unnamed'),
+              overridesApplied: Object.keys(pageInstance.overrides)
+            })
+            
+            replaceCanvasItems(resolvedCanvas)
+            setIsEditingLoadedWebsite(true)
+            loadedPageRef.current = pageKey
+            // Set previous canvas items to prevent auto-save on initial load
+            previousCanvasItemsRef.current = resolvedCanvas
+            // Mark which page this canvas belongs to
+            canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+            setCanvasOwnerId(`${websiteId}:${pageName}`)
+            // Clear transitioning flag - content loaded successfully
+            isTransitioningRef.current = false
+            
+            // IMPORTANT: Clear any stale pageCanvasData for this page
+            // The archetype system is now the source of truth
+            const savedPageCanvasData = getPageCanvas(websiteId!, pageName)
+            if (savedPageCanvasData && savedPageCanvasData.length > 0) {
+              debugLog('log', '🗑️ [PageBuilderEditor] Clearing stale pageCanvasData (archetype system is source of truth)')
+              setPageCanvas(websiteId!, pageName, [])
+            }
+            
+            return
+          }
+        }
+      }
+      
+      // FALLBACK: Check for saved route data or published canvas (non-archetype journal pages)
       const route = `/${pageName}`
       const savedRouteData = getCanvasItemsForRoute(route)
       const savedPageCanvasData = getPageCanvas(websiteId!, pageName)
-      
-      // Prefer pageCanvasData (what we save to), then routeCanvasItems
       const savedData = savedPageCanvasData || savedRouteData
       
+      debugLog('log', '🔍 [PageBuilderEditor] Fallback: checking saved data:', {
+        hasPageCanvasData: !!savedPageCanvasData,
+        hasRouteData: !!savedRouteData,
+        savedDataLength: savedData?.length || 0
+      })
+      
       if (savedData && savedData.length > 0) {
-        // Validate saved data for journal-home pages
+        // Validate saved data for journal-home pages (shouldn't reach here normally)
         let savedDataIsValid = true
         if (pageType === 'journal-home') {
           const firstSection = savedData[0] as any
@@ -616,45 +703,18 @@ export function PageBuilderEditor() {
         }
         
         if (savedDataIsValid) {
-          // Load valid saved data (user's published edits)
+          debugLog('log', '📥 [PageBuilderEditor] Loading from saved data (fallback):', {
+            source: savedPageCanvasData ? 'pageCanvasData' : 'routeCanvasItems',
+            itemCount: savedData.length
+          })
           replaceCanvasItems(savedData)
           setIsEditingLoadedWebsite(true)
           loadedPageRef.current = pageKey
-          // Set previous canvas items to prevent auto-save on initial load
           previousCanvasItemsRef.current = savedData
-          // Mark which page this canvas belongs to
           canvasOwnerPageRef.current = `${websiteId}:${pageName}`
-          // Clear transitioning flag - content loaded successfully
+          setCanvasOwnerId(`${websiteId}:${pageName}`)
           isTransitioningRef.current = false
           return
-        }
-        // If saved data is invalid, continue to load from archetype
-      }
-      
-      // Check for Page Instance (archetype system)
-      const normalizedDesignId = designId?.toLowerCase() || ''
-      const isClassicTheme = normalizedDesignId.includes('classic') || normalizedDesignId === 'foundation-theme-v1'
-      const archetypeDesignId = isClassicTheme ? 'classic-ux3-theme' : designId
-      
-      if (isClassicTheme && pageType === 'journal-home') {
-        // Try to load from Page Instance (archetype system)
-        const pageInstance = getPageInstance(websiteId!, pageName)
-        if (pageInstance) {
-          const archetype = getArchetypeById(pageInstance.templateId, archetypeDesignId)
-          if (archetype) {
-            // Resolve canvas from archetype + instance
-            const resolvedCanvas = resolveCanvasFromArchetype(archetype, pageInstance)
-            replaceCanvasItems(resolvedCanvas)
-            setIsEditingLoadedWebsite(true)
-            loadedPageRef.current = pageKey
-            // Set previous canvas items to prevent auto-save on initial load
-            previousCanvasItemsRef.current = resolvedCanvas
-            // Mark which page this canvas belongs to
-            canvasOwnerPageRef.current = `${websiteId}:${pageName}`
-            // Clear transitioning flag - content loaded successfully
-            isTransitioningRef.current = false
-            return
-          }
         }
       }
       
@@ -669,6 +729,7 @@ export function PageBuilderEditor() {
       previousCanvasItemsRef.current = defaultContent
       // Mark which page this canvas belongs to
       canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      setCanvasOwnerId(`${websiteId}:${pageName}`)
       // Clear transitioning flag - content loaded successfully
       isTransitioningRef.current = false
       return
@@ -687,6 +748,7 @@ export function PageBuilderEditor() {
       previousCanvasItemsRef.current = migratedSavedCanvas
       // Mark which page this canvas belongs to
       canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      setCanvasOwnerId(`${websiteId}:${pageName}`)
       // Clear transitioning flag - content loaded successfully
       isTransitioningRef.current = false
       return
@@ -704,9 +766,10 @@ export function PageBuilderEditor() {
     previousCanvasItemsRef.current = defaultContent
     // Mark which page this canvas belongs to
     canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+    setCanvasOwnerId(`${websiteId}:${pageName}`)
     // Clear transitioning flag - content loaded successfully
     isTransitioningRef.current = false
-  }, [websiteId, pageName, journalCount, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, getPageDraft, setPageCanvas, currentWebsite, journals])
+  }, [websiteId, pageName, journalCount, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, getPageDraft, setPageCanvas, currentWebsite, journals, setCanvasOwnerId])
   
   // Auto-save canvas changes to DRAFT storage (for preview)
   // Each page has its own draft slot, separate from published state
@@ -775,8 +838,9 @@ export function PageBuilderEditor() {
       // Update previous reference and mark canvas owner
       previousCanvasItemsRef.current = canvasItems
       canvasOwnerPageRef.current = baseKey
+      setCanvasOwnerId(baseKey)
     }
-  }, [canvasItems, websiteId, pageName, setPageDraft, setCanvasItemsForRoute, pageInstance])
+  }, [canvasItems, websiteId, pageName, setPageDraft, setCanvasItemsForRoute, pageInstance, setCanvasOwnerId])
   
   const website = websites.find(w => w.id === websiteId)
   
@@ -802,10 +866,12 @@ export function PageBuilderEditor() {
         journalName={archetypeInfo?.journalName}
         pageConfig={archetypeInfo?.archetype.pageConfig}
         pageInstance={pageInstance || undefined}
+        archetype={archetypeInfo?.archetype}
         onPageInstanceChange={() => setPageInstanceRefreshKey((prev: number) => prev + 1)}
         dirtyZones={dirtyZones}
         websiteId={websiteId}
         pageName={pageName}
+        designId={currentDesignId}
       />
       
       {/* Escape Hatch - Prototype Controls (always available) */}

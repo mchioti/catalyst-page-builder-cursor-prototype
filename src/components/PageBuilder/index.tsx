@@ -83,7 +83,7 @@ import { PREFAB_SECTIONS } from './prefabSections'
 import { createDebugLogger } from '../../utils/logger'
 
 // Control logging for this file
-const DEBUG = false // Set to true to see PageBuilder canvas state
+const DEBUG = false
 const debugLog = createDebugLogger(DEBUG)
 import {
   DndContext,
@@ -113,7 +113,8 @@ import {
   Settings, 
   Check, 
   X,
-  Save
+  Save,
+  ChevronRight
 } from 'lucide-react'
 
 // Component imports
@@ -124,6 +125,7 @@ import { SchemaFormEditor } from '../Schema/SchemaFormEditor'
 import { LayoutPicker } from '../Canvas/LayoutPicker'
 import { CanvasThemeProvider } from '../Canvas/CanvasThemeProvider'
 import { LayoutRenderer } from '../Canvas/LayoutRenderer'
+import { ReplaceZoneModal, type PreserveOptions } from './ReplaceZoneModal'
 import { NotificationBell } from '../Notifications/NotificationBell'
 import { NewBadge } from '../shared/NewBadge'
 import { PublishReviewModal } from './PublishReviewModal'
@@ -143,7 +145,7 @@ import type {
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 import { GlobalSectionBar } from './GlobalSectionBar'
-import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype } from '../../stores/archetypeStore'
+import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype, resolveCanvasFromArchetype } from '../../stores/archetypeStore'
 
 // Component props interface
 interface PageBuilderProps {
@@ -170,6 +172,7 @@ interface PageBuilderProps {
   archetypeInstanceCount?: number // Count of journals using this archetype
   archetypeId?: string // Archetype ID for preview navigation
   designId?: string // Design ID for preview navigation
+  archetypeModifiedSections?: Set<string> // Sections modified in archetype (for badge)
   onSaveArchetype?: () => void // Handler for Save Archetype button
   onPageSettingsClick?: () => void // Handler for Page Settings button
   onShowMockDataChange?: (show: boolean) => void // Handler for Show Mock Data toggle
@@ -180,6 +183,7 @@ interface PageBuilderProps {
   totalZones?: number // Total number of zones
   journalName?: string // Journal name (when editing instance)
   pageInstance?: import('../../types/archetypes').PageInstance // Page Instance data for override detection
+  archetype?: import('../../types/archetypes').Archetype // The archetype this page inherits from
   onPageInstanceChange?: () => void // Callback to trigger pageInstance refresh
   dirtyZones?: Set<string> // Zones that have drifted from archetype (draft state)
   websiteId?: string // Website ID for saving published state
@@ -202,6 +206,7 @@ export function PageBuilder({
   archetypeInstanceCount = 0,
   archetypeId,
   designId,
+  archetypeModifiedSections = new Set(),
   onSaveArchetype,
   onPageSettingsClick,
   onShowMockDataChange,
@@ -211,6 +216,7 @@ export function PageBuilder({
   totalZones = 0,
   journalName: journalNameProp,
   pageInstance,
+  archetype,
   onPageInstanceChange,
   dirtyZones = new Set(),
   websiteId: websiteIdProp,
@@ -224,6 +230,104 @@ export function PageBuilder({
   // Get websiteId and pageName (from props or store)
   const websiteId = websiteIdProp || currentWebsiteId || 'catalyst-demo'
   const pageName = pageNameProp || (mockLiveSiteRoute ? mockLiveSiteRoute.replace(/^\//, '') : 'home')
+  
+  // Track modified sections for non-archetype pages
+  // NOTE: For pages using archetype system (pageInstanceMode=true), we use dirtyZones instead
+  const [modifiedSections, setModifiedSections] = React.useState<Set<string>>(new Set())
+  const baselineCanvasRef = React.useRef<CanvasItem[]>([])
+  const trackedPageKeyRef = React.useRef<string>('')
+  
+  // Get canvasOwnerId from store - tells us which page the canvas content belongs to
+  const canvasOwnerId = usePageStore((state: any) => state.canvasOwnerId)
+  
+  // Track canvas changes for the badge (only for non-archetype pages)
+  // NOTE: For pages using archetype system (pageInstanceMode=true), we use dirtyZones instead
+  // CRITICAL: Baseline must be the PUBLISHED state, not the draft-loaded canvasItems
+  // This ensures changes are tracked correctly even after navigating away and back (preview)
+  const getPageCanvas = usePageStore((state: any) => state.getPageCanvas)
+  
+  React.useEffect(() => {
+    // Skip tracking for archetype pages (they use dirtyZones instead)
+    if (pageInstanceMode) {
+      setModifiedSections(new Set())
+      return
+    }
+    
+    const currentPageKey = `${websiteId}:${pageName}`
+    
+    // Skip if canvas content belongs to a different page (stale content during navigation)
+    if (canvasOwnerId !== currentPageKey) {
+      return
+    }
+    
+    // Reset tracking when page changes - use PUBLISHED state as baseline (not canvasItems which might be draft)
+    if (trackedPageKeyRef.current !== currentPageKey) {
+      trackedPageKeyRef.current = currentPageKey
+      // CRITICAL: Get the PUBLISHED state as baseline, not the draft-loaded canvasItems
+      // This ensures we track changes against what's actually published
+      const publishedCanvas = getPageCanvas(websiteId, pageName)
+      if (publishedCanvas && publishedCanvas.length > 0) {
+        baselineCanvasRef.current = JSON.parse(JSON.stringify(publishedCanvas))
+      } else {
+        // No published state yet - this is a new page, use current canvas as baseline
+        baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasItems))
+      }
+      // Don't return early - compare immediately to detect existing draft changes
+    }
+    
+    // Compare current canvas to baseline and find modified sections
+    if (baselineCanvasRef.current.length > 0) {
+      const modified = new Set<string>()
+      
+      // Check each section in current canvas
+      canvasItems.forEach((item, index) => {
+        if (!isSection(item)) return
+        
+        const baselineItem = baselineCanvasRef.current[index]
+        if (!baselineItem || !isSection(baselineItem)) {
+          // New section or type changed
+          modified.add(item.id)
+          return
+        }
+        
+        // Compare section content (simple JSON comparison)
+        if (JSON.stringify(item) !== JSON.stringify(baselineItem)) {
+          modified.add(item.id)
+        }
+      })
+      
+      // Check if sections were removed
+      if (canvasItems.length !== baselineCanvasRef.current.length) {
+        // Mark as having changes even if we can't identify specific removed sections
+        if (canvasItems.length < baselineCanvasRef.current.length && modified.size === 0) {
+          modified.add('_removed_')
+        }
+      }
+      
+      setModifiedSections(modified)
+    } else if (canvasItems.length > 0 && baselineCanvasRef.current.length === 0) {
+      // Canvas has content but no baseline - this means there's a draft with no published version
+      // Mark all sections as modified
+      const modified = new Set<string>()
+      canvasItems.forEach(item => {
+        if (isSection(item)) {
+          modified.add(item.id)
+        }
+      })
+      setModifiedSections(modified)
+    }
+  }, [canvasItems, pageInstanceMode, websiteId, pageName, canvasOwnerId, isSection, getPageCanvas])
+  
+  // Build map of modified sections for the modal (non-archetype pages)
+  const modifiedSectionsMap = React.useMemo(() => {
+    const map = new Map<string, WidgetSection>()
+    canvasItems.forEach(item => {
+      if (isSection(item) && modifiedSections.has(item.id)) {
+        map.set(item.id, item)
+      }
+    })
+    return map
+  }, [canvasItems, modifiedSections, isSection])
   
   // Navigation for preview
   const navigate = useNavigate()
@@ -239,6 +343,41 @@ export function PageBuilder({
     return map
   }, [canvasItems])
   
+  // Build baselineSections map for comparison (archetype sections or published sections)
+  const baselineSections = React.useMemo(() => {
+    const map = new Map<string, WidgetSection>()
+    
+    if (pageInstanceMode && archetype) {
+      // For archetype mode: use archetype's sections as baseline
+      archetype.canvasItems.forEach((item: any) => {
+        if (isSection(item) && item.zoneSlug) {
+          map.set(item.zoneSlug, item)
+        }
+      })
+    } else {
+      // For simple mode: use baseline from baselineCanvasRef
+      baselineCanvasRef.current.forEach((item: any) => {
+        if (isSection(item)) {
+          // Use section id as key for non-archetype pages (no zoneSlug)
+          map.set(item.id, item)
+        }
+      })
+    }
+    
+    return map
+  }, [pageInstanceMode, archetype, isSection])
+  
+  // Build baselineSections map for simple mode (by section id, not zoneSlug)
+  const baselineSectionsForSimpleMode = React.useMemo(() => {
+    const map = new Map<string, WidgetSection>()
+    baselineCanvasRef.current.forEach((item: any) => {
+      if (isSection(item)) {
+        map.set(item.id, item)
+      }
+    })
+    return map
+  }, [isSection, modifiedSections]) // Re-compute when modifiedSections changes (means baseline may have changed)
+  
   // Helper function to navigate to live site
   const navigateToLiveSite = () => {
     const route = mockLiveSiteRoute?.replace(/^\//, '') || ''
@@ -249,42 +388,37 @@ export function PageBuilder({
     navigate(livePath)
   }
   
-  // Handle Save & Publish
+  // Handle Save & Publish - always shows modal so user can review/discard changes
   const handleSaveAndPublish = () => {
     debugLog('log', '🚀 [PageBuilder] Save & Publish clicked:', {
       pageInstanceMode,
       dirtyZonesSize: dirtyZones.size,
       dirtyZones: Array.from(dirtyZones),
+      modifiedSectionsSize: modifiedSections.size,
       showPublishModalBefore: showPublishModal
     })
     
-    // IMPORTANT: Check for dirty zones BEFORE saving, because saving might trigger
-    // a recalculation that clears dirty zones
-    const hasDirtyZones = pageInstanceMode && dirtyZones.size > 0
-    
-    // 1. Save current draft to published state
-    setPageCanvas(websiteId, pageName, canvasItems)
-    debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
-    
-    // 2. Clear draft (published now)
-    setPageDraft(websiteId, pageName, [])
-    debugLog('log', '🗑️ [PageBuilder] Cleared draft')
-    
-    // 3. If pageInstanceMode and dirtyZones exist, show modal
-    if (hasDirtyZones) {
-      debugLog('log', '📋 [PageBuilder] Showing publish modal (pageInstanceMode + dirty zones)')
-      setShowPublishModal(true)
-      debugLog('log', '✅ [PageBuilder] setShowPublishModal(true) called')
-      return
-    }
-    
-    // 4. Otherwise, publish directly and navigate to live site
-    debugLog('log', '🚀 [PageBuilder] Publishing directly (no modal needed)')
-    handlePublishDirectly()
+    // Always show the modal - user can review changes, publish, or discard
+    // DO NOT save before showing modal - let user decide in the modal
+    setShowPublishModal(true)
   }
   
   // Handle direct publish (no dirty zones or not in pageInstanceMode)
   const handlePublishDirectly = () => {
+    debugLog('log', '📋 [PageBuilder] handlePublishDirectly called')
+    
+    // Save current canvas to published state
+    setPageCanvas(websiteId, pageName, canvasItems)
+    debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
+    
+    // Clear draft
+    setPageDraft(websiteId, pageName, [])
+    debugLog('log', '🗑️ [PageBuilder] Cleared draft')
+    
+    // Reset tracking - current state is now the new baseline
+    baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasItems))
+    setModifiedSections(new Set())
+    
     // Trigger page instance refresh if in pageInstanceMode
     if (pageInstanceMode && onPageInstanceChange) {
       onPageInstanceChange()
@@ -294,8 +428,156 @@ export function PageBuilder({
     navigateToLiveSite()
   }
   
+  // Handle simple publish (for non-archetype pages from modal)
+  const handleSimplePublish = () => {
+    debugLog('log', '📋 [PageBuilder] handleSimplePublish called')
+    
+    // Save current canvas to published state
+    setPageCanvas(websiteId, pageName, canvasItems)
+    debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
+    
+    // Clear draft
+    setPageDraft(websiteId, pageName, [])
+    debugLog('log', '🗑️ [PageBuilder] Cleared draft')
+    
+    // Reset tracking - current state is now the new baseline
+    baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasItems))
+    setModifiedSections(new Set())
+    
+    // Navigate to live site
+    navigateToLiveSite()
+  }
+  
+  // Handle discard - revert to last published state
+  const handleDiscard = () => {
+    debugLog('log', '🗑️ [PageBuilder] handleDiscard called')
+    
+    // Clear draft from sessionStorage and memory
+    clearPageDraft(websiteId, pageName)
+    debugLog('log', '🗑️ [PageBuilder] Cleared draft from store')
+    
+    // Get the last published canvas (or archetype-resolved canvas for archetype pages)
+    const getPageCanvas = usePageStore.getState().getPageCanvas
+    const publishedCanvas = getPageCanvas(websiteId, pageName)
+    
+    let canvasToLoad: typeof canvasItems | null = null
+    
+    if (publishedCanvas && publishedCanvas.length > 0) {
+      canvasToLoad = publishedCanvas
+      debugLog('log', '↩️ [PageBuilder] Will revert to published state', { itemCount: publishedCanvas.length })
+    } else if (pageInstanceMode && pageInstance && archetype) {
+      // For archetype pages with no published state, resolve from archetype
+      canvasToLoad = resolveCanvasFromArchetype(archetype, pageInstance)
+      debugLog('log', '↩️ [PageBuilder] Will revert to archetype-resolved state', { itemCount: canvasToLoad?.length })
+    }
+    
+    if (canvasToLoad && canvasToLoad.length > 0) {
+      // Replace canvas with the loaded state
+      replaceCanvasItems(canvasToLoad)
+      
+      // CRITICAL: Set baseline to the canvas we're loading, not the current canvasItems
+      // (canvasItems still has the old state at this point due to async state update)
+      baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasToLoad))
+      setModifiedSections(new Set())
+      
+      // Trigger notification
+      addNotification({
+        type: 'info',
+        title: 'Changes Discarded',
+        message: 'Your changes have been reverted to the last published version.'
+      })
+    } else {
+      // No published state to revert to
+      addNotification({
+        type: 'error',
+        title: 'Cannot Discard',
+        message: 'No published version found to revert to.'
+      })
+    }
+  }
+  
+  // Handle reset entire page to archetype (preview mode - shows archetype content in editor)
+  const handleResetToArchetype = () => {
+    if (!pageInstanceMode || !archetype) {
+      debugLog('error', 'Cannot reset to archetype: not in pageInstance mode or no archetype')
+      return
+    }
+    
+    // Load pure archetype content (no overrides)
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype) // No pageInstance = no overrides
+    
+    if (archetypeCanvas && archetypeCanvas.length > 0) {
+      replaceCanvasItems(archetypeCanvas)
+      debugLog('log', '🔄 [PageBuilder] Reset to archetype (preview): loaded archetype canvas', { itemCount: archetypeCanvas.length })
+      
+      // Don't update baseline - we want the diff to show all zones as "pending reset"
+      // The baseline should stay as the original (archetype + overrides) so the diff shows changes
+      
+      addNotification({
+        type: 'info',
+        title: 'Preview: Reset to Archetype',
+        message: 'Editor shows archetype content. Use Save & Publish to confirm or Discard to revert.'
+      })
+    }
+  }
+  
+  // Handle revert a single zone to archetype (preview mode)
+  const handleRevertZoneToArchetype = (zoneSlug: string) => {
+    if (!pageInstanceMode || !archetype) {
+      debugLog('error', 'Cannot revert zone: not in pageInstance mode or no archetype')
+      return
+    }
+    
+    // Get pure archetype content
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype)
+    const archetypeSection = archetypeCanvas.find((s: any) => s.zoneSlug === zoneSlug)
+    
+    if (!archetypeSection) {
+      debugLog('error', 'Cannot revert zone: zone not found in archetype', { zoneSlug })
+      addNotification({
+        type: 'error',
+        title: 'Zone Not Found',
+        message: `Zone "${zoneSlug}" not found in archetype.`
+      })
+      return
+    }
+    
+    // Replace just that section in the current canvas
+    const updatedCanvas = canvasItems.map((section: any) => {
+      if (section.zoneSlug === zoneSlug) {
+        return archetypeSection
+      }
+      return section
+    })
+    
+    replaceCanvasItems(updatedCanvas)
+    debugLog('log', '🔄 [PageBuilder] Reverted zone to archetype (preview):', { zoneSlug })
+    
+    addNotification({
+      type: 'info',
+      title: `Preview: Zone "${zoneSlug}" Reverted`,
+      message: 'Zone shows archetype content. Use Save & Publish to confirm or Discard to revert.'
+    })
+  }
+  
+  // Helper to normalize a section for comparison (remove runtime data, keep config)
+  const normalizeForComparison = (section: WidgetSection): any => {
+    const { id, ...sectionRest } = section
+    return {
+      ...sectionRest,
+      areas: section.areas?.map(area => ({
+        ...area,
+        widgets: area.widgets?.map(widget => {
+          // Remove runtime properties like id, journalId, publications (data)
+          const { id: wId, journalId, publications, publication, ...widgetRest } = widget as any
+          return widgetRest
+        })
+      }))
+    }
+  }
+  
   // Handle publish with choices from modal
-  const handlePublishWithChoices = (choices: Map<string, 'local' | 'archetype'>, stayInEditor: boolean = false) => {
+  const handlePublishWithChoices = (choices: Map<string, 'local' | 'archetype' | 'discard'>, stayInEditor: boolean = false) => {
     debugLog('log', '📋 [PageBuilder] handlePublishWithChoices called:', {
       choices: Array.from(choices.entries()),
       stayInEditor,
@@ -343,10 +625,33 @@ export function PageBuilder({
         return
       }
       
-      if (choice === 'local') {
+      if (choice === 'discard') {
+        // Discard: Don't save the current changes - just skip this zone
+        // The zone will keep its committed state (either existing override or inherit from archetype)
+        debugLog('log', `🗑️ [PageBuilder] Discarding changes for zone ${zoneSlug} - keeping committed state`)
+        // No action needed - the committed state is preserved
+      } else if (choice === 'local') {
         // Keep Local: Create override in page instance (overrideZone automatically saves it)
-        debugLog('log', `💾 [PageBuilder] Saving zone ${zoneSlug} as local override`)
-        updatedInstance = overrideZone(updatedInstance, zoneSlug, section)
+        // BUT: If section matches archetype, we should CLEAR the override instead (no point storing redundant data)
+        const archetypeSection = updatedArchetype.canvasItems.find(
+          s => isSection(s) && s.zoneSlug === zoneSlug
+        )
+        
+        // Check if current section matches archetype (comparing without runtime data)
+        const sectionMatchesArchetype = archetypeSection && 
+          JSON.stringify(normalizeForComparison(section)) === JSON.stringify(normalizeForComparison(archetypeSection as WidgetSection))
+        
+        if (sectionMatchesArchetype) {
+          // Section matches archetype - clear override instead of saving redundant data
+          debugLog('log', `🔄 [PageBuilder] Zone ${zoneSlug} matches archetype - clearing override (resetting to inherit)`)
+          if (updatedInstance.overrides[zoneSlug]) {
+            updatedInstance = inheritZone(updatedInstance, zoneSlug)
+          }
+        } else {
+          // Section differs from archetype - save as local override
+          debugLog('log', `💾 [PageBuilder] Saving zone ${zoneSlug} as local override`)
+          updatedInstance = overrideZone(updatedInstance, zoneSlug, section)
+        }
       } else {
         // Save to Archetype: Update archetype canvas AND remove override from page instance
         debugLog('log', `📐 [PageBuilder] Promoting zone ${zoneSlug} to archetype`)
@@ -402,6 +707,12 @@ export function PageBuilder({
     }
     
     // Note: overrideZone already saves the page instance, so we don't need to save it again here
+    
+    // CRITICAL: Clear draft AND pageCanvasData for current page after publishing
+    // This ensures next edit loads from archetype+override (the source of truth), not stale caches
+    clearPageDraft(websiteId, pageName)
+    clearPageCanvas(websiteId, pageName)
+    debugLog('log', '🗑️ [PageBuilder] Cleared draft and canvas cache for current page after publishing:', { websiteId, pageName })
     
     // Trigger refresh to reload page instance
     if (onPageInstanceChange) {
@@ -535,6 +846,12 @@ export function PageBuilder({
   const [activeWidgetToolbar, setActiveWidgetToolbar] = useState<string | null>(null)
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  
+  // Replace Zone state
+  const [replaceZoneSlug, setReplaceZoneSlug] = useState<string | null>(null)
+  const [replaceSectionId, setReplaceSectionId] = useState<string | null>(null)
+  const [showReplaceZoneModal, setShowReplaceZoneModal] = useState(false)
+  const [replaceZonePreserveOptions, setReplaceZonePreserveOptions] = useState<PreserveOptions | null>(null)
   
   // Schema editing state
   const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
@@ -1897,8 +2214,157 @@ export function PageBuilder({
     setShowLayoutPicker(true)
   }
 
+  // Replace Zone: Opens confirmation modal, then layout picker to replace a section while keeping its zoneSlug
+  const handleReplaceZone = (zoneSlug: string) => {
+    // Find the section with this zoneSlug
+    const section = canvasItems.find((item: CanvasItem) => 
+      isSection(item) && (item as WidgetSection).zoneSlug === zoneSlug
+    ) as WidgetSection | undefined
+    
+    if (!section) {
+      showToast?.(`Zone "${zoneSlug}" not found`, 'error')
+      return
+    }
+    
+    debugLog('log', '🔄 [PageBuilder] handleReplaceZone called:', { zoneSlug, sectionId: section.id })
+    setReplaceZoneSlug(zoneSlug)
+    setReplaceSectionId(section.id)
+    // Show confirmation modal first (before layout picker)
+    setShowReplaceZoneModal(true)
+  }
+
+  // Handler for when user confirms in ReplaceZoneModal
+  const handleReplaceZoneConfirm = (preserveOptions: PreserveOptions) => {
+    setReplaceZonePreserveOptions(preserveOptions)
+    setShowReplaceZoneModal(false)
+    // Now show the layout picker
+    setShowLayoutPicker(true)
+  }
+
+  // Handler for when user cancels ReplaceZoneModal
+  const handleReplaceZoneCancel = () => {
+    setShowReplaceZoneModal(false)
+    setReplaceZoneSlug(null)
+    setReplaceSectionId(null)
+    setReplaceZonePreserveOptions(null)
+  }
+
   const handleSelectLayout = (layout: ContentBlockLayout) => {
-    createContentBlockWithLayout(layout)
+    if (replaceZoneSlug && replaceSectionId) {
+      // Replace Zone mode: Create new section with same zoneSlug
+      const oldSection = canvasItems.find((item: CanvasItem) => item.id === replaceSectionId) as WidgetSection | undefined
+      if (!oldSection) {
+        setShowLayoutPicker(false)
+        setReplaceZoneSlug(null)
+        setReplaceSectionId(null)
+        return
+      }
+      
+      // Collect ALL widgets from the old section (from all areas)
+      const allExistingWidgets: Widget[] = []
+      oldSection.areas?.forEach(area => {
+        if (area.widgets && area.widgets.length > 0) {
+          allExistingWidgets.push(...area.widgets)
+        }
+      })
+      
+      debugLog('log', '🔄 [PageBuilder] Collecting widgets from old section:', {
+        oldLayout: oldSection.layout,
+        widgetCount: allExistingWidgets.length,
+        widgetTypes: allExistingWidgets.map(w => w.type)
+      })
+      
+      // Create the layout structure based on selected layout
+      // Put all existing widgets in the FIRST area of the new layout
+      let areas: { id: string; name: string; widgets: Widget[] }[] = []
+      let flexConfig: WidgetSection['flexConfig'] = undefined
+      let gridConfig: WidgetSection['gridConfig'] = undefined
+      
+      switch (layout) {
+        case 'flexible':
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+          flexConfig = { direction: 'row', wrap: false, justifyContent: 'flex-start', gap: '1rem' }
+          break
+        case 'grid':
+          areas = [{ id: 'main', name: 'Grid Items', widgets: allExistingWidgets }]
+          gridConfig = { columns: 3, gap: '1rem' }
+          break
+        case 'one-column':
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+          break
+        case 'two-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'three-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'center', name: 'Center', widgets: [] },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'one-third-left':
+          areas = [
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] },
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets }
+          ]
+          break
+        case 'one-third-right':
+          areas = [
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets },
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] }
+          ]
+          break
+        default:
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+      }
+      
+      // Create new section with same zoneSlug but new layout
+      // Use preserve options from the confirmation modal
+      const preserve = replaceZonePreserveOptions || { preserveBackground: true, preservePadding: true, preserveContentMode: true }
+      
+      const newSection: WidgetSection = {
+        id: nanoid(),
+        name: oldSection.name || `${replaceZoneSlug} Section`,
+        type: 'section',
+        layout,
+        areas,
+        zoneSlug: replaceZoneSlug,
+        // Conditionally preserve properties based on user choice
+        ...(preserve.preserveBackground && oldSection.background && { background: oldSection.background }),
+        ...(preserve.preservePadding && oldSection.padding && { padding: oldSection.padding }),
+        ...(preserve.preserveContentMode && oldSection.contentMode && { contentMode: oldSection.contentMode }),
+        ...(flexConfig && { flexConfig }),
+        ...(gridConfig && { gridConfig })
+      }
+      
+      // Replace old section with new one
+      const newCanvasItems = canvasItems.map((item: CanvasItem) => 
+        item.id === replaceSectionId ? newSection : item
+      )
+      replaceCanvasItems(newCanvasItems)
+      
+      debugLog('log', '✅ [PageBuilder] Zone replaced:', { 
+        zoneSlug: replaceZoneSlug, 
+        oldLayout: oldSection.layout, 
+        newLayout: layout,
+        widgetsPreserved: allExistingWidgets.length
+      })
+      const widgetMsg = allExistingWidgets.length > 0 
+        ? ` (${allExistingWidgets.length} widget${allExistingWidgets.length !== 1 ? 's' : ''} preserved)` 
+        : ''
+      showToast?.(`Zone "${replaceZoneSlug}" layout changed to ${layout}${widgetMsg}`, 'success')
+      
+      // Reset replace zone state
+      setReplaceZoneSlug(null)
+      setReplaceSectionId(null)
+      setReplaceZonePreserveOptions(null)
+    } else {
+      // Normal Add Section mode
+      createContentBlockWithLayout(layout)
+    }
     setShowLayoutPicker(false)
   }
 
@@ -2079,13 +2545,18 @@ export function PageBuilder({
                   </button>
                 )}
                 
-                {/* Save & Publish Button - Only show when not in template edit mode and not in archetype mode */}
-                {!isTemplateEdit && !archetypeMode && (
+                {/* Save & Publish Button - Show for all modes except template edit */}
+                {!isTemplateEdit && (
                   <button
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      handleSaveAndPublish()
+                      // In archetype mode, use the onSaveArchetype callback
+                      if (archetypeMode && onSaveArchetype) {
+                        onSaveArchetype()
+                      } else {
+                        handleSaveAndPublish()
+                      }
                     }}
                     className="relative z-10 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-colors cursor-pointer"
                     type="button"
@@ -2093,6 +2564,38 @@ export function PageBuilder({
                   >
                     <Save className="w-4 h-4" />
                     Save & Publish
+                    {/* Badge showing pending changes count */}
+                    {/* For archetype mode: show archetypeModifiedSections */}
+                    {/* For page instance mode: show dirty zones count */}
+                    {/* For non-archetype pages: show modified sections count */}
+                    {(() => {
+                      // Determine badge count based on mode
+                      let badgeCount = 0
+                      let badgeTitle = ''
+                      
+                      if (archetypeMode) {
+                        badgeCount = archetypeModifiedSections.size
+                        badgeTitle = `${badgeCount} modified section${badgeCount === 1 ? '' : 's'}`
+                      } else if (pageInstanceMode) {
+                        badgeCount = dirtyZones.size
+                        badgeTitle = `${badgeCount} pending change${badgeCount === 1 ? '' : 's'}`
+                      } else {
+                        badgeCount = modifiedSections.size
+                        badgeTitle = `${badgeCount} modified section${badgeCount === 1 ? '' : 's'}`
+                      }
+                      
+                      if (badgeCount > 0) {
+                        return (
+                          <span 
+                            className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-green-600"
+                            title={badgeTitle}
+                          >
+                            {badgeCount}
+                          </span>
+                        )
+                      }
+                      return null
+                    })()}
                   </button>
                 )}
                 
@@ -2209,21 +2712,9 @@ export function PageBuilder({
               onSectionsLoad={handleTemplateSectionsLoad}
             />
             
-            {/* Page Instance Editing Context - Show inheritance header with blue background */}
-            {pageInstanceMode && !archetypeMode && (
-              <div className="mb-2 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-md px-4 py-2">
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-blue-800">
-                    Editing: <strong>{journalNameProp || 'Journal'}</strong> - Inherits from <strong>{displayArchetypeName || 'Archetype'}</strong>
-                  </div>
-                  <span className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                    {overrideCount} of {totalZones} zones overridden
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Page Instance Editing Context - Removed: Info now shown in Page Status panel */}
             
-            {/* Archetype Editing Context - Show archetype header with yellow background */}
+            {/* Archetype Editing Context - Yellow bar to indicate master template editing */}
             {archetypeMode && displayArchetypeName && (
               <div className="mb-2 flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-md px-4 py-2">
                 <div className="flex items-center gap-4">
@@ -2231,27 +2722,12 @@ export function PageBuilder({
                     Editing: <strong>{displayArchetypeName} Archetype</strong>
                   </div>
                   {archetypeInstanceCount > 0 && (
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-500">
                       Used by {archetypeInstanceCount} {archetypeInstanceCount === 1 ? 'journal' : 'journals'}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {onSaveArchetype && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onSaveArchetype()
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors border border-green-200"
-                      title="Save Archetype"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                      </svg>
-                      Save Archetype
-                    </button>
-                  )}
+                <div className="flex items-center gap-3">
                   {onShowMockDataChange && (
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input
@@ -2272,13 +2748,10 @@ export function PageBuilder({
                         e.stopPropagation()
                         handlePageSettingsClick()
                       }}
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors border border-gray-200"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white rounded-md hover:bg-gray-100 transition-colors border border-gray-200"
                       title="Page Settings"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      </svg>
+                      <Settings className="w-4 h-4" />
                       Page Settings
                     </button>
                   )}
@@ -2477,6 +2950,9 @@ export function PageBuilder({
                           pageInstanceMode={pageInstanceMode}
                           pageInstance={pageInstance}
                           onPageInstanceChange={onPageInstanceChange}
+                          // Replace Zone feature
+                          canReplaceZone={true}
+                          onReplaceZone={handleReplaceZone}
                         />
                   </div>
                 </SortableContext>
@@ -2502,12 +2978,24 @@ export function PageBuilder({
           </div>
         </div>
 
-      {/* Right Sidebar - Properties Panel - Only show when widget is selected or Page Settings is open */}
-      {(selectedWidget || showPageSettings) ? (
-        <div className="w-80 transition-all duration-300 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen">
-          <div className="border-b border-slate-200 p-4 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-800">Properties</h2>
-          </div>
+      {/* Right Sidebar - Properties Panel - Always visible, expands for complex widgets */}
+      <div className={`${isPropertiesPanelExpanded ? 'w-[1000px]' : 'w-80'} transition-all duration-300 bg-slate-100 shadow-sm border-l border-slate-200 flex flex-col sticky top-0 h-screen`}>
+        <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-800">
+            {!selectedWidget && !showPageSettings ? 'Page Status' : 'Properties'}
+          </h2>
+          {/* Collapse button when expanded */}
+          {isPropertiesPanelExpanded && (
+            <button
+              onClick={() => setIsPropertiesPanelExpanded(false)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
+              title="Collapse panel"
+            >
+              <ChevronRight className="w-4 h-4" />
+              Collapse
+            </button>
+          )}
+        </div>
           <div 
             className="flex-1 overflow-y-auto" 
             style={{ 
@@ -2532,16 +3020,41 @@ export function PageBuilder({
               footerEditMode={footerOverrideMode}
               pageConfig={archetypeMode ? pageConfig : undefined}
               onPageConfigChange={archetypeMode ? onPageConfigChange : undefined}
+              pageInstance={pageInstance}
+              archetype={archetype}
+              archetypeName={displayArchetypeName}
+              dirtyZones={dirtyZones}
+              onPageInstanceChange={onPageInstanceChange}
+              designId={designId}
+              onResetToArchetype={handleResetToArchetype}
+              onRevertZoneToArchetype={handleRevertZoneToArchetype}
             />
           </div>
         </div>
-      ) : null}
+
+      {/* Replace Zone Confirmation Modal */}
+      {showReplaceZoneModal && replaceZoneSlug && replaceSectionId && (
+        <ReplaceZoneModal
+          zoneSlug={replaceZoneSlug}
+          section={canvasItems.find((item: CanvasItem) => item.id === replaceSectionId) as WidgetSection}
+          onConfirm={handleReplaceZoneConfirm}
+          onCancel={handleReplaceZoneCancel}
+        />
+      )}
 
       {/* Layout Picker Modal */}
       {showLayoutPicker && (
         <LayoutPicker
           onSelectLayout={handleSelectLayout}
-          onClose={() => setShowLayoutPicker(false)}
+          onClose={() => {
+            setShowLayoutPicker(false)
+            // Reset replace zone state when closing without selection
+            setReplaceZoneSlug(null)
+            setReplaceSectionId(null)
+            setReplaceZonePreserveOptions(null)
+          }}
+          title={replaceZoneSlug ? 'Choose New Layout' : undefined}
+          subtitle={replaceZoneSlug ? `Replacing layout for "${replaceZoneSlug}" zone` : undefined}
         />
       )}
       
@@ -2582,7 +3095,7 @@ export function PageBuilder({
         ) : null}
       </DragOverlay>
       
-      {/* Publish Review Modal - Only show when pageInstanceMode and modal is open */}
+      {/* Publish Review Modal - Archetype mode (with local/archetype choices) */}
       {showPublishModal && pageInstanceMode && (
         <PublishReviewModal
           isOpen={true}
@@ -2592,10 +3105,33 @@ export function PageBuilder({
           }}
           dirtyZones={dirtyZones}
           zoneSections={zoneSections}
+          baselineSections={baselineSections}
+          archetypeSections={baselineSections}
           onPublish={handlePublishWithChoices}
           archetypeName={displayArchetypeName}
           archetypeId={pageInstance?.templateId}
           journalName={journalNameProp}
+          mode="archetype"
+          onDiscard={handleDiscard}
+        />
+      )}
+      
+      {/* Publish Review Modal - Simple mode (for non-archetype pages) */}
+      {showPublishModal && !pageInstanceMode && (
+        <PublishReviewModal
+          isOpen={true}
+          onClose={() => {
+            debugLog('log', '📋 [PageBuilder] Modal onClose called (simple mode)')
+            setShowPublishModal(false)
+          }}
+          dirtyZones={modifiedSections}
+          zoneSections={modifiedSectionsMap}
+          baselineSections={baselineSectionsForSimpleMode}
+          onPublish={() => {}} // Not used in simple mode
+          mode="simple"
+          onSimplePublish={handleSimplePublish}
+          pageName={pageName === 'home' ? 'Homepage' : pageName}
+          onDiscard={handleDiscard}
         />
       )}
     </DndContext>

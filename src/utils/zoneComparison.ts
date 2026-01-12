@@ -116,29 +116,24 @@ export function compareSectionWithArchetype(
             return true
           }
 
-          // Compare widget properties (simplified - just check if structure differs)
-          // For more thorough comparison, we'd need to deep compare all properties
-          // Note: We don't compare journalId/journal-in-context here - that's a runtime parameter
-          // from page context, not part of the widget's stored configuration
-          const currentWidgetStr = JSON.stringify({
-            type: currentWidget.type,
-            ...(currentWidget as any).text && { text: (currentWidget as any).text },
-            ...(currentWidget as any).contentSource && { contentSource: (currentWidget as any).contentSource },
-            ...(currentWidget as any).maxItems && { maxItems: (currentWidget as any).maxItems },
-          })
-          const archetypeWidgetStr = JSON.stringify({
-            type: archetypeWidget.type,
-            ...(archetypeWidget as any).text && { text: (archetypeWidget as any).text },
-            ...(archetypeWidget as any).contentSource && { contentSource: (archetypeWidget as any).contentSource },
-            ...(archetypeWidget as any).maxItems && { maxItems: (archetypeWidget as any).maxItems },
-          })
+          // Compare widget properties - do a thorough comparison
+          // Exclude runtime properties like id and journalId (context-dependent)
+          const normalizeWidget = (widget: any) => {
+            const { id, journalId, ...rest } = widget
+            return rest
+          }
+          
+          const currentWidgetStr = JSON.stringify(normalizeWidget(currentWidget))
+          const archetypeWidgetStr = JSON.stringify(normalizeWidget(archetypeWidget))
 
           if (currentWidgetStr !== archetypeWidgetStr) {
             debugLog('log', `🔴 [compareSection] Zone ${zoneSlug}: Widget ${j} in area ${i} differs`, {
               area: i,
               widgetIndex: j,
-              current: currentWidgetStr,
-              archetype: archetypeWidgetStr
+              widgetType: currentWidget.type,
+              // Log a hint about what changed
+              currentLength: currentWidgetStr.length,
+              archetypeLength: archetypeWidgetStr.length
             })
             return true
           } else {
@@ -234,6 +229,308 @@ export function getDirtyZones(
   })
 
   return dirtyZones
+}
+
+/**
+ * Change description for displaying what changed in a section
+ */
+export interface ChangeDescription {
+  type: 'widget-added' | 'widget-removed' | 'widget-modified' | 'widget-reordered' | 'section-property' | 'section-styling' | 'section-reordered'
+  widgetType?: string
+  widgetName?: string
+  property?: string
+  oldValue?: any
+  newValue?: any
+  description: string
+}
+
+/**
+ * Get detailed description of what changed between current and archetype section
+ * @param currentSection Current section state
+ * @param archetypeSection Archetype section state
+ * @returns Array of change descriptions
+ */
+export function getSectionChanges(
+  currentSection: WidgetSection,
+  archetypeSection: WidgetSection
+): ChangeDescription[] {
+  const changes: ChangeDescription[] = []
+  const zoneSlug = currentSection.zoneSlug || 'unknown'
+
+  // Compare section-level properties
+  if (currentSection.name !== archetypeSection.name) {
+    changes.push({
+      type: 'section-property',
+      property: 'name',
+      oldValue: archetypeSection.name,
+      newValue: currentSection.name,
+      description: `Section name changed from "${archetypeSection.name}" to "${currentSection.name}"`
+    })
+  }
+
+  if (currentSection.layout !== archetypeSection.layout) {
+    changes.push({
+      type: 'section-property',
+      property: 'layout',
+      oldValue: archetypeSection.layout,
+      newValue: currentSection.layout,
+      description: `Layout changed from "${archetypeSection.layout}" to "${currentSection.layout}"`
+    })
+  }
+
+  // Compare styling
+  const currentStyling = currentSection.styling || {}
+  const archetypeStyling = archetypeSection.styling || {}
+  if (JSON.stringify(currentStyling) !== JSON.stringify(archetypeStyling)) {
+    // Find which styling properties changed
+    const allKeys = new Set([...Object.keys(currentStyling), ...Object.keys(archetypeStyling)])
+    allKeys.forEach(key => {
+      if (JSON.stringify((currentStyling as any)[key]) !== JSON.stringify((archetypeStyling as any)[key])) {
+        changes.push({
+          type: 'section-styling',
+          property: key,
+          oldValue: (archetypeStyling as any)[key],
+          newValue: (currentStyling as any)[key],
+          description: `Section ${key} changed`
+        })
+      }
+    })
+  }
+
+  // Compare background
+  const currentBg = currentSection.background || {}
+  const archetypeBg = archetypeSection.background || {}
+  if (JSON.stringify(currentBg) !== JSON.stringify(archetypeBg)) {
+    changes.push({
+      type: 'section-styling',
+      property: 'background',
+      description: 'Section background changed'
+    })
+  }
+
+  // Compare widgets in areas
+  const currentAreas = currentSection.areas || []
+  const archetypeAreas = archetypeSection.areas || []
+
+  // Build a map of widgets by type for comparison
+  const getWidgetsFromAreas = (areas: any[]) => {
+    const widgets: any[] = []
+    areas.forEach(area => {
+      (area.widgets || []).forEach((w: any) => widgets.push(w))
+    })
+    return widgets
+  }
+
+  const currentWidgets = getWidgetsFromAreas(currentAreas)
+  const archetypeWidgets = getWidgetsFromAreas(archetypeAreas)
+
+  // Check for added/removed widgets by comparing counts per type
+  const currentWidgetsByType = new Map<string, any[]>()
+  const archetypeWidgetsByType = new Map<string, any[]>()
+
+  currentWidgets.forEach(w => {
+    const type = w.type || 'unknown'
+    if (!currentWidgetsByType.has(type)) currentWidgetsByType.set(type, [])
+    currentWidgetsByType.get(type)!.push(w)
+  })
+
+  archetypeWidgets.forEach(w => {
+    const type = w.type || 'unknown'
+    if (!archetypeWidgetsByType.has(type)) archetypeWidgetsByType.set(type, [])
+    archetypeWidgetsByType.get(type)!.push(w)
+  })
+
+  // Detect added widgets
+  currentWidgetsByType.forEach((widgets, type) => {
+    const archetypeCount = archetypeWidgetsByType.get(type)?.length || 0
+    if (widgets.length > archetypeCount) {
+      const addedCount = widgets.length - archetypeCount
+      changes.push({
+        type: 'widget-added',
+        widgetType: type,
+        description: `${addedCount} ${type} widget${addedCount > 1 ? 's' : ''} added`
+      })
+    }
+  })
+
+  // Detect removed widgets
+  archetypeWidgetsByType.forEach((widgets, type) => {
+    const currentCount = currentWidgetsByType.get(type)?.length || 0
+    if (widgets.length > currentCount) {
+      const removedCount = widgets.length - currentCount
+      changes.push({
+        type: 'widget-removed',
+        widgetType: type,
+        description: `${removedCount} ${type} widget${removedCount > 1 ? 's' : ''} removed`
+      })
+    }
+  })
+
+  // Detect widget order changes
+  // Compare the overall order of widgets (by type sequence)
+  if (currentWidgets.length === archetypeWidgets.length && currentWidgets.length > 1) {
+    const currentTypeSequence = currentWidgets.map(w => w.type).join(',')
+    const archetypeTypeSequence = archetypeWidgets.map(w => w.type).join(',')
+    
+    if (currentTypeSequence !== archetypeTypeSequence) {
+      // Types are in different order - widgets were reordered
+      changes.push({
+        type: 'widget-reordered',
+        description: 'Widgets reordered'
+      })
+    } else {
+      // Same type sequence - check if widgets of same type were reordered among themselves
+      // Create a signature for each widget (excluding id and journalId)
+      const getWidgetSignature = (w: any) => {
+        const { id, journalId, ...rest } = w
+        return JSON.stringify(rest)
+      }
+      
+      const currentSignatures = currentWidgets.map(getWidgetSignature)
+      const archetypeSignatures = archetypeWidgets.map(getWidgetSignature)
+      
+      // Check if all signatures exist in both but in different positions
+      const currentSet = new Set(currentSignatures)
+      const archetypeSet = new Set(archetypeSignatures)
+      
+      // If same widgets (by content) but different order
+      if (currentSet.size === archetypeSet.size && 
+          [...currentSet].every(sig => archetypeSet.has(sig)) &&
+          currentSignatures.join('|||') !== archetypeSignatures.join('|||')) {
+        changes.push({
+          type: 'widget-reordered',
+          description: 'Widgets reordered'
+        })
+      }
+    }
+  }
+
+  // Detect modified widgets (same count but different content)
+  const normalizeWidget = (widget: any) => {
+    const { id, journalId, ...rest } = widget
+    return rest
+  }
+
+  currentWidgetsByType.forEach((currentWidgetsOfType, type) => {
+    const archetypeWidgetsOfType = archetypeWidgetsByType.get(type) || []
+    
+    // Only compare if counts match (otherwise it's add/remove, not modify)
+    if (currentWidgetsOfType.length === archetypeWidgetsOfType.length) {
+      currentWidgetsOfType.forEach((currentWidget, index) => {
+        const archetypeWidget = archetypeWidgetsOfType[index]
+        if (archetypeWidget) {
+          const currentStr = JSON.stringify(normalizeWidget(currentWidget))
+          const archetypeStr = JSON.stringify(normalizeWidget(archetypeWidget))
+          
+          if (currentStr !== archetypeStr) {
+            // Try to identify what changed
+            const currentNorm = normalizeWidget(currentWidget)
+            const archetypeNorm = normalizeWidget(archetypeWidget)
+            const changedProps: string[] = []
+            
+            Object.keys(currentNorm).forEach(key => {
+              if (JSON.stringify(currentNorm[key]) !== JSON.stringify(archetypeNorm[key])) {
+                changedProps.push(key)
+              }
+            })
+            
+            changes.push({
+              type: 'widget-modified',
+              widgetType: type,
+              widgetName: currentWidget.name || type,
+              property: changedProps.join(', '),
+              description: changedProps.length > 0 
+                ? `${type} widget: ${changedProps.join(', ')} modified`
+                : `${type} widget properties modified`
+            })
+          }
+        }
+      })
+    }
+  })
+
+  return changes
+}
+
+/**
+ * Position change info for a section
+ */
+export interface PositionChange {
+  sectionId: string
+  sectionName: string
+  oldPosition: number
+  newPosition: number
+  direction: 'up' | 'down' | 'none'
+}
+
+/**
+ * Get position changes for each section between current and baseline canvas
+ * @param currentCanvas Current canvas items
+ * @param baselineCanvas Baseline canvas items (archetype or published)
+ * @returns Map of sectionId -> PositionChange
+ */
+export function getSectionPositionChanges(
+  currentCanvas: WidgetSection[],
+  baselineCanvas: WidgetSection[]
+): Map<string, PositionChange> {
+  const positionChanges = new Map<string, PositionChange>()
+  
+  // Get zone slugs or section ids in order
+  const currentOrder = currentCanvas
+    .filter(s => s.zoneSlug || s.id)
+    .map(s => ({ id: s.zoneSlug || s.id, name: s.name }))
+  
+  const baselineOrder = baselineCanvas
+    .filter(s => s.zoneSlug || s.id)
+    .map(s => ({ id: s.zoneSlug || s.id, name: s.name }))
+  
+  // Create a map of baseline positions
+  const baselinePositions = new Map<string, number>()
+  baselineOrder.forEach((item, idx) => {
+    baselinePositions.set(item.id, idx + 1) // 1-based position
+  })
+  
+  // Check each current section's position
+  currentOrder.forEach((item, newIdx) => {
+    const newPosition = newIdx + 1 // 1-based
+    const oldPosition = baselinePositions.get(item.id)
+    
+    if (oldPosition !== undefined && oldPosition !== newPosition) {
+      positionChanges.set(item.id, {
+        sectionId: item.id,
+        sectionName: item.name,
+        oldPosition,
+        newPosition,
+        direction: newPosition < oldPosition ? 'up' : 'down'
+      })
+    }
+  })
+  
+  return positionChanges
+}
+
+/**
+ * @deprecated Use getSectionPositionChanges instead for per-section position info
+ * Detect section order changes between current and baseline canvas
+ */
+export function getSectionOrderChanges(
+  currentCanvas: WidgetSection[],
+  baselineCanvas: WidgetSection[]
+): ChangeDescription[] {
+  const changes: ChangeDescription[] = []
+  const positionChanges = getSectionPositionChanges(currentCanvas, baselineCanvas)
+  
+  if (positionChanges.size > 0) {
+    const movedSections = Array.from(positionChanges.values()).map(p => p.sectionName)
+    changes.push({
+      type: 'section-reordered',
+      description: movedSections.length > 0 
+        ? `Sections reordered: ${movedSections.slice(0, 3).join(', ')}${movedSections.length > 3 ? ` +${movedSections.length - 3} more` : ''}`
+        : 'Sections reordered'
+    })
+  }
+  
+  return changes
 }
 
 /**

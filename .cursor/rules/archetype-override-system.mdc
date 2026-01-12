@@ -1,0 +1,190 @@
+---
+description: Guidelines for working with the archetype/page instance inheritance system and zone overrides
+globs: ["src/**/*.tsx", "src/**/*.ts"]
+alwaysApply: false
+---
+
+# Rule: Archetype & Page Instance Override System
+
+## Architecture Overview
+
+This codebase implements a **master template inheritance system** where:
+- **Archetypes** are master templates (e.g., "Modern Journal Home") that define default content for zones
+- **Page Instances** inherit from archetypes and can override specific zones locally
+- Changes to archetypes propagate to all inheriting pages (unless those zones have local overrides)
+
+```
+Archetype (Master Template)
+  └── zones: { hero: [...], content: [...], sidebar: [...] }
+  
+PageInstance (Individual Page)
+  └── archetypeId: "modern-journal-home"
+  └── overrides: { hero: [...] }  // Only overridden zones stored
+  └── overrideHistory: { hero: [{ snapshot, description, timestamp }] }
+```
+
+## Key Concepts
+
+### Zone-Based Inheritance
+- Pages inherit ALL zones from their archetype by default
+- Only overridden zones are stored in `PageInstance.overrides`
+- `resolveCanvasFromArchetype()` merges archetype zones + local overrides
+
+### Override History
+Each zone tracks its change history for undo/revert functionality:
+
+```typescript
+interface OverrideHistoryEntry {
+  snapshot: WidgetSection[]  // State at time of override
+  description: string        // Human-readable change description
+  timestamp: number
+}
+
+interface PageInstance {
+  overrides: { [zoneSlug: string]: WidgetSection[] }
+  overrideHistory: { [zoneSlug: string]: { entries: OverrideHistoryEntry[] } }
+}
+```
+
+## Critical: Dirty Zone Calculation
+
+### ❌ WRONG: Compare against raw archetype
+```typescript
+// BAD - will flag committed local changes as "dirty" again
+const dirtyZones = compareSections(currentCanvas, archetype.zones)
+```
+
+### ✅ CORRECT: Compare against committed state (archetype + overrides)
+```typescript
+// GOOD - only new changes are flagged as dirty
+const committedState = resolveCanvasFromArchetype(pageInstance)
+const dirtyZones = compareSections(currentCanvas, committedState)
+```
+
+This prevents the system from re-asking about changes that were already saved as local overrides.
+
+## Canvas Ownership Pattern
+
+### The Problem
+When navigating between pages, stale canvas content from the previous page can pollute the editor, causing:
+- Wrong content displayed
+- Changes saved to wrong page
+- False "unsaved changes" indicators
+
+### The Solution: `canvasOwnerId`
+
+```typescript
+// In pageStore.ts
+canvasOwnerId: string | null  // Tracks which page owns current canvasItems
+
+// In PageBuilderEditor - set when loading content
+setCanvasOwnerId(`${websiteId}:${pageName}`)
+
+// In PageBuilder - only track changes for owned content
+const currentOwnerId = `${websiteId}:${pageName}`
+if (canvasOwnerId !== currentOwnerId) {
+  return  // Don't track changes for stale content
+}
+```
+
+### Lifecycle Hooks
+
+Use `useLayoutEffect` (not `useEffect`) for synchronous canvas clearing on page switch:
+
+```typescript
+// Clear stale content BEFORE render
+useLayoutEffect(() => {
+  if (isPageSwitch) {
+    setCanvasItems([])  // Synchronous clear
+    setCanvasOwnerId(null)
+    isTransitioningRef.current = true
+  }
+}, [pageKey])
+```
+
+## Draft Management
+
+### Storage Hierarchy (Priority Order)
+1. `pageDraftData` (sessionStorage + in-memory) - Unsaved edits
+2. `pageCanvasData` (in-memory) - Last published state
+3. `PageInstance` resolved from archetype - Committed overrides
+4. Raw archetype zones - Default content
+
+### Critical: Clear Drafts When Propagating Archetype Changes
+
+When saving an archetype or promoting content to archetype:
+
+```typescript
+// Clear drafts for ALL affected pages so they pick up new archetype content
+affectedPages.forEach(page => {
+  clearPageDraft(page.websiteId, page.pageName)
+  clearPageCanvas(page.websiteId, page.pageName)
+})
+```
+
+Without this, pages with existing drafts won't see archetype updates.
+
+## Key Store Functions
+
+### archetypeStore.ts
+- `resolveCanvasFromArchetype(pageInstance)` - Merge archetype + overrides
+- `overrideZone(pageInstanceId, zoneSlug, sections, description)` - Save local override
+- `inheritZone(pageInstanceId, zoneSlug)` - Revert zone to archetype
+- `undoZoneOverride(pageInstanceId, zoneSlug)` - Undo last change
+- `resetPageToArchetype(pageInstanceId)` - Clear all overrides
+
+### pageStore.ts
+- `setCanvasOwnerId(ownerId)` - Track canvas ownership
+- `clearPageDraft(websiteId, pageName)` - Clear draft data
+- `clearPageCanvas(websiteId, pageName)` - Clear published cache
+
+## Publish Flow
+
+When user clicks "Save & Publish":
+
+1. **Calculate dirty zones** (compare current vs committed state)
+2. **Show PublishReviewModal** with choices per zone:
+   - "Keep Local" → `overrideZone()` saves to PageInstance
+   - "Push to Archetype" → Updates archetype, clears override
+3. **Clear caches** after publish:
+   ```typescript
+   clearPageDraft(websiteId, pageName)
+   clearPageCanvas(websiteId, pageName)
+   ```
+
+## Common Pitfalls
+
+### 1. Race Conditions on Navigation
+- Always use `isTransitioningRef` to block draft saves during page switch
+- Clear canvas synchronously with `useLayoutEffect`
+
+### 2. Stale Content Detection
+- Don't use content heuristics (e.g., "does this look like journal content?")
+- Use explicit `canvasOwnerId` matching instead
+
+### 3. Forgetting to Clear Caches
+- After archetype save → clear all inheriting pages' drafts
+- After local override save → clear that page's draft AND pageCanvasData
+
+### 4. Comparing Against Wrong Baseline
+- For "dirty" detection: compare against committed state (archetype + overrides)
+- For "promote to archetype": compare against raw archetype zones
+
+## Key Files
+- `src/stores/archetypeStore.ts` - Archetype/PageInstance CRUD and resolution
+- `src/stores/pageStore.ts` - Canvas state, drafts, ownership tracking
+- `src/components/PageBuilderEditor/index.tsx` - Page loading and ownership
+- `src/components/PageBuilder/index.tsx` - Editing and publish flow
+- `src/utils/zoneComparison.ts` - Dirty zone detection
+- `src/types/archetypes.ts` - Type definitions
+
+## Debug Logging
+Enable debug mode in key files when troubleshooting:
+```typescript
+const DEBUG = true  // In PageBuilderEditor, PageBuilder, zoneComparison
+```
+
+Look for:
+- `[PageBuilderEditor]` - Content loading decisions
+- `[PageBuilder]` - Change tracking and publish flow
+- `[archetypeStore]` - Override saves and resolutions

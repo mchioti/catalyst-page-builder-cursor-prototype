@@ -36,6 +36,9 @@ interface LayoutRendererProps {
   pageInstanceMode?: boolean
   pageInstance?: import('../../types/archetypes').PageInstance
   onPageInstanceChange?: () => void
+  // Replace Zone feature
+  canReplaceZone?: boolean
+  onReplaceZone?: (zoneSlug: string) => void
 }
 
 export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
@@ -63,7 +66,10 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   pageConfig,
   pageInstanceMode = false,
   pageInstance,
-  onPageInstanceChange
+  onPageInstanceChange,
+  // Replace Zone feature
+  canReplaceZone = false,
+  onReplaceZone
 }) => {
   
   // If pageConfig is provided and layout is not full_width, use PageLayoutWrapper
@@ -99,6 +105,9 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         pageInstanceMode={pageInstanceMode}
         pageInstance={pageInstance}
         onPageInstanceChange={onPageInstanceChange}
+        // Replace Zone feature
+        canReplaceZone={canReplaceZone}
+        onReplaceZone={onReplaceZone}
       />
     )
   }
@@ -178,6 +187,8 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 showMockData={showMockData}
                 pageInstanceMode={pageInstanceMode}
                 pageInstance={pageInstance}
+                canReplaceZone={canReplaceZone}
+                onReplaceZone={onReplaceZone}
               />
               
               {/* Add Section Button Below */}

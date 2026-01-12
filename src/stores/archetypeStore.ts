@@ -5,7 +5,7 @@
  * Page instances are stored separately: pageInstances[websiteId:pageId]
  */
 
-import type { Archetype, PageInstance } from '../types/archetypes'
+import type { Archetype, PageInstance, OverrideHistoryEntry } from '../types/archetypes'
 import type { WidgetSection } from '../types/widgets'
 import { createDebugLogger } from '../utils/logger'
 
@@ -205,13 +205,120 @@ export function getPagesUsingArchetype(archetypeId: string): Array<{ websiteId: 
 /**
  * Override a zone in a Page Instance
  * Creates or updates the override for the specified zone
+ * Maintains history for undo functionality
  */
-export function overrideZone(instance: PageInstance, zoneSlug: string, section: WidgetSection): PageInstance {
+export function overrideZone(
+  instance: PageInstance, 
+  zoneSlug: string, 
+  section: WidgetSection,
+  description?: string // Optional description for history
+): PageInstance {
+  debugLog('log', '💾 [overrideZone] Saving override:', {
+    instanceId: `${instance.websiteId}:${instance.pageId}`,
+    zoneSlug,
+    sectionName: section.name,
+    widgetCount: section.areas?.reduce((sum, a) => sum + (a.widgets?.length || 0), 0) || 0,
+    existingOverrides: Object.keys(instance.overrides)
+  })
+  
+  const now = new Date()
+  const existingOverride = instance.overrides[zoneSlug]
+  const existingHistory = instance.overrideHistory?.[zoneSlug]
+  
+  // Build updated history
+  let newHistory = existingHistory?.history || []
+  if (existingOverride) {
+    // Push current override to history before replacing it
+    newHistory = [
+      ...newHistory,
+      {
+        timestamp: existingHistory?.committedAt || instance.updatedAt,
+        section: existingOverride,
+        description: undefined // Previous version
+      }
+    ]
+  }
+  
   const updated: PageInstance = {
     ...instance,
     overrides: {
       ...instance.overrides,
       [zoneSlug]: section
+    },
+    overrideHistory: {
+      ...instance.overrideHistory,
+      [zoneSlug]: {
+        committedAt: now,
+        history: newHistory
+      }
+    },
+    updatedAt: now
+  }
+  savePageInstance(updated)
+  
+  debugLog('log', '✅ [overrideZone] Override saved to localStorage:', {
+    instanceId: `${updated.websiteId}:${updated.pageId}`,
+    updatedOverrides: Object.keys(updated.overrides)
+  })
+  
+  return updated
+}
+
+/**
+ * Remove an override from a Page Instance (revert to archetype)
+ * Also clears the history for that zone
+ */
+export function inheritZone(instance: PageInstance, zoneSlug: string): PageInstance {
+  // Remove from overrides
+  const newOverrides = Object.fromEntries(
+    Object.entries(instance.overrides).filter(([key]) => key !== zoneSlug)
+  )
+  
+  // Remove from history
+  const newHistory = instance.overrideHistory 
+    ? Object.fromEntries(
+        Object.entries(instance.overrideHistory).filter(([key]) => key !== zoneSlug)
+      )
+    : undefined
+  
+  const updated: PageInstance = {
+    ...instance,
+    overrides: newOverrides,
+    overrideHistory: Object.keys(newHistory || {}).length > 0 ? newHistory : undefined,
+    updatedAt: new Date()
+  }
+  savePageInstance(updated)
+  return updated
+}
+
+/**
+ * Undo the last change to a zone (restore previous local version)
+ * Returns null if there's no history to undo
+ */
+export function undoZoneOverride(instance: PageInstance, zoneSlug: string): PageInstance | null {
+  const history = instance.overrideHistory?.[zoneSlug]?.history
+  
+  if (!history || history.length === 0) {
+    debugLog('log', `[undoZoneOverride] No history to undo for zone ${zoneSlug}`)
+    return null
+  }
+  
+  // Pop the last item from history and make it the current override
+  const previousVersions = [...history]
+  const lastVersion = previousVersions.pop()!
+  
+  const updated: PageInstance = {
+    ...instance,
+    overrides: {
+      ...instance.overrides,
+      [zoneSlug]: lastVersion.section
+    },
+    overrideHistory: {
+      ...instance.overrideHistory,
+      [zoneSlug]: {
+        committedAt: lastVersion.timestamp,
+        history: previousVersions
+      }
     },
     updatedAt: new Date()
   }
@@ -220,18 +327,32 @@ export function overrideZone(instance: PageInstance, zoneSlug: string, section: 
 }
 
 /**
- * Remove an override from a Page Instance (revert to archetype)
+ * Reset all overrides (revert entire page to archetype)
  */
-export function inheritZone(instance: PageInstance, zoneSlug: string): PageInstance {
+export function resetPageToArchetype(instance: PageInstance): PageInstance {
   const updated: PageInstance = {
     ...instance,
-    overrides: Object.fromEntries(
-      Object.entries(instance.overrides).filter(([key]) => key !== zoneSlug)
-    ),
+    overrides: {},
+    overrideHistory: undefined,
     updatedAt: new Date()
   }
   savePageInstance(updated)
   return updated
+}
+
+/**
+ * Get the history for a specific zone's override
+ */
+export function getZoneOverrideHistory(instance: PageInstance, zoneSlug: string) {
+  return instance.overrideHistory?.[zoneSlug] || null
+}
+
+/**
+ * Check if a zone has history that can be undone
+ */
+export function canUndoZoneOverride(instance: PageInstance, zoneSlug: string): boolean {
+  const history = instance.overrideHistory?.[zoneSlug]?.history
+  return !!(history && history.length > 0)
 }
 
 /**
@@ -345,12 +466,20 @@ export function resolveCanvasFromArchetype(
   archetype: Archetype,
   instance?: PageInstance
 ): WidgetSection[] {
+  debugLog('log', '🔄 [resolveCanvasFromArchetype] Starting resolution:', {
+    archetypeId: archetype.id,
+    archetypeSections: archetype.canvasItems.map(s => ({ name: s.name, zoneSlug: s.zoneSlug })),
+    instanceId: instance ? `${instance.websiteId}:${instance.pageId}` : 'none',
+    instanceOverrides: instance ? Object.keys(instance.overrides) : []
+  })
+  
   const resolved: WidgetSection[] = []
   const overrideZoneSlugs = instance ? new Set(Object.keys(instance.overrides)) : new Set()
   
   for (const section of archetype.canvasItems) {
     if (!section.zoneSlug) {
       // Section without zone slug - include as-is (legacy support)
+      debugLog('log', '  ↳ Section without zoneSlug (legacy):', section.name)
       resolved.push(migrateSection(section))
       continue
     }
@@ -358,12 +487,28 @@ export function resolveCanvasFromArchetype(
     // Check if this zone is overridden
     if (overrideZoneSlugs.has(section.zoneSlug)) {
       // Use override from instance (also migrate it)
-      resolved.push(migrateSection(instance!.overrides[section.zoneSlug]))
+      const overrideSection = instance!.overrides[section.zoneSlug]
+      debugLog('log', '  ↳ Using OVERRIDE for zone:', {
+        zoneSlug: section.zoneSlug,
+        archetypeSectionName: section.name,
+        overrideSectionName: overrideSection.name,
+        overrideWidgetCount: overrideSection.areas?.reduce((sum, a) => sum + (a.widgets?.length || 0), 0) || 0
+      })
+      resolved.push(migrateSection(overrideSection))
     } else {
       // Use archetype section (migrate it)
+      debugLog('log', '  ↳ Using ARCHETYPE for zone:', {
+        zoneSlug: section.zoneSlug,
+        sectionName: section.name
+      })
       resolved.push(migrateSection(section))
     }
   }
+  
+  debugLog('log', '✅ [resolveCanvasFromArchetype] Resolution complete:', {
+    resolvedCount: resolved.length,
+    resolvedSections: resolved.map(s => s.name)
+  })
   
   return resolved
 }

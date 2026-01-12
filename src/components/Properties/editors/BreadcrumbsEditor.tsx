@@ -22,6 +22,9 @@ interface BreadcrumbsEditorProps {
   updateWidget: (updates: Partial<Widget>) => void
   isExpanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
+  // Optional inheritance info (passed from parent)
+  pageInstance?: any
+  parentZoneSlug?: string
 }
 
 /**
@@ -260,7 +263,7 @@ function BreadcrumbsTips() {
 /**
  * BreadcrumbsEditor - Full property editor for Breadcrumbs widgets
  */
-export function BreadcrumbsEditor({ widget, updateWidget, isExpanded = false, onExpandedChange }: BreadcrumbsEditorProps) {
+export function BreadcrumbsEditor({ widget, updateWidget, isExpanded = false, onExpandedChange, pageInstance, parentZoneSlug }: BreadcrumbsEditorProps) {
   const [localExpanded, setLocalExpanded] = useState(false)
   const expanded = onExpandedChange ? isExpanded : localExpanded
   const setExpanded = onExpandedChange || setLocalExpanded
@@ -334,6 +337,30 @@ export function BreadcrumbsEditor({ widget, updateWidget, isExpanded = false, on
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
               <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">Breadcrumbs</span>
             </div>
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget ID</span>
+              <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{widget.id}</p>
+            </div>
+            {/* Inheritance Status for Breadcrumbs Widget */}
+            {pageInstance && parentZoneSlug && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                  {pageInstance.overrides?.[parentZoneSlug] ? (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                      Local (via zone)
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
+                      Inherited
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Zone: <code className="font-mono bg-white px-1 rounded">{parentZoneSlug}</code>
+                </p>
+              </div>
+            )}
           </div>
           
           <SeparatorSelect

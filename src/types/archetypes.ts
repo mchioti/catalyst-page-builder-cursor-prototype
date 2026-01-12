@@ -29,6 +29,23 @@ export interface Archetype {
 }
 
 /**
+ * History entry for a zone override (for undo functionality)
+ */
+export interface OverrideHistoryEntry {
+  timestamp: Date
+  section: WidgetSection
+  description?: string // e.g., "Added divider widget", "Changed layout"
+}
+
+/**
+ * Metadata for a zone override including history
+ */
+export interface ZoneOverrideInfo {
+  committedAt: Date
+  history: OverrideHistoryEntry[] // Previous versions (for undo), not including current
+}
+
+/**
  * Page Instance (overrides archetype)
  * Stores only overridden zones, inherits everything else from archetype
  */
@@ -39,7 +56,10 @@ export interface PageInstance {
   pageId: string // Route/page identifier (e.g., "journal/jas")
   templateId: string // Reference to archetype ID
   overrides: {
-    [zoneSlug: string]: WidgetSection // Only overridden zones are stored here
+    [zoneSlug: string]: WidgetSection // Only overridden zones are stored here (current state)
+  }
+  overrideHistory?: {
+    [zoneSlug: string]: ZoneOverrideInfo // History for each override (for undo)
   }
   createdAt: Date
   updatedAt: Date

@@ -201,6 +201,7 @@ export type PageState = {
   // Draft management (for preview and editing)
   getPageDraft: (websiteId: string, pageId: string) => CanvasItem[] | null // Get draft canvas
   setPageDraft: (websiteId: string, pageId: string, items: CanvasItem[]) => void // Set draft canvas
+  clearPageDraft: (websiteId: string, pageId: string) => void // Clear draft for a specific page
   getPageCanvasForPreview: (websiteId: string, pageId: string) => CanvasItem[] | null // Get canvas for preview (draft first, then published)
   
   // Per-page header/footer overrides

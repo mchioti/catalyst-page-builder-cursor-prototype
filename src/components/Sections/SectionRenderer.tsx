@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { GripVertical, Copy, Edit, Trash2, BookOpen, ArrowUp, ArrowDown } from 'lucide-react'
+import { GripVertical, Copy, Edit, Trash2, BookOpen, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react'
 import { 
   type Widget,
   type WidgetSection, 
@@ -178,11 +178,13 @@ interface SectionRendererProps {
   onUpdateWidget?: (widgetId: string, updates: any) => void
   onDeleteSection?: () => void
   onDuplicateSection?: () => void
+  onReplaceZone?: (zoneSlug: string) => void // Replace zone with new layout (keeps zoneSlug)
   
   // Permission flags (parent decides WHAT'S allowed)
   canDeleteSection?: boolean
   canReorderSection?: boolean
   canDuplicateSection?: boolean
+  canReplaceZone?: boolean // Show "Replace Zone" button (only for sections with zoneSlug)
   
   // Mock data toggle for archetype editing
   showMockData?: boolean
@@ -498,10 +500,12 @@ export function SectionRenderer({
   onUpdateWidget,
   onDeleteSection,
   onDuplicateSection,
+  onReplaceZone,
   // Permission flags (default to true for backward compatibility)
   canDeleteSection = true,
   canReorderSection = true,
   canDuplicateSection = true,
+  canReplaceZone = false, // Only enabled when explicitly passed
   showMockData = true,
   // Page Instance props (for inheritance system)
   pageInstanceMode = false,
@@ -657,7 +661,44 @@ export function SectionRenderer({
     return null // Fall back to Tailwind classes
   }
 
+  // Helper to convert hex color to rgba with opacity
+  const hexToRgba = (hex: string, opacity: number): string => {
+    // Handle rgba colors that are already in rgba format
+    if (hex.startsWith('rgba')) return hex
+    if (hex.startsWith('rgb(')) {
+      // Convert rgb to rgba
+      return hex.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`)
+    }
+    
+    // Remove # if present
+    const cleanHex = hex.replace('#', '')
+    
+    // Parse hex values
+    let r: number, g: number, b: number
+    if (cleanHex.length === 3) {
+      r = parseInt(cleanHex[0] + cleanHex[0], 16)
+      g = parseInt(cleanHex[1] + cleanHex[1], 16)
+      b = parseInt(cleanHex[2] + cleanHex[2], 16)
+    } else if (cleanHex.length === 6) {
+      r = parseInt(cleanHex.substring(0, 2), 16)
+      g = parseInt(cleanHex.substring(2, 4), 16)
+      b = parseInt(cleanHex.substring(4, 6), 16)
+    } else {
+      return hex // Return original if not a valid hex
+    }
+    
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  }
+  
+  // Helper to apply opacity to a gradient color stop
+  const applyOpacityToGradientStop = (color: string, opacity: number): string => {
+    if (opacity === 1) return color
+    return hexToRgba(color, opacity)
+  }
+
   // Generate background styles based on section background configuration
+  // IMPORTANT: Opacity is applied to the background itself, NOT the section element
+  // This ensures widgets on top of the section are not affected by background opacity
   const getSectionBackgroundStyles = (section: WidgetSection) => {
     const background = section.background
     if (!background || background.type === 'none') {
@@ -672,28 +713,38 @@ export function SectionRenderer({
         if (background.color) {
           // Resolve context-aware colors (e.g., {journal.branding.primaryColor})
           const resolvedColor = resolveContextColor(background.color, usePageStore, journalContext)
-          styles.backgroundColor = resolvedColor || background.color
-          styles.opacity = opacity
+          const finalColor = resolvedColor || background.color
+          // Apply opacity to the color itself using rgba, not to the element
+          styles.backgroundColor = opacity < 1 ? hexToRgba(finalColor, opacity) : finalColor
         }
         break
         
       case 'image':
         if (background.image?.url) {
-          styles.backgroundImage = `url(${background.image.url})`
-          styles.backgroundPosition = background.image.position || 'center'
-          styles.backgroundRepeat = background.image.repeat || 'no-repeat'
-          styles.backgroundSize = background.image.size || 'cover'
-          styles.opacity = opacity
+          // For images with opacity < 1, we use a separate overlay div (rendered in JSX)
+          // Only apply background-image here when opacity is 1 (full)
+          if (opacity === 1) {
+            styles.backgroundImage = `url(${background.image.url})`
+            styles.backgroundPosition = background.image.position || 'center'
+            styles.backgroundRepeat = background.image.repeat || 'no-repeat'
+            styles.backgroundSize = background.image.size || 'cover'
+          }
+          // When opacity < 1, the background is rendered via a separate div with position: relative
+          // We need to ensure the section has position: relative for the overlay to work
+          if (opacity < 1) {
+            styles.position = 'relative'
+          }
         }
         break
         
       case 'gradient':
         if (background.gradient?.stops && background.gradient.stops.length >= 2) {
           const { type, direction, stops } = background.gradient
-          // Resolve context-aware colors in gradient stops
+          // Resolve context-aware colors in gradient stops AND apply opacity to each
           const resolvedStops = stops.map(stop => {
             const resolvedStopColor = resolveContextColor(stop.color, usePageStore, journalContext)
-            return `${resolvedStopColor || stop.color} ${stop.position}`
+            const colorWithOpacity = applyOpacityToGradientStop(resolvedStopColor || stop.color, opacity)
+            return `${colorWithOpacity} ${stop.position}`
           })
           const gradientStops = resolvedStops.join(', ')
           
@@ -702,7 +753,6 @@ export function SectionRenderer({
           } else if (type === 'radial') {
             styles.backgroundImage = `radial-gradient(circle, ${gradientStops})`
           }
-          styles.opacity = opacity
         }
         break
     }
@@ -999,27 +1049,30 @@ export function SectionRenderer({
         {...dragAttributes}
         {...dragListeners}
       >
+        {/* Background image overlay for opacity support */}
+        {/* When background type is 'image' and opacity < 1, we need a separate layer */}
+        {section.background?.type === 'image' && 
+         section.background?.image?.url && 
+         section.background?.opacity !== undefined && 
+         section.background.opacity < 1 && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${section.background.image.url})`,
+              backgroundPosition: section.background.image.position || 'center',
+              backgroundRepeat: section.background.image.repeat || 'no-repeat',
+              backgroundSize: section.background.image.size || 'cover',
+              opacity: section.background.opacity,
+              zIndex: 0
+            }}
+          />
+        )}
+        
         {/* Section Action Toolbar - appears on click - only in editor mode */}
         {/* Uses permission flags to control which actions are available */}
         {!isLiveMode && activeSectionToolbar === section.id && (
           <div className="absolute -top-2 -right-2 transition-opacity z-20">
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg px-2 py-1">
-              {/* Page Instance: Zone inheritance badge and actions */}
-              {pageInstanceMode && section.zoneSlug && pageInstance && (
-                <>
-                  {/* Zone inheritance badge - only show when actual override exists (not drafts) */}
-                  {pageInstance.overrides[section.zoneSlug] ? (
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded border border-blue-200">
-                      Local
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded border border-gray-200">
-                      Inherited
-                    </span>
-                  )}
-                </>
-              )}
-              
               {/* Drag handle - only if reordering allowed */}
               {canReorderSection && (
                 <div 
@@ -1119,6 +1172,21 @@ export function SectionRenderer({
                   type="button"
                 >
                   <BookOpen className="w-3 h-3" />
+                </button>
+              )}
+              {/* Replace Zone - only for sections with zoneSlug when allowed */}
+              {canReplaceZone && section.zoneSlug && onReplaceZone && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onReplaceZone(section.zoneSlug!)
+                  }}
+                  className="p-1 text-gray-500 hover:text-orange-600 rounded hover:bg-orange-50 transition-colors"
+                  title={`Replace zone "${section.zoneSlug}" with new layout`}
+                  type="button"
+                >
+                  <RefreshCw className="w-3 h-3" />
                 </button>
               )}
               {/* Section properties - ALWAYS available */}

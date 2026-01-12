@@ -20,6 +20,9 @@ interface MenuEditorProps {
   updateWidget: (updates: Partial<Widget>) => void
   isExpanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
+  // Optional inheritance info (passed from parent)
+  pageInstance?: any
+  parentZoneSlug?: string
 }
 
 // Default context-aware menu items for journals
@@ -126,7 +129,7 @@ export function MenuItemForm({ item, index, onChange, onDelete, showConditions =
 /**
  * MenuEditor - Full property editor for Menu widgets
  */
-export function MenuEditor({ widget, updateWidget, isExpanded = false, onExpandedChange }: MenuEditorProps) {
+export function MenuEditor({ widget, updateWidget, isExpanded = false, onExpandedChange, pageInstance, parentZoneSlug }: MenuEditorProps) {
   const [localExpanded, setLocalExpanded] = useState(false)
   const expanded = onExpandedChange ? isExpanded : localExpanded
   const setExpanded = onExpandedChange || setLocalExpanded
@@ -191,6 +194,30 @@ export function MenuEditor({ widget, updateWidget, isExpanded = false, onExpande
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
               <span className="text-xs px-2 py-1 rounded-full font-medium bg-purple-100 text-purple-700">Menu</span>
             </div>
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget ID</span>
+              <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{widget.id}</p>
+            </div>
+            {/* Inheritance Status for Menu Widget */}
+            {pageInstance && parentZoneSlug && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                  {pageInstance.overrides?.[parentZoneSlug] ? (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                      Local (via zone)
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
+                      Inherited
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Zone: <code className="font-mono bg-white px-1 rounded">{parentZoneSlug}</code>
+                </p>
+              </div>
+            )}
           </div>
           
           <MenuTypeSelect menuWidget={menuWidget} onChange={handleMenuTypeChange} />

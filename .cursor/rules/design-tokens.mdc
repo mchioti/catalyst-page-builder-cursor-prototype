@@ -1,0 +1,207 @@
+---
+description: Guidelines for using design tokens from Figma-based themes instead of hardcoding CSS values
+globs: ["src/**/*.tsx", "src/**/*.ts"]
+alwaysApply: false
+---
+
+# Rule: Design System Architecture & Token Usage
+
+## Critical: Dual CSS System
+
+This codebase has **TWO separate CSS systems**. Understanding when to use each is essential:
+
+### 1. Tailwind CSS → Editor/Tool UI
+Used for the **Page Builder application itself**:
+- Sidebar panels, toolbars, modals
+- Properties panel controls
+- Drag-and-drop indicators
+- Navigation, menus, buttons in the editor chrome
+- Any UI that is part of the "tool" not the "content"
+
+```tsx
+// CORRECT: Tailwind for editor UI
+<div className="flex items-center gap-2 p-4 bg-gray-100 rounded-lg">
+  <button className="px-3 py-2 text-sm bg-blue-500 text-white rounded">
+    Save
+  </button>
+</div>
+```
+
+### 2. Theme-Based CSS → Canvas/Content/Live Site
+Used for **content that respects the selected design system**:
+- Canvas content (sections, widgets)
+- Live site rendering
+- Design system previews
+- Branding configuration UI
+- Any UI that should change based on Wiley/Classic/Carbon/Ant theme selection
+
+```tsx
+// CORRECT: Theme classes for canvas content
+<button className="btn btn-large btn-solid-color1 on-dark-bg">
+  Subscribe
+</button>
+```
+
+### ⚠️ Common Mistake
+```tsx
+// WRONG: Using Tailwind in canvas content
+<button className="px-4 py-2 bg-green-500 text-white rounded-lg">
+
+// WRONG: Using theme classes in editor UI  
+<div className="btn btn-solid-color1">Save Draft</div>
+```
+
+## Never Assume CSS Class Names
+
+Before using ANY CSS class in theme-based content, **search the codebase** to verify:
+
+### ❌ DON'T: Assume naming conventions
+```tsx
+// BAD - assumed Bootstrap/Tailwind convention
+<button className="btn btn-lg btn-primary">  // WRONG!
+```
+
+### ✅ DO: Search existing patterns first
+```bash
+# Search for button size classes
+grep -r "btn-large\|btn-lg\|btn-small" src/
+
+# Check how similar widgets build their classes
+# Look at WidgetRenderer.tsx, themeCSS.ts
+```
+
+```tsx
+// GOOD - verified from codebase (WidgetRenderer.tsx uses btn-${size})
+<button className="btn btn-large btn-solid-color1">  // CORRECT!
+```
+
+### Key Files for Theme Classes
+- `src/styles/themeCSS.ts` - All theme CSS class definitions
+- `src/components/Widgets/WidgetRenderer.tsx` - How widgets build class names
+- `src/foundation/adapters/*.ts` - Design system token mappings
+
+## Design Token Architecture (3-Layer System)
+
+For theme-based content, values come from design tokens, not hardcoded:
+
+```
+Layer 1: Foundation Tokens (raw values from Figma)
+  └── theme.foundation.spacing.base, theme.foundation.colors.neutral, etc.
+
+Layer 2: Semantic Tokens (role-based mappings)
+  └── theme.spacing.semantic (xs, sm, md, lg, xl, 2xl, 3xl)
+  └── theme.colors.semanticColors (primary, secondary, tertiary)
+
+Layer 3: Local Overrides (per-element via Properties Panel)
+```
+
+## How to Access Tokens
+
+```typescript
+// Get current theme
+const { currentWebsiteId, websites, themes } = usePageStore.getState()
+const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+const currentTheme = currentWebsite 
+  ? themes.find((t: any) => t.id === currentWebsite.themeId)
+  : null
+
+// Spacing tokens - check BOTH locations (theme structure varies)
+const semanticSpacing = currentTheme?.spacing?.semantic 
+  || currentTheme?.foundation?.spacing?.semantic
+
+// Typography tokens
+const typographyStyles = currentTheme?.typography?.styles
+
+// Color tokens
+const semanticColors = currentTheme?.colors?.semanticColors
+```
+
+## ❌ DON'T: Hardcode Values in Theme Content
+
+```typescript
+// BAD - hardcoded spacing presets
+const presets = [
+  { label: 'SM', value: '8px' },
+  { label: 'MD', value: '16px' },
+  { label: 'LG', value: '24px' },
+]
+
+// BAD - hardcoded colors in canvas content
+const buttonColor = '#00d875'
+```
+
+## ✅ DO: Use Dynamic Tokens
+
+```typescript
+// GOOD - generate from theme tokens
+const presets = semanticSpacing 
+  ? Object.entries(semanticSpacing).map(([key, value]) => ({
+      label: key.toUpperCase(),
+      value: value as string
+    }))
+  : []
+
+// GOOD - reference semantic colors
+const buttonColor = currentTheme?.colors?.semanticColors?.primary?.light
+```
+
+## Fallback Pattern
+When tokens might not exist, provide sensible fallbacks:
+
+```typescript
+const getTokenValue = (tokenName: string, fallback: string = '16px'): string => {
+  return (semanticSpacing as Record<string, string>)?.[tokenName] || fallback
+}
+
+// Usage
+const padding = getTokenValue('lg', '24px')
+```
+
+## Token Resolution for CSS
+For runtime style application, use the existing resolver in `SectionRenderer.tsx`:
+
+```typescript
+// Resolves 'semantic.lg' → '24px' based on current theme
+import { resolveSpacingToken } from './utils'
+
+const resolvedPadding = resolveSpacingToken(section.padding, usePageStore)
+```
+
+## Supported Design Systems
+
+Each has different token values - never assume one system's values work for another:
+
+| System | Spacing Scale | Button Classes | Border Radius |
+|--------|--------------|----------------|---------------|
+| Wiley | 0, 4, 8, 16, 24, 32, 40, 64px | btn-small/medium/large | 8px |
+| Classic | 0, 8, 16, 24, 32, 48, 64, 80px | btn-small/medium/large | 2px |
+| IBM Carbon | 2, 4, 8, 16, 24, 32, 48, 64, 80, 96px | btn-small/medium/large | 0px |
+| Ant Design | 0, 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96px | btn-small/medium/large | 2px |
+
+## Quick Decision Tree
+
+Before writing any styling code, ask:
+
+1. **Is this editor UI or canvas content?**
+   - Editor UI → Use Tailwind CSS
+   - Canvas/Live Site → Use theme classes
+
+2. **Am I using a CSS class I haven't verified?**
+   - Search codebase first: `grep -r "class-name" src/`
+   - Check `themeCSS.ts` and `WidgetRenderer.tsx`
+
+3. **Am I hardcoding a value that could vary by theme?**
+   - Check if token exists in theme
+   - Use dynamic token access
+
+4. **Could this value differ between design systems?**
+   - Yes → Pull from theme tokens
+   - No (truly universal) → Can hardcode
+
+## Key Files Reference
+- `src/data/mockThemes.ts` - Theme definitions with all tokens
+- `src/styles/themeCSS.ts` - Theme CSS class definitions
+- `src/components/Sections/SectionRenderer.tsx` - Token resolution logic
+- `src/components/Canvas/CanvasThemeProvider.tsx` - Theme CSS variable generation
+- `src/components/Widgets/WidgetRenderer.tsx` - Widget class name patterns
+- `src/foundation/adapters/*.ts` - Design system adapters

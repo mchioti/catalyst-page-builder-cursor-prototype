@@ -9,6 +9,11 @@ import { LegacyMockLiveSite } from './components/LegacyMockLiveSite'
 import { PageBuilderEditor } from './components/PageBuilderEditor'
 import { ArchetypeEditor } from './components/ArchetypeEditor'
 import { ArchetypePreview } from './components/ArchetypePreview'
+import { addMilestoneNotifications } from './utils/milestoneNotifications'
+
+// Add milestone notifications on app start (for demo/review purposes)
+// Comment out this line for production
+setTimeout(() => addMilestoneNotifications(), 1000)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

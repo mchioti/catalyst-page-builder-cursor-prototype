@@ -40,6 +40,9 @@ interface SortableItemProps {
   pageInstanceMode?: boolean
   pageInstance?: import('../../types/archetypes').PageInstance
   onPageInstanceChange?: () => void
+  // Replace Zone feature
+  canReplaceZone?: boolean
+  onReplaceZone?: (zoneSlug: string) => void
 }
 
 export function SortableItem({ 
@@ -61,7 +64,9 @@ export function SortableItem({
   showMockData = true,
   pageInstanceMode = false,
   pageInstance,
-  onPageInstanceChange
+  onPageInstanceChange,
+  canReplaceZone = false,
+  onReplaceZone
 }: SortableItemProps) {
   const {
     attributes,
@@ -132,6 +137,8 @@ export function SortableItem({
             pageInstanceMode={pageInstanceMode}
             pageInstance={pageInstance}
             onPageInstanceChange={onPageInstanceChange}
+            canReplaceZone={canReplaceZone}
+            onReplaceZone={onReplaceZone}
           />
         </div>
       ) : (

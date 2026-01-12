@@ -27,7 +27,10 @@ import {
   initializeJournalHomeArchetype
 } from '../../utils/archetypeFactory'
 import type { Archetype } from '../../types/archetypes'
+import type { WidgetSection } from '../../types'
 import { createDebugLogger } from '../../utils/logger'
+import { PublishReviewModal } from '../PageBuilder/PublishReviewModal'
+import { compareSectionWithArchetype } from '../../utils/zoneComparison'
 
 // Control logging for this file
 const DEBUG = false
@@ -41,6 +44,7 @@ export function ArchetypeEditor() {
   const { 
     setCurrentView, 
     setEditingContext,
+    setMockLiveSiteRoute,
     replaceCanvasItems,
     setIsEditingLoadedWebsite,
     canvasItems,
@@ -57,7 +61,9 @@ export function ArchetypeEditor() {
   const [archetype, setArchetype] = useState<Archetype | null>(null)
   const [showMockData, setShowMockData] = useState(true) // Mock data toggle
   const [instanceCount, setInstanceCount] = useState(0) // Count of journals using this archetype
+  const [showPublishModal, setShowPublishModal] = useState(false) // Show review modal
   const loadedRef = useRef(false)
+  const baselineCanvasRef = useRef<any[]>([]) // Track original archetype for change detection
   
   // Get drawer state for Escape Hatch margin adjustment
   const { drawerOpen } = usePrototypeStore()
@@ -66,7 +72,12 @@ export function ArchetypeEditor() {
   useEffect(() => {
     setCurrentView('page-builder')
     setEditingContext('archetype')
-  }, [setCurrentView, setEditingContext])
+    // CRITICAL: Reset mockLiveSiteRoute to prevent journal context from bleeding in
+    // Without this, journalCode would be extracted from the previous journal's route
+    // and widgets would load that journal's data instead of generating AI mock content
+    setMockLiveSiteRoute('/')
+    debugLog('log', '🎨 [ArchetypeEditor] Reset mockLiveSiteRoute for archetype mode')
+  }, [setCurrentView, setEditingContext, setMockLiveSiteRoute])
   
   // Load archetype
   useEffect(() => {
@@ -97,11 +108,24 @@ export function ArchetypeEditor() {
   
   // Load canvas items when archetype is loaded
   useEffect(() => {
-    if (!archetype || loadedRef.current) return
+    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: archetype=${archetype?.name || 'null'}, loadedRef=${loadedRef.current}, archetypeId=${archetypeId}`)
+    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: Current canvasItems has ${canvasItems.length} sections, first section id=${canvasItems[0]?.id || 'none'}`)
+    
+    if (!archetype || loadedRef.current) {
+      debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: Skipping - archetype=${!!archetype}, loadedRef=${loadedRef.current}`)
+      return
+    }
     
     // Check if we have saved canvas (user edits)
     const savedCanvas = getPageCanvas('archetype', archetypeId!)
+    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: savedCanvas has ${savedCanvas?.length || 0} sections`)
+    
+    // Always set baseline from the archetype (the committed state)
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype)
+    baselineCanvasRef.current = JSON.parse(JSON.stringify(archetypeCanvas))
+    
     if (savedCanvas && savedCanvas.length > 0) {
+      debugLog('log', `📂 [ArchetypeEditor] Loading from SAVED canvas, first section id=${savedCanvas[0]?.id}`)
       replaceCanvasItems(savedCanvas)
       setIsEditingLoadedWebsite(true)
       loadedRef.current = true
@@ -109,83 +133,25 @@ export function ArchetypeEditor() {
     }
     
     // Load from archetype
-    const resolvedCanvas = resolveCanvasFromArchetype(archetype)
-    replaceCanvasItems(resolvedCanvas)
+    debugLog('log', `📂 [ArchetypeEditor] Loading from ARCHETYPE:`)
+    debugLog('log', `   - Archetype name: ${archetype.name}`)
+    debugLog('log', `   - Archetype canvasItems count: ${archetype.canvasItems?.length || 0}`)
+    debugLog('log', `   - Resolved canvas count: ${archetypeCanvas.length}`)
+    debugLog('log', `   - First resolved section: id=${archetypeCanvas[0]?.id}, zoneSlug=${(archetypeCanvas[0] as any)?.zoneSlug}`)
+    replaceCanvasItems(archetypeCanvas)
     setIsEditingLoadedWebsite(true)
     loadedRef.current = true
-  }, [archetype, archetypeId, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas])
+  }, [archetype, archetypeId, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, canvasItems])
   
-  // Auto-save archetype when canvas changes
-  // Use a ref to track the last saved canvas to avoid infinite loops
-  const lastSavedCanvasRef = useRef<string>('')
-  const isSavingRef = useRef(false)
-  const archetypeRef = useRef(archetype)
-  
-  // Keep archetype ref in sync
-  useEffect(() => {
-    archetypeRef.current = archetype
-  }, [archetype])
-  
-  useEffect(() => {
-    if (!archetypeRef.current || !loadedRef.current || canvasItems.length === 0) return
-    if (isSavingRef.current) return // Prevent concurrent saves
-    
-    // Create a stable key from canvas items to detect actual changes
-    const canvasKey = JSON.stringify(canvasItems.map(item => ({
-      id: item.id,
-      areas: (item as any).areas?.map((a: any) => ({
-        id: a.id,
-        widgets: a.widgets?.map((w: any) => ({ id: w.id, type: w.type }))
-      }))
-    })))
-    
-    // Only save if canvas actually changed
-    if (canvasKey === lastSavedCanvasRef.current) return
-    
-    // Mark as saving to prevent concurrent updates
-    isSavingRef.current = true
-    
-    // Clean canvas items (remove publications data, keep config)
-    const cleanedCanvas = cleanCanvasForArchetype(canvasItems)
-    const currentArchetype = archetypeRef.current
-    
-    if (!currentArchetype) {
-      isSavingRef.current = false
-      return
-    }
-    
-    const updatedArchetype: Archetype = {
-      ...currentArchetype,
-      canvasItems: cleanedCanvas,
-      updatedAt: new Date()
-    }
-    
-    // Save to archetype store (synchronous, but doesn't trigger React state)
-    saveArchetype(updatedArchetype)
-    
-    // Update archetype state (this will trigger a re-render, but that's okay)
-    setArchetype(updatedArchetype)
-    
-    // Save to page canvas (Zustand store update - happens after React state update)
-    setPageCanvas('archetype', archetypeId!, cleanedCanvas)
-    
-    // Clear cached canvas for all pages using this archetype
-    // This ensures they re-resolve from the updated archetype on next load
-    // Need to clear BOTH pageCanvasData, routeCanvasItems, AND drafts
-    const pagesUsingArchetype = getPagesUsingArchetype(currentArchetype.id)
-    pagesUsingArchetype.forEach(({ websiteId, pageId }) => {
-      clearPageCanvas(websiteId, pageId)
-      // Also clear routeCanvasItems (LiveSite uses both storage locations)
-      const route = `/${pageId}`
-      clearCanvasItemsForRoute(route)
-      // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
-      clearPageDraft(websiteId, pageId)
-    })
-    
-    // Update ref to track this save
-    lastSavedCanvasRef.current = canvasKey
-    isSavingRef.current = false
-  }, [canvasItems, archetypeId, setPageCanvas, clearPageCanvas, clearCanvasItemsForRoute, clearPageDraft]) // Don't include archetype to prevent loops
+  // AUTO-SAVE DISABLED - It was causing data corruption!
+  // The auto-save would run with stale canvasItems (from previous page edit) 
+  // before the archetype content was loaded, corrupting the archetype store.
+  // Changes are now only saved on explicit user action (click "Save Archetype" button)
+  //
+  // If you need to re-enable auto-save in the future, you MUST:
+  // 1. Check canvasOwnerId to ensure canvasItems belong to this archetype
+  // 2. Wait until AFTER the archetype content has been loaded into canvasItems
+  // 3. Never save during the initial mount phase
   
   
   // Clean canvas items for archetype storage (remove data, keep config)
@@ -218,6 +184,56 @@ export function ArchetypeEditor() {
     })
   }
   
+  // Compute modified sections by comparing current canvas to baseline
+  const computeModifiedSections = (): Set<string> => {
+    const modified = new Set<string>()
+    const baseline = baselineCanvasRef.current
+    
+    if (!baseline || baseline.length === 0) return modified
+    
+    // Check each current section against baseline
+    canvasItems.forEach((section: any) => {
+      const zoneSlug = section.zoneSlug || section.id
+      const baselineSection = baseline.find((b: any) => 
+        b.zoneSlug === section.zoneSlug || b.id === section.id
+      )
+      
+      if (!baselineSection) {
+        // New section added
+        modified.add(zoneSlug)
+      } else {
+        // Check if section has changes
+        const hasChanges = compareSectionWithArchetype(section, baselineSection)
+        if (hasChanges) {
+          modified.add(zoneSlug)
+        }
+      }
+    })
+    
+    // Check for removed sections
+    baseline.forEach((baselineSection: any) => {
+      const zoneSlug = baselineSection.zoneSlug || baselineSection.id
+      const stillExists = canvasItems.some((s: any) => 
+        s.zoneSlug === baselineSection.zoneSlug || s.id === baselineSection.id
+      )
+      if (!stillExists) {
+        modified.add(zoneSlug)
+      }
+    })
+    
+    return modified
+  }
+  
+  // Get current modified sections
+  const modifiedSections = computeModifiedSections()
+  
+  // Create baseline sections map for PublishReviewModal
+  const baselineSectionsMap = new Map<string, WidgetSection>()
+  baselineCanvasRef.current.forEach((section: any) => {
+    const key = section.zoneSlug || section.id
+    baselineSectionsMap.set(key, section)
+  })
+  
   if (!archetype) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -228,8 +244,13 @@ export function ArchetypeEditor() {
     )
   }
   
-  // Handle save archetype
-  const handleSaveArchetype = () => {
+  // Handle showing the publish modal
+  const handleShowPublishModal = () => {
+    setShowPublishModal(true)
+  }
+  
+  // Handle confirming the publish action
+  const handleConfirmPublish = () => {
     if (!archetype) return
     
     // Clean canvas items (remove publications data, keep config)
@@ -245,9 +266,11 @@ export function ArchetypeEditor() {
     saveArchetype(updatedArchetype)
     setArchetype(updatedArchetype)
     
+    // Update baseline to match saved state
+    baselineCanvasRef.current = JSON.parse(JSON.stringify(cleanedCanvas))
+    
     // Clear cached canvas for all pages using this archetype
     // This ensures they re-resolve from the updated archetype on next load
-    // Need to clear BOTH pageCanvasData and routeCanvasItems
     const pagesUsingArchetype = getPagesUsingArchetype(archetype.id)
     const clearedCount = pagesUsingArchetype.length
     
@@ -262,19 +285,23 @@ export function ArchetypeEditor() {
       debugLog('log', `🗑️ [ArchetypeEditor] Cleared all caches (canvas, route, draft) for: ${route}`)
     })
     
-    // Show success message with actual journal count cleared
-    const journalText = clearedCount === 1 ? 'journal' : 'journals'
-    addNotification({
-      type: 'success',
-      title: 'Archetype Saved',
-      message: clearedCount > 0 
-        ? `Changes will affect ${clearedCount} ${journalText} using this template.`
-        : 'Archetype saved successfully.',
-      closeAfter: 5000
-    })
+    // Close modal
+    setShowPublishModal(false)
     
     // Update instance count state to match actual
     setInstanceCount(clearedCount)
+  }
+  
+  // Handle discarding changes
+  const handleDiscard = () => {
+    if (!archetype) return
+    
+    // Reload from baseline (original archetype)
+    const originalCanvas = JSON.parse(JSON.stringify(baselineCanvasRef.current))
+    replaceCanvasItems(originalCanvas)
+    
+    // Close modal
+    setShowPublishModal(false)
   }
   
   // Handle page settings click - deselect widget to show page settings in Properties Panel
@@ -324,11 +351,29 @@ export function ArchetypeEditor() {
         archetypeInstanceCount={instanceCount}
         archetypeId={archetypeId}
         designId={designId}
-            onSaveArchetype={handleSaveArchetype}
-            onPageSettingsClick={handlePageSettingsClick}
-            onShowMockDataChange={setShowMockData}
-            onPageConfigChange={handlePageConfigChange}
-          />
+        archetypeModifiedSections={modifiedSections}
+        onSaveArchetype={handleShowPublishModal}
+        onPageSettingsClick={handlePageSettingsClick}
+        onShowMockDataChange={setShowMockData}
+        onPageConfigChange={handlePageConfigChange}
+      />
+      
+      {/* Archetype Publish Review Modal */}
+      {showPublishModal && (
+        <PublishReviewModal
+          isOpen={showPublishModal}
+          onClose={() => setShowPublishModal(false)}
+          onPublish={() => {}} // Not used in archetype-master mode
+          onSimplePublish={handleConfirmPublish}
+          onDiscard={handleDiscard}
+          mode="archetype-master"
+          dirtyZones={modifiedSections}
+          canvasItems={canvasItems as WidgetSection[]}
+          baselineSections={baselineSectionsMap}
+          archetypeName={archetype.name}
+          affectedPagesCount={instanceCount}
+        />
+      )}
       
       <EscapeHatch 
         context="editor"

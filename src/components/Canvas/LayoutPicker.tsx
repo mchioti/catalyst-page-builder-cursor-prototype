@@ -4,6 +4,8 @@ import type { ContentBlockLayout } from '../../types/widgets'
 interface LayoutPickerProps {
   onSelectLayout: (layout: ContentBlockLayout) => void
   onClose: () => void
+  title?: string // Custom title for the modal (e.g., "Replace Zone Layout")
+  subtitle?: string // Custom subtitle (e.g., "Replacing header_local zone")
 }
 
 interface LayoutOption {
@@ -21,7 +23,7 @@ interface LayoutCategory {
   color: string
 }
 
-export function LayoutPicker({ onSelectLayout, onClose }: LayoutPickerProps) {
+export function LayoutPicker({ onSelectLayout, onClose, title, subtitle }: LayoutPickerProps) {
   const categories: LayoutCategory[] = [
     {
       title: 'Modern Layouts',
@@ -82,7 +84,12 @@ export function LayoutPicker({ onSelectLayout, onClose }: LayoutPickerProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Choose Layout Type</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{title || 'Choose Layout Type'}</h3>
+            {subtitle && (
+              <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"

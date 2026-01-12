@@ -42,6 +42,9 @@ interface PageLayoutWrapperProps {
   pageInstanceMode?: boolean
   pageInstance?: import('../../types/archetypes').PageInstance
   onPageInstanceChange?: () => void
+  // Replace Zone feature
+  canReplaceZone?: boolean
+  onReplaceZone?: (zoneSlug: string) => void
 }
 
 /**
@@ -82,7 +85,9 @@ export function PageLayoutWrapper({
   InteractiveWidgetRenderer,
   pageInstanceMode = false,
   pageInstance,
-  onPageInstanceChange
+  onPageInstanceChange,
+  canReplaceZone = false,
+  onReplaceZone
 }: PageLayoutWrapperProps) {
   const layout = pageConfig?.layout || 'full_width'
   
@@ -185,6 +190,8 @@ export function PageLayoutWrapper({
             pageInstanceMode={pageInstanceMode}
             pageInstance={pageInstance}
             onPageInstanceChange={onPageInstanceChange}
+            canReplaceZone={canReplaceZone}
+            onReplaceZone={onReplaceZone}
           />
           
           {/* Add Section Button Below */}
