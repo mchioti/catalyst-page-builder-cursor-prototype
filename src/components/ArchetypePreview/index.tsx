@@ -12,7 +12,8 @@ import { CanvasRenderer } from '../LiveSite/CanvasRenderer'
 import { usePageStore } from '../../stores'
 import { 
   getArchetypeById,
-  resolveCanvasFromArchetype
+  resolveCanvasFromArchetype,
+  getWebsiteArchetypeOverride
 } from '../../stores/archetypeStore'
 import { 
   initializeJournalHomeArchetype
@@ -26,6 +27,7 @@ export function ArchetypePreview() {
   const { archetypeId } = useParams<{ archetypeId: string }>()
   const [searchParams] = useSearchParams()
   const designId = searchParams.get('designId') || 'classic-ux3-theme'
+  const websiteId = searchParams.get('websiteId') // Optional - if present, use website-level overrides
   const navigate = useNavigate()
   
   const { setCurrentView } = usePageStore()
@@ -70,21 +72,39 @@ export function ArchetypePreview() {
   // Get pageCanvas accessor from store
   const getPageCanvas = usePageStore(state => state.getPageCanvas)
   
-  // Load canvas - first check for draft (unsaved changes), then fall back to archetype
+  // Load canvas - first check for draft (unsaved changes), then fall back to archetype with website overrides
   useEffect(() => {
     if (!archetype || !archetypeId) return
     
+    console.log('📺 [ArchetypePreview] LOAD CANVAS EFFECT:')
+    console.log('   - archetypeId:', archetypeId)
+    console.log('   - websiteId:', websiteId || 'none (Design level)')
+    console.log('   - archetype.name:', archetype.name)
+    console.log('   - archetype.canvasItems count:', archetype.canvasItems?.length)
+    
     // Check for draft canvas first (unsaved changes from editor)
-    const draftCanvas = getPageCanvas('archetype', archetypeId)
+    // Use website-specific key if websiteId is present
+    const draftKey = websiteId ? `${websiteId}:${archetypeId}` : archetypeId
+    const draftCanvas = getPageCanvas('archetype', draftKey)
+    console.log('   - Draft key:', draftKey)
+    console.log('   - Draft canvas found:', draftCanvas?.length || 0, 'sections')
+    
     if (draftCanvas && draftCanvas.length > 0) {
+      console.log('   ✅ Using DRAFT canvas')
       setCanvasItems(draftCanvas)
       return
     }
     
-    // Fall back to resolved archetype canvas
-    const resolved = resolveCanvasFromArchetype(archetype)
+    // Get website override if websiteId is present
+    const websiteOverride = websiteId ? getWebsiteArchetypeOverride(websiteId, archetypeId) : null
+    console.log('   - Website override:', websiteOverride ? Object.keys(websiteOverride.overrides) : 'none')
+    
+    // Fall back to resolved archetype canvas with website overrides
+    const resolved = resolveCanvasFromArchetype(archetype, websiteOverride)
+    console.log('   ✅ Using RESOLVED canvas:', resolved.length, 'sections')
+    console.log('   - First section widgets:', resolved[0]?.areas?.[0]?.widgets?.map((w: any) => w.type).join(', '))
     setCanvasItems(resolved)
-  }, [archetype, archetypeId, getPageCanvas])
+  }, [archetype, archetypeId, websiteId, getPageCanvas])
   
   // Create default header/footer for preview (must be before early return)
   const headerSections = useMemo(() => [createStandardHeaderPrefab()], [])
@@ -110,10 +130,12 @@ export function ArchetypePreview() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-yellow-800 font-semibold text-sm">
-              🏛️ Archetype Preview: {archetype.name}
+              {websiteId ? '📄' : '🏛️'} {websiteId ? 'Website' : 'Design'} Master: {archetype.name}
             </span>
             <span className="text-xs text-yellow-700">
-              This is the master template. All pages using this archetype inherit from it.
+              {websiteId 
+                ? 'This is the website master template. Changes affect only journals in this website.'
+                : 'This is the design master template. Changes affect all websites using this design.'}
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -167,16 +189,21 @@ export function ArchetypePreview() {
         style={{ right: drawerOpen ? 'calc(288px + 5rem)' : '5rem' }}
       >
         <button
-          onClick={() => navigate(`/edit/archetype/${archetypeId}?designId=${designId}`)}
+          onClick={() => {
+            // Include websiteId in URL if present - changes will be website-scoped
+            const params = new URLSearchParams({ designId })
+            if (websiteId) params.set('websiteId', websiteId)
+            navigate(`/edit/archetype/${archetypeId}?${params.toString()}`)
+          }}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-lg"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
-          Edit Archetype
+          {websiteId ? 'Edit Website Master' : 'Edit Design Master'}
         </button>
         <div className="text-xs text-gray-500 text-center bg-white/90 px-2 py-1 rounded shadow">
-          🏛️ Master Template
+          {websiteId ? '📄 Changes apply to this website only' : '🏛️ Changes apply to all websites'}
         </div>
       </div>
       

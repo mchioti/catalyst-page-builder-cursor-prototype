@@ -86,6 +86,10 @@ export function createJournalHomeArchetype(designId: string = 'classic-ux3-theme
     name: 'Modern Journal Home',
     description: 'Journal homepage template with banner, navigation, and latest articles feed',
     designId, // designId is used both for storage organization and as themeId for rendering
+    displayLabel: {
+      singular: 'Journal',
+      plural: 'Journals'
+    },
     pageConfig: defaultPageConfig,
     canvasItems: archetypeSections,
     createdAt: new Date(),
@@ -218,8 +222,15 @@ function migrateSplitStructureToCombined(archetype: Archetype): Archetype {
  * And removes deprecated 'theme' field (now using designId only)
  */
 export function initializeJournalHomeArchetype(designId: string = 'classic-ux3-theme') {
+  console.log(`🏭 [initializeJournalHomeArchetype] designId=${designId}`)
   const existing = getArchetypeById('modern-journal-home', designId)
+  console.log(`   - Existing archetype found: ${!!existing}`)
+  if (existing) {
+    console.log(`   - Existing canvasItems: ${existing.canvasItems?.length}`)
+    console.log(`   - First section widgets:`, existing.canvasItems?.[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+  }
   if (!existing) {
+    console.log(`   - Creating NEW archetype from factory`)
     const archetype = createJournalHomeArchetype(designId)
     saveArchetype(archetype)
     return archetype

@@ -1,5 +1,5 @@
 /**
- * Milestone Notifications - Session 2026-01-12
+ * Milestone Notifications - Session 2026-01-13
  * 
  * This file contains the milestone summary that can be displayed
  * in the notifications panel to track development progress.
@@ -14,60 +14,62 @@ export interface MilestoneItem {
 
 export const SESSION_MILESTONES: MilestoneItem[] = [
   {
-    category: '🎨 Page Status & Override Management',
+    category: '🏛️ 3-Layer Inheritance Model',
     items: [
-      'PageStatus component in Properties Panel',
-      'Save & Publish badge showing pending changes count',
-      'Dirty zones compare against committed state (archetype + overrides)',
-      'Per-zone discard option (cherry-pick changes)',
-      'Reset to Archetype with preview mode'
+      'Design Archetype → Website Override → Journal Instance',
+      'WebsiteArchetypeOverride type and storage functions',
+      'resolveCanvasFromArchetype handles all 3 layers',
+      'Website-scoped archetype editing (doesn\'t affect Design)',
+      '"Edit Website Master" vs "Edit Design Master" distinction'
     ]
   },
   {
-    category: '📝 Publish Review Modal',
+    category: '📝 Terminology Updates',
     items: [
-      'Detailed change descriptions (widget added/removed/modified)',
-      'Section and widget order change detection',
-      'Smart grouping: "Resetting to Archetype" vs "New Changes"',
-      'Per-zone choices: Keep Local / Push to Archetype / Discard',
-      'Removed bulk actions for individual zone control'
+      '"Push to Archetype" → "Push to All Journals"',
+      '"Keep Local" → "Keep for This Journal Only"',
+      '"Save as Stub" → "Save as Copy"',
+      '"Inherited" badge → "Synced" badge',
+      '"Overridden" badge → "Modified" badge',
+      'Master name shown in UI (e.g., "Modern Journal Home")'
     ]
   },
   {
-    category: '🏗️ Archetype Editor',
+    category: '🗂️ Design Console Updates',
     items: [
-      'Unified UI with page editor (same buttons/flow)',
-      'Disabled auto-save (changes stay as drafts)',
-      'Change tracking with badge indicator',
-      'Preview persistence (drafts survive preview navigation)',
-      'Fixed journal context pollution (mockLiveSiteRoute reset)'
+      '"Page Library" → "Data-driven Pages"',
+      '"Stub Library" → "Other Pages"',
+      'Publication Cards moved above Data-driven Pages',
+      'Preview button added to Website Data-driven Pages',
+      'Removed Use button from URL-bound system pages'
     ]
   },
   {
-    category: '🔄 Replace Zone Feature',
+    category: '🔄 Website Master Flow',
     items: [
-      'Replace Zone button on sections with zoneSlug',
-      'Confirmation modal showing widgets to be moved',
-      'Style preservation options (background, padding, content mode)',
-      'All widgets automatically moved to new layout',
-      'Layout picker with contextual title'
+      'Editing archetype from website context creates website override',
+      '"Push to All Journals" saves to website override (not design)',
+      'Preview shows correct context (Website vs Design Master)',
+      'Banner and button text reflect website/design scope'
     ]
   },
   {
-    category: '🎯 UX Improvements',
+    category: '✅ Sync with Master Fix',
     items: [
-      'Inherit/Local badges moved to Properties Panel',
-      'Section/Widget ID and type shown in properties',
-      'Menu/Breadcrumbs unified expansion mechanism',
-      'Background opacity applies to background only (not widgets)',
-      'Section padding supports CSS shorthand (2 or 4 values)'
+      '"Reset to Archetype" now compares against Website Master',
+      'Reset zones show "Confirm Sync" / "Keep Modified" options',
+      'Baseline uses resolved archetype (Design + Website override)',
+      'No more "Push to All Journals" option for reset actions'
     ]
   },
   {
-    category: '📚 Project Rules Created',
+    category: '📋 Previous Session (2026-01-12)',
     items: [
-      'design-tokens.mdc - Using Figma design tokens',
-      'archetype-override-system.mdc - Zone override architecture'
+      'PageStatus component with change badges',
+      'Publish modal with per-zone choices',
+      'Replace Zone feature with widget migration',
+      'Archetype editor unified with page editor',
+      'Design tokens and archetype override rules'
     ]
   }
 ]
@@ -82,7 +84,7 @@ export function addMilestoneNotifications() {
   // Add a summary notification
   addNotification({
     type: 'success',
-    title: '✨ Milestone: Replace Zone & Override System',
+    title: '✨ Milestone: Website Master & 3-Layer Inheritance',
     message: `Session completed with ${SESSION_MILESTONES.reduce((sum, m) => sum + m.items.length, 0)} improvements across ${SESSION_MILESTONES.length} categories. Check notifications for details.`,
     autoClose: false // Keep this one visible
   })
@@ -104,7 +106,7 @@ export function addMilestoneNotifications() {
  * Get milestone summary as formatted text
  */
 export function getMilestoneSummaryText(): string {
-  let text = '# Session Milestone Summary (2026-01-12)\n\n'
+  let text = '# Session Milestone Summary (2026-01-13)\n\n'
   
   SESSION_MILESTONES.forEach(milestone => {
     text += `## ${milestone.category}\n`
@@ -115,10 +117,11 @@ export function getMilestoneSummaryText(): string {
   })
   
   text += '## Pending Tasks\n'
-  text += '- Add tests for dirty zones and publish flow\n'
-  text += '- Add test case for properties panel expansion\n'
-  text += '- Create history/audit panel for site changes\n'
+  text += '- [FUTURE] Implement Design / My Pages / All filtering\n'
+  text += '- [FUTURE] Add role-based access control\n'
   text += '- [DISCUSS] Merge changes UI when local + archetype affect same zone/widget\n'
+  text += '- Allow any page to sync with any Master\n'
+  text += '- Add "Link to Master" action with preview/diff\n'
   
   return text
 }

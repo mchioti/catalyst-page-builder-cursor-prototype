@@ -5,7 +5,7 @@
  * Page instances are stored separately: pageInstances[websiteId:pageId]
  */
 
-import type { Archetype, PageInstance, OverrideHistoryEntry } from '../types/archetypes'
+import type { Archetype, PageInstance, OverrideHistoryEntry, WebsiteArchetypeOverride } from '../types/archetypes'
 import type { WidgetSection } from '../types/widgets'
 import { createDebugLogger } from '../utils/logger'
 
@@ -15,7 +15,8 @@ const debugLog = createDebugLogger(DEBUG)
 
 const STORAGE_KEYS = {
   DESIGNS: 'catalyst-designs', // Stores designs with nested archetypes
-  PAGE_INSTANCES: 'catalyst-page-instances'
+  PAGE_INSTANCES: 'catalyst-page-instances',
+  WEBSITE_ARCHETYPE_OVERRIDES: 'catalyst-website-archetype-overrides'
 }
 
 // =============================================================================
@@ -66,13 +67,24 @@ export function getArchetypesForDesign(designId: string): Archetype[] {
  */
 export function getArchetypeById(archetypeId: string, designId: string): Archetype | null {
   const archetypes = getArchetypesForDesign(designId)
-  return archetypes.find(a => a.id === archetypeId) || null
+  const archetype = archetypes.find(a => a.id === archetypeId) || null
+  console.log(`📦 [getArchetypeById] archetypeId=${archetypeId}, designId=${designId}, found=${!!archetype}`)
+  if (archetype) {
+    console.log(`   - canvasItems count: ${archetype.canvasItems?.length}`)
+    console.log(`   - First section widgets:`, archetype.canvasItems?.[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+  }
+  return archetype
 }
 
 /**
  * Save an archetype (adds or updates)
  */
 export function saveArchetype(archetype: Archetype) {
+  console.log(`📦 [saveArchetype] Saving archetype: ${archetype.id}`)
+  console.log(`   - designId: ${archetype.designId}`)
+  console.log(`   - canvasItems count: ${archetype.canvasItems?.length}`)
+  console.log(`   - First section widgets:`, archetype.canvasItems?.[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+  
   const designs = loadDesignsWithArchetypes()
   
   if (!designs[archetype.designId]) {
@@ -83,13 +95,16 @@ export function saveArchetype(archetype: Archetype) {
   
   if (existingIndex >= 0) {
     // Update existing
+    console.log(`   - Updating existing archetype at index ${existingIndex}`)
     designs[archetype.designId].archetypes[existingIndex] = archetype
   } else {
     // Add new
+    console.log(`   - Adding new archetype`)
     designs[archetype.designId].archetypes.push(archetype)
   }
   
   saveDesignsWithArchetypes(designs)
+  console.log(`   ✅ Archetype saved to localStorage`)
 }
 
 /**
@@ -102,6 +117,88 @@ export function deleteArchetype(archetypeId: string, designId: string) {
     designs[designId].archetypes = designs[designId].archetypes.filter(a => a.id !== archetypeId)
     saveDesignsWithArchetypes(designs)
   }
+}
+
+// =============================================================================
+// Website Archetype Override Storage
+// =============================================================================
+
+/**
+ * Load all website archetype overrides from localStorage
+ */
+export function loadWebsiteArchetypeOverrides(): Record<string, WebsiteArchetypeOverride> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.WEBSITE_ARCHETYPE_OVERRIDES)
+    if (!stored) return {}
+    return JSON.parse(stored, (key, value) => {
+      if (key === 'createdAt' || key === 'updatedAt' || key === 'committedAt' || key === 'timestamp') {
+        return new Date(value)
+      }
+      return value
+    })
+  } catch (error) {
+    debugLog('error', 'Failed to load website archetype overrides:', error)
+    return {}
+  }
+}
+
+/**
+ * Save all website archetype overrides to localStorage
+ */
+function saveWebsiteArchetypeOverrides(overrides: Record<string, WebsiteArchetypeOverride>) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.WEBSITE_ARCHETYPE_OVERRIDES, JSON.stringify(overrides))
+  } catch (error) {
+    debugLog('error', 'Failed to save website archetype overrides:', error)
+  }
+}
+
+/**
+ * Get website archetype override by websiteId and archetypeId
+ */
+export function getWebsiteArchetypeOverride(websiteId: string, archetypeId: string): WebsiteArchetypeOverride | null {
+  const overrides = loadWebsiteArchetypeOverrides()
+  const key = `${websiteId}:${archetypeId}`
+  const override = overrides[key] || null
+  console.log(`📦 [getWebsiteArchetypeOverride] key=${key}, found=${!!override}`)
+  if (override) {
+    console.log(`   - Override zones:`, Object.keys(override.overrides))
+  }
+  return override
+}
+
+/**
+ * Save website archetype override (creates or updates)
+ */
+export function saveWebsiteArchetypeOverride(override: WebsiteArchetypeOverride) {
+  const overrides = loadWebsiteArchetypeOverrides()
+  const key = `${override.websiteId}:${override.archetypeId}`
+  overrides[key] = {
+    ...override,
+    updatedAt: new Date()
+  }
+  saveWebsiteArchetypeOverrides(overrides)
+  console.log(`📦 [WebsiteArchetypeOverride] Saved override for ${key}`)
+  console.log(`   - Override zones:`, Object.keys(override.overrides))
+  console.log(`   - First zone widgets:`, override.overrides[Object.keys(override.overrides)[0]]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+}
+
+/**
+ * Delete website archetype override
+ */
+export function deleteWebsiteArchetypeOverride(websiteId: string, archetypeId: string) {
+  const overrides = loadWebsiteArchetypeOverrides()
+  const key = `${websiteId}:${archetypeId}`
+  delete overrides[key]
+  saveWebsiteArchetypeOverrides(overrides)
+}
+
+/**
+ * Get all website archetype overrides for a specific website
+ */
+export function getWebsiteArchetypeOverridesForWebsite(websiteId: string): WebsiteArchetypeOverride[] {
+  const overrides = loadWebsiteArchetypeOverrides()
+  return Object.values(overrides).filter(o => o.websiteId === websiteId)
 }
 
 // =============================================================================
@@ -458,23 +555,32 @@ function migrateSection(section: WidgetSection): WidgetSection {
 }
 
 /**
- * Resolve canvas items from archetype and instance overrides
- * Returns the final canvas with archetype zones merged with instance overrides
+ * Resolve canvas items from archetype with website and page instance overrides
+ * Resolution chain: Design Archetype → Website Override → Page Instance
+ * Returns the final canvas with all layers merged
  * Also migrates old contentSource values to ensure mock data generation
+ * 
+ * @param archetype - Design-level archetype (base template)
+ * @param websiteOverride - Website-level override (optional, contains per-website changes)
+ * @param instance - Page-level instance (optional, contains per-journal changes)
  */
 export function resolveCanvasFromArchetype(
   archetype: Archetype,
+  websiteOverride?: WebsiteArchetypeOverride | null,
   instance?: PageInstance
 ): WidgetSection[] {
-  debugLog('log', '🔄 [resolveCanvasFromArchetype] Starting resolution:', {
+  debugLog('log', '🔄 [resolveCanvasFromArchetype] Starting 3-layer resolution:', {
     archetypeId: archetype.id,
     archetypeSections: archetype.canvasItems.map(s => ({ name: s.name, zoneSlug: s.zoneSlug })),
+    websiteOverrideId: websiteOverride ? `${websiteOverride.websiteId}:${websiteOverride.archetypeId}` : 'none',
+    websiteOverrideZones: websiteOverride ? Object.keys(websiteOverride.overrides) : [],
     instanceId: instance ? `${instance.websiteId}:${instance.pageId}` : 'none',
     instanceOverrides: instance ? Object.keys(instance.overrides) : []
   })
   
   const resolved: WidgetSection[] = []
-  const overrideZoneSlugs = instance ? new Set(Object.keys(instance.overrides)) : new Set()
+  const websiteOverrideZoneSlugs = websiteOverride ? new Set(Object.keys(websiteOverride.overrides)) : new Set<string>()
+  const instanceOverrideZoneSlugs = instance ? new Set(Object.keys(instance.overrides)) : new Set<string>()
   
   for (const section of archetype.canvasItems) {
     if (!section.zoneSlug) {
@@ -484,20 +590,26 @@ export function resolveCanvasFromArchetype(
       continue
     }
     
-    // Check if this zone is overridden
-    if (overrideZoneSlugs.has(section.zoneSlug)) {
-      // Use override from instance (also migrate it)
+    // Resolution priority: Page Instance > Website Override > Design Archetype
+    if (instanceOverrideZoneSlugs.has(section.zoneSlug)) {
+      // Use override from page instance (highest priority)
       const overrideSection = instance!.overrides[section.zoneSlug]
-      debugLog('log', '  ↳ Using OVERRIDE for zone:', {
+      debugLog('log', '  ↳ Using PAGE INSTANCE override for zone:', {
         zoneSlug: section.zoneSlug,
-        archetypeSectionName: section.name,
-        overrideSectionName: overrideSection.name,
-        overrideWidgetCount: overrideSection.areas?.reduce((sum, a) => sum + (a.widgets?.length || 0), 0) || 0
+        overrideSectionName: overrideSection.name
+      })
+      resolved.push(migrateSection(overrideSection))
+    } else if (websiteOverrideZoneSlugs.has(section.zoneSlug)) {
+      // Use override from website (middle priority)
+      const overrideSection = websiteOverride!.overrides[section.zoneSlug]
+      debugLog('log', '  ↳ Using WEBSITE override for zone:', {
+        zoneSlug: section.zoneSlug,
+        overrideSectionName: overrideSection.name
       })
       resolved.push(migrateSection(overrideSection))
     } else {
-      // Use archetype section (migrate it)
-      debugLog('log', '  ↳ Using ARCHETYPE for zone:', {
+      // Use archetype section (base)
+      debugLog('log', '  ↳ Using DESIGN ARCHETYPE for zone:', {
         zoneSlug: section.zoneSlug,
         sectionName: section.name
       })

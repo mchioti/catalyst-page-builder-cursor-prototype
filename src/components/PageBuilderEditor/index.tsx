@@ -40,7 +40,8 @@ import {
   getPageInstance,
   getOrCreatePageInstance,
   getArchetypeById,
-  resolveCanvasFromArchetype
+  resolveCanvasFromArchetype,
+  getWebsiteArchetypeOverride
 } from '../../stores/archetypeStore'
 import { 
   initializeJournalHomeArchetype
@@ -295,10 +296,12 @@ export function PageBuilderEditor() {
         }
       }
       
-      // CRITICAL: Compare against COMMITTED STATE (archetype + overrides), not raw archetype
+      // CRITICAL: Compare against COMMITTED STATE (archetype + website override + page overrides), not raw archetype
       // If a zone has a committed override, compare current canvas against the override
       // Only show as "dirty" if current differs from committed state
-      const committedSections = resolveCanvasFromArchetype(archetypeInfo.archetype, pageInstance)
+      // Include website override for 3-layer resolution
+      const websiteOverrideForDiff = websiteId ? getWebsiteArchetypeOverride(websiteId, archetypeInfo.archetype.id) : null
+      const committedSections = resolveCanvasFromArchetype(archetypeInfo.archetype, websiteOverrideForDiff, pageInstance)
       
       debugLog('log', '🔍 [PageBuilderEditor] Calculating dirty zones (vs committed state):', {
         currentSectionsCount: currentSections.length,
@@ -633,13 +636,15 @@ export function PageBuilderEditor() {
           })
           
           if (archetype) {
-            // Resolve canvas from archetype + instance overrides
-            const resolvedCanvas = resolveCanvasFromArchetype(archetype, pageInstance)
+            // Resolve canvas from archetype + website override + instance overrides (3-layer)
+            const websiteOverrideForLoad = websiteId ? getWebsiteArchetypeOverride(websiteId, archetype.id) : null
+            const resolvedCanvas = resolveCanvasFromArchetype(archetype, websiteOverrideForLoad, pageInstance)
             
-            debugLog('log', '✅ [PageBuilderEditor] Resolved canvas from archetype + overrides:', {
+            debugLog('log', '✅ [PageBuilderEditor] Resolved canvas from archetype + website override + page overrides:', {
               resolvedSectionCount: resolvedCanvas.length,
               resolvedSectionNames: resolvedCanvas.map((s: any) => s.name || 'unnamed'),
-              overridesApplied: Object.keys(pageInstance.overrides)
+              websiteOverrideZones: websiteOverrideForLoad ? Object.keys(websiteOverrideForLoad.overrides) : [],
+              pageOverridesApplied: Object.keys(pageInstance.overrides)
             })
             
             replaceCanvasItems(resolvedCanvas)

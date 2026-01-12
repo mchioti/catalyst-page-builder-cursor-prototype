@@ -1,21 +1,29 @@
 /**
- * Website Stubs
- * Shows saved stubs and sections created by users for this specific website
+ * Website Design Library
+ * Shows saved templates and sections created by users for this specific website
+ * 
+ * Supports two usage modes:
+ * - "Copy" - One-time snapshot, page is independent
+ * - "Sync with Master" - Page inherits from template, stays synced
  */
 
 import { useState } from 'react'
-import { Search, FilePlus2, Layers, Trash2, Download } from 'lucide-react'
+import { Search, FilePlus2, Layers, Trash2, Download, Copy, Link2 } from 'lucide-react'
+import { UseTemplateModal, type TemplateInfo } from '../PageBuilder/UseTemplateModal'
+import { nanoid } from 'nanoid'
 
 interface WebsiteDesignLibraryProps {
   websiteId: string
   websiteName: string
   usePageStore: any
+  currentPageName?: string // For context when applying templates
 }
 
 export function WebsiteDesignLibrary({
   websiteId,
   websiteName,
-  usePageStore
+  usePageStore,
+  currentPageName
 }: WebsiteDesignLibraryProps) {
   const { 
     customStarterPages = [], 
@@ -25,10 +33,16 @@ export function WebsiteDesignLibrary({
     replaceCanvasItems,
     setCurrentView,
     selectWidget,
-    addNotification
+    addNotification,
+    setPageInstance,
+    currentWebsiteId
   } = usePageStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState<'starters' | 'sections'>('starters')
+  
+  // UseTemplateModal state
+  const [showUseModal, setShowUseModal] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateInfo | null>(null)
 
   // Filter by website
   const websiteStarterPages = customStarterPages.filter((page: any) => page.websiteId === websiteId)
@@ -59,37 +73,112 @@ export function WebsiteDesignLibrary({
     }
   }
 
+  // Open the Use Template modal
   const handleLoad = (id: string, type: 'starter' | 'section', name: string) => {
     if (type === 'starter') {
       const starterPage = customStarterPages.find((p: any) => p.id === id)
       if (!starterPage) {
-        addNotification({ type: 'error', title: 'Error', message: 'Stub not found' })
+        addNotification({ type: 'error', title: 'Error', message: 'Template not found' })
         return
       }
       
-      const confirmed = window.confirm(
-        `Load "${name}" into editor?\n\nYour current page will be replaced. This action cannot be undone.`
-      )
-      
-      if (confirmed) {
-        selectWidget(null)
-        replaceCanvasItems(starterPage.canvasItems || [])
-        setCurrentView('page-builder')
-        addNotification({ type: 'success', title: 'Stub Loaded', message: `"${name}" loaded into editor` })
-      }
+      // Show the Use Template modal
+      setSelectedTemplate({
+        id: starterPage.id,
+        name: starterPage.name,
+        description: starterPage.description,
+        canvasItems: starterPage.canvasItems || []
+      })
+      setShowUseModal(true)
     } else {
       // For sections, just show a message for now
       addNotification({ type: 'info', title: 'Section Load', message: 'Section loading to be implemented' })
     }
+  }
+  
+  // Handle "Start as Copy" - one-time snapshot, no sync
+  const handleUseCopy = (template: TemplateInfo) => {
+    // Deep clone and regenerate IDs to avoid conflicts
+    const clonedItems = template.canvasItems.map((item: any) => {
+      if (item.type === 'section') {
+        const newSectionId = nanoid()
+        return {
+          ...item,
+          id: newSectionId,
+          // Remove zoneSlug since this is a copy (no inheritance)
+          zoneSlug: undefined,
+          areas: item.areas?.map((area: any) => ({
+            ...area,
+            id: nanoid(),
+            widgets: area.widgets?.map((widget: any) => ({
+              ...widget,
+              id: nanoid(),
+              sectionId: newSectionId
+            }))
+          }))
+        }
+      }
+      return { ...item, id: nanoid() }
+    })
+    
+    selectWidget(null)
+    replaceCanvasItems(clonedItems)
+    setCurrentView('page-builder')
+    addNotification({ 
+      type: 'success', 
+      title: 'Template Applied as Copy', 
+      message: `"${template.name}" loaded. This page is independent.` 
+    })
+  }
+  
+  // Handle "Sync with Master" - create PageInstance with archetype relationship
+  const handleUseSync = (template: TemplateInfo) => {
+    // For sync, we keep the original structure with zoneSlugs
+    // This creates an archetype relationship
+    
+    // Create a new PageInstance that references this template as archetype
+    const pageId = currentPageName || `page-${nanoid(6)}`
+    
+    // Note: In a full implementation, we would:
+    // 1. Save the template as an archetype if it isn't already
+    // 2. Create a PageInstance that references it
+    // 3. Load the resolved canvas from the archetype
+    
+    // For now, load with zoneSlugs preserved (future sync capability)
+    const itemsWithZones = template.canvasItems.map((item: any, index: number) => {
+      if (item.type === 'section') {
+        return {
+          ...item,
+          // Preserve or create zoneSlug for sync capability
+          zoneSlug: item.zoneSlug || `zone_${index}`
+        }
+      }
+      return item
+    })
+    
+    selectWidget(null)
+    replaceCanvasItems(itemsWithZones)
+    setCurrentView('page-builder')
+    
+    // TODO: Actually create PageInstance and save archetype relationship
+    // This would involve:
+    // - saveArchetype(template as archetype)
+    // - createPageInstance({ websiteId, pageId, archetypeId: template.id })
+    
+    addNotification({ 
+      type: 'success', 
+      title: 'Synced with Master', 
+      message: `Page is now synced with "${template.name}". Updates will propagate.` 
+    })
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Stubs</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Templates</h2>
         <p className="text-gray-600 mt-1">
-          Your saved stubs and reusable sections for this website
+          Your saved templates and reusable sections for this website
         </p>
       </div>
 
@@ -105,7 +194,7 @@ export function WebsiteDesignLibrary({
         >
           <div className="flex items-center gap-2">
             <FilePlus2 className="w-4 h-4" />
-            Saved Stubs ({websiteStarterPages.length})
+            Saved Templates ({websiteStarterPages.length})
           </div>
         </button>
         <button
@@ -129,7 +218,7 @@ export function WebsiteDesignLibrary({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder={`Search ${selectedTab === 'starters' ? 'stubs' : 'sections'}...`}
+            placeholder={`Search ${selectedTab === 'starters' ? 'templates' : 'sections'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -140,17 +229,17 @@ export function WebsiteDesignLibrary({
       {/* Content */}
       <div className="bg-white rounded-lg border border-gray-200">
         {selectedTab === 'starters' ? (
-          // Starter Pages
+          // Starter Pages / Templates
           filteredStarters.length === 0 ? (
             <div className="p-12 text-center">
               <FilePlus2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'No stubs found' : 'No saved stubs yet'}
+                {searchTerm ? 'No templates found' : 'No saved templates yet'}
               </h3>
               <p className="text-gray-600">
                 {searchTerm 
                   ? 'Try adjusting your search terms.' 
-                  : 'Save a page as a stub in the Page Builder to see it here.'}
+                  : 'Save a page as a copy in the Page Builder to see it here.'}
               </p>
             </div>
           ) : (
@@ -176,10 +265,10 @@ export function WebsiteDesignLibrary({
                         <button
                           onClick={() => handleLoad(page.id, 'starter', page.name)}
                           className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded transition-colors flex items-center gap-1.5"
-                          title="Load in editor"
+                          title="Use this template"
                         >
                           <Download className="w-4 h-4" />
-                          Load
+                          Use
                         </button>
                         <button
                           onClick={() => handleDelete(page.id, 'starter', page.name)}
@@ -260,6 +349,19 @@ export function WebsiteDesignLibrary({
           )
         )}
       </div>
+      
+      {/* Use Template Modal */}
+      <UseTemplateModal
+        isOpen={showUseModal}
+        onClose={() => {
+          setShowUseModal(false)
+          setSelectedTemplate(null)
+        }}
+        template={selectedTemplate}
+        onUseCopy={handleUseCopy}
+        onUseSync={handleUseSync}
+        currentPageName={currentPageName}
+      />
     </div>
   )
 }

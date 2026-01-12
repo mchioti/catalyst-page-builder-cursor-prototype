@@ -37,7 +37,7 @@ export function WebsiteInheritedStubs({
 }: WebsiteInheritedStubsProps) {
   const [searchTerm, setSearchTerm] = useState('')
   
-  // Get page canvas data from store to check for modifications
+  // Get store functions
   const getPageCanvas = usePageStore((state: any) => state.getPageCanvas)
   
   // Get the base design stubs for comparison
@@ -240,11 +240,11 @@ export function WebsiteInheritedStubs({
     }
   }
 
-  // Handle reset to base
+  // Handle reset to base (sync with master)
   const handleResetToBase = (stubId: string, stubName: string) => {
     if (!window.confirm(
-      `Reset "${stubName}" to the base design?\n\n` +
-      `This will remove all modifications and restore the original design stub.\n` +
+      `Sync "${stubName}" with Master?\n\n` +
+      `This will remove all modifications and restore the original design template.\n` +
       `This action cannot be undone.`
     )) {
       return
@@ -267,19 +267,21 @@ export function WebsiteInheritedStubs({
     
     addNotification?.({
       type: 'success',
-      title: 'Reset Complete',
-      message: `"${stubName}" has been reset to the base design`
+      title: 'Synced with Master',
+      message: `"${stubName}" has been synced with the master design`
     })
   }
 
+  // Handle "Use" button click - open UseTemplateModal
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Stubs</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Other Pages</h2>
         <p className="text-gray-600 mt-1">
-          Pages inherited from the design with modification tracking
+          Marketing and informational pages with modification tracking
         </p>
+        
       </div>
 
       {/* Search */}
@@ -287,7 +289,7 @@ export function WebsiteInheritedStubs({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Search stubs..."
+          placeholder="Search pages..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -298,11 +300,11 @@ export function WebsiteInheritedStubs({
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <Check className="w-4 h-4 text-green-600" />
-          <span className="text-gray-600">Using base design</span>
+          <span className="text-gray-600">🔗 Synced with Master</span>
         </div>
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
-          <span className="text-gray-600">Modified from base</span>
+          <span className="text-gray-600">✏️ Modified</span>
         </div>
       </div>
 
@@ -311,7 +313,7 @@ export function WebsiteInheritedStubs({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Stub</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Page</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
               <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
             </tr>
@@ -342,11 +344,11 @@ export function WebsiteInheritedStubs({
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-amber-500" />
                         <span className="text-amber-700 font-medium">
-                          Modified
+                          ✏️ Modified
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        {stub.hasCustomStub && 'Custom stub'}
+                        {stub.hasCustomStub && 'Custom template'}
                         {stub.hasCustomStub && stub.hasEditorChanges && ' + '}
                         {stub.hasEditorChanges && 'Editor changes'}
                       </div>
@@ -354,7 +356,7 @@ export function WebsiteInheritedStubs({
                   ) : (
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-green-600" />
-                      <span className="text-green-700">Using base</span>
+                      <span className="text-green-700">🔗 Synced</span>
                     </div>
                   )}
                 </td>
@@ -362,13 +364,13 @@ export function WebsiteInheritedStubs({
                 {/* Actions */}
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-end gap-2">
-                    {/* View Live */}
+                    {/* Preview */}
                     <Link
                       to={`/live/${websiteId}/${stub.slug}`}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                      View Live
+                      Preview
                     </Link>
                     
                     {/* Edit */}
@@ -380,15 +382,15 @@ export function WebsiteInheritedStubs({
                       Edit
                     </Link>
                     
-                    {/* Reset to Base (only if modified) */}
+                    {/* Sync with Master (only if modified) */}
                     {stub.isModified && (
                       <button
                         onClick={() => handleResetToBase(stub.id, stub.name)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors"
-                        title="Reset to base design"
+                        title="Sync with Master"
                       >
                         <RotateCcw className="w-4 h-4" />
-                        Reset
+                        Sync
                       </button>
                     )}
                   </div>
@@ -400,18 +402,18 @@ export function WebsiteInheritedStubs({
         
         {filteredStubs.length === 0 && (
           <div className="py-12 text-center text-gray-500">
-            No stubs found matching your search
+            No pages found matching your search
           </div>
         )}
       </div>
 
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-1">About Stubs</h4>
+        <h4 className="font-medium text-blue-900 mb-1">About Other Pages</h4>
         <p className="text-sm text-blue-700">
-          Stubs are page templates from the design that you can customize. 
+          These are marketing and informational page templates from the design. 
           When modified, changes are saved specifically for this website while 
-          the base design remains unchanged. Use "Reset" to restore the original.
+          the design master remains unchanged. Use "Sync" to restore the master version.
         </p>
       </div>
     </div>

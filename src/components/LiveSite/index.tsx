@@ -31,7 +31,8 @@ const debugLog = createDebugLogger(DEBUG)
 import { 
   getOrCreatePageInstance, 
   getArchetypeById, 
-  resolveCanvasFromArchetype 
+  resolveCanvasFromArchetype,
+  getWebsiteArchetypeOverride
 } from '../../stores/archetypeStore'
 
 // Create default site layout for websites that don't have one
@@ -452,7 +453,14 @@ function JournalHomePage() {
         // Page Instance exists - load archetype and resolve with instance
         const archetype = getArchetypeById(archetypeId, designId)
         if (archetype) {
-          const resolvedCanvas = resolveCanvasFromArchetype(archetype, instance)
+          // Get website override (3-layer resolution: Design → Website → Page Instance)
+          const websiteOverride = getWebsiteArchetypeOverride(websiteId, archetypeId)
+          console.log(`🌐 [LiveSite] Resolving canvas for ${websiteId}:${pageName}`)
+          console.log(`   - Website override found: ${!!websiteOverride}`)
+          if (websiteOverride) {
+            console.log(`   - Override zones: ${Object.keys(websiteOverride.overrides)}`)
+          }
+          const resolvedCanvas = resolveCanvasFromArchetype(archetype, websiteOverride, instance)
           // Save resolved canvas to both locations for consistency
           setPageCanvas(websiteId, pageName, resolvedCanvas)
           setCanvasItemsForRoute(route, resolvedCanvas)
@@ -506,17 +514,20 @@ function JournalHomePage() {
     return getOrCreatePageInstance(websiteId, pageName, 'modern-journal-home', designId)
   }, [websiteId, pageName, designId])
   
-  // If using Page Instance, resolve from archetype + instance
+  // If using Page Instance, resolve from archetype + instance with website override
   const resolvedCanvas = useMemo(() => {
     if (pageInstance && pageCanvas.length === 0) {
       // No saved canvas yet, but instance exists - resolve from archetype
       const archetype = getArchetypeById('modern-journal-home', designId)
       if (archetype) {
-        return resolveCanvasFromArchetype(archetype, pageInstance)
+        // Get website override for 3-layer resolution
+        const websiteOverride = getWebsiteArchetypeOverride(websiteId, 'modern-journal-home')
+        console.log(`🌐 [LiveSite] resolvedCanvas memo - website override: ${!!websiteOverride}`)
+        return resolveCanvasFromArchetype(archetype, websiteOverride, pageInstance)
       }
     }
     return pageCanvas
-  }, [pageCanvas, pageInstance, designId])
+  }, [pageCanvas, pageInstance, designId, websiteId])
   
   // Render canvas content if available
   if (resolvedCanvas && resolvedCanvas.length > 0) {

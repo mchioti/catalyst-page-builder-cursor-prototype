@@ -63,18 +63,21 @@ export function PageStatus({
     return pageName === 'home' ? 'Homepage' : pageName
   }
   
-  // Handle revert zone to archetype (preview mode - updates editor but doesn't commit)
+  // Get archetype display name
+  const masterName = archetypeName || archetype?.name || 'Master'
+  
+  // Handle sync zone with Master (preview mode - updates editor but doesn't commit)
   const handleRevertZone = (zoneSlug: string) => {
     if (!pageInstance) return
     
     if (onRevertZoneToArchetype) {
-      // New behavior: Preview the revert (updates canvas, marks as pending)
-      if (window.confirm(`Preview "${zoneSlug}" as archetype version? You can confirm or discard via Save & Publish.`)) {
+      // New behavior: Preview the sync (updates canvas, marks as pending)
+      if (window.confirm(`Preview "${zoneSlug}" synced with "${masterName}"? You can confirm or discard via Save & Publish.`)) {
         onRevertZoneToArchetype(zoneSlug)
       }
     } else {
       // Fallback: Old behavior (direct commit)
-      if (window.confirm(`Revert "${zoneSlug}" to archetype? This will remove your local changes.`)) {
+      if (window.confirm(`Sync "${zoneSlug}" with "${masterName}"? This will remove your modifications.`)) {
         inheritZone(pageInstance, zoneSlug)
         onPageInstanceChange?.()
       }
@@ -91,20 +94,20 @@ export function PageStatus({
     }
   }
   
-  // Handle reset entire page to archetype (preview mode - updates editor but doesn't commit)
+  // Handle sync entire page with Master (preview mode - updates editor but doesn't commit)
   const handleResetPage = () => {
     if (!pageInstance) return
     
     const overrideCount = Object.keys(pageInstance.overrides).length
     
     if (onResetToArchetype) {
-      // New behavior: Preview the reset (updates canvas, marks as pending)
-      if (window.confirm(`Preview page as pure archetype? All ${overrideCount} local override(s) will be shown as pending removal. Confirm via Save & Publish.`)) {
+      // New behavior: Preview the sync (updates canvas, marks as pending)
+      if (window.confirm(`Preview page fully synced with "${masterName}"? All ${overrideCount} modification(s) will be shown as pending removal. Confirm via Save & Publish.`)) {
         onResetToArchetype()
       }
     } else {
       // Fallback: Old behavior (direct commit)
-      if (window.confirm(`Reset entire page to archetype? This will remove all ${overrideCount} local override(s).`)) {
+      if (window.confirm(`Sync entire page with "${masterName}"? This will remove all ${overrideCount} modification(s).`)) {
         resetPageToArchetype(pageInstance)
         onPageInstanceChange?.()
       }
@@ -184,11 +187,11 @@ export function PageStatus({
         <p className="text-sm font-medium text-gray-700">{getPageDisplayName()}</p>
       </div>
       
-      {/* Archetype Info */}
+      {/* Master Info */}
       <div className="mb-4">
         <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
           <GitBranch className="w-3 h-3" />
-          Inherits From
+          Master
         </h4>
         <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
           <div className="flex items-center justify-between">
@@ -209,12 +212,12 @@ export function PageStatus({
         </div>
       </div>
       
-      {/* Committed Overrides */}
+      {/* Modified Zones (Committed) */}
       {committedOverrides.length > 0 && (
         <div className="mb-4">
-          <h4 className="text-xs font-medium text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <h4 className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
-            Local Overrides ({committedOverrides.length})
+            Modified Zones ({committedOverrides.length})
           </h4>
           <div className="space-y-2">
             {committedOverrides.map(zoneSlug => {
@@ -222,17 +225,17 @@ export function PageStatus({
               const canUndo = canUndoZoneOverride(pageInstance, zoneSlug)
               
               return (
-                <div key={zoneSlug} className="bg-green-50 rounded-lg p-3 border border-green-100">
+                <div key={zoneSlug} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium text-green-800">{zoneSlug}</p>
+                      <p className="text-sm font-medium text-amber-800">{zoneSlug}</p>
                       {historyInfo && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Committed {formatDate(historyInfo.committedAt)}
+                        <p className="text-xs text-amber-600 mt-1">
+                          Saved {formatDate(historyInfo.committedAt)}
                         </p>
                       )}
                       {canUndo && historyInfo?.history && (
-                        <p className="text-xs text-green-500 mt-0.5 flex items-center gap-1">
+                        <p className="text-xs text-amber-500 mt-0.5 flex items-center gap-1">
                           <History className="w-3 h-3" />
                           {historyInfo.history.length} previous version(s)
                         </p>
@@ -242,16 +245,16 @@ export function PageStatus({
                       {canUndo && (
                         <button
                           onClick={() => handleUndoZone(zoneSlug)}
-                          className="p-1.5 text-green-600 hover:bg-green-100 rounded transition-colors"
-                          title="Undo to previous local version"
+                          className="p-1.5 text-amber-600 hover:bg-amber-100 rounded transition-colors"
+                          title="Undo to previous version"
                         >
                           <Undo2 className="w-4 h-4" />
                         </button>
                       )}
                       <button
                         onClick={() => handleRevertZone(zoneSlug)}
-                        className="p-1.5 text-green-600 hover:bg-green-100 rounded transition-colors"
-                        title="Revert to archetype"
+                        className="p-1.5 text-amber-600 hover:bg-amber-100 rounded transition-colors"
+                        title={`Sync with "${masterName}"`}
                       >
                         <RotateCcw className="w-4 h-4" />
                       </button>
@@ -289,26 +292,26 @@ export function PageStatus({
       
       {/* No Changes State */}
       {committedOverrides.length === 0 && pendingChanges.length === 0 && (
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <CheckCircle className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">
-            No local changes. Page matches archetype.
+        <div className="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+          <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+          <p className="text-sm text-green-700">
+            🔗 Fully synced with "{masterName}"
           </p>
         </div>
       )}
       
-      {/* Reset All Button */}
+      {/* Sync All Button */}
       {committedOverrides.length > 0 && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <button
             onClick={handleResetPage}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 transition-colors"
           >
-            <Trash2 className="w-4 h-4" />
-            Reset All to Archetype
+            <RotateCcw className="w-4 h-4" />
+            Sync All with "{masterName}"
           </button>
           <p className="text-xs text-gray-500 text-center mt-2">
-            Removes all {committedOverrides.length} local override(s)
+            Removes all {committedOverrides.length} modification(s)
           </p>
         </div>
       )}

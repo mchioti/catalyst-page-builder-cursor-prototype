@@ -14,6 +14,7 @@
 import React, { useState, useMemo } from 'react'
 import { X, Save, Layers, AlertTriangle, Check, Trash2, ChevronDown, ChevronRight, Undo2 } from 'lucide-react'
 import type { WidgetSection } from '../../types/widgets'
+import type { ArchetypeDisplayLabel } from '../../types/archetypes'
 import { createDebugLogger } from '../../utils/logger'
 import { countPageInstancesByArchetype } from '../../stores/archetypeStore'
 import { getSectionChanges, getSectionPositionChanges, type ChangeDescription, type PositionChange } from '../../utils/zoneComparison'
@@ -38,6 +39,7 @@ interface PublishReviewModalProps {
   pageName?: string // For simple mode header
   onDiscard?: () => void // Called when user wants to discard all changes
   affectedPagesCount?: number // Number of pages that will be affected (for archetype-master mode)
+  displayLabel?: ArchetypeDisplayLabel // For contextual language (e.g., "Journals", "Issues")
 }
 
 export function PublishReviewModal({
@@ -56,8 +58,21 @@ export function PublishReviewModal({
   onSimplePublish,
   pageName,
   onDiscard,
-  affectedPagesCount = 0
+  affectedPagesCount = 0,
+  displayLabel = { singular: 'Journal', plural: 'Journals' } // Default to Journal for backwards compatibility
 }: PublishReviewModalProps) {
+  // Helper for contextual language
+  const labels = {
+    singular: displayLabel.singular,
+    plural: displayLabel.plural,
+    singularLower: displayLabel.singular.toLowerCase(),
+    pluralLower: displayLabel.plural.toLowerCase(),
+    // Common phrases
+    pushToAll: `Push to All ${displayLabel.plural}`,
+    keepForThis: `Keep for This ${displayLabel.singular}`,
+    syncWithMaster: 'Sync with Master',
+    modified: 'Modified'
+  }
   // Build zoneSections from canvasItems if not provided (for archetype-master mode)
   const effectiveZoneSections = useMemo(() => {
     if (zoneSections) return zoneSections
@@ -286,7 +301,7 @@ export function PublishReviewModal({
             </p>
             {mode === 'archetype-master' && effectiveAffectedPagesCount > 0 && (
               <p className="text-sm text-amber-600 mt-1 font-medium">
-                ⚠️ This will update {effectiveAffectedPagesCount} {effectiveAffectedPagesCount === 1 ? 'journal' : 'journals'} using this template
+                ⚠️ This will update {effectiveAffectedPagesCount} {effectiveAffectedPagesCount === 1 ? labels.singularLower : labels.pluralLower} using{archetypeName ? ` "${archetypeName}"` : ' this Master'}
               </p>
             )}
           </div>
@@ -324,7 +339,7 @@ export function PublishReviewModal({
                     <Undo2 className="w-3.5 h-3.5 text-indigo-600" />
                   </div>
                   <h4 className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">
-                    Resetting to Archetype ({resetZones.length})
+                    Syncing with Master{archetypeName ? ` "${archetypeName}"` : ''} ({resetZones.length})
                   </h4>
                 </div>
                 <div className="space-y-3">
@@ -358,7 +373,7 @@ export function PublishReviewModal({
                                 {section?.name || zoneSlug}
                               </h3>
                               <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">
-                                Will inherit from archetype
+                                Will sync with Master
                               </span>
                             </div>
                             <p className="text-xs text-gray-500 mt-1 ml-6">
@@ -384,7 +399,7 @@ export function PublishReviewModal({
                             )}
                           </div>
                           
-                          {/* Simple choice: Confirm or Discard (undo the reset) */}
+                          {/* Simple choice: Confirm Sync or Keep Modified */}
                           <div className="flex items-center gap-2 ml-4">
                             <label className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-md border border-indigo-200 bg-white hover:bg-indigo-50 transition-colors">
                               <input
@@ -395,7 +410,7 @@ export function PublishReviewModal({
                                 onChange={() => handleChoiceChange(zoneSlug, 'local')}
                                 className="w-3.5 h-3.5 text-indigo-600 focus:ring-indigo-500"
                               />
-                              <span className="text-xs font-medium text-indigo-700">Confirm Reset</span>
+                              <span className="text-xs font-medium text-indigo-700">Confirm Sync</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-md border border-red-200 bg-white hover:bg-red-50 transition-colors">
                               <input
@@ -406,7 +421,7 @@ export function PublishReviewModal({
                                 onChange={() => handleChoiceChange(zoneSlug, 'discard')}
                                 className="w-3.5 h-3.5 text-red-600 focus:ring-red-500"
                               />
-                              <span className="text-xs font-medium text-red-600">Keep Override</span>
+                              <span className="text-xs font-medium text-red-600">Keep Modified</span>
                             </label>
                           </div>
                         </div>
@@ -522,7 +537,7 @@ export function PublishReviewModal({
                           {/* Choices - Only in page-instance archetype mode (not archetype-master) */}
                           {mode === 'archetype' && (
                             <div className="flex items-center gap-3 ml-4">
-                              {/* Keep Local Option */}
+                              {/* Keep for This Journal/Issue/etc Option */}
                               <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
@@ -534,11 +549,11 @@ export function PublishReviewModal({
                                 />
                                 <div className="flex items-center gap-1.5">
                                   <Layers className="w-4 h-4 text-blue-600" />
-                                  <span className="text-sm font-medium text-gray-700">Keep Local</span>
+                                  <span className="text-sm font-medium text-gray-700">{labels.keepForThis}</span>
                                 </div>
                               </label>
                               
-                              {/* Save to Archetype Option */}
+                              {/* Push to All Journals/Issues/etc Option */}
                               <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="radio"
@@ -550,7 +565,7 @@ export function PublishReviewModal({
                                 />
                                 <div className="flex items-center gap-1.5">
                                   <Save className="w-4 h-4 text-green-600" />
-                                  <span className="text-sm font-medium text-gray-700">Push to Archetype</span>
+                                  <span className="text-sm font-medium text-gray-700">{labels.pushToAll}</span>
                                 </div>
                               </label>
                               
@@ -578,17 +593,17 @@ export function PublishReviewModal({
                           <div className="mt-3 pt-3 border-t border-gray-100">
                             {choice === 'local' ? (
                               <p className="text-xs text-gray-500">
-                                This change will only affect <strong>this page</strong>. Other pages using this archetype will not be affected.
+                                This change will only affect <strong>this {labels.singularLower}</strong>. Other {labels.pluralLower} will not be affected.
                               </p>
                             ) : choice === 'archetype' ? (
                               <div className="flex items-start gap-2">
                                 <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-amber-700">
-                                  This change will update the <strong>archetype template</strong>.
+                                  This change will update the Master{archetypeName ? ` "${archetypeName}"` : ''}.
                                   {effectiveAffectedPagesCount > 0 ? (
-                                    <> <strong>{effectiveAffectedPagesCount}</strong> other page{effectiveAffectedPagesCount !== 1 ? 's' : ''} using this archetype will also inherit this change.</>
+                                    <> <strong>{effectiveAffectedPagesCount}</strong> other {labels.pluralLower} will also receive this change.</>
                                   ) : (
-                                    <> All pages using this archetype will inherit this change.</>
+                                    <> All {labels.pluralLower} will receive this change.</>
                                   )}
                                 </p>
                               </div>
@@ -620,23 +635,23 @@ export function PublishReviewModal({
               </div>
             ) : mode === 'archetype-master' ? (
               <div className="text-gray-600">
-                <span className="font-medium">{allChangedSections.size}</span> section{allChangedSections.size !== 1 ? 's' : ''} will be published to archetype
+                <span className="font-medium">{allChangedSections.size}</span> section{allChangedSections.size !== 1 ? 's' : ''} will be published to{archetypeName ? ` "${archetypeName}"` : ' Master'}
                 {effectiveAffectedPagesCount > 0 && (
                   <span className="text-amber-600 ml-1">
-                    (affects {effectiveAffectedPagesCount} {effectiveAffectedPagesCount === 1 ? 'journal' : 'journals'})
+                    (affects {effectiveAffectedPagesCount} {effectiveAffectedPagesCount === 1 ? labels.singularLower : labels.pluralLower})
                   </span>
                 )}
               </div>
             ) : mode === 'archetype' ? (
               <>
                 <div className="text-gray-600 space-y-1">
-                  {/* Show reset summary if any */}
+                  {/* Show sync summary if any */}
                   {resetZones.length > 0 && (
                     <div>
                       <span className="font-medium text-indigo-600">{resetZones.filter(z => choices.get(z) === 'local').length}</span>
-                      <span className="text-gray-500"> reset{resetZones.filter(z => choices.get(z) === 'local').length !== 1 ? 's' : ''} confirmed</span>
+                      <span className="text-gray-500"> sync{resetZones.filter(z => choices.get(z) === 'local').length !== 1 ? 's' : ''} confirmed</span>
                       {resetZones.filter(z => choices.get(z) === 'discard').length > 0 && (
-                        <span className="text-gray-500">, <span className="font-medium text-red-500">{resetZones.filter(z => choices.get(z) === 'discard').length}</span> kept as override</span>
+                        <span className="text-gray-500">, <span className="font-medium text-red-500">{resetZones.filter(z => choices.get(z) === 'discard').length}</span> kept modified</span>
                       )}
                     </div>
                   )}
@@ -644,9 +659,9 @@ export function PublishReviewModal({
                   {changeZones.length > 0 && (
                     <div>
                       <span className="font-medium text-blue-600">{changeZones.filter(z => choices.get(z) === 'local').length}</span>
-                      <span className="text-gray-500"> local</span>
+                      <span className="text-gray-500"> for this {labels.singularLower}</span>
                       {changeZones.filter(z => choices.get(z) === 'archetype').length > 0 && (
-                        <span className="text-gray-500">, <span className="font-medium text-green-600">{changeZones.filter(z => choices.get(z) === 'archetype').length}</span> to archetype</span>
+                        <span className="text-gray-500">, <span className="font-medium text-green-600">{changeZones.filter(z => choices.get(z) === 'archetype').length}</span> to all {labels.pluralLower}</span>
                       )}
                       {changeZones.filter(z => choices.get(z) === 'discard').length > 0 && (
                         <span className="text-gray-500">, <span className="font-medium text-red-500">{changeZones.filter(z => choices.get(z) === 'discard').length}</span> discarded</span>
@@ -658,7 +673,7 @@ export function PublishReviewModal({
                   <div className="flex items-center gap-1 text-amber-600 mt-1">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span className="text-xs">
-                      {effectiveAffectedPagesCount} other page{effectiveAffectedPagesCount !== 1 ? 's' : ''} will be affected
+                      {effectiveAffectedPagesCount} other {labels.pluralLower} will be affected
                     </span>
                   </div>
                 )}
@@ -696,7 +711,7 @@ export function PublishReviewModal({
             >
               <Save className="w-4 h-4" />
               {mode === 'archetype-master' 
-                ? `Publish to ${effectiveAffectedPagesCount > 0 ? `${effectiveAffectedPagesCount} Journals` : 'All Journals'}`
+                ? `Publish to ${effectiveAffectedPagesCount > 0 ? `${effectiveAffectedPagesCount} ${labels.plural}` : `All ${labels.plural}`}`
                 : 'Publish & View Live'
               }
             </button>

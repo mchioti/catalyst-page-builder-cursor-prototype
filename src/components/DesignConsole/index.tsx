@@ -169,18 +169,6 @@ export function DesignConsole() {
                       </button>
 
                       <button
-                        onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
-                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
-                          siteManagerView === `${website.id}-templates`
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <LayoutTemplate className="w-4 h-4" />
-                        Pages
-                      </button>
-
-                      <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                           siteManagerView === `${website.id}-publication-cards`
@@ -193,6 +181,18 @@ export function DesignConsole() {
                       </button>
 
                       <button
+                        onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                        Data-driven Pages
+                      </button>
+
+                      <button
                         onClick={() => setSiteManagerView(`${website.id}-custom-templates` as DesignConsoleView)}
                         className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
                           siteManagerView === `${website.id}-custom-templates`
@@ -201,7 +201,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <FilePlus2 className="w-4 h-4" />
-                        Stubs
+                        Other Pages
                       </button>
                     </div>
                   )}
@@ -272,7 +272,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <LayoutTemplate className="w-4 h-4" />
-                        Page Library
+                        Data-driven Pages
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${theme.id}-starter-library` as DesignConsoleView)}
@@ -283,7 +283,7 @@ export function DesignConsole() {
                         }`}
                       >
                         <FilePlus2 className="w-4 h-4" />
-                        Stub Library
+                        Other Pages
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${theme.id}-section-library` as DesignConsoleView)}
@@ -346,10 +346,10 @@ export function DesignConsole() {
                         Publication Cards →
                       </button>
                       <button 
-                        onClick={() => setSiteManagerView(`${theme.id}-templates` as DesignConsoleView)}
+                        onClick={() => setSiteManagerView(`${theme.id}-template-library` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Design Pages →
+                        Data-driven Pages →
                       </button>
                         </div>
                   </div>
@@ -378,7 +378,7 @@ export function DesignConsole() {
                         onClick={() => setSiteManagerView(`${website.id}-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Pages →
+                        Data-driven Pages →
                       </button>
                       <button
                         onClick={() => setSiteManagerView(`${website.id}-publication-cards` as DesignConsoleView)}
@@ -390,7 +390,7 @@ export function DesignConsole() {
                         onClick={() => setSiteManagerView(`${website.id}-custom-templates` as DesignConsoleView)}
                         className="block text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        Custom Pages →
+                        Other Pages →
                       </button>
                     </div>
                   </div>

@@ -345,14 +345,14 @@ export function BreadcrumbsEditor({ widget, updateWidget, isExpanded = false, on
             {pageInstance && parentZoneSlug && (
               <div className="mt-2 pt-2 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Inheritance</span>
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</span>
                   {pageInstance.overrides?.[parentZoneSlug] ? (
-                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
-                      Local (via zone)
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">
+                      ✏️ Modified (via zone)
                     </span>
                   ) : (
-                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600">
-                      Inherited
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-600">
+                      🔗 Synced
                     </span>
                   )}
                 </div>

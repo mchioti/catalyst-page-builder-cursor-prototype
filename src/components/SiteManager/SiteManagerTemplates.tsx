@@ -1451,8 +1451,8 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedType === 'templates' && '📋 Pages'}
-                  {selectedType === 'starters' && '📄 Stubs'}
+                  {selectedType === 'templates' && '📋 Data-driven Pages'}
+                  {selectedType === 'starters' && '📄 Other Pages'}
                   {selectedType === 'sections' && '🧩 Sections'}
                   {availableCategories.length > 1 && ` • ${categories.find(c => c.key === selectedCategory)?.label.replace(' Pages', '').replace(' Sections', '')}`}
                 </h2>
@@ -1466,8 +1466,8 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                 )}
               </div>
               <p className="text-gray-600 mt-1">
-                {selectedType === 'templates' && 'Data-driven hierarchical pages with inheritance (Journal → Archive → Issue → Article)'}
-                {selectedType === 'starters' && 'Marketing and creative pages - create independent copies for each website'}
+                {selectedType === 'templates' && 'Publication pages driven by backend data (Journal Home, Issue ToC, Article, etc.)'}
+                {selectedType === 'starters' && 'Marketing and informational pages (Homepage, About, Landing Pages, etc.)'}
                 {selectedType === 'sections' && 'Reusable prefab components - drag & drop into any page'}
               </p>
             </div>
@@ -1523,9 +1523,9 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                       className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2"
                     >
                       <Plus className="h-4 w-4" />
-                      {selectedType === 'templates' && 'Create New Page'}
-                      {selectedType === 'starters' && 'Create New Stub'}
-                      {selectedType === 'sections' && 'Create New Section'}
+                      {selectedType === 'templates' && 'Create Data-driven Page'}
+                      {selectedType === 'starters' && 'Create Other Page'}
+                      {selectedType === 'sections' && 'Create Section'}
                     </button>
                   )}
                 </div>
@@ -1558,7 +1558,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                       </th>
                       <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {selectedType === 'templates' && 'Page Name'}
-                        {selectedType === 'starters' && 'Stub Name'}
+                        {selectedType === 'starters' && 'Page Name'}
                         {selectedType === 'sections' && 'Section Name'}
                       </th>
                       <th className="text-right py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1611,10 +1611,10 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>📋 Pages</span>
+                      <span>📋 Data-driven Pages</span>
                       {selectedType === 'templates' && <span className="text-xs">▼</span>}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Data-driven pages with inheritance</div>
+                    <div className="text-xs text-gray-500 mt-1">Publication pages (Journal, Article, etc.)</div>
                   </button>
                   
                   <button
@@ -1626,10 +1626,10 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>📄 Stubs</span>
+                      <span>📄 Other Pages</span>
                       {selectedType === 'starters' && <span className="text-xs">▼</span>}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Marketing & creative pages (copy, not inherit)</div>
+                    <div className="text-xs text-gray-500 mt-1">Marketing & informational pages</div>
                   </button>
                   
                   <button
@@ -1687,7 +1687,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   <>
                     <div className="flex items-start gap-2">
                       <div className="w-2 h-2 rounded-full bg-purple-500 mt-1"></div>
-                      <span><strong>Pages</strong> are data-driven pages with inheritance. Changes propagate to child pages.</span>
+                      <span><strong>Data-driven Pages</strong> are publication pages populated by backend data. Sync with Master or modify locally.</span>
                     </div>
                   </>
                 )}
@@ -1695,7 +1695,7 @@ export function SiteManagerTemplates({ themeId, usePageStore, libraryType }: Sit
                   <>
                     <div className="flex items-start gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
-                      <span><strong>Stubs</strong> are independent copies. No inheritance or propagation.</span>
+                      <span><strong>Other Pages</strong> are marketing and informational pages. Can be copied or synced with Master.</span>
                     </div>
                   </>
                 )}

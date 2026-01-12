@@ -225,36 +225,13 @@ export function TemplateRow({
               ) : (
                 /* Website View (showDivergence = true) - Minimal view for template divergence management */
                 <>
-                  {/* TODO: Uncomment these when template editing is implemented
+                  {/* Preview button for Website view */}
                   <button 
-                    onClick={() => handleEditTemplate(template)}
-                    className="text-blue-600 hover:text-blue-800 text-left transition-colors"
+                    onClick={() => handlePreviewTemplate(template)}
+                    className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
                   >
-                    Edit Page Template
+                    Preview
                   </button>
-                  <div className="flex gap-2 mt-1">
-                    <button 
-                      onClick={() => handlePreviewTemplate(template)}
-                      className="text-green-600 hover:text-green-800 text-xs transition-colors"
-                    >
-                      Preview
-                    </button>
-                    <button 
-                      onClick={() => handleDuplicateTemplate(template)}
-                      className="text-purple-600 hover:text-purple-800 text-xs transition-colors"
-                    >
-                      Duplicate
-                    </button>
-                    {template.usageCount === 0 && (
-                      <button 
-                        onClick={() => handleDeleteTemplate(template)}
-                        className="text-red-600 hover:text-red-800 text-xs transition-colors"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                  */}
                   
                   {/* Promote to Publisher Theme button - template level */}
                   {consoleMode === 'multi' && 

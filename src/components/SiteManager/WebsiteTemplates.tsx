@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { TemplateRow } from './TemplateRow'
 
@@ -48,9 +49,11 @@ export function WebsiteTemplates({
   usePageStore,
   consoleMode = 'multi', // Default to multi for backwards compatibility
   selectionMode = false,
+  // Note: navigate hook is used below
   selectedTemplates = new Set(),
   onToggleTemplateSelection
 }: WebsiteTemplatesProps) {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
@@ -199,7 +202,20 @@ export function WebsiteTemplates({
   }
 
   const handlePreviewTemplate = (template: Template) => {
-    console.log('Preview template:', template.id)
+    // For Journal Home, navigate to archetype preview with website context
+    if (template.id === 'journal-home') {
+      const archetypeId = 'modern-journal-home'
+      // Use the website's designId if available
+      const designId = 'classic-ux3-theme' // TODO: Get from website config
+      // Include websiteId so changes only affect this website
+      navigate(`/preview/archetype/${archetypeId}?designId=${designId}&websiteId=${websiteId}`)
+      return
+    }
+    
+    // For other templates, navigate to mock live site preview
+    // Using the website context
+    const pageSlug = template.id.replace('-template', '').replace('journal-', '')
+    navigate(`/live/${websiteId}/${pageSlug}`)
   }
 
   const handleDuplicateTemplate = (template: Template) => {
@@ -237,10 +253,27 @@ export function WebsiteTemplates({
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Pages</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Data-driven Pages</h2>
         <p className="text-gray-600 mt-1">
-          Manage templates and track modifications for this website
+          Publication pages with modification tracking (Journal Home, Issue ToC, Article, etc.)
         </p>
+        
+        {/* Filter: Design / My Pages / All */}
+        <div className="mt-4 flex items-center gap-6">
+          <span className="text-sm font-medium text-gray-700">Show:</span>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="page-filter" value="design" defaultChecked className="w-4 h-4 text-blue-600" />
+            <span className="text-sm text-gray-700">Design</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="page-filter" value="my-pages" className="w-4 h-4 text-blue-600" />
+            <span className="text-sm text-gray-700">My Pages</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="page-filter" value="all" className="w-4 h-4 text-blue-600" />
+            <span className="text-sm text-gray-700">All</span>
+          </label>
+        </div>
         
         {/* Enabled Content Types */}
         <div className="mt-4 flex items-center gap-2">

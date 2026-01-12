@@ -78,7 +78,7 @@ export function TemplateDivergenceTracker({
     return (
       <div className="space-y-2">
         <div className="text-sm font-medium text-gray-900 mb-3">
-          Journals with modifications for {templateName}:
+          Modified journals for {templateName}:
         </div>
         {modifications.map((modification: any) => (
           <CustomizationItem
@@ -107,7 +107,7 @@ export function TemplateDivergenceTracker({
     <div className="flex items-center gap-2 flex-wrap" data-testid="divergence-tracker">
       {usingBaseCount > 0 && (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-          {usingBaseCount} using base
+          {usingBaseCount} synced
         </span>
       )}
       
@@ -128,7 +128,7 @@ export function TemplateDivergenceTracker({
         </span>
       )}
       
-      {/* Promote to Publisher Theme button - only for Publication Pages in multi-website console when this website has modifications */}
+      {/* Push to Design button - only for Publication Pages in multi-website console when this website has modifications */}
       {consoleMode === 'multi' && 
        templateCategory === 'publication' && 
        thisWebsiteHasModification && 
@@ -136,11 +136,11 @@ export function TemplateDivergenceTracker({
         <button
           onClick={() => onPromoteToPublisherTheme(templateId)}
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
-          title="Promote this journal's modifications to Publisher Theme"
+          title="Push this journal's modifications to Design"
           data-testid="promote-to-publisher-theme"
         >
           <ArrowUp className="h-3 w-3" />
-          Promote to Theme
+          Push to Design
         </button>
       )}
     </div>
@@ -233,12 +233,12 @@ function CustomizationItem({
   }
   
   const handleReset = () => {
-    if (confirm(`Reset ${modification.journalName} to base template?\n\nAll ${modificationBreakdown.total} modifications will be lost.`)) {
+    if (confirm(`Sync ${modification.journalName} with Master?\n\nAll ${modificationBreakdown.total} modifications will be removed.`)) {
       resetToBase?.(modification.route)
       addNotification?.({
         type: 'success',
-        title: 'Reset Complete',
-        message: `${modification.journalName} reset to base template`
+        title: 'Synced with Master',
+        message: `${modification.journalName} synced with Master template`
       })
     }
   }
@@ -246,11 +246,11 @@ function CustomizationItem({
   const handlePromote = () => {
     if (isIndividualIssue) {
       // Promote individual issue to journal template (Level 1 → Level 2)
-      if (confirm(`Promote this issue's modifications to ALL ${modification.journalName} issues?\n\nAll issues in this journal will inherit these changes.`)) {
+      if (confirm(`Push this issue's modifications to ALL ${modification.journalName} issues?\n\nAll issues in this journal will inherit these changes.`)) {
         promoteToJournalTemplate?.(modification.route, modification.journalCode, templateId)
         addNotification?.({
           type: 'success',
-          title: 'Promoted to Journal Page',
+          title: 'Pushed to Journal',
           message: `All ${modification.journalName} issues will now inherit these changes`
         })
       }
@@ -266,23 +266,23 @@ function CustomizationItem({
         .map((m: any) => m.journalName)
       
       // Build accurate dialog message with explicit template name
-      let message = `Promote ${modification.journalName}'s ${templateName} to ALL journals?\n\n`
-      message += `This will update the base ${templateName} used across all journals.\n\n`
+      let message = `Push ${modification.journalName}'s ${templateName} to Master (all journals)?\n\n`
+      message += `This will update the Master ${templateName} used across all journals.\n\n`
       
       if (otherModifiedJournals.length > 0) {
         message += `⚠️ ${otherModifiedJournals.join(', ')} will NOT be affected because they have their own ${templateName} modifications.\n\n`
-        message += `Only journals without modifications will inherit this ${templateName}.`
+        message += `Only synced journals will inherit this ${templateName}.`
       } else {
-        message += `All journals will inherit this ${templateName} (except exempted ones).`
+        message += `All journals will inherit this ${templateName} (except those broken from Master).`
       }
       
       if (confirm(message)) {
         promoteToBase?.(modification.route, templateId)
         addNotification?.({
           type: 'success',
-          title: `Promoted to Base ${templateName}`,
+          title: `Pushed to Master ${templateName}`,
           message: otherModifiedJournals.length > 0 
-            ? `Base ${templateName} updated. ${otherModifiedJournals.join(', ')} kept their own modifications.`
+            ? `Master ${templateName} updated. ${otherModifiedJournals.join(', ')} kept their own modifications.`
             : `All journals will now use ${modification.journalName}'s ${templateName}`
         })
       }
@@ -291,21 +291,21 @@ function CustomizationItem({
   
   const handleToggleExempt = () => {
     if (modification.isExempt) {
-      if (confirm(`Remove exemption for ${modification.journalName}?\n\nThis journal will inherit future base template updates.`)) {
+      if (confirm(`Re-enable sync for ${modification.journalName}?\n\nThis journal will inherit future Master updates.`)) {
         removeExemption?.(modification.route)
         addNotification?.({
           type: 'info',
-          title: 'Exemption Removed',
-          message: `${modification.journalName} will now inherit template updates`
+          title: 'Sync Enabled',
+          message: `${modification.journalName} will now sync with Master updates`
         })
       }
     } else {
-      if (confirm(`Exempt ${modification.journalName} from base template updates?\n\nThis journal will keep its modifications even when the base template is updated.`)) {
+      if (confirm(`Break from Master for ${modification.journalName}?\n\nThis journal will keep its modifications even when the Master is updated.`)) {
         exemptFromUpdates?.(modification.route)
         addNotification?.({
           type: 'info',
-          title: 'Journal Exempted',
-          message: `${modification.journalName} will not inherit future template updates`
+          title: 'Broken from Master',
+          message: `${modification.journalName} will not sync with future Master updates`
         })
       }
     }
@@ -380,7 +380,7 @@ function CustomizationItem({
         <button
           onClick={handleReset}
           className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
-          title="Reset to base template"
+          title="Sync with Master"
           data-testid={`reset-${modification.journalCode}`}
         >
           <RotateCcw className="h-4 w-4" />
@@ -395,8 +395,8 @@ function CustomizationItem({
           }`}
           title={
             isIndividualIssue 
-              ? 'Promote to journal template (all issues in this journal)' 
-              : 'Promote to base template (all journals)'
+              ? 'Push to journal (all issues in this journal)' 
+              : 'Push to Master (all journals)'
           }
           data-testid={`promote-${modification.journalCode}`}
         >
@@ -410,7 +410,7 @@ function CustomizationItem({
               ? 'text-purple-600 hover:bg-purple-50' 
               : 'text-gray-600 hover:bg-gray-50'
           }`}
-          title={modification.isExempt ? "Remove exemption" : "Exempt from updates"}
+          title={modification.isExempt ? "Enable sync with Master" : "Break from Master"}
           data-testid={`exempt-${modification.journalCode}`}
         >
           {modification.isExempt ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}

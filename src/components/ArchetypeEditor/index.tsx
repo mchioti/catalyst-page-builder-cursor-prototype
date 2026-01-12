@@ -21,8 +21,11 @@ import {
   saveArchetype,
   resolveCanvasFromArchetype,
   countPageInstancesByArchetype,
-  getPagesUsingArchetype
+  getPagesUsingArchetype,
+  getWebsiteArchetypeOverride,
+  saveWebsiteArchetypeOverride
 } from '../../stores/archetypeStore'
+import type { WebsiteArchetypeOverride } from '../../types/archetypes'
 import { 
   initializeJournalHomeArchetype
 } from '../../utils/archetypeFactory'
@@ -40,6 +43,7 @@ export function ArchetypeEditor() {
   const { archetypeId } = useParams<{ archetypeId: string }>()
   const [searchParams] = useSearchParams()
   const designId = searchParams.get('designId') || 'classic-ux3-theme'
+  const websiteId = searchParams.get('websiteId') // Optional - if present, save to website-level override
   
   const { 
     setCurrentView, 
@@ -59,6 +63,7 @@ export function ArchetypeEditor() {
   // const { drawerOpen } = usePrototypeStore() // Reserved for future use
   
   const [archetype, setArchetype] = useState<Archetype | null>(null)
+  const [websiteOverride, setWebsiteOverride] = useState<WebsiteArchetypeOverride | null>(null)
   const [showMockData, setShowMockData] = useState(true) // Mock data toggle
   const [instanceCount, setInstanceCount] = useState(0) // Count of journals using this archetype
   const [showPublishModal, setShowPublishModal] = useState(false) // Show review modal
@@ -79,7 +84,7 @@ export function ArchetypeEditor() {
     debugLog('log', '🎨 [ArchetypeEditor] Reset mockLiveSiteRoute for archetype mode')
   }, [setCurrentView, setEditingContext, setMockLiveSiteRoute])
   
-  // Load archetype
+  // Load archetype and website override
   useEffect(() => {
     if (!archetypeId) return
     
@@ -87,28 +92,45 @@ export function ArchetypeEditor() {
     if (archetypeId === 'modern-journal-home') {
       const initialized = initializeJournalHomeArchetype(designId)
       setArchetype(initialized)
-      return
+    } else {
+      // Load existing archetype
+      const loaded = getArchetypeById(archetypeId, designId)
+      if (loaded) {
+        setArchetype(loaded)
+      } else {
+        debugLog('error', `Archetype not found: ${archetypeId}`)
+      }
     }
     
-    // Load existing archetype
-    const loaded = getArchetypeById(archetypeId, designId)
-    if (loaded) {
-      setArchetype(loaded)
+    // Load website override if websiteId is present
+    if (websiteId) {
+      const override = getWebsiteArchetypeOverride(websiteId, archetypeId)
+      setWebsiteOverride(override)
+      debugLog('log', `📦 [ArchetypeEditor] Loaded website override for ${websiteId}:${archetypeId}:`, override ? Object.keys(override.overrides) : 'none')
     } else {
-      debugLog('error', `Archetype not found: ${archetypeId}`)
+      setWebsiteOverride(null)
     }
-  }, [archetypeId, designId])
+  }, [archetypeId, designId, websiteId])
   
   // Count page instances using this archetype
   useEffect(() => {
     if (!archetypeId) return
-    const count = countPageInstancesByArchetype(archetypeId)
-    setInstanceCount(count)
-  }, [archetypeId])
+    
+    if (websiteId) {
+      // Count only pages in this website
+      const allPages = getPagesUsingArchetype(archetypeId)
+      const websitePages = allPages.filter(p => p.websiteId === websiteId)
+      setInstanceCount(websitePages.length)
+    } else {
+      // Count all pages across all websites
+      const count = countPageInstancesByArchetype(archetypeId)
+      setInstanceCount(count)
+    }
+  }, [archetypeId, websiteId])
   
   // Load canvas items when archetype is loaded
   useEffect(() => {
-    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: archetype=${archetype?.name || 'null'}, loadedRef=${loadedRef.current}, archetypeId=${archetypeId}`)
+    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: archetype=${archetype?.name || 'null'}, loadedRef=${loadedRef.current}, archetypeId=${archetypeId}, websiteId=${websiteId || 'none'}`)
     debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: Current canvasItems has ${canvasItems.length} sections, first section id=${canvasItems[0]?.id || 'none'}`)
     
     if (!archetype || loadedRef.current) {
@@ -117,11 +139,13 @@ export function ArchetypeEditor() {
     }
     
     // Check if we have saved canvas (user edits)
-    const savedCanvas = getPageCanvas('archetype', archetypeId!)
-    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: savedCanvas has ${savedCanvas?.length || 0} sections`)
+    // Use website-specific key if websiteId is present
+    const canvasKey = websiteId ? `${websiteId}:${archetypeId}` : archetypeId!
+    const savedCanvas = getPageCanvas('archetype', canvasKey)
+    debugLog('log', `🔍 [ArchetypeEditor] LOAD EFFECT: savedCanvas has ${savedCanvas?.length || 0} sections (key: ${canvasKey})`)
     
-    // Always set baseline from the archetype (the committed state)
-    const archetypeCanvas = resolveCanvasFromArchetype(archetype)
+    // Always set baseline from the resolved archetype with website override (the committed state)
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype, websiteOverride)
     baselineCanvasRef.current = JSON.parse(JSON.stringify(archetypeCanvas))
     
     if (savedCanvas && savedCanvas.length > 0) {
@@ -132,16 +156,16 @@ export function ArchetypeEditor() {
       return
     }
     
-    // Load from archetype
-    debugLog('log', `📂 [ArchetypeEditor] Loading from ARCHETYPE:`)
+    // Load from archetype with website override
+    debugLog('log', `📂 [ArchetypeEditor] Loading from ARCHETYPE with website override:`)
     debugLog('log', `   - Archetype name: ${archetype.name}`)
-    debugLog('log', `   - Archetype canvasItems count: ${archetype.canvasItems?.length || 0}`)
+    debugLog('log', `   - Website override zones: ${websiteOverride ? Object.keys(websiteOverride.overrides).join(', ') : 'none'}`)
     debugLog('log', `   - Resolved canvas count: ${archetypeCanvas.length}`)
     debugLog('log', `   - First resolved section: id=${archetypeCanvas[0]?.id}, zoneSlug=${(archetypeCanvas[0] as any)?.zoneSlug}`)
     replaceCanvasItems(archetypeCanvas)
     setIsEditingLoadedWebsite(true)
     loadedRef.current = true
-  }, [archetype, archetypeId, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, canvasItems])
+  }, [archetype, archetypeId, websiteId, websiteOverride, replaceCanvasItems, setIsEditingLoadedWebsite, getPageCanvas, canvasItems])
   
   // AUTO-SAVE DISABLED - It was causing data corruption!
   // The auto-save would run with stale canvasItems (from previous page edit) 
@@ -253,43 +277,120 @@ export function ArchetypeEditor() {
   const handleConfirmPublish = () => {
     if (!archetype) return
     
+    console.log('💾 [ArchetypeEditor] CONFIRM PUBLISH:')
+    console.log('   - archetypeId:', archetypeId)
+    console.log('   - websiteId:', websiteId || 'none (Design level)')
+    console.log('   - canvasItems count:', canvasItems.length)
+    console.log('   - First section widgets:', canvasItems[0]?.areas?.[0]?.widgets?.map((w: any) => w.type).join(', '))
+    
     // Clean canvas items (remove publications data, keep config)
     const cleanedCanvas = cleanCanvasForArchetype(canvasItems)
+    console.log('   - Cleaned canvas count:', cleanedCanvas.length)
     
-    const updatedArchetype: Archetype = {
-      ...archetype,
-      canvasItems: cleanedCanvas,
-      updatedAt: new Date()
+    if (websiteId) {
+      // WEBSITE-LEVEL SAVE: Save as website override
+      console.log('   📄 WEBSITE-LEVEL SAVE for:', websiteId)
+      
+      // Extract zone overrides by comparing current canvas to design archetype
+      const overrides: Record<string, WidgetSection> = {}
+      
+      cleanedCanvas.forEach((section: WidgetSection) => {
+        if (!section.zoneSlug) return
+        
+        // Find corresponding section in design archetype
+        const designSection = archetype.canvasItems.find(s => s.zoneSlug === section.zoneSlug)
+        
+        // If section differs from design archetype, store as override
+        // For simplicity, we store all sections that have zoneSlug (can be optimized later)
+        if (section.zoneSlug) {
+          overrides[section.zoneSlug] = section
+          console.log('   - Storing override for zone:', section.zoneSlug)
+        }
+      })
+      
+      const newOverride: WebsiteArchetypeOverride = {
+        id: `${websiteId}:${archetype.id}`,
+        type: 'website-archetype-override',
+        websiteId,
+        archetypeId: archetype.id,
+        designId: archetype.designId,
+        overrides,
+        createdAt: websiteOverride?.createdAt || new Date(),
+        updatedAt: new Date()
+      }
+      
+      console.log('   - Saving WebsiteArchetypeOverride:', newOverride.id)
+      console.log('   - Override zones:', Object.keys(overrides))
+      saveWebsiteArchetypeOverride(newOverride)
+      setWebsiteOverride(newOverride)
+      
+      // Update baseline to match saved state
+      baselineCanvasRef.current = JSON.parse(JSON.stringify(cleanedCanvas))
+      
+      // Clear cached canvas for pages using this archetype IN THIS WEBSITE ONLY
+      const allPages = getPagesUsingArchetype(archetype.id)
+      console.log('   - All pages using archetype:', allPages.map(p => `${p.websiteId}:${p.pageId}`))
+      const websitePages = allPages.filter(p => p.websiteId === websiteId)
+      console.log('   - Pages in this website:', websitePages.map(p => `${p.websiteId}:${p.pageId}`))
+      
+      websitePages.forEach(({ websiteId: wId, pageId }) => {
+        console.log(`   🗑️ Clearing cached canvas for: ${wId}:${pageId}`)
+        clearPageCanvas(wId, pageId)
+        const route = `/${pageId}`
+        clearCanvasItemsForRoute(route)
+        clearPageDraft(wId, pageId)
+      })
+      
+      setShowPublishModal(false)
+      setInstanceCount(websitePages.length)
+      
+      addNotification({
+        type: 'success',
+        title: 'Website Master Updated',
+        message: `Changes saved to website. ${websitePages.length} journal(s) in this website will be updated.`,
+        closeAfter: 3000
+      })
+    } else {
+      // DESIGN-LEVEL SAVE: Save to design archetype (affects all websites)
+      console.log('   🏛️ DESIGN-LEVEL SAVE')
+      
+      const updatedArchetype: Archetype = {
+        ...archetype,
+        canvasItems: cleanedCanvas,
+        updatedAt: new Date()
+      }
+      
+      console.log('   - Saving to design archetype:', updatedArchetype.id)
+      console.log('   - Canvas items:', cleanedCanvas.length)
+      saveArchetype(updatedArchetype)
+      setArchetype(updatedArchetype)
+      
+      // Update baseline to match saved state
+      baselineCanvasRef.current = JSON.parse(JSON.stringify(cleanedCanvas))
+      
+      // Clear cached canvas for ALL pages using this archetype
+      const pagesUsingArchetype = getPagesUsingArchetype(archetype.id)
+      const clearedCount = pagesUsingArchetype.length
+      console.log('   - Pages using archetype:', pagesUsingArchetype.map(p => `${p.websiteId}:${p.pageId}`))
+      
+      pagesUsingArchetype.forEach(({ websiteId: wId, pageId }) => {
+        console.log(`   🗑️ Clearing cached canvas for: ${wId}:${pageId}`)
+        clearPageCanvas(wId, pageId)
+        const route = `/${pageId}`
+        clearCanvasItemsForRoute(route)
+        clearPageDraft(wId, pageId)
+      })
+      
+      setShowPublishModal(false)
+      setInstanceCount(clearedCount)
+      
+      addNotification({
+        type: 'success',
+        title: 'Design Master Updated',
+        message: `Changes saved to design. ${clearedCount} journal(s) across all websites will be updated.`,
+        closeAfter: 3000
+      })
     }
-    
-    // Save archetype
-    saveArchetype(updatedArchetype)
-    setArchetype(updatedArchetype)
-    
-    // Update baseline to match saved state
-    baselineCanvasRef.current = JSON.parse(JSON.stringify(cleanedCanvas))
-    
-    // Clear cached canvas for all pages using this archetype
-    // This ensures they re-resolve from the updated archetype on next load
-    const pagesUsingArchetype = getPagesUsingArchetype(archetype.id)
-    const clearedCount = pagesUsingArchetype.length
-    
-    pagesUsingArchetype.forEach(({ websiteId, pageId }) => {
-      debugLog('log', `🗑️ [ArchetypeEditor] Clearing cached canvas for: ${websiteId}:${pageId}`)
-      clearPageCanvas(websiteId, pageId)
-      // Also clear routeCanvasItems (LiveSite uses both storage locations)
-      const route = `/${pageId}`
-      clearCanvasItemsForRoute(route)
-      // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
-      clearPageDraft(websiteId, pageId)
-      debugLog('log', `🗑️ [ArchetypeEditor] Cleared all caches (canvas, route, draft) for: ${route}`)
-    })
-    
-    // Close modal
-    setShowPublishModal(false)
-    
-    // Update instance count state to match actual
-    setInstanceCount(clearedCount)
   }
   
   // Handle discarding changes
@@ -351,6 +452,7 @@ export function ArchetypeEditor() {
         archetypeInstanceCount={instanceCount}
         archetypeId={archetypeId}
         designId={designId}
+        archetypeWebsiteId={websiteId || undefined}
         archetypeModifiedSections={modifiedSections}
         onSaveArchetype={handleShowPublishModal}
         onPageSettingsClick={handlePageSettingsClick}

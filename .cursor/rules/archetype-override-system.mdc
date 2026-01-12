@@ -9,9 +9,62 @@ alwaysApply: false
 ## Architecture Overview
 
 This codebase implements a **master template inheritance system** where:
-- **Archetypes** are master templates (e.g., "Modern Journal Home") that define default content for zones
-- **Page Instances** inherit from archetypes and can override specific zones locally
-- Changes to archetypes propagate to all inheriting pages (unless those zones have local overrides)
+- **Masters (Archetypes)** are master templates (e.g., "Modern Journal Home") that define default content for zones
+- **Page Instances** can sync with Masters and override specific zones locally
+- Changes to Masters propagate to all synced pages (unless those zones have local modifications)
+
+## Terminology (User-Facing)
+
+| Internal Term | User-Facing Term | Description |
+|---------------|------------------|-------------|
+| Archetype | **Master** | Source of truth template |
+| Stub | **Copy** | One-time snapshot, no sync |
+| Inherited | **🔗 Synced** | Following the Master |
+| Overridden | **✏️ Modified** | Has local changes |
+| Push to Archetype | **Push to All [Journals]** | Update Master (contextual) |
+| Keep Local | **Keep for This [Journal]** | Save as modification (contextual) |
+| Reset to Archetype | **Sync with Master** | Remove modifications |
+
+### Contextual Labels (displayLabel)
+
+Archetypes have a `displayLabel` property for contextual language:
+```typescript
+archetype: {
+  displayLabel: { singular: 'Journal', plural: 'Journals' }
+}
+```
+
+This enables:
+- "Push to All **Journals**" (for Journal Home archetype)
+- "Push to All **Issues**" (for Issue ToC archetype)
+- "Keep for This **Article**" (for Article archetype)
+
+## Inheritance Decision: At Use Time
+
+**Key Design Decision:** The choice between Copy vs Synced happens when USING a saved design, not when saving it.
+
+### When Creating/Applying a Page Design:
+```
+┌─────────────────────────────────────────────────────┐
+│ How would you like to use "Modern Journal Home"?    │
+│                                                     │
+│ ○ Start as Copy                                     │
+│   (Independent - no sync with original)             │
+│                                                     │
+│ ○ Sync with Master                                  │
+│   (Stays synced - receives updates)                 │
+└─────────────────────────────────────────────────────┘
+```
+
+### For Existing Pages (Link to Master):
+- Show preview/diff of what will change
+- User can cherry-pick which zones to sync vs keep
+- Draft/Preview mode before committing
+
+### Any Page Can Sync with Any Master
+- Not limited to journal homepages
+- Homepage, About, Contact can all sync with Masters
+- Enables managing 10+ websites with consistent templates
 
 ```
 Archetype (Master Template)
@@ -144,13 +197,27 @@ When user clicks "Save & Publish":
 
 1. **Calculate dirty zones** (compare current vs committed state)
 2. **Show PublishReviewModal** with choices per zone:
-   - "Keep Local" → `overrideZone()` saves to PageInstance
-   - "Push to Archetype" → Updates archetype, clears override
-3. **Clear caches** after publish:
+   - "Keep for This [Journal]" → `overrideZone()` saves as modification
+   - "Push to All [Journals]" → Updates Master, clears modification
+   - "Discard" → Reverts zone to previous state
+3. **Grouped display:**
+   - "Syncing with Master" group → Zones being reset (show Confirm Sync / Keep Modified)
+   - "New Changes" group → Zones with new edits (show full options)
+4. **Clear caches** after publish:
    ```typescript
    clearPageDraft(websiteId, pageName)
    clearPageCanvas(websiteId, pageName)
    ```
+
+## Role-Based Access (Phase 2)
+
+Future implementation will enforce:
+- **Platform Admin**: Can push to all, create Masters, edit any zone
+- **Publisher**: Can push to their portfolio, create Masters for their journals
+- **Journal Manager**: Can only modify their journal (no push to others)
+- **Content Editor**: Can only edit specific content zones
+
+Zone tiers (`locked` property) will control editability per role.
 
 ## Common Pitfalls
 

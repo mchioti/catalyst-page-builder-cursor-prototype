@@ -145,7 +145,8 @@ import type {
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 import { GlobalSectionBar } from './GlobalSectionBar'
-import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype, resolveCanvasFromArchetype } from '../../stores/archetypeStore'
+import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype, resolveCanvasFromArchetype, getWebsiteArchetypeOverride, saveWebsiteArchetypeOverride } from '../../stores/archetypeStore'
+import type { WebsiteArchetypeOverride } from '../../types/archetypes'
 
 // Component props interface
 interface PageBuilderProps {
@@ -172,6 +173,7 @@ interface PageBuilderProps {
   archetypeInstanceCount?: number // Count of journals using this archetype
   archetypeId?: string // Archetype ID for preview navigation
   designId?: string // Design ID for preview navigation
+  archetypeWebsiteId?: string // If editing website-level archetype, the website ID (null = design-level)
   archetypeModifiedSections?: Set<string> // Sections modified in archetype (for badge)
   onSaveArchetype?: () => void // Handler for Save Archetype button
   onPageSettingsClick?: () => void // Handler for Page Settings button
@@ -206,6 +208,7 @@ export function PageBuilder({
   archetypeInstanceCount = 0,
   archetypeId,
   designId,
+  archetypeWebsiteId,
   archetypeModifiedSections = new Set(),
   onSaveArchetype,
   onPageSettingsClick,
@@ -344,12 +347,17 @@ export function PageBuilder({
   }, [canvasItems])
   
   // Build baselineSections map for comparison (archetype sections or published sections)
+  // IMPORTANT: For page instance mode, use resolved canvas (Design + Website override)
+  // so that "Reset to Archetype" correctly identifies zones as resets, not new changes
   const baselineSections = React.useMemo(() => {
     const map = new Map<string, WidgetSection>()
     
     if (pageInstanceMode && archetype) {
-      // For archetype mode: use archetype's sections as baseline
-      archetype.canvasItems.forEach((item: any) => {
+      // For archetype mode: use RESOLVED archetype (with website override) as baseline
+      // This ensures "Sync with Master" compares against Website Master, not Design Master
+      const websiteOverrideForBaseline = websiteId ? getWebsiteArchetypeOverride(websiteId, archetype.id) : null
+      const resolvedArchetype = resolveCanvasFromArchetype(archetype, websiteOverrideForBaseline)
+      resolvedArchetype.forEach((item: any) => {
         if (isSection(item) && item.zoneSlug) {
           map.set(item.zoneSlug, item)
         }
@@ -365,7 +373,7 @@ export function PageBuilder({
     }
     
     return map
-  }, [pageInstanceMode, archetype, isSection])
+  }, [pageInstanceMode, archetype, websiteId, isSection])
   
   // Build baselineSections map for simple mode (by section id, not zoneSlug)
   const baselineSectionsForSimpleMode = React.useMemo(() => {
@@ -467,7 +475,9 @@ export function PageBuilder({
       debugLog('log', '↩️ [PageBuilder] Will revert to published state', { itemCount: publishedCanvas.length })
     } else if (pageInstanceMode && pageInstance && archetype) {
       // For archetype pages with no published state, resolve from archetype
-      canvasToLoad = resolveCanvasFromArchetype(archetype, pageInstance)
+      // Include website override for 3-layer resolution
+      const websiteOverrideForRevert = getWebsiteArchetypeOverride(websiteId, archetype.id)
+      canvasToLoad = resolveCanvasFromArchetype(archetype, websiteOverrideForRevert, pageInstance)
       debugLog('log', '↩️ [PageBuilder] Will revert to archetype-resolved state', { itemCount: canvasToLoad?.length })
     }
     
@@ -503,8 +513,10 @@ export function PageBuilder({
       return
     }
     
-    // Load pure archetype content (no overrides)
-    const archetypeCanvas = resolveCanvasFromArchetype(archetype) // No pageInstance = no overrides
+    // Load archetype content with website override (resets to Website Master, not Design Master)
+    // This preserves publisher's website-level customizations
+    const websiteOverrideForReset = getWebsiteArchetypeOverride(websiteId, archetype.id)
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype, websiteOverrideForReset) // No pageInstance = reset to website master
     
     if (archetypeCanvas && archetypeCanvas.length > 0) {
       replaceCanvasItems(archetypeCanvas)
@@ -515,8 +527,8 @@ export function PageBuilder({
       
       addNotification({
         type: 'info',
-        title: 'Preview: Reset to Archetype',
-        message: 'Editor shows archetype content. Use Save & Publish to confirm or Discard to revert.'
+        title: 'Preview: Syncing with Master',
+        message: 'Editor shows Master content. Use Save & Publish to confirm or Discard to revert.'
       })
     }
   }
@@ -528,8 +540,9 @@ export function PageBuilder({
       return
     }
     
-    // Get pure archetype content
-    const archetypeCanvas = resolveCanvasFromArchetype(archetype)
+    // Get archetype content with website override (Website Master)
+    const websiteOverrideForZoneReset = getWebsiteArchetypeOverride(websiteId, archetype.id)
+    const archetypeCanvas = resolveCanvasFromArchetype(archetype, websiteOverrideForZoneReset)
     const archetypeSection = archetypeCanvas.find((s: any) => s.zoneSlug === zoneSlug)
     
     if (!archetypeSection) {
@@ -677,33 +690,86 @@ export function PageBuilder({
     // Save updated archetype if any changes were made
     const hasArchetypeChanges = Array.from(choices.values()).some(c => c === 'archetype')
     if (hasArchetypeChanges) {
-      debugLog('log', '💾 [PageBuilder] Saving updated archetype')
-      updatedArchetype.updatedAt = new Date()
-      saveArchetype(updatedArchetype)
-      
-      // Invalidate cached canvas for all pages using this archetype (except current page)
-      // This ensures they re-resolve from the updated archetype on next load
-      const pagesUsingArchetype = getPagesUsingArchetype(updatedArchetype.id)
-      const currentPageKey = `${currentWebsiteId}:${pageName}`
-      
-      pagesUsingArchetype.forEach(({ websiteId: pageWebsiteId, pageId }) => {
-        const pageKey = `${pageWebsiteId}:${pageId}`
-        // Don't clear the current page we're editing (it will be saved fresh)
-        if (pageKey !== currentPageKey) {
-          debugLog('log', `🗑️ [PageBuilder] Clearing cached canvas for: ${pageKey}`)
-          clearPageCanvas(pageWebsiteId, pageId)
-          // Also clear routeCanvasItems (LiveSite uses both storage locations)
-          const route = `/${pageId}`
-          clearCanvasItemsForRoute(route)
-          // CRITICAL: Also clear drafts - otherwise the draft will take priority over archetype
-          clearPageDraft(pageWebsiteId, pageId)
+      // IMPORTANT: In page instance mode, "Push to All Journals" should save to WEBSITE archetype override
+      // NOT the Design archetype. This ensures changes only affect this website's journals.
+      if (pageInstanceMode && websiteId) {
+        console.log('💾 [PageBuilder] Saving to WEBSITE archetype override (Push to All Journals)')
+        
+        // Get existing website override or create new one
+        const existingOverride = getWebsiteArchetypeOverride(websiteId, updatedArchetype.id)
+        const overrides: Record<string, WidgetSection> = existingOverride?.overrides || {}
+        
+        // Update overrides for zones that were pushed to archetype
+        choices.forEach((choice, zoneSlug) => {
+          if (choice === 'archetype') {
+            const section = canvasItems.find(
+              (item): item is WidgetSection => isSection(item) && item.zoneSlug === zoneSlug
+            )
+            if (section) {
+              overrides[zoneSlug] = section
+              console.log(`   - Saving zone ${zoneSlug} to website override`)
+            }
+          }
+        })
+        
+        const websiteOverride: WebsiteArchetypeOverride = {
+          id: `${websiteId}:${updatedArchetype.id}`,
+          type: 'website-archetype-override',
+          websiteId,
+          archetypeId: updatedArchetype.id,
+          designId: updatedArchetype.designId,
+          overrides,
+          createdAt: existingOverride?.createdAt || new Date(),
+          updatedAt: new Date()
         }
-      })
-      
-      debugLog('log', '✅ [PageBuilder] Archetype promoted and caches invalidated:', {
-        archetypeId: updatedArchetype.id,
-        pagesAffected: pagesUsingArchetype.length - 1 // Minus current page
-      })
+        
+        saveWebsiteArchetypeOverride(websiteOverride)
+        console.log('   ✅ Website archetype override saved:', Object.keys(overrides))
+        
+        // Invalidate cached canvas ONLY for pages in THIS WEBSITE
+        const pagesUsingArchetype = getPagesUsingArchetype(updatedArchetype.id)
+        const websitePages = pagesUsingArchetype.filter(p => p.websiteId === websiteId)
+        const currentPageKey = `${websiteId}:${pageName}`
+        
+        websitePages.forEach(({ websiteId: pageWebsiteId, pageId }) => {
+          const pageKey = `${pageWebsiteId}:${pageId}`
+          if (pageKey !== currentPageKey) {
+            console.log(`   🗑️ Clearing cached canvas for: ${pageKey}`)
+            clearPageCanvas(pageWebsiteId, pageId)
+            clearCanvasItemsForRoute(`/${pageId}`)
+            clearPageDraft(pageWebsiteId, pageId)
+          }
+        })
+        
+        console.log('   ✅ Website-level push complete:', {
+          websiteId,
+          pagesAffected: websitePages.length - 1
+        })
+      } else {
+        // Design-level save (original behavior - only used in archetype mode without websiteId)
+        debugLog('log', '💾 [PageBuilder] Saving to DESIGN archetype')
+        updatedArchetype.updatedAt = new Date()
+        saveArchetype(updatedArchetype)
+        
+        // Invalidate cached canvas for ALL pages using this archetype
+        const pagesUsingArchetype = getPagesUsingArchetype(updatedArchetype.id)
+        const currentPageKey = `${currentWebsiteId}:${pageName}`
+        
+        pagesUsingArchetype.forEach(({ websiteId: pageWebsiteId, pageId }) => {
+          const pageKey = `${pageWebsiteId}:${pageId}`
+          if (pageKey !== currentPageKey) {
+            debugLog('log', `🗑️ [PageBuilder] Clearing cached canvas for: ${pageKey}`)
+            clearPageCanvas(pageWebsiteId, pageId)
+            clearCanvasItemsForRoute(`/${pageId}`)
+            clearPageDraft(pageWebsiteId, pageId)
+          }
+        })
+        
+        debugLog('log', '✅ [PageBuilder] Design archetype promoted and caches invalidated:', {
+          archetypeId: updatedArchetype.id,
+          pagesAffected: pagesUsingArchetype.length - 1
+        })
+      }
     }
     
     // Note: overrideZone already saves the page instance, so we don't need to save it again here
@@ -2604,8 +2670,23 @@ export function PageBuilder({
                     e.stopPropagation()
                     // If in archetype mode, navigate to archetype preview
                     if (archetypeMode && archetypeId) {
-                        const previewPath = designId 
-                          ? `/preview/archetype/${archetypeId}?designId=${designId}`
+                        // CRITICAL: Save current canvas as draft before preview
+                        // Use website-specific key if editing website master
+                        const draftKey = archetypeWebsiteId 
+                          ? `${archetypeWebsiteId}:${archetypeId}` 
+                          : archetypeId
+                        console.log('📝 [PageBuilder] Saving draft before preview:', draftKey)
+                        console.log('   - canvasItems count:', canvasItems.length)
+                        console.log('   - First section widgets:', canvasItems[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+                        setPageCanvas('archetype', draftKey, canvasItems)
+                        
+                        // Build preview URL with designId and optional websiteId
+                        const params = new URLSearchParams()
+                        if (designId) params.set('designId', designId)
+                        if (archetypeWebsiteId) params.set('websiteId', archetypeWebsiteId)
+                        const queryString = params.toString()
+                        const previewPath = queryString 
+                          ? `/preview/archetype/${archetypeId}?${queryString}`
                           : `/preview/archetype/${archetypeId}`
                         navigate(previewPath)
                         return
@@ -2719,11 +2800,16 @@ export function PageBuilder({
               <div className="mb-2 flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-md px-4 py-2">
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-gray-700">
-                    Editing: <strong>{displayArchetypeName} Archetype</strong>
+                    {archetypeWebsiteId ? '📄' : '🏛️'} Editing: <strong>{displayArchetypeName}</strong>
+                    <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-yellow-200 text-yellow-800">
+                      {archetypeWebsiteId ? 'Website Master' : 'Design Master'}
+                    </span>
                   </div>
                   {archetypeInstanceCount > 0 && (
                     <span className="text-sm text-gray-500">
-                      Used by {archetypeInstanceCount} {archetypeInstanceCount === 1 ? 'journal' : 'journals'}
+                      {archetypeWebsiteId 
+                        ? `${archetypeInstanceCount} journal${archetypeInstanceCount === 1 ? '' : 's'} in this website`
+                        : `${archetypeInstanceCount} journal${archetypeInstanceCount === 1 ? '' : 's'} across all websites`}
                     </span>
                   )}
                 </div>
@@ -2818,10 +2904,10 @@ export function PageBuilder({
                         return
                       }
 
-                      const starterName = prompt('Enter a name for this stub:')
+                      const starterName = prompt('Enter a name for this copy:')
                       if (!starterName?.trim()) return
 
-                      const starterDescription = prompt('Enter a description (optional):') || 'Custom stub'
+                      const starterDescription = prompt('Enter a description (optional):') || 'Custom copy'
 
                       // Deep clone and regenerate IDs for canvas items to avoid conflicts
                       const clonedCanvasItems = canvasItems.map((item: CanvasItem) => {
@@ -2861,15 +2947,15 @@ export function PageBuilder({
                       }
 
                       addCustomStarterPage(newStarterPage)
-                      showToast(`Stub "${starterName.trim()}" saved!`, 'success')
+                      showToast(`Copy "${starterName.trim()}" saved!`, 'success')
                     }}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors border border-green-200"
-                    title="Save as Stub"
+                    title="Save as Copy (no inheritance)"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                     </svg>
-                    Save as Stub
+                    Save as Copy
                   </button>
                   <button
                     onClick={(e) => {
