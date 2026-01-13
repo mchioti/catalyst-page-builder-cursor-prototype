@@ -258,23 +258,6 @@ export function WebsiteTemplates({
           Publication pages with modification tracking (Journal Home, Issue ToC, Article, etc.)
         </p>
         
-        {/* Filter: Design / My Pages / All */}
-        <div className="mt-4 flex items-center gap-6">
-          <span className="text-sm font-medium text-gray-700">Show:</span>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="page-filter" value="design" defaultChecked className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-gray-700">Design</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="page-filter" value="my-pages" className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-gray-700">My Pages</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="page-filter" value="all" className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-gray-700">All</span>
-          </label>
-        </div>
-        
         {/* Enabled Content Types */}
         <div className="mt-4 flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Publishing:</span>

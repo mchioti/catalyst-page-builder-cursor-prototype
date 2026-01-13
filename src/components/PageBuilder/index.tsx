@@ -415,9 +415,24 @@ export function PageBuilder({
   const handlePublishDirectly = () => {
     debugLog('log', '📋 [PageBuilder] handlePublishDirectly called')
     
-    // Save current canvas to published state
+    // Save current canvas to published state (in-memory)
     setPageCanvas(websiteId, pageName, canvasItems)
     debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
+    
+    // Also update websitePages if this is a user-created page (persisted to localStorage)
+    const websitePages = usePageStore.getState().websitePages || []
+    const websitePage = websitePages.find(
+      (p: any) => p.websiteId === websiteId && p.slug === pageName
+    )
+    if (websitePage) {
+      const updateWebsitePage = usePageStore.getState().updateWebsitePage
+      updateWebsitePage(websitePage.id, { 
+        canvasItems: canvasItems,
+        isPublished: true,
+        updatedAt: new Date()
+      })
+      debugLog('log', '💾 [PageBuilder] Updated websitePage in localStorage')
+    }
     
     // Clear draft
     setPageDraft(websiteId, pageName, [])
@@ -440,9 +455,24 @@ export function PageBuilder({
   const handleSimplePublish = () => {
     debugLog('log', '📋 [PageBuilder] handleSimplePublish called')
     
-    // Save current canvas to published state
+    // Save current canvas to published state (in-memory)
     setPageCanvas(websiteId, pageName, canvasItems)
     debugLog('log', '💾 [PageBuilder] Saved canvas to published state')
+    
+    // Also update websitePages if this is a user-created page (persisted to localStorage)
+    const websitePages = usePageStore.getState().websitePages || []
+    const websitePage = websitePages.find(
+      (p: any) => p.websiteId === websiteId && p.slug === pageName
+    )
+    if (websitePage) {
+      const updateWebsitePage = usePageStore.getState().updateWebsitePage
+      updateWebsitePage(websitePage.id, { 
+        canvasItems: canvasItems,
+        isPublished: true,
+        updatedAt: new Date()
+      })
+      debugLog('log', '💾 [PageBuilder] Updated websitePage in localStorage')
+    }
     
     // Clear draft
     setPageDraft(websiteId, pageName, [])

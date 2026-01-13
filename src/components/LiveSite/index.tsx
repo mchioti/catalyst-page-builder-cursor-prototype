@@ -1176,6 +1176,68 @@ function NotFoundPage({ message }: { message: string }) {
 }
 
 // ============================================================================
+// GENERIC PAGE (for user-created pages)
+// ============================================================================
+
+function GenericPage() {
+  const websiteId = useWebsiteId()
+  const { pageSlug } = useParams<{ pageSlug: string }>()
+  const websites = useAllWebsites()
+  const website = websites.find(w => w.id === websiteId)
+  
+  // Get canvas for preview (checks draft first, then published)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Get websitePages from persisted storage (localStorage)
+  const websitePages = usePageStore(state => state.websitePages) || []
+  
+  // Find this page in websitePages (persisted storage)
+  const websitePage = useMemo(() => {
+    return websitePages.find(p => p.websiteId === websiteId && p.slug === pageSlug)
+  }, [websitePages, websiteId, pageSlug])
+  
+  // Load canvas data for this page
+  // First check in-memory store, then fall back to persisted websitePage
+  const pageCanvas = useMemo(() => {
+    if (!pageSlug) return null
+    
+    // First try in-memory store
+    const canvas = getPageCanvasForPreview(websiteId, pageSlug)
+    if (canvas && canvas.length > 0) {
+      debugLog('log', '📖 [GenericPage] Loaded canvas from store:', { websiteId, pageSlug, itemCount: canvas.length })
+      return canvas
+    }
+    
+    // Fall back to persisted websitePage
+    if (websitePage?.canvasItems && websitePage.canvasItems.length > 0) {
+      debugLog('log', '📖 [GenericPage] Loading canvas from persisted websitePage:', { websiteId, pageSlug, itemCount: websitePage.canvasItems.length })
+      // Hydrate the in-memory store for future access
+      setPageCanvas(websiteId, pageSlug, websitePage.canvasItems)
+      return websitePage.canvasItems
+    }
+    
+    debugLog('log', '📖 [GenericPage] No canvas found:', { websiteId, pageSlug })
+    return null
+  }, [websiteId, pageSlug, getPageCanvasForPreview, websitePage, setPageCanvas])
+  
+  // If no canvas found, show not found
+  if (!pageCanvas || pageCanvas.length === 0) {
+    return <NotFoundPage message={`Page "${pageSlug}" not found`} />
+  }
+  
+  // Render the page canvas
+  return (
+    <CanvasRenderer 
+      items={pageCanvas} 
+      websiteId={websiteId} 
+      themeId={website?.themeId}
+      brandMode={website?.brandMode}
+    />
+  )
+}
+
+// ============================================================================
 // MAIN ROUTES
 // ============================================================================
 
@@ -1202,6 +1264,8 @@ function LiveSiteRoutes({ websiteId }: { websiteId: string }) {
         <Route path="/journal/:journalId/toc/:vol/:issue" element={<LiveSiteLayout websiteId={websiteId}><IssueTocPage /></LiveSiteLayout>} />
         <Route path="/journal/:journalId/toc/current" element={<LiveSiteLayout websiteId={websiteId}><IssueTocPage /></LiveSiteLayout>} />
         <Route path="/journal/:journalId/article/:doi" element={<LiveSiteLayout websiteId={websiteId}><ArticlePage /></LiveSiteLayout>} />
+        {/* Generic page route for user-created pages - must come before catch-all */}
+        <Route path="/:pageSlug" element={<LiveSiteLayout websiteId={websiteId}><GenericPage /></LiveSiteLayout>} />
         <Route path="*" element={<LiveSiteLayout websiteId={websiteId}><NotFoundPage message="Page not found" /></LiveSiteLayout>} />
       </Routes>
     </WebsiteContext.Provider>

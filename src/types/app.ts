@@ -1,6 +1,6 @@
 // Application and UI state types
 
-import type { CanvasItem, Widget, WidgetSection, CustomSection, CustomStarterPage, PublicationCardVariant, ContentBlockLayout } from './widgets'
+import type { CanvasItem, Widget, WidgetSection, CustomSection, CustomStarterPage, WebsitePage, PublicationCardVariant, ContentBlockLayout } from './widgets'
 import type { BaseTemplate, Website, Theme, Modification } from './templates'
 import type { SchemaObject, SchemaOrgType } from './schema'
 
@@ -166,6 +166,7 @@ export type PageState = {
   pageDraftData: Record<string, CanvasItem[]> // Per-website, per-page draft storage (key: "websiteId:pageId") - DRAFT (previewable, not published)
   customSections: CustomSection[]
   customStarterPages: CustomStarterPage[]
+  websitePages: WebsitePage[]
   publicationCardVariants: PublicationCardVariant[]
   selectedWidget: string | null
   insertPosition: { relativeTo: string; position: 'above' | 'below' } | null
@@ -225,6 +226,10 @@ export type PageState = {
   removeCustomSection: (id: string) => void
   addCustomStarterPage: (starterPage: CustomStarterPage) => void
   removeCustomStarterPage: (id: string) => void
+  addWebsitePage: (page: WebsitePage) => void
+  updateWebsitePage: (id: string, updates: Partial<WebsitePage>) => void
+  removeWebsitePage: (id: string) => void
+  getWebsitePagesForWebsite: (websiteId: string) => WebsitePage[]
   addPublicationCardVariant: (variant: PublicationCardVariant) => void
   removePublicationCardVariant: (id: string) => void
   setInsertPosition: (position: { relativeTo: string; position: 'above' | 'below' } | null) => void

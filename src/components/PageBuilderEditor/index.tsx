@@ -759,6 +759,32 @@ export function PageBuilderEditor() {
       return
     }
     
+    // Check websitePages (persisted to localStorage) for user-created pages
+    // This is needed because pageCanvasData is in-memory only and lost on refresh
+    const websitePages = usePageStore.getState().websitePages || []
+    const websitePage = websitePages.find(
+      (p: any) => p.websiteId === websiteId && p.slug === pageName
+    )
+    
+    if (websitePage?.canvasItems && websitePage.canvasItems.length > 0) {
+      debugLog('log', '📂 [PageBuilderEditor] Loading from persisted websitePage:', {
+        websiteId,
+        pageName,
+        itemCount: websitePage.canvasItems.length
+      })
+      const migratedWebsitePageCanvas = migrateCanvasItems(websitePage.canvasItems)
+      replaceCanvasItems(migratedWebsitePageCanvas)
+      // Hydrate pageCanvasData for future access
+      setPageCanvas(websiteId!, pageName, migratedWebsitePageCanvas)
+      setIsEditingLoadedWebsite(true)
+      loadedPageRef.current = pageKey
+      previousCanvasItemsRef.current = migratedWebsitePageCanvas
+      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      setCanvasOwnerId(`${websiteId}:${pageName}`)
+      isTransitioningRef.current = false
+      return
+    }
+    
     // No saved data - load default content based on page type and website
     // designId already defined at the top of this useEffect
     const defaultContent = getPageStub(pageType, websiteId!, designId, journals)

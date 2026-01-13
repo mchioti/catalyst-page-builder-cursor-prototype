@@ -5,14 +5,15 @@
  */
 
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { 
   Search, Eye, Edit3, RotateCcw, Check, AlertTriangle, 
-  FileText, Home, HelpCircle, SearchIcon
+  FileText, Home, HelpCircle, SearchIcon, Plus, Trash2, User
 } from 'lucide-react'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { NewBadge } from '../shared/NewBadge'
 import { getHomepageStubForWebsite, getPageStub } from '../PageBuilder/pageStubs'
+import type { WebsitePage } from '../../types/widgets'
 
 // Stub types that come from the Design
 type DesignStub = {
@@ -35,10 +36,29 @@ export function WebsiteInheritedStubs({
   websiteName,
   usePageStore
 }: WebsiteInheritedStubsProps) {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeFilter, setActiveFilter] = useState<'design' | 'my-pages' | 'all'>('all')
+  const [showNewPageDialog, setShowNewPageDialog] = useState(false)
+  
+  // New page form state
+  const [newPageSlug, setNewPageSlug] = useState('')
+  const [newPageName, setNewPageName] = useState('')
+  const [startFrom, setStartFrom] = useState<'blank' | 'template' | 'copy'>('blank')
+  const [copyFromPageId, setCopyFromPageId] = useState<string>('')
   
   // Get store functions
   const getPageCanvas = usePageStore((state: any) => state.getPageCanvas)
+  const setPageCanvas = usePageStore((state: any) => state.setPageCanvas)
+  const addWebsitePage = usePageStore((state: any) => state.addWebsitePage)
+  const removeWebsitePage = usePageStore((state: any) => state.removeWebsitePage)
+  const websitePages: WebsitePage[] = usePageStore((state: any) => state.websitePages) || []
+  const addNotification = usePageStore((state: any) => state.addNotification)
+  
+  // Get user-created pages for this website
+  const userCreatedPages = useMemo(() => {
+    return websitePages.filter(page => page.websiteId === websiteId && page.source === 'user')
+  }, [websitePages, websiteId])
   
   // Get the base design stubs for comparison
   const v2Website = mockWebsites.find(w => w.id === websiteId)
@@ -181,8 +201,42 @@ export function WebsiteInheritedStubs({
     })
   }, [designStubs, getPageCanvas, websiteId])
   
-  // Filter by search
-  const filteredStubs = stubsWithStatus.filter(stub => {
+  // Convert user-created pages to the same format as design stubs for display
+  const userPagesNormalized = useMemo(() => {
+    return userCreatedPages.map(page => ({
+      id: page.id,
+      name: page.name,
+      description: page.description || 'User-created page',
+      icon: <User className="w-4 h-4" />,
+      slug: page.slug,
+      isAvailable: true,
+      hasCustomStub: false,
+      hasEditorChanges: false,
+      isModified: false,
+      modificationCount: 0,
+      savedCanvas: page.canvasItems,
+      isUserCreated: true, // Flag to identify user pages
+      templateName: page.templateName,
+      createdAt: page.createdAt
+    }))
+  }, [userCreatedPages])
+  
+  // Filter stubs based on active filter
+  const displayedStubs = useMemo(() => {
+    if (activeFilter === 'design') {
+      return stubsWithStatus.map(s => ({ ...s, isUserCreated: false }))
+    } else if (activeFilter === 'my-pages') {
+      return userPagesNormalized
+    }
+    // 'all' - show both design pages and user pages
+    return [
+      ...stubsWithStatus.map(s => ({ ...s, isUserCreated: false })),
+      ...userPagesNormalized
+    ]
+  }, [stubsWithStatus, activeFilter, userPagesNormalized])
+  
+  // Filter by search (applied on top of activeFilter)
+  const filteredStubs = displayedStubs.filter(stub => {
     if (!searchTerm) return true
     const searchLower = searchTerm.toLowerCase()
     return stub.name.toLowerCase().includes(searchLower) ||
@@ -272,16 +326,171 @@ export function WebsiteInheritedStubs({
     })
   }
 
+  // Handle delete user page
+  const handleDeleteUserPage = (pageId: string, pageName: string) => {
+    // Find the page to get its slug
+    const pageToDelete = userCreatedPages.find(p => p.id === pageId)
+    
+    if (!window.confirm(
+      `Delete "${pageName}"?\n\n` +
+      `This will permanently remove this page.\n` +
+      `This action cannot be undone.`
+    )) {
+      return
+    }
+    
+    // Remove from websitePages store
+    removeWebsitePage(pageId)
+    
+    // Also clear the canvas data
+    if (pageToDelete) {
+      setPageCanvas(websiteId, pageToDelete.slug, [])
+    }
+    
+    addNotification?.({
+      type: 'success',
+      title: 'Page Deleted',
+      message: `"${pageName}" has been deleted`
+    })
+  }
+
+  // Handle create new page
+  const handleCreatePage = () => {
+    if (!newPageSlug.trim() || !newPageName.trim()) {
+      addNotification?.({
+        type: 'error',
+        title: 'Missing Information',
+        message: 'Please enter both a URL slug and page name'
+      })
+      return
+    }
+    
+    // Check if slug already exists
+    const slugExists = [...stubsWithStatus, ...userCreatedPages].some(
+      p => p.slug === newPageSlug.trim()
+    )
+    
+    if (slugExists) {
+      addNotification?.({
+        type: 'error',
+        title: 'URL Already Exists',
+        message: `A page with URL "/${newPageSlug.trim()}" already exists`
+      })
+      return
+    }
+    
+    // Create a blank section for the new page
+    const blankSection = {
+      id: `section-${Date.now()}`,
+      type: 'section' as const,
+      name: 'New Section',
+      layout: 'single' as const,
+      areas: [{
+        id: `area-${Date.now()}`,
+        widgets: []
+      }],
+      background: { type: 'color' as const, color: '#ffffff' },
+      padding: '40px'
+    }
+    
+    const initialCanvasItems = [blankSection]
+    
+    // Create the new page
+    const newPage: WebsitePage = {
+      id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      websiteId,
+      slug: newPageSlug.trim(),
+      name: newPageName.trim(),
+      description: `Custom page created by user`,
+      source: 'user',
+      canvasItems: initialCanvasItems,
+      isPublished: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    // Add to websitePages store
+    addWebsitePage(newPage)
+    
+    // IMPORTANT: Also save to pageCanvasData so the editor can load it
+    setPageCanvas(websiteId, newPageSlug.trim(), initialCanvasItems)
+    
+    addNotification?.({
+      type: 'success',
+      title: 'Page Created',
+      message: `"${newPageName.trim()}" has been created`
+    })
+    
+    // Reset form and close dialog
+    setNewPageSlug('')
+    setNewPageName('')
+    setStartFrom('blank')
+    setShowNewPageDialog(false)
+    
+    // Navigate to edit the new page
+    navigate(`/edit/${websiteId}/${newPageSlug.trim()}`)
+  }
+
   // Handle "Use" button click - open UseTemplateModal
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Other Pages</h2>
-        <p className="text-gray-600 mt-1">
-          Marketing and informational pages with modification tracking
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{websiteName} - Other Pages</h2>
+            <p className="text-gray-600 mt-1">
+              Marketing and informational pages with modification tracking
+            </p>
+          </div>
+          
+          {/* + New Page Button */}
+          <button
+            onClick={() => setShowNewPageDialog(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            New Page
+          </button>
+        </div>
         
+        {/* Filter: Design / My Pages / All */}
+        <div className="mt-4 flex items-center gap-6">
+          <span className="text-sm font-medium text-gray-700">Show:</span>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="page-filter" 
+              value="design" 
+              checked={activeFilter === 'design'}
+              onChange={() => setActiveFilter('design')}
+              className="w-4 h-4 text-blue-600" 
+            />
+            <span className="text-sm text-gray-700">Design</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="page-filter" 
+              value="my-pages" 
+              checked={activeFilter === 'my-pages'}
+              onChange={() => setActiveFilter('my-pages')}
+              className="w-4 h-4 text-blue-600" 
+            />
+            <span className="text-sm text-gray-700">My Pages</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="page-filter" 
+              value="all" 
+              checked={activeFilter === 'all'}
+              onChange={() => setActiveFilter('all')}
+              className="w-4 h-4 text-blue-600" 
+            />
+            <span className="text-sm text-gray-700">All</span>
+          </label>
+        </div>
       </div>
 
       {/* Search */}
@@ -324,22 +533,40 @@ export function WebsiteInheritedStubs({
                 {/* Stub Info */}
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                    <div className={`p-2 rounded-lg ${stub.isUserCreated ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
                       {stub.icon}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{stub.name}</span>
-                        <NewBadge itemId={`starter:${stub.id}`} variant="pill" />
+                        {stub.isUserCreated ? (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                            My Page
+                          </span>
+                        ) : (
+                          <NewBadge itemId={`starter:${stub.id}`} variant="pill" />
+                        )}
                       </div>
-                      <div className="text-sm text-gray-500">{stub.description}</div>
+                      <div className="text-sm text-gray-500">
+                        {stub.description}
+                        {stub.templateName && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            (from {stub.templateName})
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </td>
                 
                 {/* Status */}
                 <td className="py-4 px-4">
-                  {stub.isModified ? (
+                  {stub.isUserCreated ? (
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-purple-500" />
+                      <span className="text-purple-700">Custom Page</span>
+                    </div>
+                  ) : stub.isModified ? (
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -382,8 +609,8 @@ export function WebsiteInheritedStubs({
                       Edit
                     </Link>
                     
-                    {/* Sync with Master (only if modified) */}
-                    {stub.isModified && (
+                    {/* Sync with Master (only if modified and NOT user-created) */}
+                    {stub.isModified && !stub.isUserCreated && (
                       <button
                         onClick={() => handleResetToBase(stub.id, stub.name)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors"
@@ -391,6 +618,18 @@ export function WebsiteInheritedStubs({
                       >
                         <RotateCcw className="w-4 h-4" />
                         Sync
+                      </button>
+                    )}
+                    
+                    {/* Delete (only for user-created pages) */}
+                    {stub.isUserCreated && (
+                      <button
+                        onClick={() => handleDeleteUserPage(stub.id, stub.name)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                        title="Delete page"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
                       </button>
                     )}
                   </div>
@@ -401,8 +640,21 @@ export function WebsiteInheritedStubs({
         </table>
         
         {filteredStubs.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
-            No pages found matching your search
+          <div className="py-12 text-center">
+            {activeFilter === 'my-pages' ? (
+              <div className="space-y-3">
+                <div className="text-gray-500">You haven't created any pages yet</div>
+                <button
+                  onClick={() => setShowNewPageDialog(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Your First Page
+                </button>
+              </div>
+            ) : (
+              <div className="text-gray-500">No pages found matching your search</div>
+            )}
           </div>
         )}
       </div>
@@ -411,11 +663,139 @@ export function WebsiteInheritedStubs({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-medium text-blue-900 mb-1">About Other Pages</h4>
         <p className="text-sm text-blue-700">
-          These are marketing and informational page templates from the design. 
+          <strong>Design</strong> pages come from the theme and are URL-bound system pages. 
+          <strong>My Pages</strong> are custom pages you create for campaigns, events, or other needs. 
           When modified, changes are saved specifically for this website while 
-          the design master remains unchanged. Use "Sync" to restore the master version.
+          the design master remains unchanged.
         </p>
       </div>
+      
+      {/* New Page Dialog */}
+      {showNewPageDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Create New Page</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Add a new page to {websiteName}
+              </p>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* URL Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Page URL
+                </label>
+                <div className="flex items-center">
+                  <span className="text-gray-500 text-sm mr-1">/{websiteId}/</span>
+                  <input
+                    type="text"
+                    placeholder="my-new-page"
+                    value={newPageSlug}
+                    onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  This will be the URL path for your new page
+                </p>
+              </div>
+              
+              {/* Page Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Page Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="My New Page"
+                  value={newPageName}
+                  onChange={(e) => setNewPageName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              {/* Start From Options */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start from
+                </label>
+                <div className="space-y-2">
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${startFrom === 'blank' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <input 
+                      type="radio" 
+                      name="start-from" 
+                      value="blank" 
+                      checked={startFrom === 'blank'}
+                      onChange={() => setStartFrom('blank')}
+                      className="w-4 h-4 text-blue-600" 
+                    />
+                    <div>
+                      <span className="font-medium text-gray-900">Blank Page</span>
+                      <p className="text-xs text-gray-500">Start with an empty canvas</p>
+                    </div>
+                  </label>
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 opacity-50 ${startFrom === 'template' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <input 
+                      type="radio" 
+                      name="start-from" 
+                      value="template" 
+                      checked={startFrom === 'template'}
+                      onChange={() => setStartFrom('template')}
+                      disabled
+                      className="w-4 h-4 text-blue-600" 
+                    />
+                    <div>
+                      <span className="font-medium text-gray-900">From Template</span>
+                      <p className="text-xs text-gray-500">Choose from saved page templates</p>
+                    </div>
+                  </label>
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 opacity-50 ${startFrom === 'copy' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <input 
+                      type="radio" 
+                      name="start-from" 
+                      value="copy" 
+                      checked={startFrom === 'copy'}
+                      onChange={() => setStartFrom('copy')}
+                      disabled
+                      className="w-4 h-4 text-blue-600" 
+                    />
+                    <div>
+                      <span className="font-medium text-gray-900">Copy Existing Page</span>
+                      <p className="text-xs text-gray-500">Duplicate an existing page on this site</p>
+                    </div>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  "From Template" and "Copy Existing" options coming soon
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowNewPageDialog(false)
+                  setNewPageSlug('')
+                  setNewPageName('')
+                  setStartFrom('blank')
+                }}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreatePage}
+                disabled={!newPageSlug.trim() || !newPageName.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

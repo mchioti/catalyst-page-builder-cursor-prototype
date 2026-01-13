@@ -569,6 +569,26 @@ export type CustomStarterPage = {
   createdAt: Date
 }
 
+/**
+ * WebsitePage - An actual page that exists on a website
+ * This is different from CustomStarterPage which is a template for creating pages
+ */
+export type WebsitePage = {
+  id: string
+  websiteId: string
+  slug: string              // URL path, e.g., "spring-2026", "conference"
+  name: string
+  description?: string
+  source: 'design' | 'user' // 'design' = system page from theme, 'user' = user-created
+  templateId?: string       // If created from a template/starter page
+  templateName?: string     // Name of template used (for reference)
+  canvasItems: CanvasItem[] // Page content
+  isPublished: boolean      // Whether page is live
+  createdAt: Date
+  updatedAt: Date
+  createdBy?: string        // User who created the page
+}
+
 export type PublicationCardVariant = {
   id: string
   name: string

@@ -43,7 +43,8 @@ import { DEFAULT_PUBLICATION_CARD_CONFIG } from '../constants'
 
 const STORAGE_KEYS = {
   CUSTOM_STARTER_PAGES: 'catalyst-custom-starter-pages',
-  CUSTOM_SECTIONS: 'catalyst-custom-sections'
+  CUSTOM_SECTIONS: 'catalyst-custom-sections',
+  WEBSITE_PAGES: 'catalyst-website-pages'
 }
 
 // Reviver function to convert date strings back to Date objects
@@ -82,6 +83,11 @@ const initializeCustomStarterPages = () => {
 const initializeCustomSections = () => {
   const userCreatedSections = loadFromLocalStorage(STORAGE_KEYS.CUSTOM_SECTIONS, [])
   return [...mockSections, ...userCreatedSections]
+}
+
+// Initialize website pages from localStorage
+const initializeWebsitePages = (): import('../types/widgets').WebsitePage[] => {
+  return loadFromLocalStorage(STORAGE_KEYS.WEBSITE_PAGES, [])
 }
 
 // =============================================================================
@@ -279,6 +285,7 @@ export const usePageStore = create<PageState>((set, get) => ({
   pageLayouts: {} as Record<string, 'full' | 'left' | 'right'>,
   customSections: initializeCustomSections(),
   customStarterPages: initializeCustomStarterPages(),
+  websitePages: initializeWebsitePages(),
   templates: [],
   websites: mockWebsites,
   themes: mockThemes,
@@ -776,6 +783,32 @@ export const usePageStore = create<PageState>((set, get) => ({
     saveToLocalStorage(STORAGE_KEYS.CUSTOM_STARTER_PAGES, userCreatedPages)
     return { customStarterPages: filteredPages }
   }),
+  
+  // Website Pages Management (user-created pages on a website)
+  addWebsitePage: (page: import('../types/widgets').WebsitePage) => set((s) => {
+    const newPages = [...s.websitePages, page]
+    saveToLocalStorage(STORAGE_KEYS.WEBSITE_PAGES, newPages)
+    return { websitePages: newPages }
+  }),
+  
+  updateWebsitePage: (id: string, updates: Partial<import('../types/widgets').WebsitePage>) => set((s) => {
+    const newPages = s.websitePages.map(page => 
+      page.id === id ? { ...page, ...updates, updatedAt: new Date() } : page
+    )
+    saveToLocalStorage(STORAGE_KEYS.WEBSITE_PAGES, newPages)
+    return { websitePages: newPages }
+  }),
+  
+  removeWebsitePage: (id: string) => set((s) => {
+    const filteredPages = s.websitePages.filter(page => page.id !== id)
+    saveToLocalStorage(STORAGE_KEYS.WEBSITE_PAGES, filteredPages)
+    return { websitePages: filteredPages }
+  }),
+  
+  getWebsitePagesForWebsite: (websiteId: string) => {
+    const state = get()
+    return state.websitePages.filter(page => page.websiteId === websiteId)
+  },
   
   addPublicationCardVariant: (variant) => set((s) => ({ 
     publicationCardVariants: [...s.publicationCardVariants, variant] 
