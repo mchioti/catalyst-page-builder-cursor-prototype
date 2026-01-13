@@ -1176,7 +1176,95 @@ function NotFoundPage({ message }: { message: string }) {
 }
 
 // ============================================================================
-// GENERIC PAGE (for user-created pages)
+// JOURNAL-SCOPED GENERIC PAGE (for user-created pages under /journal/:journalId/)
+// ============================================================================
+
+function JournalScopedGenericPage() {
+  const websiteId = useWebsiteId()
+  const { journalId, customPageSlug } = useParams<{ journalId: string; customPageSlug: string }>()
+  const websites = useAllWebsites()
+  const website = websites.find(w => w.id === websiteId)
+  
+  // Construct the full slug as stored in the database
+  const fullSlug = `journal/${journalId}/${customPageSlug}`
+  
+  // Get canvas for preview (checks draft first, then published)
+  const getPageCanvasForPreview = usePageStore(state => state.getPageCanvasForPreview)
+  const setPageCanvas = usePageStore(state => state.setPageCanvas)
+  
+  // Get websitePages from persisted storage (localStorage)
+  const websitePages = usePageStore(state => state.websitePages) || []
+  
+  // Find this page in websitePages (persisted storage)
+  const websitePage = useMemo(() => {
+    return websitePages.find(p => p.websiteId === websiteId && p.slug === fullSlug)
+  }, [websitePages, websiteId, fullSlug])
+  
+  // Get journal data for context
+  const journal = useMemo(() => {
+    if (!journalId || !website?.journals) return null
+    return website.journals.find(j => j.id === journalId)
+  }, [journalId, website?.journals])
+  
+  // Load canvas data for this page
+  const pageCanvas = useMemo(() => {
+    if (!fullSlug) return null
+    
+    // First try in-memory store
+    const canvas = getPageCanvasForPreview(websiteId, fullSlug)
+    if (canvas && canvas.length > 0) {
+      debugLog('log', '📖 [JournalScopedGenericPage] Loaded canvas from store:', { websiteId, fullSlug, itemCount: canvas.length })
+      return canvas
+    }
+    
+    // Fall back to persisted websitePage
+    if (websitePage?.canvasItems && websitePage.canvasItems.length > 0) {
+      debugLog('log', '📖 [JournalScopedGenericPage] Loading canvas from persisted websitePage:', { websiteId, fullSlug, itemCount: websitePage.canvasItems.length })
+      // Hydrate the in-memory store for future access
+      setPageCanvas(websiteId, fullSlug, websitePage.canvasItems)
+      return websitePage.canvasItems
+    }
+    
+    debugLog('log', '📖 [JournalScopedGenericPage] No canvas found:', { websiteId, fullSlug })
+    return null
+  }, [websiteId, fullSlug, getPageCanvasForPreview, websitePage, setPageCanvas])
+  
+  // If no canvas found, show not found
+  if (!pageCanvas || pageCanvas.length === 0) {
+    return <NotFoundPage message={`Page "${fullSlug}" not found`} />
+  }
+  
+  // Build template context for journal-scoped pages
+  const templateContext = useMemo(() => {
+    if (!journal) return undefined
+    return {
+      journal: {
+        id: journalId,
+        name: journal.name,
+        description: journal.description,
+        brandColor: journal.branding?.primaryColor,
+        brandColorLight: journal.branding?.secondaryColor || journal.branding?.primaryColor
+      }
+    }
+  }, [journalId, journal])
+  
+  // Render the page canvas with journal context for template variables
+  // Note: showMockData=true allows widgets to fetch real data when context is available
+  // The widgets themselves decide whether to use real data (from context) or AI-generated mock data
+  return (
+    <CanvasRenderer 
+      items={pageCanvas} 
+      websiteId={websiteId} 
+      themeId={website?.themeId}
+      brandMode={website?.brandMode}
+      templateContext={templateContext}
+      showMockData={true}
+    />
+  )
+}
+
+// ============================================================================
+// GENERIC PAGE (for user-created pages at website root)
 // ============================================================================
 
 function GenericPage() {
@@ -1264,7 +1352,9 @@ function LiveSiteRoutes({ websiteId }: { websiteId: string }) {
         <Route path="/journal/:journalId/toc/:vol/:issue" element={<LiveSiteLayout websiteId={websiteId}><IssueTocPage /></LiveSiteLayout>} />
         <Route path="/journal/:journalId/toc/current" element={<LiveSiteLayout websiteId={websiteId}><IssueTocPage /></LiveSiteLayout>} />
         <Route path="/journal/:journalId/article/:doi" element={<LiveSiteLayout websiteId={websiteId}><ArticlePage /></LiveSiteLayout>} />
-        {/* Generic page route for user-created pages - must come before catch-all */}
+        {/* Journal-scoped custom pages (e.g., /journal/jas/promo) - must come after specific journal routes */}
+        <Route path="/journal/:journalId/:customPageSlug" element={<LiveSiteLayout websiteId={websiteId}><JournalScopedGenericPage /></LiveSiteLayout>} />
+        {/* Generic page route for user-created pages at website root - must come before catch-all */}
         <Route path="/:pageSlug" element={<LiveSiteLayout websiteId={websiteId}><GenericPage /></LiveSiteLayout>} />
         <Route path="*" element={<LiveSiteLayout websiteId={websiteId}><NotFoundPage message="Page not found" /></LiveSiteLayout>} />
       </Routes>

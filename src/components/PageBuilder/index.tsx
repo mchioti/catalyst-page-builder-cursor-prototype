@@ -2909,9 +2909,33 @@ export function PageBuilder({
                         const journalId = pageRoute.split('/')[1]?.toUpperCase()
                         return `${journalId} Article`
                       }
+                      // Check for custom journal-scoped pages (e.g., journal/jas/promo)
                       if (pageRoute.startsWith('journal/')) {
-                        const journalId = pageRoute.split('/')[1]?.toUpperCase()
+                        const parts = pageRoute.split('/')
+                        const journalId = parts[1]?.toUpperCase()
+                        // If there's more after journalId and it's not a known route, it's a custom page
+                        if (parts.length > 2 && parts[2] && !['loi', 'toc', 'article'].includes(parts[2])) {
+                          // Try to find the page name from websitePages
+                          const websitePages = usePageStore.getState().websitePages || []
+                          const customPage = websitePages.find((p: any) => 
+                            p.websiteId === currentWebsiteId && p.slug === pageRoute
+                          )
+                          if (customPage) {
+                            return customPage.name
+                          }
+                          // Fallback: format the custom slug
+                          const customSlug = parts.slice(2).join('/')
+                          return `${journalId} - ${customSlug.charAt(0).toUpperCase() + customSlug.slice(1)}`
+                        }
                         return `${journalId} Journal Home`
+                      }
+                      // Check for custom pages at website root
+                      const websitePages = usePageStore.getState().websitePages || []
+                      const customPage = websitePages.find((p: any) => 
+                        p.websiteId === currentWebsiteId && p.slug === pageRoute
+                      )
+                      if (customPage) {
+                        return customPage.name
                       }
                       // Fallback: capitalize the route
                       return pageRoute.charAt(0).toUpperCase() + pageRoute.slice(1)

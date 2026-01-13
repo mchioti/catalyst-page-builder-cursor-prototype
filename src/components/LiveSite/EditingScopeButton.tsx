@@ -62,9 +62,16 @@ export function EditingScopeButton({
     // Match issue archive: /journal/:journalId/loi
     const isArchive = route.includes('/loi')
     
+    // Check for custom journal-scoped pages (e.g., /journal/jas/promo)
+    // These have a journalId but also have additional path segments that aren't known routes
+    const journalPathParts = journalId ? route.replace(/^\/journal\/[^/]+/, '').split('/').filter(Boolean) : []
+    const hasCustomSlug = journalPathParts.length > 0 && 
+      !['loi', 'toc', 'article'].some(known => journalPathParts[0]?.startsWith(known))
+    const isCustomJournalPage = journalId && hasCustomSlug
+    
     // Determine page type
     const isHomepage = route === '' || route === '/' || route === '/home'
-    const isJournalHome = journalId && !tocMatch && !articleMatch && !isArchive
+    const isJournalHome = journalId && !tocMatch && !articleMatch && !isArchive && !isCustomJournalPage
     const isIssueToc = !!tocMatch
     const isArticle = !!doi
     const isJournalsPage = route === '/journals'
@@ -92,6 +99,7 @@ export function EditingScopeButton({
       isJournalsPage,
       isAboutPage,
       isSearchPage,
+      isCustomJournalPage,
       issueType 
     }
   }
@@ -101,7 +109,8 @@ export function EditingScopeButton({
 
   // Stub-based pages: Homepage, About, Search, Journals Browse
   // These don't use Page Templates (no inheritance), just show simple Edit button
-  const isStubPage = ctx.isHomepage || ctx.isAboutPage || ctx.isSearchPage || ctx.isJournalsPage
+  // Custom journal-scoped pages are also treated as simple pages (no archetype inheritance)
+  const isStubPage = ctx.isHomepage || ctx.isAboutPage || ctx.isSearchPage || ctx.isJournalsPage || ctx.isCustomJournalPage
 
   // Generate editing options based on context
   const getEditingOptions = (): EditingScopeOption[] => {
@@ -112,13 +121,19 @@ export function EditingScopeButton({
       const pageLabel = ctx.isHomepage ? 'Homepage' 
         : ctx.isAboutPage ? 'About Page'
         : ctx.isSearchPage ? 'Search Page'
-        : 'Journals Page'
+        : ctx.isJournalsPage ? 'Journals Page'
+        : ctx.isCustomJournalPage ? 'This Page'  // Consistent with other custom pages
+        : 'Page'
       
       options.push({
         id: 'individual',
         label: `Edit ${pageLabel}`,
-        description: `Edit this ${pageLabel.toLowerCase()} content and layout`,
-        affects: `This ${pageLabel.toLowerCase()} only`,
+        description: ctx.isCustomJournalPage 
+          ? 'Edit this custom page'
+          : `Edit this ${pageLabel.toLowerCase()} content and layout`,
+        affects: ctx.isCustomJournalPage 
+          ? 'This page only'
+          : `This ${pageLabel.toLowerCase()} only`,
         icon: <Edit3 className="w-4 h-4" />,
         isPrimary: true
       })

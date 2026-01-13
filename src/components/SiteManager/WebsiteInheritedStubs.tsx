@@ -8,12 +8,30 @@ import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { 
   Search, Eye, Edit3, RotateCcw, Check, AlertTriangle, 
-  FileText, Home, HelpCircle, SearchIcon, Plus, Trash2, User
+  FileText, Home, HelpCircle, SearchIcon, Plus, Trash2, User,
+  BookOpen, Layers, FileEdit, Info
 } from 'lucide-react'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { NewBadge } from '../shared/NewBadge'
-import { getHomepageStubForWebsite, getPageStub } from '../PageBuilder/pageStubs'
+import { 
+  getHomepageStubForWebsite, 
+  getPageStub,
+  createJournalHomeTemplate,
+  createIssueArchiveTemplate,
+  createIssueTocTemplate,
+  createArticleTemplate
+} from '../PageBuilder/pageStubs'
 import type { WebsitePage } from '../../types/widgets'
+
+// Data-driven page templates that can be copied
+type DataDrivenTemplate = {
+  id: string
+  name: string
+  description: string
+  icon: React.ReactNode
+  urlPattern: string // Expected URL pattern for context (e.g., "/journal/{journalId}/...")
+  contextType: 'journal' | 'issue' | 'article' | 'none'
+}
 
 // Stub types that come from the Design
 type DesignStub = {
@@ -59,6 +77,70 @@ export function WebsiteInheritedStubs({
   const userCreatedPages = useMemo(() => {
     return websitePages.filter(page => page.websiteId === websiteId && page.source === 'user')
   }, [websitePages, websiteId])
+  
+  // Data-driven page templates available for copying
+  const dataDrivenTemplates: DataDrivenTemplate[] = useMemo(() => [
+    {
+      id: 'journal-home',
+      name: 'Journal Home',
+      description: 'Journal landing page with banner and articles',
+      icon: <BookOpen className="w-4 h-4" />,
+      urlPattern: '/journal/{journalId}',
+      contextType: 'journal'
+    },
+    {
+      id: 'issue-archive',
+      name: 'Issue Archive',
+      description: 'List of all issues for a journal',
+      icon: <Layers className="w-4 h-4" />,
+      urlPattern: '/journal/{journalId}/issues',
+      contextType: 'journal'
+    },
+    {
+      id: 'issue-toc',
+      name: 'Issue Table of Contents',
+      description: 'Articles listing for a specific issue',
+      icon: <FileText className="w-4 h-4" />,
+      urlPattern: '/journal/{journalId}/issue/{issueId}',
+      contextType: 'issue'
+    },
+    {
+      id: 'article-page',
+      name: 'Article Page',
+      description: 'Full article view with metadata',
+      icon: <FileEdit className="w-4 h-4" />,
+      urlPattern: '/journal/{journalId}/article/{articleId}',
+      contextType: 'article'
+    }
+  ], [])
+  
+  // Detect URL context from the slug input
+  const urlContext = useMemo(() => {
+    const slug = newPageSlug.trim().toLowerCase()
+    
+    // Check for journal context: journal/xxx/...
+    const journalMatch = slug.match(/^journal\/([^/]+)/)
+    if (journalMatch) {
+      const journalId = journalMatch[1]
+      // Check for deeper context
+      if (slug.includes('/issue/')) {
+        return { type: 'issue' as const, journalId, hasContext: true }
+      }
+      if (slug.includes('/article/')) {
+        return { type: 'article' as const, journalId, hasContext: true }
+      }
+      return { type: 'journal' as const, journalId, hasContext: true }
+    }
+    
+    return { type: 'none' as const, journalId: null, hasContext: false }
+  }, [newPageSlug])
+  
+  // Get selected template info for context message
+  const selectedTemplateInfo = useMemo(() => {
+    if (!copyFromPageId.startsWith('template:')) return null
+    const templateId = copyFromPageId.replace('template:', '')
+    return dataDrivenTemplates.find(t => t.id === templateId)
+  }, [copyFromPageId, dataDrivenTemplates])
   
   // Get the base design stubs for comparison
   const v2Website = mockWebsites.find(w => w.id === websiteId)
@@ -379,21 +461,115 @@ export function WebsiteInheritedStubs({
       return
     }
     
-    // Create a blank section for the new page
-    const blankSection = {
-      id: `section-${Date.now()}`,
-      type: 'section' as const,
-      name: 'New Section',
-      layout: 'single' as const,
-      areas: [{
-        id: `area-${Date.now()}`,
-        widgets: []
-      }],
-      background: { type: 'color' as const, color: '#ffffff' },
-      padding: '40px'
+    // Validate copy selection
+    if (startFrom === 'copy' && !copyFromPageId) {
+      addNotification?.({
+        type: 'error',
+        title: 'No Page Selected',
+        message: 'Please select a page to copy from'
+      })
+      return
     }
     
-    const initialCanvasItems = [blankSection]
+    let initialCanvasItems: any[] = []
+    let templateName: string | undefined
+    let description = 'Custom page created by user'
+    
+    if (startFrom === 'copy' && copyFromPageId) {
+      // Copy from existing page
+      const [source, id] = copyFromPageId.split(':')
+      
+      if (source === 'design') {
+        // Copy from a design page
+        const designPage = stubsWithStatus.find(s => s.id === id)
+        if (designPage) {
+          // Try to get saved canvas first, then use theme default
+          const savedCanvas = designPage.savedCanvas
+          if (savedCanvas && savedCanvas.length > 0) {
+            initialCanvasItems = JSON.parse(JSON.stringify(savedCanvas)) // Deep clone
+          } else {
+            // Get theme default stub
+            const website = mockWebsites.find(w => w.id === websiteId)
+            const designId = (website as any)?.themeId || (website as any)?.designId || website?.name
+            const themeDefault = getThemeDefaultStub(id, designId)
+            initialCanvasItems = JSON.parse(JSON.stringify(themeDefault)) // Deep clone
+          }
+          templateName = designPage.name
+          description = `Copied from ${designPage.name}`
+        }
+      } else if (source === 'user') {
+        // Copy from a user-created page
+        const userPage = userCreatedPages.find(p => p.id === id)
+        if (userPage) {
+          initialCanvasItems = JSON.parse(JSON.stringify(userPage.canvasItems)) // Deep clone
+          templateName = userPage.name
+          description = `Copied from ${userPage.name}`
+        }
+      } else if (source === 'template') {
+        // Copy from a data-driven template
+        const templateInfo = dataDrivenTemplates.find(t => t.id === id)
+        if (templateInfo) {
+          // Get the template canvas based on template type
+          // Use a mock websiteId for template generation
+          switch (id) {
+            case 'journal-home':
+              initialCanvasItems = JSON.parse(JSON.stringify(
+                createJournalHomeTemplate(websiteId)
+              ))
+              break
+            case 'issue-archive':
+              initialCanvasItems = JSON.parse(JSON.stringify(
+                createIssueArchiveTemplate(websiteId, urlContext.journalId || 'sample-journal')
+              ))
+              break
+            case 'issue-toc':
+              initialCanvasItems = JSON.parse(JSON.stringify(
+                createIssueTocTemplate(websiteId, urlContext.journalId || 'sample-journal', 'sample-issue')
+              ))
+              break
+            case 'article-page':
+              initialCanvasItems = JSON.parse(JSON.stringify(
+                createArticleTemplate(websiteId, urlContext.journalId || 'sample-journal', 'sample-article')
+              ))
+              break
+          }
+          
+          templateName = templateInfo.name
+          description = urlContext.hasContext 
+            ? `Based on ${templateInfo.name} (with journal context)`
+            : `Based on ${templateInfo.name} (uses mock data)`
+        }
+      }
+      
+      // Generate new IDs for all sections and widgets to avoid conflicts
+      initialCanvasItems = initialCanvasItems.map(section => ({
+        ...section,
+        id: `section-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        areas: section.areas?.map((area: any) => ({
+          ...area,
+          id: `area-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          widgets: area.widgets?.map((widget: any) => ({
+            ...widget,
+            id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+          }))
+        }))
+      }))
+    } else {
+      // Create a blank section for the new page
+      const blankSection = {
+        id: `section-${Date.now()}`,
+        type: 'section' as const,
+        name: 'New Section',
+        layout: 'single' as const,
+        areas: [{
+          id: `area-${Date.now()}`,
+          widgets: []
+        }],
+        background: { type: 'color' as const, color: '#ffffff' },
+        padding: '40px'
+      }
+      initialCanvasItems = [blankSection]
+    }
     
     // Create the new page
     const newPage: WebsitePage = {
@@ -401,8 +577,9 @@ export function WebsiteInheritedStubs({
       websiteId,
       slug: newPageSlug.trim(),
       name: newPageName.trim(),
-      description: `Custom page created by user`,
+      description,
       source: 'user',
+      templateName,
       canvasItems: initialCanvasItems,
       isPublished: false,
       createdAt: new Date(),
@@ -425,6 +602,7 @@ export function WebsiteInheritedStubs({
     setNewPageSlug('')
     setNewPageName('')
     setStartFrom('blank')
+    setCopyFromPageId('')
     setShowNewPageDialog(false)
     
     // Navigate to edit the new page
@@ -691,14 +869,14 @@ export function WebsiteInheritedStubs({
                   <span className="text-gray-500 text-sm mr-1">/{websiteId}/</span>
                   <input
                     type="text"
-                    placeholder="my-new-page"
+                    placeholder="my-new-page or journal/jas/my-page"
                     value={newPageSlug}
-                    onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                    onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-/]/g, '-').replace(/\/+/g, '/').replace(/^\//, ''))}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  This will be the URL path for your new page
+                  Use paths like <code className="bg-gray-100 px-1 rounded">journal/jas/promo</code> to inherit journal context
                 </p>
               </div>
               
@@ -751,24 +929,92 @@ export function WebsiteInheritedStubs({
                       <p className="text-xs text-gray-500">Choose from saved page templates</p>
                     </div>
                   </label>
-                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 opacity-50 ${startFrom === 'copy' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${startFrom === 'copy' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                     <input 
                       type="radio" 
                       name="start-from" 
                       value="copy" 
                       checked={startFrom === 'copy'}
                       onChange={() => setStartFrom('copy')}
-                      disabled
                       className="w-4 h-4 text-blue-600" 
                     />
-                    <div>
+                    <div className="flex-1">
                       <span className="font-medium text-gray-900">Copy Existing Page</span>
                       <p className="text-xs text-gray-500">Duplicate an existing page on this site</p>
                     </div>
                   </label>
+                  
+                  {/* Page selector when "Copy" is selected */}
+                  {startFrom === 'copy' && (
+                    <div className="ml-7 mt-2">
+                      <select
+                        value={copyFromPageId}
+                        onChange={(e) => setCopyFromPageId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      >
+                        <option value="">Select a page to copy...</option>
+                        <optgroup label="Design Pages">
+                          {stubsWithStatus.map(stub => (
+                            <option key={`design-${stub.id}`} value={`design:${stub.id}`}>
+                              {stub.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Data-driven Pages (Templates)">
+                          {dataDrivenTemplates.map(template => (
+                            <option key={`template-${template.id}`} value={`template:${template.id}`}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                        {userCreatedPages.length > 0 && (
+                          <optgroup label="My Pages">
+                            {userCreatedPages.map(page => (
+                              <option key={`user-${page.id}`} value={`user:${page.id}`}>
+                                {page.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                      
+                      {/* Context info message for data-driven templates */}
+                      {selectedTemplateInfo && (
+                        <div className={`mt-2 p-2 rounded-lg text-xs flex items-start gap-2 ${
+                          urlContext.hasContext && (
+                            urlContext.type === selectedTemplateInfo.contextType ||
+                            (selectedTemplateInfo.contextType === 'journal' && urlContext.hasContext)
+                          )
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                          <div>
+                            {urlContext.hasContext && (
+                              urlContext.type === selectedTemplateInfo.contextType ||
+                              (selectedTemplateInfo.contextType === 'journal' && urlContext.hasContext)
+                            ) ? (
+                              <>
+                                <strong>Context detected:</strong> Your URL contains journal context.
+                                Template variables like colors and branding will use real data from the journal.
+                              </>
+                            ) : (
+                              <>
+                                <strong>No context in URL:</strong> Template will use AI-generated mock content.
+                                <br />
+                                <span className="text-amber-600">
+                                  Tip: Use a URL like <code className="bg-amber-100 px-1 rounded">journal/jas/my-page</code> to inherit journal branding.
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  "From Template" and "Copy Existing" options coming soon
+                  "From Template" option coming soon
                 </p>
               </div>
             </div>
@@ -780,6 +1026,7 @@ export function WebsiteInheritedStubs({
                   setNewPageSlug('')
                   setNewPageName('')
                   setStartFrom('blank')
+                  setCopyFromPageId('')
                 }}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -787,10 +1034,10 @@ export function WebsiteInheritedStubs({
               </button>
               <button
                 onClick={handleCreatePage}
-                disabled={!newPageSlug.trim() || !newPageName.trim()}
+                disabled={!newPageSlug.trim() || !newPageName.trim() || (startFrom === 'copy' && !copyFromPageId)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Page
+                {startFrom === 'copy' ? 'Copy & Create Page' : 'Create Page'}
               </button>
             </div>
           </div>

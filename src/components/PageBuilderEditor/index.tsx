@@ -162,6 +162,9 @@ export function PageBuilderEditor() {
   } : v2Website
   const journals = currentWebsite?.journals as JournalStubData[] | undefined
   
+  // Get websitePages from store for custom page detection
+  const websitePages = usePageStore(state => state.websitePages) || []
+  
   // Determine page type from route (helper function)
   const getPageType = (route: string): PageType => {
     if (!route || route === '' || route === 'home') return 'home'
@@ -171,7 +174,20 @@ export function PageBuilderEditor() {
     if (route.startsWith('journal/') && route.includes('/loi')) return 'issue-archive'
     if (route.startsWith('journal/') && route.includes('/toc/')) return 'issue-toc'
     if (route.startsWith('journal/') && route.includes('/article/')) return 'article'
-    if (route.startsWith('journal/')) return 'journal-home'
+    // Check for journal-scoped custom pages (e.g., journal/jas/promo)
+    if (route.startsWith('journal/')) {
+      const parts = route.split('/')
+      // If there are more than 2 parts and 3rd part is not a known route, it's a custom page
+      if (parts.length > 2 && parts[2] && !['loi', 'toc', 'article'].includes(parts[2])) {
+        return 'custom' as PageType
+      }
+      return 'journal-home'
+    }
+    // Check for custom pages at website root
+    const isCustomPage = websitePages.some(p => p.websiteId === websiteId && p.slug === route)
+    if (isCustomPage) {
+      return 'custom' as PageType
+    }
     return 'home' // Default
   }
   
@@ -580,6 +596,57 @@ export function PageBuilderEditor() {
         isTransitioningRef.current = false
         return
       }
+    }
+    
+    // PRIORITY 2: Handle custom (user-created) pages
+    if (pageType === 'custom') {
+      debugLog('log', '📄 [PageBuilderEditor] Loading custom page:', { websiteId, pageName })
+      
+      // First check in-memory pageCanvas
+      const savedCanvas = getPageCanvas(websiteId!, pageName)
+      if (savedCanvas && savedCanvas.length > 0) {
+        debugLog('log', '📄 [PageBuilderEditor] Loading custom page from pageCanvas:', { itemCount: savedCanvas.length })
+        const migratedCanvas = migrateCanvasItems(savedCanvas)
+        replaceCanvasItems(migratedCanvas)
+        setIsEditingLoadedWebsite(true)
+        loadedPageRef.current = pageKey
+        previousCanvasItemsRef.current = migratedCanvas
+        canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+        setCanvasOwnerId(`${websiteId}:${pageName}`)
+        isTransitioningRef.current = false
+        return
+      }
+      
+      // Fall back to persisted websitePages
+      const customPage = websitePages.find(p => p.websiteId === websiteId && p.slug === pageName)
+      if (customPage && customPage.canvasItems && customPage.canvasItems.length > 0) {
+        debugLog('log', '📄 [PageBuilderEditor] Loading custom page from websitePages:', { 
+          pageName: customPage.name, 
+          itemCount: customPage.canvasItems.length 
+        })
+        const migratedCanvas = migrateCanvasItems(customPage.canvasItems)
+        replaceCanvasItems(migratedCanvas)
+        // Also hydrate pageCanvas for future access
+        setPageCanvas(websiteId!, pageName, customPage.canvasItems)
+        setIsEditingLoadedWebsite(true)
+        loadedPageRef.current = pageKey
+        previousCanvasItemsRef.current = migratedCanvas
+        canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+        setCanvasOwnerId(`${websiteId}:${pageName}`)
+        isTransitioningRef.current = false
+        return
+      }
+      
+      // Custom page not found - load with empty canvas
+      debugLog('warn', '⚠️ [PageBuilderEditor] Custom page not found:', { websiteId, pageName })
+      replaceCanvasItems([])
+      setIsEditingLoadedWebsite(false)
+      loadedPageRef.current = pageKey
+      previousCanvasItemsRef.current = []
+      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+      setCanvasOwnerId(`${websiteId}:${pageName}`)
+      isTransitioningRef.current = false
+      return
     }
     
     // For journals page, always regenerate to ensure correct journals are shown

@@ -1,0 +1,52 @@
+---
+description: Guidelines for commit and push workflow with notification summaries
+globs: 
+alwaysApply: false
+---
+
+# Commit & Push Workflow
+
+When the user asks to "commit and push" or "create a milestone summary and push":
+
+## 1. Update Notification Bell
+
+Before committing, update the `MOCK_NOTIFICATIONS` array in `src/components/Notifications/NotificationBell.tsx`:
+
+- Add new milestone notifications at the **top** of the array
+- Use sequential IDs like `milestone-1`, `milestone-2`, etc.
+- Set `read: false` for new items, `read: true` for older ones
+- Use appropriate icons in titles: ✨ (features), 🔗 (connections), 💾 (storage), 🏛️ (architecture), 📝 (UI), ✅ (fixes), 🐛 (bugs)
+- Keep descriptions concise but informative
+- Set `createdAt` to current date/time in ISO format
+
+### Notification Structure
+
+```typescript
+{
+  id: 'milestone-X',
+  type: 'success' | 'feature' | 'info' | 'warning' as const,
+  category: 'release' | 'bugfix' | 'system',
+  title: '🎯 Short Title',
+  description: 'Concise description of what was achieved.',
+  createdAt: '2026-01-13T18:00:00Z', // Use current date
+  read: false,
+}
+```
+
+## 2. Commit Message Format
+
+Use conventional commit format:
+```
+feat: Brief summary of changes
+
+- Bullet point details
+- Another detail
+```
+
+## 3. Push to Remote
+
+Always push to `origin main` after committing.
+
+## 4. Also Update milestoneNotifications.ts (Optional)
+
+For major milestones, also update `src/utils/milestoneNotifications.ts` with the `SESSION_MILESTONES` array for programmatic access to milestone data.

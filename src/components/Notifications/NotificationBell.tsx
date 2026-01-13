@@ -1,16 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Bell, X, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, ChevronRight } from 'lucide-react'
 
-// Session milestone notifications - 2026-01-13
+// Session milestone notifications - 2026-01-13 (Part 3)
 const MOCK_NOTIFICATIONS = [
+  {
+    id: 'milestone-0',
+    type: 'success' as const,
+    category: 'release',
+    title: '🎯 Copy from Data-driven Pages',
+    description: 'Create custom pages by copying Journal Home, Issue TOC, Article templates. URL context detection auto-applies journal branding.',
+    createdAt: '2026-01-13T20:00:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-0b',
+    type: 'success' as const,
+    category: 'bugfix',
+    title: '✅ Journal-Scoped Custom Pages',
+    description: 'Fixed routing, editor loading, and context for pages like /journal/jas/promo. Correct colors, metadata, and "Edit This Page" button.',
+    createdAt: '2026-01-13T19:30:00Z',
+    read: false,
+  },
   {
     id: 'milestone-1',
     type: 'success' as const,
     category: 'release',
-    title: '✨ Milestone: User-Created Pages System',
+    title: '✨ User-Created Pages System',
     description: 'New system for creating custom pages: "+ New Page" button, Design/My Pages/All filter, GenericPage renderer, full persistence across refreshes.',
     createdAt: '2026-01-13T18:00:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-2',
@@ -19,7 +37,7 @@ const MOCK_NOTIFICATIONS = [
     title: '🔗 Page Creation Flow',
     description: 'Create blank pages with initial section, navigate to editor, Save & Publish persists to memory + localStorage, delete cleans both stores.',
     createdAt: '2026-01-13T17:45:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-3',
@@ -28,7 +46,7 @@ const MOCK_NOTIFICATIONS = [
     title: '💾 Storage Persistence Fix',
     description: 'Pages now survive browser refresh! Editor and LiveSite hydrate from localStorage when memory is empty.',
     createdAt: '2026-01-13T17:30:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-4',
@@ -37,7 +55,7 @@ const MOCK_NOTIFICATIONS = [
     title: '🏛️ 3-Layer Inheritance Model',
     description: 'Design Archetype → Website Override → Journal Instance. Website-scoped archetype editing ensures changes don\'t affect other websites.',
     createdAt: '2026-01-13T16:00:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-5',
@@ -46,7 +64,7 @@ const MOCK_NOTIFICATIONS = [
     title: '📝 Terminology & UI Updates',
     description: '"Push to All Journals", "Keep for This Journal Only", "Data-driven Pages", "Other Pages". Removed Use button from URL-bound system pages.',
     createdAt: '2026-01-13T15:00:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-6',
@@ -55,7 +73,7 @@ const MOCK_NOTIFICATIONS = [
     title: '✅ Sync with Master Fixes',
     description: 'Reset zones now compare against Website Master (not Design). Modal shows correct options: Confirm Sync / Keep Modified.',
     createdAt: '2026-01-13T14:00:00Z',
-    read: false,
+    read: true,
   },
   {
     id: '0a',
