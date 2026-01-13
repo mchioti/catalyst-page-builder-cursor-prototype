@@ -1,8 +1,62 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Bell, X, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, ChevronRight } from 'lucide-react'
 
-// Mock notification data for visual prototype
+// Session milestone notifications - 2026-01-13
 const MOCK_NOTIFICATIONS = [
+  {
+    id: 'milestone-1',
+    type: 'success' as const,
+    category: 'release',
+    title: '✨ Milestone: User-Created Pages System',
+    description: 'New system for creating custom pages: "+ New Page" button, Design/My Pages/All filter, GenericPage renderer, full persistence across refreshes.',
+    createdAt: '2026-01-13T18:00:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-2',
+    type: 'feature' as const,
+    category: 'release',
+    title: '🔗 Page Creation Flow',
+    description: 'Create blank pages with initial section, navigate to editor, Save & Publish persists to memory + localStorage, delete cleans both stores.',
+    createdAt: '2026-01-13T17:45:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-3',
+    type: 'feature' as const,
+    category: 'release',
+    title: '💾 Storage Persistence Fix',
+    description: 'Pages now survive browser refresh! Editor and LiveSite hydrate from localStorage when memory is empty.',
+    createdAt: '2026-01-13T17:30:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-4',
+    type: 'feature' as const,
+    category: 'release',
+    title: '🏛️ 3-Layer Inheritance Model',
+    description: 'Design Archetype → Website Override → Journal Instance. Website-scoped archetype editing ensures changes don\'t affect other websites.',
+    createdAt: '2026-01-13T16:00:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-5',
+    type: 'feature' as const,
+    category: 'release',
+    title: '📝 Terminology & UI Updates',
+    description: '"Push to All Journals", "Keep for This Journal Only", "Data-driven Pages", "Other Pages". Removed Use button from URL-bound system pages.',
+    createdAt: '2026-01-13T15:00:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-6',
+    type: 'success' as const,
+    category: 'bugfix',
+    title: '✅ Sync with Master Fixes',
+    description: 'Reset zones now compare against Website Master (not Design). Modal shows correct options: Confirm Sync / Keep Modified.',
+    createdAt: '2026-01-13T14:00:00Z',
+    read: false,
+  },
   {
     id: '0a',
     type: 'feature' as const,
@@ -10,7 +64,7 @@ const MOCK_NOTIFICATIONS = [
     title: 'Master/Copy Terminology Update',
     description: 'New clearer terminology: "Push to All Journals" replaces "Push to Archetype", "Synced/Modified" badges replace "Inherited/Overridden".',
     createdAt: '2026-01-12T14:00:00Z',
-    read: false,
+    read: true,
     action: { label: 'Try it', path: '/edit/catalyst-demo/journal/jas' }
   },
   {
