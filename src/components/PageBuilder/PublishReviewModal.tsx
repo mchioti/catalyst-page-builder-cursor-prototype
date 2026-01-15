@@ -40,6 +40,16 @@ interface PublishReviewModalProps {
   onDiscard?: () => void // Called when user wants to discard all changes
   affectedPagesCount?: number // Number of pages that will be affected (for archetype-master mode)
   displayLabel?: ArchetypeDisplayLabel // For contextual language (e.g., "Journals", "Issues")
+  // Page shell (header/footer/etc) changes live outside the page canvas and must be passed explicitly.
+  // We use a generic name so later we can include navigation/sidebars without renaming.
+  pageShellChanges?: {
+    header?: boolean | { source?: 'global' | 'page' | 'unknown'; kinds?: Array<'sections' | 'visibility' | 'enabled'> }
+    footer?: boolean | { source?: 'global' | 'page' | 'unknown'; kinds?: Array<'sections' | 'visibility' | 'enabled'> }
+  }
+  // Optional callback to apply page shell publish decisions (e.g., commit global header draft vs keep for this page).
+  onPublishPageShell?: (choices: Partial<Record<'header' | 'footer', 'global' | 'page' | 'discard'>>) => void
+  // Optional callback to apply page-shell visibility decisions (hide/show on this page).
+  onPublishPageShellVisibility?: (choices: Partial<Record<'header' | 'footer', 'accept' | 'discard'>>) => void
 }
 
 export function PublishReviewModal({
@@ -59,7 +69,10 @@ export function PublishReviewModal({
   pageName,
   onDiscard,
   affectedPagesCount = 0,
-  displayLabel = { singular: 'Journal', plural: 'Journals' } // Default to Journal for backwards compatibility
+  displayLabel = { singular: 'Journal', plural: 'Journals' }, // Default to Journal for backwards compatibility
+  pageShellChanges,
+  onPublishPageShell,
+  onPublishPageShellVisibility
 }: PublishReviewModalProps) {
   // Helper for contextual language
   const labels = {
@@ -95,6 +108,8 @@ export function PublishReviewModal({
   
   const [choices, setChoices] = useState<Map<string, 'local' | 'archetype' | 'discard'>>(new Map())
   const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set())
+  const [pageShellChoices, setPageShellChoices] = useState<Partial<Record<'header' | 'footer', 'global' | 'page' | 'discard'>>>({})
+  const [pageShellVisibilityChoices, setPageShellVisibilityChoices] = useState<Partial<Record<'header' | 'footer', 'accept' | 'discard'>>>({})
   
   // Helper to normalize section for comparison (remove runtime data)
   const normalizeSection = (section: WidgetSection): string => {
@@ -199,6 +214,26 @@ export function PublishReviewModal({
     })
     return allSections
   }, [dirtyZones, sectionPositionChanges])
+
+  const pageShellHeaderPresent = !!pageShellChanges?.header
+  const pageShellFooterPresent = !!pageShellChanges?.footer
+  const pageShellCount = (pageShellHeaderPresent ? 1 : 0) + (pageShellFooterPresent ? 1 : 0)
+  const totalChangeCount = allChangedSections.size + pageShellCount
+  const hasPublishableChanges = totalChangeCount > 0
+  
+  const getPageShellSource = (region: 'header' | 'footer'): 'global' | 'page' | 'unknown' => {
+    const value = (pageShellChanges as any)?.[region]
+    if (!value) return 'unknown'
+    if (typeof value === 'boolean') return 'unknown'
+    return value.source || 'unknown'
+  }
+
+  const getPageShellKinds = (region: 'header' | 'footer'): Array<'sections' | 'visibility' | 'enabled'> => {
+    const value = (pageShellChanges as any)?.[region]
+    if (!value) return []
+    if (typeof value === 'boolean') return ['sections']
+    return (value.kinds && Array.isArray(value.kinds) ? value.kinds : ['sections'])
+  }
   
   // Note: affectedPagesCount is now passed as a prop (or computed from archetypeId if not provided)
   // The prop takes precedence; if not provided, calculate from archetypeId for backwards compatibility
@@ -230,8 +265,30 @@ export function PublishReviewModal({
       })
       setChoices(initialChoices)
       debugLog('log', '📋 [PublishReviewModal] Choices initialized:', Array.from(initialChoices.entries()))
+
+      // Initialize page shell choices (Flow A):
+      // - If the draft came from a page-only edit, default to "This Page".
+      // - If it came from a global edit, default to "All Pages".
+      const initialShell: Partial<Record<'header' | 'footer', 'global' | 'page' | 'discard'>> = {}
+      const initialVisibility: Partial<Record<'header' | 'footer', 'accept' | 'discard'>> = {}
+      if (pageShellHeaderPresent) {
+        const kinds = getPageShellKinds('header')
+        if (kinds.length === 1 && kinds[0] === 'visibility') initialShell.header = 'page'
+        else if (kinds.length === 1 && kinds[0] === 'enabled') initialShell.header = 'global'
+        else initialShell.header = getPageShellSource('header') === 'page' ? 'page' : 'global'
+        if (kinds.includes('visibility')) initialVisibility.header = 'accept'
+      }
+      if (pageShellFooterPresent) {
+        const kinds = getPageShellKinds('footer')
+        if (kinds.length === 1 && kinds[0] === 'visibility') initialShell.footer = 'page'
+        else if (kinds.length === 1 && kinds[0] === 'enabled') initialShell.footer = 'global'
+        else initialShell.footer = getPageShellSource('footer') === 'page' ? 'page' : 'global'
+        if (kinds.includes('visibility')) initialVisibility.footer = 'accept'
+      }
+      setPageShellChoices(initialShell)
+      setPageShellVisibilityChoices(initialVisibility)
     }
-  }, [isOpen, dirtyZones])
+  }, [isOpen, dirtyZones, pageShellHeaderPresent, pageShellFooterPresent])
   
   if (!isOpen) {
     debugLog('log', '📋 [PublishReviewModal] Not rendering (isOpen=false)')
@@ -253,6 +310,14 @@ export function PublishReviewModal({
       mode,
       choices: Array.from(choices.entries())
     })
+
+    // Apply page shell publish decisions first (so downstream publish can navigate safely).
+    if (onPublishPageShell) {
+      onPublishPageShell(pageShellChoices)
+    }
+    if (onPublishPageShellVisibility) {
+      onPublishPageShellVisibility(pageShellVisibilityChoices)
+    }
     
     if (mode === 'simple' && onSimplePublish) {
       onSimplePublish()
@@ -293,7 +358,7 @@ export function PublishReviewModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Review Changes Before Publishing</h2>
             <p className="text-sm text-gray-500 mt-1">
-              {allChangedSections.size} modified section{allChangedSections.size !== 1 ? 's' : ''} found
+              {totalChangeCount} pending change{totalChangeCount !== 1 ? 's' : ''} found
               {mode === 'archetype' && archetypeName && ` in ${archetypeName}`}
               {mode === 'archetype' && journalName && ` (${journalName})`}
               {mode === 'simple' && pageName && ` on ${pageName}`}
@@ -318,7 +383,7 @@ export function PublishReviewModal({
         {/* Zone List */}
         <div className="flex-1 overflow-y-auto p-6">
           {/* No changes message */}
-          {allChangedSections.size === 0 && (
+          {totalChangeCount === 0 && (
             <div className="text-center py-12">
               <Check className="w-12 h-12 text-green-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Changes</h3>
@@ -328,6 +393,234 @@ export function PublishReviewModal({
             </div>
           )}
           
+          {/* PAGE SHELL CHANGES (Header/Footer/etc) */}
+          {pageShellCount > 0 && (
+            <div className="mb-6 border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <div className="flex items-center gap-2 mb-2">
+                <Layers className="w-4 h-4 text-slate-600" />
+                <h4 className="text-sm font-semibold text-slate-800">
+                  Page Shell (This Page)
+                </h4>
+              </div>
+              <div className="text-xs text-slate-600 mb-3">
+                Decide whether shell changes should apply to <span className="font-medium">all pages</span> or <span className="font-medium">this page only</span>. Use <span className="font-medium">Discard Changes</span> to revert.
+              </div>
+              <div className="space-y-2">
+                {pageShellHeaderPresent && !(
+                  getPageShellKinds('header').length === 1 &&
+                  getPageShellKinds('header')[0] === 'visibility'
+                ) && (
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-600" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Header changes</div>
+                          <div className="text-xs text-gray-500">
+                            Source: {getPageShellSource('header') === 'global' ? 'Global edit (website)' : getPageShellSource('header') === 'page' ? 'This page edit' : 'Draft'}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            Changes: {getPageShellKinds('header').map(k => k === 'sections' ? 'Content' : k === 'visibility' ? 'Visibility' : 'Enabled').join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
+                        Pending
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-header"
+                          value="global"
+                          checked={(pageShellChoices.header || 'global') === 'global'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, header: 'global' }))}
+                          className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Apply to All Pages</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-header"
+                          value="page"
+                          checked={pageShellChoices.header === 'page'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, header: 'page' }))}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Keep for This Page Only</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50">
+                        <input
+                          type="radio"
+                          name="page-shell-header"
+                          value="discard"
+                          checked={pageShellChoices.header === 'discard'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, header: 'discard' }))}
+                          className="w-3.5 h-3.5 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-xs font-medium text-red-700">Discard</span>
+                      </label>
+                    </div>
+                    {pageShellChoices.header === 'global' && (
+                      <div className="mt-2 text-xs text-amber-600">
+                        ⚠️ Publishing will update the header across <strong>all pages</strong>.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {pageShellHeaderPresent && getPageShellKinds('header').includes('visibility') && (
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-600" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Header visibility (this page)</div>
+                          <div className="text-xs text-gray-500">Hidden on this page</div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
+                        Pending
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-header-visibility"
+                          value="accept"
+                          checked={(pageShellVisibilityChoices.header || 'accept') === 'accept'}
+                          onChange={() => setPageShellVisibilityChoices(prev => ({ ...prev, header: 'accept' }))}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Accept</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50">
+                        <input
+                          type="radio"
+                          name="page-shell-header-visibility"
+                          value="discard"
+                          checked={pageShellVisibilityChoices.header === 'discard'}
+                          onChange={() => setPageShellVisibilityChoices(prev => ({ ...prev, header: 'discard' }))}
+                          className="w-3.5 h-3.5 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-xs font-medium text-red-700">Discard</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {pageShellFooterPresent && !(
+                  getPageShellKinds('footer').length === 1 &&
+                  getPageShellKinds('footer')[0] === 'visibility'
+                ) && (
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-600" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Footer changes</div>
+                          <div className="text-xs text-gray-500">
+                            Source: {getPageShellSource('footer') === 'global' ? 'Global edit (website)' : getPageShellSource('footer') === 'page' ? 'This page edit' : 'Draft'}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            Changes: {getPageShellKinds('footer').map(k => k === 'sections' ? 'Content' : k === 'visibility' ? 'Visibility' : 'Enabled').join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
+                        Pending
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-footer"
+                          value="global"
+                          checked={(pageShellChoices.footer || 'global') === 'global'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, footer: 'global' }))}
+                          className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Apply to All Pages</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-footer"
+                          value="page"
+                          checked={pageShellChoices.footer === 'page'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, footer: 'page' }))}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Keep for This Page Only</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50">
+                        <input
+                          type="radio"
+                          name="page-shell-footer"
+                          value="discard"
+                          checked={pageShellChoices.footer === 'discard'}
+                          onChange={() => setPageShellChoices(prev => ({ ...prev, footer: 'discard' }))}
+                          className="w-3.5 h-3.5 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-xs font-medium text-red-700">Discard</span>
+                      </label>
+                    </div>
+                    {pageShellChoices.footer === 'global' && (
+                      <div className="mt-2 text-xs text-amber-600">
+                        ⚠️ Publishing will update the footer across <strong>all pages</strong>.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {pageShellFooterPresent && getPageShellKinds('footer').includes('visibility') && (
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-600" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Footer visibility (this page)</div>
+                          <div className="text-xs text-gray-500">Hidden on this page</div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
+                        Pending
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="page-shell-footer-visibility"
+                          value="accept"
+                          checked={(pageShellVisibilityChoices.footer || 'accept') === 'accept'}
+                          onChange={() => setPageShellVisibilityChoices(prev => ({ ...prev, footer: 'accept' }))}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-gray-800">Accept</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50">
+                        <input
+                          type="radio"
+                          name="page-shell-footer-visibility"
+                          value="discard"
+                          checked={pageShellVisibilityChoices.footer === 'discard'}
+                          onChange={() => setPageShellVisibilityChoices(prev => ({ ...prev, footer: 'discard' }))}
+                          className="w-3.5 h-3.5 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-xs font-medium text-red-700">Discard</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* GROUPED ZONE LIST - Separates resets from new changes */}
           <div className="space-y-6">
             
@@ -629,7 +922,7 @@ export function PublishReviewModal({
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t bg-gray-50">
           <div className="text-sm">
-            {allChangedSections.size === 0 ? (
+            {!hasPublishableChanges ? (
               <div className="text-gray-500">
                 No changes to publish
               </div>
@@ -680,12 +973,12 @@ export function PublishReviewModal({
               </>
             ) : (
               <div className="text-gray-600">
-                <span className="font-medium">{allChangedSections.size}</span> section{allChangedSections.size !== 1 ? 's' : ''} will be published
+                <span className="font-medium">{totalChangeCount}</span> change{totalChangeCount !== 1 ? 's' : ''} will be published
               </div>
             )}
           </div>
           <div className="flex items-center gap-3">
-            {onDiscard && allChangedSections.size > 0 && (
+            {onDiscard && hasPublishableChanges && (
               <button
                 onClick={handleDiscard}
                 className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors flex items-center gap-2"
@@ -702,9 +995,9 @@ export function PublishReviewModal({
             </button>
             <button
               onClick={handlePublish}
-              disabled={allChangedSections.size === 0}
+              disabled={!hasPublishableChanges}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
-                allChangedSections.size === 0
+                !hasPublishableChanges
                   ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                   : 'text-white bg-green-600 hover:bg-green-700'
               }`}

@@ -37,6 +37,20 @@ export function ReplaceZoneModal({
   // Check what styling exists on the section
   const hasBackground = section.background && section.background.type !== 'none'
   const hasPadding = section.padding && section.padding !== '0' && section.padding !== ''
+  const hasStylingSpacing =
+    !!section.styling?.paddingTop ||
+    !!section.styling?.paddingBottom ||
+    !!section.styling?.paddingLeft ||
+    !!section.styling?.paddingRight ||
+    !!section.styling?.gap ||
+    !!section.styling?.minHeight ||
+    !!section.styling?.variant ||
+    !!section.styling?.border ||
+    !!section.styling?.shadow ||
+    !!section.styling?.maxWidth ||
+    !!section.styling?.centerContent
+  const hasMinHeight = !!section.minHeight
+  const hasSpacingOrStyle = !!hasPadding || hasStylingSpacing || hasMinHeight
   const hasContentMode = section.contentMode && section.contentMode !== 'light'
 
   const handleConfirm = () => {
@@ -48,8 +62,14 @@ export function ReplaceZoneModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
@@ -101,12 +121,15 @@ export function ReplaceZoneModal({
           </div>
 
           {/* Style preservation options */}
-          {(hasBackground || hasPadding || hasContentMode) && (
+          {(hasBackground || hasSpacingOrStyle || hasContentMode) && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Palette className="w-4 h-4" />
-                <span>Preserve existing styles?</span>
+                <span>Preserve existing section settings?</span>
               </div>
+              <p className="text-xs text-gray-500 pl-6">
+                Content will move to the new layout. These options keep the section's visual settings.
+              </p>
               
               <div className="space-y-2 pl-6">
                 {/* Background */}
@@ -129,8 +152,8 @@ export function ReplaceZoneModal({
                   </label>
                 )}
 
-                {/* Padding */}
-                {hasPadding && (
+                {/* Spacing & layout */}
+                {hasSpacingOrStyle && (
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
@@ -139,8 +162,10 @@ export function ReplaceZoneModal({
                       className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                     />
                     <div className="flex-1">
-                      <span className="text-sm text-gray-700 group-hover:text-gray-900">Padding</span>
-                      <span className="text-xs text-gray-500 ml-2">({section.padding})</span>
+                      <span className="text-sm text-gray-700 group-hover:text-gray-900">Spacing & layout</span>
+                      <span className="text-xs text-gray-500 ml-2">
+                        (padding, gaps, min height, variant, borders)
+                      </span>
                     </div>
                   </label>
                 )}
@@ -165,7 +190,7 @@ export function ReplaceZoneModal({
           )}
 
           {/* Warning if no styles to preserve */}
-          {!hasBackground && !hasPadding && !hasContentMode && (
+          {!hasBackground && !hasSpacingOrStyle && !hasContentMode && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-sm text-gray-600">
                 <Check className="w-4 h-4 inline mr-1 text-green-500" />

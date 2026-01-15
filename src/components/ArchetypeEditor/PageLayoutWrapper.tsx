@@ -2,6 +2,24 @@
  * PageLayoutWrapper - Wraps sections in page layout structure
  * Handles full_width, left_rail, and right_rail layouts
  * Separates sections into main content and sidebar zones
+ * 
+ * IMPORTANT: Zone-Based Rendering (By Design)
+ * -------------------------------------------
+ * Sections on archetype-based pages (Journal Home, Issue TOC, Article) are 
+ * grouped and rendered by their zoneSlug, NOT by their position in the 
+ * canvasItems array. This means:
+ * 
+ * 1. hero_primary zones ALWAYS render before body_main zones
+ * 2. body_main zones ALWAYS render before sidebar zones
+ * 3. Drag-and-drop or up/down arrows change the array order but NOT the 
+ *    visual order (because zones have fixed semantic positions)
+ * 
+ * This is intentional - archetype pages define a semantic structure where
+ * zones have fixed positions. To reorder zones visually, modify the zone
+ * definitions in the archetype, not the section order.
+ * 
+ * For non-archetype pages (custom pages, stubs), sections render in array
+ * order since they don't have zoneSlug assignments.
  */
 
 import React from 'react'
@@ -45,6 +63,7 @@ interface PageLayoutWrapperProps {
   // Replace Zone feature
   canReplaceZone?: boolean
   onReplaceZone?: (zoneSlug: string) => void
+  onReplaceSectionLayout?: (sectionId: string) => void
 }
 
 /**
@@ -87,7 +106,8 @@ export function PageLayoutWrapper({
   pageInstance,
   onPageInstanceChange,
   canReplaceZone = false,
-  onReplaceZone
+  onReplaceZone,
+  onReplaceSectionLayout
 }: PageLayoutWrapperProps) {
   const layout = pageConfig?.layout || 'full_width'
   
@@ -192,6 +212,7 @@ export function PageLayoutWrapper({
             onPageInstanceChange={onPageInstanceChange}
             canReplaceZone={canReplaceZone}
             onReplaceZone={onReplaceZone}
+            onReplaceSectionLayout={onReplaceSectionLayout}
           />
           
           {/* Add Section Button Below */}

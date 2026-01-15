@@ -582,6 +582,7 @@ export type WebsitePage = {
   source: 'design' | 'user' // 'design' = system page from theme, 'user' = user-created
   templateId?: string       // If created from a template/starter page
   templateName?: string     // Name of template used (for reference)
+  syncedWithMaster?: boolean // If true, page syncs with template changes (like archetype inheritance)
   canvasItems: CanvasItem[] // Page content
   isPublished: boolean      // Whether page is live
   createdAt: Date

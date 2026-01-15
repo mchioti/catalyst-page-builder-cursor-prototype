@@ -24,6 +24,7 @@ import { EditingScopeButton } from './EditingScopeButton'
 import { EscapeHatch } from '../PrototypeControls/EscapeHatch'
 import { createStandardHeaderPrefab, createStandardFooterPrefab } from '../PageBuilder/prefabSections'
 import { createDebugLogger } from '../../utils/logger'
+import { getSiteLayoutDraftKey } from '../../utils/pageShellDraftKeys'
 
 // Control logging for this file
 const DEBUG = false
@@ -170,28 +171,50 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
   const hasCustomFooter = siteLayout?.footer && siteLayout.footer.length > 0
   
   // Check if header/footer is globally enabled (site-wide setting)
-  const headerGloballyEnabled = siteLayout?.headerEnabled !== false
-  const footerGloballyEnabled = siteLayout?.footerEnabled !== false
+  const getSiteLayoutDraftSettings = usePageStore(state => (state as any).getSiteLayoutDraftSettings)
+  const siteLayoutDraftSettings = getSiteLayoutDraftSettings ? getSiteLayoutDraftSettings(websiteId) : null
+  const headerGloballyEnabled = (siteLayoutDraftSettings?.headerEnabled ?? siteLayout?.headerEnabled) !== false
+  const footerGloballyEnabled = (siteLayoutDraftSettings?.footerEnabled ?? siteLayout?.footerEnabled) !== false
   
   // Check for page-specific overrides from store
   const pathAfterLive = location.pathname.replace(`/live/${websiteId}`, '').replace(/^\//, '')
   const currentPageId = pathAfterLive || 'home'
-  const pageLayoutOverrides = usePageStore(state => (state as any).pageLayoutOverrides || {})
+  const getPageLayoutOverrides = usePageStore(state => (state as any).getPageLayoutOverrides)
   const getPageCanvas = usePageStore(state => (state as any).getPageCanvas)
-  const overrideKey = `${websiteId}:${currentPageId}`
-  const pageOverrides = pageLayoutOverrides[overrideKey] || { headerOverride: 'global', footerOverride: 'global' }
+  const getPageDraft = usePageStore(state => (state as any).getPageDraft)
+  const pageOverrides = getPageLayoutOverrides
+    ? getPageLayoutOverrides(websiteId, currentPageId)
+    : { headerOverride: 'global', footerOverride: 'global' }
+  
+  // Website-level page shell drafts (for previewing "global header/footer" edits before publish)
+  const siteHeaderDraft = getPageDraft ? getPageDraft(websiteId, getSiteLayoutDraftKey('header')) : null
+  const siteFooterDraft = getPageDraft ? getPageDraft(websiteId, getSiteLayoutDraftKey('footer')) : null
+  const hasSiteHeaderDraft = Array.isArray(siteHeaderDraft) && siteHeaderDraft.length > 0
+  const hasSiteFooterDraft = Array.isArray(siteFooterDraft) && siteFooterDraft.length > 0
   
   // Get page-specific header/footer if in page-edit mode
-  const pageHeaderSections = pageOverrides.headerOverride === 'page-edit' && getPageCanvas 
-    ? getPageCanvas(websiteId, `header-${currentPageId}`) 
+  const pageHeaderDraft = pageOverrides.headerOverride === 'page-edit' && getPageDraft
+    ? getPageDraft(websiteId, `header-${currentPageId}`)
     : null
-  const pageFooterSections = pageOverrides.footerOverride === 'page-edit' && getPageCanvas
-    ? getPageCanvas(websiteId, `footer-${currentPageId}`)
+  const pageFooterDraft = pageOverrides.footerOverride === 'page-edit' && getPageDraft
+    ? getPageDraft(websiteId, `footer-${currentPageId}`)
+    : null
+
+  const pageHeaderSections = pageOverrides.headerOverride === 'page-edit'
+    ? ((pageHeaderDraft && pageHeaderDraft.length > 0)
+        ? pageHeaderDraft
+        : (getPageCanvas ? getPageCanvas(websiteId, `header-${currentPageId}`) : null))
+    : null
+
+  const pageFooterSections = pageOverrides.footerOverride === 'page-edit'
+    ? ((pageFooterDraft && pageFooterDraft.length > 0)
+        ? pageFooterDraft
+        : (getPageCanvas ? getPageCanvas(websiteId, `footer-${currentPageId}`) : null))
     : null
   
   // Use page-specific sections if available, otherwise global
-  const headerToRender = pageHeaderSections || siteLayout?.header
-  const footerToRender = pageFooterSections || siteLayout?.footer
+  const headerToRender = pageHeaderSections || (hasSiteHeaderDraft ? siteHeaderDraft : siteLayout?.header)
+  const footerToRender = pageFooterSections || (hasSiteFooterDraft ? siteFooterDraft : siteLayout?.footer)
   
   // Show header/footer if: 1) globally enabled AND 2) not hidden for this specific page
   const shouldShowHeader = headerGloballyEnabled && pageOverrides.headerOverride !== 'hide'
@@ -205,20 +228,22 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
     >
       {/* Site Header - Custom header from Site Layout (or page-specific) */}
       {shouldShowHeader && headerToRender && headerToRender.length > 0 && (
-        <CanvasRenderer 
-          items={headerToRender} 
-          websiteId={websiteId} 
-          themeId={website?.themeId}
-        />
+        <header role="banner">
+          <CanvasRenderer 
+            items={headerToRender} 
+            websiteId={websiteId} 
+            themeId={website?.themeId}
+          />
+        </header>
       )}
       
       {/* Placeholder when no header configured - only visible as a hint */}
       {shouldShowHeader && (!headerToRender || headerToRender.length === 0) && (
-        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 text-center">
+        <header role="banner" className="bg-gray-100 border-b border-gray-200 px-4 py-2 text-center">
           <span className="text-xs text-gray-500">
             ℹ️ No site header configured. Add one in Website Settings → Site Layout
           </span>
-        </div>
+        </header>
       )}
       
       {/* Page Content */}
@@ -228,20 +253,22 @@ function LiveSiteLayout({ children, websiteId }: { children: React.ReactNode; we
       
       {/* Site Footer - Custom footer from Site Layout (or page-specific) */}
       {shouldShowFooter && footerToRender && footerToRender.length > 0 && (
-        <CanvasRenderer 
-          items={footerToRender} 
-          websiteId={websiteId} 
-          themeId={website?.themeId}
-        />
+        <footer role="contentinfo">
+          <CanvasRenderer 
+            items={footerToRender} 
+            websiteId={websiteId} 
+            themeId={website?.themeId}
+          />
+        </footer>
       )}
       
       {/* Placeholder when no footer configured */}
       {shouldShowFooter && (!footerToRender || footerToRender.length === 0) && (
-        <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center mt-auto">
+        <footer role="contentinfo" className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center mt-auto">
           <span className="text-xs text-gray-500">
             ℹ️ No site footer configured. Add one in Website Settings → Site Layout
           </span>
-        </div>
+        </footer>
       )}
       
       {/* Floating Edit Button - Shows for Designer and Admin personas (simulated UI) */}
@@ -1195,10 +1222,27 @@ function JournalScopedGenericPage() {
   // Get websitePages from persisted storage (localStorage)
   const websitePages = usePageStore(state => state.websitePages) || []
   
+  // Get customStarterPages (templates) for sync resolution
+  const customStarterPages = usePageStore(state => state.customStarterPages) || []
+  
   // Find this page in websitePages (persisted storage)
   const websitePage = useMemo(() => {
     return websitePages.find(p => p.websiteId === websiteId && p.slug === fullSlug)
   }, [websitePages, websiteId, fullSlug])
+  
+  // Check if page is synced with a template
+  const syncedTemplate = useMemo(() => {
+    if (!websitePage?.syncedWithMaster || !websitePage?.templateId) return null
+    const template = customStarterPages.find(t => t.id === websitePage.templateId)
+    if (template) {
+      debugLog('log', '🔗 [JournalScopedGenericPage] Page is synced with template:', { 
+        fullSlug, 
+        templateId: websitePage.templateId, 
+        templateName: template.name 
+      })
+    }
+    return template
+  }, [websitePage, customStarterPages, fullSlug])
   
   // Get journal data for context
   const journal = useMemo(() => {
@@ -1207,8 +1251,19 @@ function JournalScopedGenericPage() {
   }, [journalId, website?.journals])
   
   // Load canvas data for this page
+  // If synced with template, use template's canvas; otherwise use page's canvas
   const pageCanvas = useMemo(() => {
     if (!fullSlug) return null
+    
+    // SYNC CHECK: If page is synced with a template, use template's canvas
+    if (syncedTemplate && syncedTemplate.canvasItems?.length > 0) {
+      debugLog('log', '🔗 [JournalScopedGenericPage] Using SYNCED template canvas:', { 
+        fullSlug, 
+        templateName: syncedTemplate.name,
+        itemCount: syncedTemplate.canvasItems.length 
+      })
+      return syncedTemplate.canvasItems
+    }
     
     // First try in-memory store
     const canvas = getPageCanvasForPreview(websiteId, fullSlug)
@@ -1227,7 +1282,7 @@ function JournalScopedGenericPage() {
     
     debugLog('log', '📖 [JournalScopedGenericPage] No canvas found:', { websiteId, fullSlug })
     return null
-  }, [websiteId, fullSlug, getPageCanvasForPreview, websitePage, setPageCanvas])
+  }, [websiteId, fullSlug, getPageCanvasForPreview, websitePage, setPageCanvas, syncedTemplate])
   
   // If no canvas found, show not found
   if (!pageCanvas || pageCanvas.length === 0) {
@@ -1280,15 +1335,42 @@ function GenericPage() {
   // Get websitePages from persisted storage (localStorage)
   const websitePages = usePageStore(state => state.websitePages) || []
   
+  // Get customStarterPages (templates) for sync resolution
+  const customStarterPages = usePageStore(state => state.customStarterPages) || []
+  
   // Find this page in websitePages (persisted storage)
   const websitePage = useMemo(() => {
     return websitePages.find(p => p.websiteId === websiteId && p.slug === pageSlug)
   }, [websitePages, websiteId, pageSlug])
   
+  // Check if page is synced with a template
+  const syncedTemplate = useMemo(() => {
+    if (!websitePage?.syncedWithMaster || !websitePage?.templateId) return null
+    const template = customStarterPages.find(t => t.id === websitePage.templateId)
+    if (template) {
+      debugLog('log', '🔗 [GenericPage] Page is synced with template:', { 
+        pageSlug, 
+        templateId: websitePage.templateId, 
+        templateName: template.name 
+      })
+    }
+    return template
+  }, [websitePage, customStarterPages, pageSlug])
+  
   // Load canvas data for this page
-  // First check in-memory store, then fall back to persisted websitePage
+  // If synced with template, use template's canvas; otherwise use page's canvas
   const pageCanvas = useMemo(() => {
     if (!pageSlug) return null
+    
+    // SYNC CHECK: If page is synced with a template, use template's canvas
+    if (syncedTemplate && syncedTemplate.canvasItems?.length > 0) {
+      debugLog('log', '🔗 [GenericPage] Using SYNCED template canvas:', { 
+        pageSlug, 
+        templateName: syncedTemplate.name,
+        itemCount: syncedTemplate.canvasItems.length 
+      })
+      return syncedTemplate.canvasItems
+    }
     
     // First try in-memory store
     const canvas = getPageCanvasForPreview(websiteId, pageSlug)
@@ -1307,7 +1389,7 @@ function GenericPage() {
     
     debugLog('log', '📖 [GenericPage] No canvas found:', { websiteId, pageSlug })
     return null
-  }, [websiteId, pageSlug, getPageCanvasForPreview, websitePage, setPageCanvas])
+  }, [websiteId, pageSlug, getPageCanvasForPreview, websitePage, setPageCanvas, syncedTemplate])
   
   // If no canvas found, show not found
   if (!pageCanvas || pageCanvas.length === 0) {

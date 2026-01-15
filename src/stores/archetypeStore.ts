@@ -68,10 +68,10 @@ export function getArchetypesForDesign(designId: string): Archetype[] {
 export function getArchetypeById(archetypeId: string, designId: string): Archetype | null {
   const archetypes = getArchetypesForDesign(designId)
   const archetype = archetypes.find(a => a.id === archetypeId) || null
-  console.log(`📦 [getArchetypeById] archetypeId=${archetypeId}, designId=${designId}, found=${!!archetype}`)
+  debugLog('log', `📦 [getArchetypeById] archetypeId=${archetypeId}, designId=${designId}, found=${!!archetype}`)
   if (archetype) {
-    console.log(`   - canvasItems count: ${archetype.canvasItems?.length}`)
-    console.log(`   - First section widgets:`, archetype.canvasItems?.[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+    debugLog('log', `   - canvasItems count: ${archetype.canvasItems?.length}`)
+    debugLog('log', `   - First section widgets:`, archetype.canvasItems?.[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
   }
   return archetype
 }
@@ -160,9 +160,9 @@ export function getWebsiteArchetypeOverride(websiteId: string, archetypeId: stri
   const overrides = loadWebsiteArchetypeOverrides()
   const key = `${websiteId}:${archetypeId}`
   const override = overrides[key] || null
-  console.log(`📦 [getWebsiteArchetypeOverride] key=${key}, found=${!!override}`)
+  debugLog('log', `📦 [getWebsiteArchetypeOverride] key=${key}, found=${!!override}`)
   if (override) {
-    console.log(`   - Override zones:`, Object.keys(override.overrides))
+    debugLog('log', `   - Override zones:`, Object.keys(override.overrides))
   }
   return override
 }

@@ -129,7 +129,7 @@ export function HTMLBlockEditor({ widget, updateWidget }: DIYEditorProps) {
           </div>
           <div className="space-y-2">
             <button className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
-              Nominate for Roadmap
+              Nominate for Product Roadmap
             </button>
             <button className="w-full px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors">
               Commission Custom Widget

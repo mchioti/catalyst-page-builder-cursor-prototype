@@ -44,7 +44,9 @@ import { DEFAULT_PUBLICATION_CARD_CONFIG } from '../constants'
 const STORAGE_KEYS = {
   CUSTOM_STARTER_PAGES: 'catalyst-custom-starter-pages',
   CUSTOM_SECTIONS: 'catalyst-custom-sections',
-  WEBSITE_PAGES: 'catalyst-website-pages'
+  WEBSITE_PAGES: 'catalyst-website-pages',
+  PAGE_SHELL_HISTORY: 'catalyst-page-shell-history',
+  SITE_LAYOUT_DRAFT_SETTINGS: 'catalyst-site-layout-draft-settings'
 }
 
 // Reviver function to convert date strings back to Date objects
@@ -88,6 +90,31 @@ const initializeCustomSections = () => {
 // Initialize website pages from localStorage
 const initializeWebsitePages = (): import('../types/widgets').WebsitePage[] => {
   return loadFromLocalStorage(STORAGE_KEYS.WEBSITE_PAGES, [])
+}
+
+// Initialize page shell history from localStorage
+const initializePageShellHistory = (): import('../types/app').PageShellHistoryEntry[] => {
+  return loadFromLocalStorage(STORAGE_KEYS.PAGE_SHELL_HISTORY, [])
+}
+
+// Draft site layout settings (header/footer enabled) persisted in sessionStorage (per browser session).
+const loadSiteLayoutDraftSettingsFromSession = (): Record<string, import('../types/app').SiteLayoutDraftSettings> => {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEYS.SITE_LAYOUT_DRAFT_SETTINGS)
+    if (!stored) return {}
+    return JSON.parse(stored)
+  } catch (error) {
+    debugLog('error', 'Failed to load site layout draft settings from sessionStorage:', error)
+    return {}
+  }
+}
+
+const saveSiteLayoutDraftSettingsToSession = (data: Record<string, import('../types/app').SiteLayoutDraftSettings>) => {
+  try {
+    sessionStorage.setItem(STORAGE_KEYS.SITE_LAYOUT_DRAFT_SETTINGS, JSON.stringify(data))
+  } catch (error) {
+    debugLog('error', 'Failed to save site layout draft settings to sessionStorage:', error)
+  }
 }
 
 // =============================================================================
@@ -272,13 +299,23 @@ export const usePageStore = create<PageState>((set, get) => ({
   // Per-website, per-page draft storage (for preview and editing)
   // Key format: "websiteId:pageId" -> CanvasItem[]
   pageDraftData: {} as Record<string, CanvasItem[]>, // DRAFT (previewable, not published)
+
+  // Page shell publish history (header/footer snapshots)
+  pageShellHistory: initializePageShellHistory(),
+
+  // Draft-only settings for site-wide header/footer enablement; committed on Publish.
+  siteLayoutDraftSettings: loadSiteLayoutDraftSettingsFromSession(),
   
   // Per-page header/footer overrides
   // Key format: "websiteId:pageId" -> { headerOverride, footerOverride }
   pageLayoutOverrides: {} as Record<string, { 
     headerOverride?: 'global' | 'hide' | 'page-edit'
     footerOverride?: 'global' | 'hide' | 'page-edit' 
-  }>,
+  }>, // PUBLISHED
+  pageLayoutOverridesDraft: {} as Record<string, {
+    headerOverride?: 'global' | 'hide' | 'page-edit'
+    footerOverride?: 'global' | 'hide' | 'page-edit'
+  }>, // DRAFT (previewable, committed on Publish)
   
   // Per-page layout settings (full, left, right)
   // Key format: "websiteId:pageId" -> 'full' | 'left' | 'right'
@@ -467,6 +504,57 @@ export const usePageStore = create<PageState>((set, get) => ({
     
     return null
   },
+
+  // Page shell publish history (header/footer snapshots)
+  addPageShellHistoryEntry: (entry) => set((state) => {
+    const committedAt = entry.committedAt ? new Date(entry.committedAt) : new Date()
+    const nextEntry = {
+      ...entry,
+      id: nanoid(),
+      committedAt
+    }
+    // Keep most recent first, cap to avoid unbounded growth
+    const next = [nextEntry, ...(state.pageShellHistory || [])].slice(0, 200)
+    saveToLocalStorage(STORAGE_KEYS.PAGE_SHELL_HISTORY, next)
+    return { pageShellHistory: next }
+  }),
+  getPageShellHistory: (websiteId, region, opts) => {
+    const state = get()
+    const scope = opts?.scope
+    const pageId = opts?.pageId
+    const limit = opts?.limit ?? 25
+    return (state.pageShellHistory || [])
+      .filter((e: any) => {
+        if (e.websiteId !== websiteId) return false
+        if (e.region !== region) return false
+        if (scope && e.scope !== scope) return false
+        if (scope === 'page' && pageId && e.pageId !== pageId) return false
+        return true
+      })
+      .slice(0, limit)
+  },
+
+  // Draft-only settings for site-wide header/footer enablement
+  getSiteLayoutDraftSettings: (websiteId: string) => {
+    const state = get()
+    return state.siteLayoutDraftSettings?.[websiteId] || null
+  },
+  setSiteLayoutDraftSettings: (websiteId: string, updates) => set((state) => {
+    const existing = state.siteLayoutDraftSettings?.[websiteId] || {}
+    const nextForSite = { ...existing, ...updates }
+    const next = {
+      ...(state.siteLayoutDraftSettings || {}),
+      [websiteId]: nextForSite
+    }
+    saveSiteLayoutDraftSettingsToSession(next)
+    return { siteLayoutDraftSettings: next }
+  }),
+  clearSiteLayoutDraftSettings: (websiteId: string) => set((state) => {
+    const next = { ...(state.siteLayoutDraftSettings || {}) }
+    delete next[websiteId]
+    saveSiteLayoutDraftSettingsToSession(next)
+    return { siteLayoutDraftSettings: next }
+  }),
   
   // Add a widget to a website's global header/footer
   // Insert a widget BEFORE a target widget in siteLayout (for precise positioning)
@@ -602,20 +690,64 @@ export const usePageStore = create<PageState>((set, get) => ({
   getPageLayoutOverrides: (websiteId: string, pageId: string) => {
     const state = get()
     const key = `${websiteId}:${pageId}`
-    return state.pageLayoutOverrides[key] || { headerOverride: 'global', footerOverride: 'global' }
+    const published = state.pageLayoutOverrides[key] || {}
+    const draft = state.pageLayoutOverridesDraft[key] || {}
+    const merged = { ...published, ...draft }
+    return (merged.headerOverride || merged.footerOverride)
+      ? merged
+      : { headerOverride: 'global', footerOverride: 'global' }
   },
+  // Set DRAFT override (previewable; committed on Publish)
   setPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => set((state) => {
     const key = `${websiteId}:${pageId}`
-    const existing = state.pageLayoutOverrides[key] || {}
+    const existingDraft = state.pageLayoutOverridesDraft[key] || {}
+    return {
+      pageLayoutOverridesDraft: {
+        ...state.pageLayoutOverridesDraft,
+        [key]: {
+          ...existingDraft,
+          [type === 'header' ? 'headerOverride' : 'footerOverride']: mode
+        }
+      },
+    }
+  }),
+  // Commit override into PUBLISHED state and clear any draft value for that field.
+  commitPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => set((state) => {
+    const key = `${websiteId}:${pageId}`
+    const existingPublished = state.pageLayoutOverrides[key] || {}
+    const nextPublished = {
+      ...existingPublished,
+      [type === 'header' ? 'headerOverride' : 'footerOverride']: mode
+    }
+    const nextDraft = { ...(state.pageLayoutOverridesDraft || {}) }
+    const existingDraft = nextDraft[key] || {}
+    const { [type === 'header' ? 'headerOverride' : 'footerOverride']: _removed, ...restDraftForKey } = existingDraft as any
+    if (Object.keys(restDraftForKey).length === 0) {
+      delete nextDraft[key]
+    } else {
+      nextDraft[key] = restDraftForKey as any
+    }
     return {
       pageLayoutOverrides: {
         ...state.pageLayoutOverrides,
-        [key]: {
-          ...existing,
-          [type === 'header' ? 'headerOverride' : 'footerOverride']: mode
-        }
-      }
+        [key]: nextPublished
+      },
+      pageLayoutOverridesDraft: nextDraft
     }
+  }),
+  // Discard draft override for a specific region (revert to published).
+  discardPageLayoutOverrideDraft: (websiteId: string, pageId: string, type: 'header' | 'footer') => set((state) => {
+    const key = `${websiteId}:${pageId}`
+    const nextDraft = { ...(state.pageLayoutOverridesDraft || {}) }
+    const existingDraft = nextDraft[key] || {}
+    const field = type === 'header' ? 'headerOverride' : 'footerOverride'
+    const { [field]: _removed, ...rest } = existingDraft as any
+    if (Object.keys(rest).length === 0) {
+      delete nextDraft[key]
+    } else {
+      nextDraft[key] = rest as any
+    }
+    return { pageLayoutOverridesDraft: nextDraft }
   }),
   
   // Page layout getter/setter (full, left, right)

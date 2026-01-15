@@ -18,6 +18,10 @@ export function compareSectionWithArchetype(
   currentSection: WidgetSection,
   archetypeSection: WidgetSection
 ): boolean {
+  const normalizeOverlay = (overlay: WidgetSection['overlay']) => {
+    if (!overlay || overlay.enabled !== true) return undefined
+    return overlay
+  }
   const zoneSlug = currentSection.zoneSlug || 'unknown'
   
   debugLog('log', `🔍 [compareSection] Starting comparison for zone ${zoneSlug}:`, {
@@ -160,6 +164,14 @@ export function compareSectionWithArchetype(
     return true
   }
 
+  // Compare overlay (treat disabled overlay as undefined)
+  const currentOverlay = JSON.stringify(normalizeOverlay(currentSection.overlay))
+  const archetypeOverlay = JSON.stringify(normalizeOverlay(archetypeSection.overlay))
+  if (currentOverlay !== archetypeOverlay) {
+    debugLog('log', `🔴 [compareSection] Zone ${zoneSlug}: Overlay differs`)
+    return true
+  }
+
   // Sections are identical
   debugLog('log', `✅ [compareSection] Zone ${zoneSlug}: Sections are identical`)
   return false
@@ -194,11 +206,23 @@ export function getDirtyZones(
     zoneSlugs: Array.from(archetypeByZone.keys())
   })
 
+  // Track sections without zoneSlugs (newly added sections like prefabs/saved sections)
+  let newSectionsCount = 0
+
   // Compare each current section with its archetype counterpart
-  currentCanvas.forEach(currentSection => {
+  currentCanvas.forEach((currentSection, index) => {
     if (!currentSection.zoneSlug) {
-      debugLog('log', '⏭️ [getDirtyZones] Skipping section without zoneSlug:', currentSection.name)
-      return // Skip sections without zoneSlug
+      // NEW: Sections without zoneSlug are NEW sections (prefab/saved sections added by user)
+      // Mark them as dirty using a synthetic zoneSlug based on section id
+      newSectionsCount++
+      const syntheticZoneSlug = `new_section_${currentSection.id || index}`
+      debugLog('log', `🆕 [getDirtyZones] NEW section without zoneSlug detected:`, {
+        name: currentSection.name,
+        id: currentSection.id,
+        syntheticZoneSlug
+      })
+      dirtyZones.add(syntheticZoneSlug)
+      return
     }
 
     const archetypeSection = archetypeByZone.get(currentSection.zoneSlug)
@@ -225,7 +249,8 @@ export function getDirtyZones(
 
   debugLog('log', '✅ [getDirtyZones] Comparison complete:', {
     dirtyZones: Array.from(dirtyZones),
-    totalDirty: dirtyZones.size
+    totalDirty: dirtyZones.size,
+    newSectionsDetected: newSectionsCount
   })
 
   return dirtyZones
@@ -254,6 +279,10 @@ export function getSectionChanges(
   currentSection: WidgetSection,
   archetypeSection: WidgetSection
 ): ChangeDescription[] {
+  const normalizeOverlay = (overlay: WidgetSection['overlay']) => {
+    if (!overlay || overlay.enabled !== true) return undefined
+    return overlay
+  }
   const changes: ChangeDescription[] = []
   const zoneSlug = currentSection.zoneSlug || 'unknown'
 
@@ -275,6 +304,60 @@ export function getSectionChanges(
       oldValue: archetypeSection.layout,
       newValue: currentSection.layout,
       description: `Layout changed from "${archetypeSection.layout}" to "${currentSection.layout}"`
+    })
+  }
+
+  // Compare core section properties that affect rendering/behavior
+  if (currentSection.role !== archetypeSection.role) {
+    changes.push({
+      type: 'section-property',
+      property: 'role',
+      oldValue: archetypeSection.role,
+      newValue: currentSection.role,
+      description: 'Section role changed'
+    })
+  }
+  if (currentSection.behavior !== archetypeSection.behavior) {
+    changes.push({
+      type: 'section-property',
+      property: 'behavior',
+      oldValue: archetypeSection.behavior,
+      newValue: currentSection.behavior,
+      description: 'Section behavior changed'
+    })
+  }
+  if (currentSection.contentMode !== archetypeSection.contentMode) {
+    changes.push({
+      type: 'section-property',
+      property: 'contentMode',
+      oldValue: archetypeSection.contentMode,
+      newValue: currentSection.contentMode,
+      description: 'Section content mode changed'
+    })
+  }
+  if (currentSection.padding !== archetypeSection.padding) {
+    changes.push({
+      type: 'section-property',
+      property: 'padding',
+      oldValue: archetypeSection.padding,
+      newValue: currentSection.padding,
+      description: 'Section padding changed'
+    })
+  }
+  if (currentSection.minHeight !== archetypeSection.minHeight) {
+    changes.push({
+      type: 'section-property',
+      property: 'minHeight',
+      oldValue: archetypeSection.minHeight,
+      newValue: currentSection.minHeight,
+      description: 'Section min height changed'
+    })
+  }
+  if (JSON.stringify(normalizeOverlay(currentSection.overlay)) !== JSON.stringify(normalizeOverlay(archetypeSection.overlay))) {
+    changes.push({
+      type: 'section-property',
+      property: 'overlay',
+      description: 'Section overlay changed'
     })
   }
 

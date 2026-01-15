@@ -39,6 +39,7 @@ interface LayoutRendererProps {
   // Replace Zone feature
   canReplaceZone?: boolean
   onReplaceZone?: (zoneSlug: string) => void
+  onReplaceSectionLayout?: (sectionId: string) => void
 }
 
 export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
@@ -69,7 +70,8 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   onPageInstanceChange,
   // Replace Zone feature
   canReplaceZone = false,
-  onReplaceZone
+  onReplaceZone,
+  onReplaceSectionLayout
 }) => {
   
   // If pageConfig is provided and layout is not full_width, use PageLayoutWrapper
@@ -108,6 +110,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         // Replace Zone feature
         canReplaceZone={canReplaceZone}
         onReplaceZone={onReplaceZone}
+        onReplaceSectionLayout={onReplaceSectionLayout}
       />
     )
   }
@@ -189,6 +192,7 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
                 pageInstance={pageInstance}
                 canReplaceZone={canReplaceZone}
                 onReplaceZone={onReplaceZone}
+                onReplaceSectionLayout={onReplaceSectionLayout}
               />
               
               {/* Add Section Button Below */}

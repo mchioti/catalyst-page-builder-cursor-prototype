@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { createDebugLogger } from '../../utils/logger'
+import { getGlobalRegionTypeFromSelectionId, isGlobalRegionSelectionId } from '../../utils/globalRegionSelection'
+import { getSiteLayoutDraftKey } from '../../utils/pageShellDraftKeys'
 import { useBrandingStore } from '../../stores/brandingStore'
 import { PageStatus } from './PageStatus'
 import type { PageInstance, Archetype } from '../../types/archetypes'
@@ -10,6 +12,73 @@ import type { PageInstance, Archetype } from '../../types/archetypes'
 // 🐛 DEBUG FLAG - Set to true to enable detailed properties panel logs
 const DEBUG_PROPERTIES_PANEL = false
 const debugLog = createDebugLogger(DEBUG_PROPERTIES_PANEL)
+
+function HeaderFooterHistory({
+  websiteId,
+  pageId,
+  region,
+  usePageStore
+}: {
+  websiteId: string
+  pageId: string
+  region: 'header' | 'footer'
+  usePageStore: any
+}) {
+  const history = usePageStore((state: any) => state.pageShellHistory || [])
+  const setPageDraft = usePageStore((state: any) => state.setPageDraft)
+
+  const entries = React.useMemo(() => {
+    return (history || [])
+      .filter((e: any) => e.websiteId === websiteId && e.region === region)
+      .slice(0, 5)
+  }, [history, websiteId, region])
+
+  // Don't show anything if there's no history
+  if (!entries || entries.length === 0) {
+    return null
+  }
+
+  const restoreAsDraft = (entry: any) => {
+    // Restore into the GLOBAL draft key; scope is chosen later at Publish.
+    const draftKey = getSiteLayoutDraftKey(region)
+    setPageDraft?.(websiteId, draftKey, entry.sections)
+  }
+
+  return (
+    <div className="border-t border-gray-200 pt-3">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        History
+      </label>
+      <select
+        defaultValue=""
+        onChange={(e) => {
+          if (e.target.value) {
+            const entry = entries.find((ent: any) => ent.id === e.target.value)
+            if (entry) restoreAsDraft(entry)
+            e.target.value = '' // Reset dropdown
+          }
+        }}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+      >
+        <option value="">Restore a previous version...</option>
+        {entries.map((entry: any) => {
+          const when = entry.committedAt
+            ? new Date(entry.committedAt).toLocaleDateString() + ' ' + new Date(entry.committedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : 'Unknown'
+          const scopeLabel = entry.scope === 'global' ? 'All pages' : 'This page'
+          return (
+            <option key={entry.id} value={entry.id}>
+              {when} ({scopeLabel})
+            </option>
+          )
+        })}
+      </select>
+      <p className="mt-1 text-xs text-gray-500">
+        Restores to draft. Choose scope when publishing.
+      </p>
+    </div>
+  )
+}
 
 import { 
   type Widget, 
@@ -71,7 +140,11 @@ interface PropertiesPanelProps {
   footerSections?: CanvasItem[]
   currentWebsiteId?: string
   currentPageId?: string
-  // Edit mode for header/footer ('global' edits site-wide, 'page-edit' creates page-specific copy)
+  // Edit mode for header/footer:
+  // - global: default
+  // - hide: hide on this page
+  // - page-edit: (internal) this page is currently using a page-specific override
+  // Note: the UI no longer offers an "Edit for this page" toggle; per-page overrides are created via Publish scope.
   headerEditMode?: 'global' | 'hide' | 'page-edit'
   footerEditMode?: 'global' | 'hide' | 'page-edit'
   // Archetype-specific props
@@ -86,6 +159,10 @@ interface PropertiesPanelProps {
   designId?: string // Design ID for archetype link
   onResetToArchetype?: () => void // Preview reset to archetype (loads archetype content into editor)
   onRevertZoneToArchetype?: (zoneSlug: string) => void // Preview zone revert (loads zone from archetype)
+  // Highlight the section type indicator (e.g., after section layout replace)
+  highlightSectionType?: boolean
+  // Page shell actions (header/footer)
+  onReplacePageShell?: (region: 'header' | 'footer') => void
 }
 
 export function PropertiesPanel({ 
@@ -113,11 +190,32 @@ export function PropertiesPanel({
   onPageInstanceChange,
   designId,
   onResetToArchetype,
-  onRevertZoneToArchetype
+  onRevertZoneToArchetype,
+  highlightSectionType = false,
+  onReplacePageShell
 }: PropertiesPanelProps) {
-  const { canvasItems, selectedWidget, replaceCanvasItems, publicationCardVariants, schemaObjects, updateSiteLayoutWidget, setPageCanvas, getPageCanvas, editingContext } = usePageStore()
+  const { 
+    canvasItems, 
+    selectedWidget, 
+    replaceCanvasItems, 
+    publicationCardVariants, 
+    schemaObjects, 
+    updateSiteLayoutWidget, 
+    setPageCanvas, 
+    getPageCanvas, 
+    getPageDraft,
+    setPageDraft,
+    clearPageDraft,
+    editingContext,
+    setPageLayoutOverride,
+    deletePageCanvas,
+    updateWebsite,
+    websites
+  } = usePageStore()
   const isArchetypeMode = editingContext === 'archetype'
   const pageCanvasData = usePageStore((state: any) => state.pageCanvasData || {})
+  const getSiteLayoutDraftSettings = usePageStore((state: any) => state.getSiteLayoutDraftSettings)
+  const setSiteLayoutDraftSettings = usePageStore((state: any) => state.setSiteLayoutDraftSettings)
   const navigate = useNavigate()
   
   // State for menu items inline editor (expanded panel)
@@ -207,6 +305,164 @@ export function PropertiesPanel({
     )
   }
 
+  // ============================================================================
+  // HEADER / FOOTER PROPERTIES (region-level)
+  // ============================================================================
+  if (isGlobalRegionSelectionId(selectedWidget)) {
+    const regionType = getGlobalRegionTypeFromSelectionId(selectedWidget)
+    const mode = regionType === 'header' ? headerEditMode : footerEditMode
+    const label = regionType === 'header' ? 'Header' : 'Footer'
+
+    const website = (websites || []).find((w: any) => w.id === currentWebsiteId)
+    const siteLayout = (website as any)?.siteLayout || {}
+
+    const draftSiteLayoutSettings = getSiteLayoutDraftSettings ? getSiteLayoutDraftSettings(currentWebsiteId) : null
+
+    const globallyEnabled =
+      regionType === 'header'
+        ? (draftSiteLayoutSettings?.headerEnabled ?? siteLayout.headerEnabled) !== false
+        : (draftSiteLayoutSettings?.footerEnabled ?? siteLayout.footerEnabled) !== false
+
+    const pageKey = `${regionType}-${currentPageId}`
+    const isHiddenOnThisPage = mode === 'hide'
+    const hasPageOverride = !!pageCanvasData?.[`${currentWebsiteId}:${pageKey}`]
+    const hasDraft = (() => {
+      const d = getPageDraft ? getPageDraft(currentWebsiteId, pageKey) : null
+      return Array.isArray(d) && d.length > 0
+    })()
+    const hasAnyPageCustomization = hasPageOverride || hasDraft || mode === 'page-edit'
+
+    const setHiddenOnThisPage = (hidden: boolean) => {
+      if (!setPageLayoutOverride || !currentWebsiteId || !currentPageId) return
+      if (hidden) {
+        setPageLayoutOverride(currentWebsiteId, currentPageId, regionType, 'hide')
+      } else {
+        // If a page override exists, return to using it; otherwise, return to global.
+        setPageLayoutOverride(currentWebsiteId, currentPageId, regionType, hasAnyPageCustomization ? 'page-edit' : 'global')
+      }
+    }
+
+    const toggleGlobalEnabled = (enabled: boolean) => {
+      if (!setSiteLayoutDraftSettings || !currentWebsiteId) return
+      setSiteLayoutDraftSettings(currentWebsiteId, regionType === 'header' ? { headerEnabled: enabled } : { footerEnabled: enabled })
+    }
+
+    const handleDiscardPageOverride = () => {
+      if (!deletePageCanvas || !currentWebsiteId || !currentPageId) return
+      if (!hasPageOverride && !hasDraft) return
+      if (!confirm(`Discard page-specific ${label.toLowerCase()} changes? This cannot be undone.`)) return
+      // Clear pending draft first (if any)
+      if (clearPageDraft) clearPageDraft(currentWebsiteId, pageKey)
+      deletePageCanvas(currentWebsiteId, pageKey)
+      setPageLayoutOverride(currentWebsiteId, currentPageId, regionType, 'global')
+    }
+
+    return (
+      <div className="p-4 space-y-4">
+        <h3 className="font-semibold text-gray-900">{label} Properties</h3>
+        
+        {/* Status indicator */}
+        <div className="rounded-lg p-3 bg-gray-50 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</span>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+              !globallyEnabled
+                ? 'bg-red-100 text-red-700'
+                : isHiddenOnThisPage
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-green-100 text-green-700'
+            }`}>
+              {!globallyEnabled ? 'Disabled globally' : isHiddenOnThisPage ? 'Hidden on this page' : 'Visible'}
+            </span>
+          </div>
+          {hasAnyPageCustomization && (
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Override</span>
+                <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+                  Page-specific version
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Global visibility */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Global Visibility
+          </label>
+          <select
+            value={globallyEnabled ? 'enabled' : 'disabled'}
+            onChange={(e) => toggleGlobalEnabled(e.target.value === 'enabled')}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="enabled">Enabled (shows on all pages)</option>
+            <option value="disabled">Disabled (hidden on all pages)</option>
+          </select>
+        </div>
+
+        {/* Page visibility */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            This Page
+          </label>
+          <select
+            value={isHiddenOnThisPage ? 'hidden' : 'visible'}
+            onChange={(e) => setHiddenOnThisPage(e.target.value === 'hidden')}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="visible">Show {label.toLowerCase()}</option>
+            <option value="hidden">Hide on this page only</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Edits are saved as drafts. Choose scope (all pages vs this page) when you publish.
+          </p>
+        </div>
+
+        {/* Replace */}
+        {onReplacePageShell && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Replace
+            </label>
+            <button
+              type="button"
+              onClick={() => onReplacePageShell(regionType)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 hover:bg-gray-50"
+            >
+              Replace {label} layout…
+            </button>
+            <p className="mt-1 text-xs text-gray-500">
+              Opens the same replace workflow as Sections. The replacement is saved as a draft until you publish.
+            </p>
+          </div>
+        )}
+
+        {/* History section - only show if there's history */}
+        <HeaderFooterHistory
+          websiteId={currentWebsiteId}
+          pageId={currentPageId}
+          region={regionType}
+          usePageStore={usePageStore}
+        />
+
+        {/* Page override actions */}
+        {(hasPageOverride || mode === 'page-edit') && (
+          <div className="pt-3 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleDiscardPageOverride}
+              className="text-xs font-medium text-red-600 hover:text-red-800 hover:underline"
+            >
+              Discard page override → use global
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Find selected widget/section - check both canvas items and widgets within sections
   let selectedItem: CanvasItem | Widget | undefined = canvasItems.find(
     (item: CanvasItem) => item.id === selectedWidget
@@ -264,8 +520,15 @@ export function PropertiesPanel({
   // Search in global sections (header/footer) OR page-specific sections if in page-edit mode
   const pageHeaderKey = `${currentWebsiteId}:header-${currentPageId}`
   const pageFooterKey = `${currentWebsiteId}:footer-${currentPageId}`
-  const pageHeaderSections = headerEditMode === 'page-edit' ? pageCanvasData[pageHeaderKey] : null
-  const pageFooterSections = footerEditMode === 'page-edit' ? pageCanvasData[pageFooterKey] : null
+  const headerDraft = getPageDraft ? getPageDraft(currentWebsiteId, `header-${currentPageId}`) : null
+  const footerDraft = getPageDraft ? getPageDraft(currentWebsiteId, `footer-${currentPageId}`) : null
+
+  // Page override sections exist regardless of "mode" (mode is now only global vs hide).
+  // If a page-specific header/footer exists (published or draft), it should be discoverable in the properties panel.
+  const pageHeaderSections =
+    headerDraft && headerDraft.length > 0 ? headerDraft : pageCanvasData[pageHeaderKey]
+  const pageFooterSections =
+    footerDraft && footerDraft.length > 0 ? footerDraft : pageCanvasData[pageFooterKey]
   
   // Determine which sections to search - prefer page-specific when in page-edit mode
   const sectionsToSearch = [
@@ -348,50 +611,40 @@ export function PropertiesPanel({
     // If widget is from global header/footer
     if ((isInHeader || isInFooter) && currentWebsiteId) {
       const sectionType = isInHeader ? 'header' : 'footer'
-      const editMode = isInHeader ? headerEditMode : footerEditMode
-      
-      if (editMode === 'page-edit' && currentPageId) {
-        // PAGE-SPECIFIC EDIT: Update page-specific copy
-        debugLog('log', `📝 [PAGE-EDIT] Updating ${sectionType} widget:`, selectedWidget, 'with:', updates)
-        debugLog('log', `📝 [PAGE-EDIT] Website: ${currentWebsiteId}, Page: ${currentPageId}`)
-        
-        // Get or create page-specific sections
-        const pageKey = `${sectionType}-${currentPageId}`
-        let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
-        
-        debugLog('log', `📝 [PAGE-EDIT] Existing page sections for key "${pageKey}":`, pageSections ? 'found' : 'none')
-        
-        // If no page-specific copy exists, create one from global
-        if (!pageSections) {
-          pageSections = JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
-          debugLog('log', `📋 [PAGE-EDIT] Created page-specific copy from global ${sectionType}`)
-        }
-        
-        // Update the widget in the page-specific copy
-        const updatedSections = pageSections.map((section: any) => ({
+      const isHiddenOnThisPage = (isInHeader ? headerEditMode : footerEditMode) === 'hide'
+      // Even if hidden, we still allow editing and drafting; publish choice controls scope.
+      void isHiddenOnThisPage
+
+      // Draft target:
+      // - If a page-specific version already exists (published or draft), draft against the page key.
+      // - Otherwise, draft against the siteLayout key (global draft).
+      const pageKey = `${sectionType}-${currentPageId}`
+      const existingPageSections =
+        (getPageDraft ? getPageDraft(currentWebsiteId, pageKey) : null) ||
+        (getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null)
+
+      const draftKey = existingPageSections ? pageKey : getSiteLayoutDraftKey(sectionType)
+      const baseSections =
+        (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+        (existingPageSections ? existingPageSections : null) ||
+        JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
+
+        const updatedSections = (baseSections || []).map((section: any) => ({
           ...section,
           areas: section.areas?.map((area: any) => ({
             ...area,
-            widgets: area.widgets?.map((widget: any) => 
+            widgets: area.widgets?.map((widget: any) =>
               widget.id === selectedWidget ? { ...widget, ...updates } : widget
             )
           }))
         }))
-        
-        // Save to page canvas
-        if (setPageCanvas) {
-          debugLog('log', `💾 [PAGE-EDIT] Saving to pageCanvasData with key: ${currentWebsiteId}:${pageKey}`)
-          setPageCanvas(currentWebsiteId, pageKey, updatedSections)
-        } else {
-          debugLog('error', '❌ [PAGE-EDIT] setPageCanvas not available!')
-        }
-        return
-      } else if (updateSiteLayoutWidget) {
-        // GLOBAL EDIT: Update site-wide header/footer
-        debugLog('log', `📝 Updating global ${sectionType} widget:`, selectedWidget, updates)
-        updateSiteLayoutWidget(currentWebsiteId, sectionType, selectedWidget || '', updates)
-        return
-      }
+
+      debugLog('log', `📝 [PAGE-SHELL-DRAFT] Updating ${sectionType} widget:`, selectedWidget, {
+        draftKey,
+        updates
+      })
+      setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+      return
     }
     
     // Otherwise, update in canvasItems as usual
@@ -474,36 +727,29 @@ export function PropertiesPanel({
     
     if ((isInHeader || isInFooter) && currentWebsiteId) {
       const sectionType = isInHeader ? 'header' : 'footer'
-      const editMode = isInHeader ? headerEditMode : footerEditMode
-      
-      if (editMode === 'page-edit' && currentPageId) {
-        // Update page-specific copy
-        debugLog('log', `📝 [PAGE-EDIT] Updating ${sectionType} section:`, selectedWidget, updates)
-        
-        const pageKey = `${sectionType}-${currentPageId}`
-        let pageSections = getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null
-        
-        if (!pageSections) {
-          pageSections = JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
-        }
-        
-        const updatedSections = pageSections.map((section: any) => 
-          section.id === selectedWidget ? processUpdatesWithPadding(section, updates) : section
-        )
-        
-        if (setPageCanvas) {
-          setPageCanvas(currentWebsiteId, pageKey, updatedSections)
-        }
-        return
-      } else {
-        // Update global site layout
-        debugLog('log', `📝 [GLOBAL] Updating ${sectionType} section:`, selectedWidget, updates)
-        const updateSiteLayoutSection = (usePageStore.getState() as any).updateSiteLayoutSection
-        if (updateSiteLayoutSection) {
-          updateSiteLayoutSection(currentWebsiteId, sectionType, selectedWidget, updates)
-        }
-        return
-      }
+
+      const pageKey = `${sectionType}-${currentPageId}`
+      const existingPageSections =
+        (getPageDraft ? getPageDraft(currentWebsiteId, pageKey) : null) ||
+        (getPageCanvas ? getPageCanvas(currentWebsiteId, pageKey) : null)
+
+      // If there is already a page-specific version, draft against it; otherwise draft globally.
+      const draftKey = existingPageSections ? pageKey : getSiteLayoutDraftKey(sectionType)
+      const baseSections =
+        (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+        (existingPageSections ? existingPageSections : null) ||
+        JSON.parse(JSON.stringify(isInHeader ? headerSections : footerSections))
+
+      const updatedSections = (baseSections || []).map((section: any) =>
+        section.id === selectedWidget ? processUpdatesWithPadding(section, updates) : section
+      )
+
+      debugLog('log', `📝 [PAGE-SHELL-DRAFT] Updating ${sectionType} section:`, selectedWidget, {
+        draftKey,
+        updates
+      })
+      setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+      return
     }
     
     // Regular canvas section update
@@ -546,10 +792,18 @@ export function PropertiesPanel({
         <h3 className="font-semibold text-gray-900">Section Properties</h3>
         
         {/* Section Type Indicator */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+        <div className={`rounded-lg p-3 transition-all duration-500 ${
+          highlightSectionType 
+            ? 'bg-blue-50 border-2 border-blue-400 ring-2 ring-blue-200 shadow-md' 
+            : 'bg-gray-50 border border-gray-200'
+        }`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
-            <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">
+            <span className={`text-xs px-2 py-1 rounded-full font-medium transition-all duration-500 ${
+              highlightSectionType
+                ? 'bg-blue-500 text-white animate-pulse'
+                : 'bg-green-100 text-green-700'
+            }`}>
               {getSectionTypeName(section.layout)}
             </span>
           </div>

@@ -145,6 +145,7 @@ import type {
 import { isSection } from '../../types/widgets'
 import type { EditingContext, MockLiveSiteRoute } from '../../types'
 import { GlobalSectionBar } from './GlobalSectionBar'
+import { getSiteLayoutDraftKey } from '../../utils/pageShellDraftKeys'
 import { overrideZone, inheritZone, getArchetypeById, saveArchetype, loadDesignsWithArchetypes, getPagesUsingArchetype, resolveCanvasFromArchetype, getWebsiteArchetypeOverride, saveWebsiteArchetypeOverride } from '../../stores/archetypeStore'
 import type { WebsiteArchetypeOverride } from '../../types/archetypes'
 
@@ -190,6 +191,9 @@ interface PageBuilderProps {
   dirtyZones?: Set<string> // Zones that have drifted from archetype (draft state)
   websiteId?: string // Website ID for saving published state
   pageName?: string // Page name/ID for saving published state
+  // Template editing mode
+  isTemplateMode?: boolean // If true, editing a user-saved template (CustomStarterPage)
+  templateName?: string // Template name for display
 }
 
 type LeftSidebarTab = 'library' | 'sections' | 'diy-zone' | 'schema-content'
@@ -223,7 +227,9 @@ export function PageBuilder({
   onPageInstanceChange,
   dirtyZones = new Set(),
   websiteId: websiteIdProp,
-  pageName: pageNameProp
+  pageName: pageNameProp,
+  isTemplateMode = false,
+  templateName
 }: PageBuilderProps) {
   // Use archetypeName prop (renamed from prop to avoid confusion)
   const displayArchetypeName = archetypeNameProp
@@ -278,6 +284,15 @@ export function PageBuilder({
       // Don't return early - compare immediately to detect existing draft changes
     }
     
+    const normalizeSectionForCompare = (section: WidgetSection) => {
+      const normalized = JSON.parse(JSON.stringify(section))
+      // Treat disabled/empty overlay as equivalent to undefined
+      if (!normalized.overlay || normalized.overlay.enabled !== true) {
+        delete normalized.overlay
+      }
+      return normalized
+    }
+
     // Compare current canvas to baseline and find modified sections
     if (baselineCanvasRef.current.length > 0) {
       const modified = new Set<string>()
@@ -293,8 +308,10 @@ export function PageBuilder({
           return
         }
         
-        // Compare section content (simple JSON comparison)
-        if (JSON.stringify(item) !== JSON.stringify(baselineItem)) {
+        // Compare section content (normalized JSON comparison)
+        const currentNormalized = normalizeSectionForCompare(item as WidgetSection)
+        const baselineNormalized = normalizeSectionForCompare(baselineItem as WidgetSection)
+        if (JSON.stringify(currentNormalized) !== JSON.stringify(baselineNormalized)) {
           modified.add(item.id)
         }
       })
@@ -336,11 +353,18 @@ export function PageBuilder({
   const navigate = useNavigate()
   
   // Build zoneSections map from canvasItems for the modal
+  // Also include NEW sections (without zoneSlug) using synthetic key
   const zoneSections = React.useMemo(() => {
     const map = new Map<string, WidgetSection>()
-    canvasItems.forEach(item => {
-      if (isSection(item) && item.zoneSlug) {
-        map.set(item.zoneSlug, item)
+    canvasItems.forEach((item, index) => {
+      if (isSection(item)) {
+        if (item.zoneSlug) {
+          map.set(item.zoneSlug, item)
+        } else {
+          // NEW section without zoneSlug - use synthetic key matching getDirtyZones
+          const syntheticKey = `new_section_${item.id || index}`
+          map.set(syntheticKey, item)
+        }
       }
     })
     return map
@@ -437,6 +461,9 @@ export function PageBuilder({
     // Clear draft
     setPageDraft(websiteId, pageName, [])
     debugLog('log', '🗑️ [PageBuilder] Cleared draft')
+
+    // Commit header/footer drafts as part of page publish
+    commitHeaderFooterDrafts()
     
     // Reset tracking - current state is now the new baseline
     baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasItems))
@@ -477,6 +504,9 @@ export function PageBuilder({
     // Clear draft
     setPageDraft(websiteId, pageName, [])
     debugLog('log', '🗑️ [PageBuilder] Cleared draft')
+
+    // Commit header/footer drafts as part of page publish
+    commitHeaderFooterDrafts()
     
     // Reset tracking - current state is now the new baseline
     baselineCanvasRef.current = JSON.parse(JSON.stringify(canvasItems))
@@ -493,6 +523,9 @@ export function PageBuilder({
     // Clear draft from sessionStorage and memory
     clearPageDraft(websiteId, pageName)
     debugLog('log', '🗑️ [PageBuilder] Cleared draft from store')
+
+    // Also discard any pending header/footer drafts for this page
+    clearHeaderFooterDrafts()
     
     // Get the last published canvas (or archetype-resolved canvas for archetype pages)
     const getPageCanvas = usePageStore.getState().getPageCanvas
@@ -692,8 +725,14 @@ export function PageBuilder({
           }
         } else {
           // Section differs from archetype - save as local override
+          // For NEW sections (synthetic zoneSlug), assign the zoneSlug to the section
+          let sectionToSave = section
+          if (zoneSlug.startsWith('new_section_') && !section.zoneSlug) {
+            sectionToSave = { ...section, zoneSlug }
+            debugLog('log', `💾 [PageBuilder] Assigning zoneSlug ${zoneSlug} to NEW section before saving`)
+          }
           debugLog('log', `💾 [PageBuilder] Saving zone ${zoneSlug} as local override`)
-          updatedInstance = overrideZone(updatedInstance, zoneSlug, section)
+          updatedInstance = overrideZone(updatedInstance, zoneSlug, sectionToSave)
         }
       } else {
         // Save to Archetype: Update archetype canvas AND remove override from page instance
@@ -732,12 +771,32 @@ export function PageBuilder({
         // Update overrides for zones that were pushed to archetype
         choices.forEach((choice, zoneSlug) => {
           if (choice === 'archetype') {
-            const section = canvasItems.find(
-              (item): item is WidgetSection => isSection(item) && item.zoneSlug === zoneSlug
-            )
+            let section: WidgetSection | undefined
+            
+            // Check if this is a NEW section (synthetic zoneSlug like 'new_section_xyz123')
+            if (zoneSlug.startsWith('new_section_')) {
+              // Extract section ID from synthetic zoneSlug
+              const sectionId = zoneSlug.replace('new_section_', '')
+              section = canvasItems.find(
+                (item): item is WidgetSection => isSection(item) && item.id === sectionId
+              )
+              if (section) {
+                // Assign the synthetic zoneSlug to the section so it can be tracked
+                section = { ...section, zoneSlug }
+                console.log(`   - NEW section ${sectionId} assigned zoneSlug: ${zoneSlug}`)
+              }
+            } else {
+              // Normal zone lookup by zoneSlug
+              section = canvasItems.find(
+                (item): item is WidgetSection => isSection(item) && item.zoneSlug === zoneSlug
+              )
+            }
+            
             if (section) {
               overrides[zoneSlug] = section
               console.log(`   - Saving zone ${zoneSlug} to website override`)
+            } else {
+              console.warn(`   ⚠️ Section not found for zone: ${zoneSlug}`)
             }
           }
         })
@@ -809,6 +868,9 @@ export function PageBuilder({
     clearPageDraft(websiteId, pageName)
     clearPageCanvas(websiteId, pageName)
     debugLog('log', '🗑️ [PageBuilder] Cleared draft and canvas cache for current page after publishing:', { websiteId, pageName })
+
+    // Commit header/footer drafts as part of page publish (page chrome is part of the preview/publish lifecycle)
+    commitHeaderFooterDrafts()
     
     // Trigger refresh to reload page instance
     if (onPageInstanceChange) {
@@ -869,6 +931,9 @@ export function PageBuilder({
   const isGlobalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'global'
   const isJournalTemplateEdit = isTemplateEdit && templateEditingContext?.scope === 'journal'
   
+  // User-saved template mode (CustomStarterPage editing) - hides standard Save/Preview buttons
+  const isUserTemplateMode = isTemplateMode === true
+  
   // Get current website and theme (needed for journal context and theme name)
   const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
   const currentTheme = themes.find((t: any) => t.id === currentWebsite?.themeId)
@@ -899,10 +964,18 @@ export function PageBuilder({
   }
   const journalName = getJournalName(journalCode)
   
-  // Get site layout for global header/footer
+  // Subscribe to draft changes so draft-aware header/footer rendering and indicators update reactively.
+  const pageDraftData = usePageStore((state: any) => state.pageDraftData || {})
+  const siteLayoutDraftSettings = usePageStore((state: any) => state.siteLayoutDraftSettings || {})
+  const pageLayoutOverridesDraft = usePageStore((state: any) => state.pageLayoutOverridesDraft || {})
+  const pageLayoutOverridesPublished = usePageStore((state: any) => state.pageLayoutOverrides || {})
+
+  // Get site layout for global header/footer (draft-aware)
   const siteLayout = (currentWebsite as any)?.siteLayout
-  const headerSections = siteLayout?.header || []
-  const footerSections = siteLayout?.footer || []
+  const headerSectionsDraft = pageDraftData[`${currentWebsiteId}:${getSiteLayoutDraftKey('header')}`]
+  const footerSectionsDraft = pageDraftData[`${currentWebsiteId}:${getSiteLayoutDraftKey('footer')}`]
+  const headerSections = (Array.isArray(headerSectionsDraft) && headerSectionsDraft.length > 0) ? headerSectionsDraft : (siteLayout?.header || [])
+  const footerSections = (Array.isArray(footerSectionsDraft) && footerSectionsDraft.length > 0) ? footerSectionsDraft : (siteLayout?.footer || [])
   // Header/footer are always enabled - visibility is controlled per-page via dropdown
   
   // Get page-level layout overrides from store
@@ -933,6 +1006,66 @@ export function PageBuilder({
     setPageLayoutOverride(currentWebsiteId, currentPageId, 'footer', mode)
   }
 
+  // Header/Footer drafts are stored as drafts under keys:
+  // - header-${pageId}
+  // - footer-${pageId}
+  const commitHeaderFooterDrafts = () => {
+    const { getPageDraft, setPageCanvas, clearPageDraft, getPageCanvas, commitPageLayoutOverride } = usePageStore.getState() as any
+    if (!currentWebsiteId || !currentPageId) return
+
+    ;(['header', 'footer'] as const).forEach((type) => {
+      const mode = type === 'header' ? headerOverrideMode : footerOverrideMode
+      if (mode !== 'page-edit') return
+
+      const key = `${type}-${currentPageId}`
+      const draft = getPageDraft ? getPageDraft(currentWebsiteId, key) : null
+      if (Array.isArray(draft) && setPageCanvas) {
+        // Commit draft -> published override
+        setPageCanvas(currentWebsiteId, key, draft)
+        if (clearPageDraft) clearPageDraft(currentWebsiteId, key)
+      }
+
+      // If there's no published override and no draft, revert mode back to global
+      const published = getPageCanvas ? getPageCanvas(currentWebsiteId, key) : null
+      const stillHasDraft = getPageDraft ? getPageDraft(currentWebsiteId, key) : null
+      if ((!published || published.length === 0) && (!stillHasDraft || stillHasDraft.length === 0)) {
+        commitPageLayoutOverride?.(currentWebsiteId, currentPageId, type, 'global')
+      }
+    })
+  }
+
+  const clearHeaderFooterDrafts = () => {
+    const { 
+      clearPageDraft, 
+      getPageCanvas, 
+      commitPageLayoutOverride, 
+      discardPageLayoutOverrideDraft,
+      clearSiteLayoutDraftSettings
+    } = usePageStore.getState() as any
+    if (!currentWebsiteId || !currentPageId) return
+    ;(['header', 'footer'] as const).forEach((type) => {
+      const mode = type === 'header' ? headerOverrideMode : footerOverrideMode
+      if (mode !== 'page-edit') return
+      const key = `${type}-${currentPageId}`
+      clearPageDraft?.(currentWebsiteId, key)
+      const published = getPageCanvas ? getPageCanvas(currentWebsiteId, key) : null
+      if (!published || published.length === 0) {
+        commitPageLayoutOverride?.(currentWebsiteId, currentPageId, type, 'global')
+      }
+    })
+
+    // Clear website-level shell drafts (global header/footer edits)
+    clearPageDraft?.(currentWebsiteId, getSiteLayoutDraftKey('header'))
+    clearPageDraft?.(currentWebsiteId, getSiteLayoutDraftKey('footer'))
+
+    // Discard draft-only visibility overrides (hide/global) for this page
+    discardPageLayoutOverrideDraft?.(currentWebsiteId, currentPageId, 'header')
+    discardPageLayoutOverrideDraft?.(currentWebsiteId, currentPageId, 'footer')
+
+    // Clear draft-only global enable/disable settings for this website
+    clearSiteLayoutDraftSettings?.(currentWebsiteId)
+  }
+
 
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('library')
   const [isPropertiesPanelExpanded, setIsPropertiesPanelExpanded] = useState(false)
@@ -943,11 +1076,254 @@ export function PageBuilder({
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   
+  const pageShellChanges = React.useMemo(() => {
+    if (archetypeMode) return undefined // no per-page header/footer overrides in archetype editing mode
+    if (!currentWebsiteId || !currentPageId) return undefined
+
+    const overridesKey = `${currentWebsiteId}:${currentPageId}`
+    const publishedOverrides = pageLayoutOverridesPublished[overridesKey] || {}
+    const draftOverrides = pageLayoutOverridesDraft[overridesKey] || {}
+    const publishedHeaderMode = publishedOverrides.headerOverride || 'global'
+    const publishedFooterMode = publishedOverrides.footerOverride || 'global'
+
+    const headerKey = `${currentWebsiteId}:header-${currentPageId}`
+    const footerKey = `${currentWebsiteId}:footer-${currentPageId}`
+    const headerDraft = headerOverrideMode === 'page-edit' ? pageDraftData[headerKey] : null
+    const footerDraft = footerOverrideMode === 'page-edit' ? pageDraftData[footerKey] : null
+    const globalHeaderDraft = pageDraftData[`${currentWebsiteId}:${getSiteLayoutDraftKey('header')}`]
+    const globalFooterDraft = pageDraftData[`${currentWebsiteId}:${getSiteLayoutDraftKey('footer')}`]
+
+    const headerHasGlobal = Array.isArray(globalHeaderDraft) && globalHeaderDraft.length > 0
+    const headerHasPage = Array.isArray(headerDraft) && headerDraft.length > 0
+    const footerHasGlobal = Array.isArray(globalFooterDraft) && globalFooterDraft.length > 0
+    const footerHasPage = Array.isArray(footerDraft) && footerDraft.length > 0
+
+    const computeRegionChange = (region: 'header' | 'footer') => {
+      const kinds: Array<'sections' | 'visibility' | 'enabled'> = []
+      let source: 'global' | 'page' | 'unknown' = 'unknown'
+
+      const hasGlobalSections = region === 'header' ? headerHasGlobal : footerHasGlobal
+      const hasPageSections = region === 'header' ? headerHasPage : footerHasPage
+      if (hasGlobalSections || hasPageSections) {
+        kinds.push('sections')
+        source = hasGlobalSections ? 'global' : 'page'
+        if (hasGlobalSections && hasPageSections) source = 'unknown'
+      }
+
+      const draftMode = region === 'header' ? draftOverrides.headerOverride : draftOverrides.footerOverride
+      const publishedMode = region === 'header' ? publishedHeaderMode : publishedFooterMode
+      if (draftMode !== undefined && draftMode !== publishedMode) {
+        kinds.push('visibility')
+        if (source === 'unknown') source = 'page'
+        if (source === 'global') source = 'unknown'
+      }
+
+      const draftEnabled = region === 'header'
+        ? (siteLayoutDraftSettings[currentWebsiteId]?.headerEnabled)
+        : (siteLayoutDraftSettings[currentWebsiteId]?.footerEnabled)
+      const publishedEnabled = region === 'header'
+        ? (siteLayout?.headerEnabled !== false)
+        : (siteLayout?.footerEnabled !== false)
+      if (draftEnabled !== undefined && draftEnabled !== publishedEnabled) {
+        kinds.push('enabled')
+        if (source === 'unknown') source = 'global'
+        if (source === 'page') source = 'unknown'
+      }
+
+      if (kinds.length === 0) return undefined
+      return { source, kinds }
+    }
+
+    const header = computeRegionChange('header')
+    const footer = computeRegionChange('footer')
+
+    if (!header && !footer) return undefined
+    return { header, footer }
+  }, [
+    archetypeMode,
+    currentWebsiteId,
+    currentPageId,
+    headerOverrideMode,
+    footerOverrideMode,
+    pageDraftData,
+    siteLayoutDraftSettings,
+    pageLayoutOverridesDraft,
+    pageLayoutOverridesPublished,
+    siteLayout
+  ])
+
+  const applyPageShellPublishChoices = (shellChoices: Partial<Record<'header' | 'footer', 'global' | 'page' | 'discard'>>) => {
+    const {
+      getPageDraft,
+      clearPageDraft,
+      setPageCanvas,
+      setPageLayoutOverride,
+      commitPageLayoutOverride,
+      discardPageLayoutOverrideDraft,
+      getSiteLayoutDraftSettings,
+      setSiteLayoutDraftSettings,
+      websites,
+      updateWebsite,
+      deletePageCanvas,
+      addPageShellHistoryEntry
+    } = usePageStore.getState() as any
+
+    if (!currentWebsiteId || !currentPageId) return
+
+    const website = (websites || []).find((w: any) => w.id === currentWebsiteId)
+    const siteLayout = website?.siteLayout || {}
+    const draftSiteLayoutSettings = getSiteLayoutDraftSettings ? getSiteLayoutDraftSettings(currentWebsiteId) : null
+    const overridesKey = `${currentWebsiteId}:${currentPageId}`
+    const overridesDraftForPage = (usePageStore.getState() as any).pageLayoutOverridesDraft?.[overridesKey] || {}
+
+    const commitToSiteLayout = (region: 'header' | 'footer', sections: any[]) => {
+      if (!website || !updateWebsite) return
+      const updatedSiteLayout = { ...siteLayout, [region]: sections }
+      updateWebsite(currentWebsiteId, {
+        ...website,
+        siteLayout: updatedSiteLayout,
+        updatedAt: new Date()
+      })
+    }
+
+    const commitEnabledFlag = (region: 'header' | 'footer', enabled: boolean) => {
+      if (!website || !updateWebsite) return
+      const updatedSiteLayout = { ...siteLayout }
+      if (region === 'header') updatedSiteLayout.headerEnabled = enabled
+      if (region === 'footer') updatedSiteLayout.footerEnabled = enabled
+      updateWebsite(currentWebsiteId, {
+        ...website,
+        siteLayout: updatedSiteLayout,
+        updatedAt: new Date()
+      })
+    }
+
+    ;(['header', 'footer'] as const).forEach((region) => {
+      const choice = shellChoices[region]
+      if (!choice) return
+
+      const globalKey = getSiteLayoutDraftKey(region)
+      const pageKey = `${region}-${currentPageId}`
+
+      const globalDraft = getPageDraft ? getPageDraft(currentWebsiteId, globalKey) : null
+      const pageDraft = getPageDraft ? getPageDraft(currentWebsiteId, pageKey) : null
+      const draftToUse =
+        (Array.isArray(globalDraft) && globalDraft.length > 0) ? globalDraft :
+        (Array.isArray(pageDraft) && pageDraft.length > 0) ? pageDraft :
+        null
+
+      if (choice === 'discard') {
+        clearPageDraft?.(currentWebsiteId, globalKey)
+        clearPageDraft?.(currentWebsiteId, pageKey)
+        // Discard any draft-only visibility override
+        discardPageLayoutOverrideDraft?.(currentWebsiteId, currentPageId, region)
+        // Discard any draft-only enabled setting (by setting to undefined so preview falls back to published)
+        if (setSiteLayoutDraftSettings) {
+          setSiteLayoutDraftSettings(currentWebsiteId, region === 'header' ? { headerEnabled: undefined } : { footerEnabled: undefined })
+        }
+        // If there is no published override, revert the mode back to global
+        const published = (usePageStore.getState() as any).getPageCanvas?.(currentWebsiteId, pageKey)
+        if (!published || published.length === 0) {
+          commitPageLayoutOverride?.(currentWebsiteId, currentPageId, region, 'global')
+          deletePageCanvas?.(currentWebsiteId, pageKey)
+        }
+        return
+      }
+
+      if (choice === 'global') {
+        if (draftToUse && Array.isArray(draftToUse) && draftToUse.length > 0) {
+          commitToSiteLayout(region, draftToUse)
+          // Record history snapshot
+          addPageShellHistoryEntry?.({
+            websiteId: currentWebsiteId,
+            region,
+            scope: 'global',
+            sections: draftToUse
+          })
+        }
+        // Commit global enabled/disabled if present
+        const draftEnabled = region === 'header' ? draftSiteLayoutSettings?.headerEnabled : draftSiteLayoutSettings?.footerEnabled
+        if (draftEnabled !== undefined) {
+          commitEnabledFlag(region, draftEnabled)
+        }
+        // Ensure the page uses global (commit published)
+        commitPageLayoutOverride?.(currentWebsiteId, currentPageId, region, 'global')
+        // Clear drafts (sections + settings + visibility)
+        clearPageDraft?.(currentWebsiteId, globalKey)
+        clearPageDraft?.(currentWebsiteId, pageKey)
+        discardPageLayoutOverrideDraft?.(currentWebsiteId, currentPageId, region)
+        if (setSiteLayoutDraftSettings) {
+          setSiteLayoutDraftSettings(currentWebsiteId, region === 'header' ? { headerEnabled: undefined } : { footerEnabled: undefined })
+        }
+        return
+      }
+
+      if (choice === 'page') {
+        // If we have section drafts, commit as a page-specific override.
+        if (draftToUse && Array.isArray(draftToUse) && draftToUse.length > 0) {
+          setPageCanvas?.(currentWebsiteId, pageKey, draftToUse)
+          // Record history snapshot
+          addPageShellHistoryEntry?.({
+            websiteId: currentWebsiteId,
+            region,
+            scope: 'page',
+            pageId: currentPageId,
+            sections: draftToUse
+          })
+        }
+        // Commit the page-level visibility mode if drafted; otherwise default to page-edit if we committed sections.
+        const draftedMode = region === 'header' ? overridesDraftForPage.headerOverride : overridesDraftForPage.footerOverride
+        const nextMode = draftedMode ?? (draftToUse ? 'page-edit' : undefined)
+        if (nextMode) {
+          commitPageLayoutOverride?.(currentWebsiteId, currentPageId, region, nextMode)
+        } else if (draftToUse) {
+          commitPageLayoutOverride?.(currentWebsiteId, currentPageId, region, 'page-edit')
+        }
+        // Discard any global enabled/disabled changes (not page-scoped)
+        if (setSiteLayoutDraftSettings) {
+          setSiteLayoutDraftSettings(currentWebsiteId, region === 'header' ? { headerEnabled: undefined } : { footerEnabled: undefined })
+        }
+        // Clear drafts
+        clearPageDraft?.(currentWebsiteId, globalKey)
+        clearPageDraft?.(currentWebsiteId, pageKey)
+      }
+    })
+  }
+
+  const applyPageShellVisibilityChoices = (choices: Partial<Record<'header' | 'footer', 'accept' | 'discard'>>) => {
+    const {
+      commitPageLayoutOverride,
+      discardPageLayoutOverrideDraft
+    } = usePageStore.getState() as any
+
+    if (!currentWebsiteId || !currentPageId) return
+
+    ;(['header', 'footer'] as const).forEach((region) => {
+      const decision = choices[region]
+      if (!decision) return
+      if (decision === 'discard') {
+        discardPageLayoutOverrideDraft?.(currentWebsiteId, currentPageId, region)
+        return
+      }
+      const overridesKey = `${currentWebsiteId}:${currentPageId}`
+      const draftOverrides = (usePageStore.getState() as any).pageLayoutOverridesDraft?.[overridesKey] || {}
+      const draftMode = region === 'header' ? draftOverrides.headerOverride : draftOverrides.footerOverride
+      if (draftMode !== undefined) {
+        commitPageLayoutOverride?.(currentWebsiteId, currentPageId, region, draftMode)
+      }
+    })
+  }
+  
   // Replace Zone state
   const [replaceZoneSlug, setReplaceZoneSlug] = useState<string | null>(null)
   const [replaceSectionId, setReplaceSectionId] = useState<string | null>(null)
   const [showReplaceZoneModal, setShowReplaceZoneModal] = useState(false)
   const [replaceZonePreserveOptions, setReplaceZonePreserveOptions] = useState<PreserveOptions | null>(null)
+  const [highlightSectionType, setHighlightSectionType] = useState(false)
+  // Replace Section layout (non-zone sections)
+  const [replaceCanvasSectionId, setReplaceCanvasSectionId] = useState<string | null>(null)
+  // Replace Header/Footer (page shell) state
+  const [replacePageShellRegion, setReplacePageShellRegion] = useState<'header' | 'footer' | null>(null)
   
   // Schema editing state
   const [creatingSchemaType, setCreatingSchemaType] = useState<SchemaOrgType | null>(null)
@@ -1470,18 +1846,43 @@ export function PageBuilder({
         const newWidget = buildWidget(libraryItem)
         newWidget.sectionId = sectionId
         
-        // First, check if this section is in siteLayout (global header/footer)
+        // First, check if this section is in siteLayout (global header/footer) - include DRAFT state too.
         const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
         const targetSiteLayout = targetWebsite?.siteLayout
-        const headerSection = targetSiteLayout?.header?.find((s: any) => s.id === sectionId)
-        const footerSection = targetSiteLayout?.footer?.find((s: any) => s.id === sectionId)
+        const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+        const headerSiteDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('header')) : null
+        const footerSiteDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('footer')) : null
+        const headerInDraft = Array.isArray(headerSiteDraft) && headerSiteDraft.some((s: any) => s.id === sectionId)
+        const footerInDraft = Array.isArray(footerSiteDraft) && footerSiteDraft.some((s: any) => s.id === sectionId)
+        const headerInPublished = targetSiteLayout?.header?.some((s: any) => s.id === sectionId)
+        const footerInPublished = targetSiteLayout?.footer?.some((s: any) => s.id === sectionId)
+        const isHeaderGlobal = headerInDraft || !!headerInPublished
+        const isFooterGlobal = footerInDraft || !!footerInPublished
         
-        if (headerSection || footerSection) {
-          // This is a global section - use siteLayout store action with insert position
-          const sectionType = headerSection ? 'header' : 'footer'
+        if (isHeaderGlobal || isFooterGlobal) {
+          // This is a global section - write to WEBSITE-LEVEL DRAFT (do not commit immediately)
+          const sectionType = isHeaderGlobal ? 'header' : 'footer'
           debugLog('log', '🌐 Widget-target drop in global siteLayout (' + sectionType + ')')
-          const { insertWidgetInSiteLayout } = usePageStore.getState()
-          insertWidgetInSiteLayout(currentWebsiteId, sectionType, sectionId, areaId, newWidget, targetWidgetId)
+          const draftKey = getSiteLayoutDraftKey(sectionType)
+          const baseSections =
+            (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+            JSON.parse(JSON.stringify(targetSiteLayout?.[sectionType] || []))
+
+          const updatedSections = (baseSections || []).map((section: any) => {
+            if (section.id !== sectionId) return section
+            return {
+              ...section,
+              areas: section.areas?.map((area: any) => {
+                if (area.id !== areaId) return area
+                const widgets = [...(area.widgets || [])]
+                const targetIndex = widgets.findIndex((w: any) => w.id === targetWidgetId)
+                if (targetIndex !== -1) widgets.splice(targetIndex, 0, newWidget)
+                else widgets.push(newWidget)
+                return { ...area, widgets }
+              })
+            }
+          })
+          setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
           debugLog('log', '✅ Widget inserted before target in global ' + sectionType + '!')
           return
         }
@@ -1612,18 +2013,39 @@ export function PageBuilder({
         const newWidget = buildWidget(libraryItem)
         newWidget.sectionId = sectionId
         
-        // First, check if this section is in siteLayout (global header/footer)
+        // First, check if this section is in siteLayout (global header/footer) - include DRAFT state too.
         const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
         const targetSiteLayout = targetWebsite?.siteLayout
-        const headerSection = targetSiteLayout?.header?.find((s: any) => s.id === sectionId)
-        const footerSection = targetSiteLayout?.footer?.find((s: any) => s.id === sectionId)
+        const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+        const headerSiteDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('header')) : null
+        const footerSiteDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('footer')) : null
+        const headerInDraft = Array.isArray(headerSiteDraft) && headerSiteDraft.some((s: any) => s.id === sectionId)
+        const footerInDraft = Array.isArray(footerSiteDraft) && footerSiteDraft.some((s: any) => s.id === sectionId)
+        const headerInPublished = targetSiteLayout?.header?.some((s: any) => s.id === sectionId)
+        const footerInPublished = targetSiteLayout?.footer?.some((s: any) => s.id === sectionId)
+        const isHeaderGlobal = headerInDraft || !!headerInPublished
+        const isFooterGlobal = footerInDraft || !!footerInPublished
         
-        if (headerSection || footerSection) {
-          // This is a global section - use siteLayout store action
-          const sectionType = headerSection ? 'header' : 'footer'
+        if (isHeaderGlobal || isFooterGlobal) {
+          // This is a global section - write to WEBSITE-LEVEL DRAFT (do not commit immediately)
+          const sectionType = isHeaderGlobal ? 'header' : 'footer'
           debugLog('log', '🌐 Section is in global siteLayout (' + sectionType + ')')
-          const { addWidgetToSiteLayout } = usePageStore.getState()
-          addWidgetToSiteLayout(currentWebsiteId, sectionType, sectionId, areaId, newWidget)
+          const draftKey = getSiteLayoutDraftKey(sectionType)
+          const baseSections =
+            (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+            JSON.parse(JSON.stringify(targetSiteLayout?.[sectionType] || []))
+
+          const updatedSections = (baseSections || []).map((section: any) => {
+            if (section.id !== sectionId) return section
+            return {
+              ...section,
+              areas: section.areas?.map((area: any) => {
+                if (area.id !== areaId) return area
+                return { ...area, widgets: [...(area.widgets || []), newWidget] }
+              })
+            }
+          })
+          setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
           debugLog('log', '✅ Widget added to global ' + sectionType + '!')
           return
         }
@@ -1789,6 +2211,21 @@ export function PageBuilder({
         overType: over?.data?.current?.type,
         overData: over?.data?.current 
       })
+
+      const getGlobalRegionForSection = (sectionId: string): 'header' | 'footer' | null => {
+        const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+        const targetSiteLayout = targetWebsite?.siteLayout
+        const { getPageDraft } = usePageStore.getState() as any
+        const headerDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('header')) : null
+        const footerDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('footer')) : null
+        const inHeaderDraft = Array.isArray(headerDraft) && headerDraft.some((s: any) => s.id === sectionId)
+        const inFooterDraft = Array.isArray(footerDraft) && footerDraft.some((s: any) => s.id === sectionId)
+        const inHeaderPublished = targetSiteLayout?.header?.some((s: any) => s.id === sectionId)
+        const inFooterPublished = targetSiteLayout?.footer?.some((s: any) => s.id === sectionId)
+        if (inHeaderDraft || inHeaderPublished) return 'header'
+        if (inFooterDraft || inFooterPublished) return 'footer'
+        return null
+      }
       
       // Case 0: Dropped ON a specific widget (widget-target) - insert BEFORE that widget
       if (over.data?.current?.type === 'widget-target') {
@@ -1802,6 +2239,62 @@ export function PageBuilder({
         // Check if moving within same area
         const isSameArea = fromSectionId === targetSectionId && fromAreaId === targetAreaId
         
+        const globalRegion = getGlobalRegionForSection(targetSectionId) || getGlobalRegionForSection(fromSectionId)
+        if (globalRegion) {
+          const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+          const targetSiteLayout = targetWebsite?.siteLayout
+          const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+          const draftKey = getSiteLayoutDraftKey(globalRegion)
+          const baseSections =
+            (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+            JSON.parse(JSON.stringify(targetSiteLayout?.[globalRegion] || []))
+
+          const updatedSections = (baseSections || []).map((section: any) => {
+            if (section.id !== fromSectionId && section.id !== targetSectionId) return section
+            return {
+              ...section,
+              areas: section.areas?.map((area: any) => {
+                // Same-area reordering
+                if (isSameArea && area.id === fromAreaId && section.id === fromSectionId) {
+                  const widgets = [...(area.widgets || [])]
+                  const fromIndex = widgets.findIndex((w: any) => w.id === draggedWidget.id)
+                  const toIndex = widgets.findIndex((w: any) => w.id === targetWidgetId)
+                  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+                    const [movedWidget] = widgets.splice(fromIndex, 1)
+                    const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
+                    widgets.splice(adjustedToIndex, 0, movedWidget)
+                  }
+                  return { ...area, widgets }
+                }
+
+                // Cross-area: remove from source area
+                if (!isSameArea && area.id === fromAreaId && section.id === fromSectionId) {
+                  const widgets = (area.widgets || []).filter((w: Widget) => w.id !== draggedWidget.id)
+                  return { ...area, widgets }
+                }
+
+                // Cross-area: insert into target area BEFORE target widget
+                if (!isSameArea && area.id === targetAreaId && section.id === targetSectionId) {
+                  const widgets = [...(area.widgets || [])]
+                  const targetIndex = widgets.findIndex((w: any) => w.id === targetWidgetId)
+                  const widgetToInsert = { ...draggedWidget, sectionId: targetSectionId }
+                  if (targetIndex !== -1) {
+                    widgets.splice(targetIndex, 0, widgetToInsert)
+                  } else {
+                    widgets.push(widgetToInsert)
+                  }
+                  return { ...area, widgets }
+                }
+
+                return area
+              })
+            }
+          })
+
+          setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+          return
+        }
+
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         
         const updatedCanvasItems = canvasItems.map((canvasItem: CanvasItem) => {
@@ -1994,6 +2487,7 @@ export function PageBuilder({
         const draggedWidget = active.data.current.widget
         const fromAreaId = active.data.current.fromAreaId
         const toAreaId = over.data.current.areaId
+        const targetSectionId = over.data.current.sectionId
         
         debugLog('log', '🎯 Section widget dropped on area:', {
           widgetType: draggedWidget.type,
@@ -2004,8 +2498,45 @@ export function PageBuilder({
           targetSectionId: over.data.current.sectionId
         })
         
+        const globalRegion = getGlobalRegionForSection(targetSectionId) || getGlobalRegionForSection(active.data.current.fromSectionId)
+
         // Handle reordering within the same area - detect drop position
         if (fromAreaId === toAreaId) {
+          if (globalRegion) {
+            const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+            const targetSiteLayout = targetWebsite?.siteLayout
+            const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+            const draftKey = getSiteLayoutDraftKey(globalRegion)
+            const baseSections =
+              (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+              JSON.parse(JSON.stringify(targetSiteLayout?.[globalRegion] || []))
+
+            const updatedSections = (baseSections || []).map((section: any) => {
+              if (section.id !== targetSectionId) return section
+              return {
+                ...section,
+                areas: section.areas?.map((area: any) => {
+                  if (area.id !== fromAreaId) return area
+                  const widgets = [...(area.widgets || [])]
+                  const oldIndex = widgets.findIndex((w: Widget) => w.id === draggedWidget.id)
+                  if (oldIndex === -1) return area
+                  const [movedWidget] = widgets.splice(oldIndex, 1)
+                  let newIndex = widgets.length
+                  if (over.data?.current?.type === 'widget-target') {
+                    const targetWidgetId = over.data.current.widgetId
+                    const targetIndex = widgets.findIndex((w: Widget) => w.id === targetWidgetId)
+                    if (targetIndex !== -1) newIndex = targetIndex
+                  }
+                  widgets.splice(newIndex, 0, movedWidget)
+                  return { ...area, widgets }
+                })
+              }
+            })
+
+            setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+            return
+          }
+
           const { replaceCanvasItems, canvasItems } = usePageStore.getState()
           
           // Find the target section and area to get current widget positions
@@ -2081,19 +2612,48 @@ export function PageBuilder({
           widgetType: draggedWidget.type,
           fromAreaId,
           toAreaId,
-          targetSectionId: over.data.current.sectionId
+          targetSectionId
         })
-        
+
+        if (globalRegion) {
+          const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+          const targetSiteLayout = targetWebsite?.siteLayout
+          const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+          const draftKey = getSiteLayoutDraftKey(globalRegion)
+          const baseSections =
+            (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+            JSON.parse(JSON.stringify(targetSiteLayout?.[globalRegion] || []))
+
+          const updatedSections = (baseSections || []).map((section: any) => {
+            if (section.id !== active.data.current.fromSectionId && section.id !== targetSectionId) return section
+            return {
+              ...section,
+              areas: section.areas?.map((area: any) => {
+                if (area.id === fromAreaId && section.id === active.data.current.fromSectionId) {
+                  return { ...area, widgets: (area.widgets || []).filter((w: Widget) => w.id !== draggedWidget.id) }
+                }
+                if (area.id === toAreaId && section.id === targetSectionId) {
+                  const updatedWidget = { ...draggedWidget, sectionId: targetSectionId || '' }
+                  return { ...area, widgets: [...(area.widgets || []), updatedWidget] }
+                }
+                return area
+              })
+            }
+          })
+          setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+          return
+        }
+
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         
         // Verify the target section exists
         const targetSection = canvasItems.find((item: CanvasItem) => 
-          isSection(item) && item.id === over.data.current?.sectionId
+          isSection(item) && item.id === targetSectionId
         )
         
         if (!targetSection) {
           debugLog('error','❌ Target section not found!', {
-            expectedSectionId: over.data.current?.sectionId,
+            expectedSectionId: targetSectionId,
             availableSections: canvasItems.filter(isSection).map((s: any) => s.id)
           })
           return
@@ -2113,8 +2673,8 @@ export function PageBuilder({
                 }
                 // Add to target area with updated sectionId
                 if (area.id === toAreaId) {
-                  const updatedWidget = { ...draggedWidget, sectionId: over.data.current?.sectionId || '' }
-                  debugLog('log','➕ Adding to target area:', toAreaId, 'in section:', over.data.current?.sectionId)
+                  const updatedWidget = { ...draggedWidget, sectionId: targetSectionId || '' }
+                  debugLog('log','➕ Adding to target area:', toAreaId, 'in section:', targetSectionId)
                   return { ...area, widgets: [...area.widgets, updatedWidget] }
                 }
                 return area
@@ -2151,6 +2711,40 @@ export function PageBuilder({
           return
         }
         
+        const globalRegion = getGlobalRegionForSection(targetSectionId) || getGlobalRegionForSection(fromSectionId)
+        if (globalRegion) {
+          const targetWebsite = websites.find((w: any) => w.id === currentWebsiteId)
+          const targetSiteLayout = targetWebsite?.siteLayout
+          const { getPageDraft, setPageDraft } = usePageStore.getState() as any
+          const draftKey = getSiteLayoutDraftKey(globalRegion)
+          const baseSections =
+            (getPageDraft ? getPageDraft(currentWebsiteId, draftKey) : null) ||
+            JSON.parse(JSON.stringify(targetSiteLayout?.[globalRegion] || []))
+
+          const targetSection = (baseSections || []).find((s: any) => s.id === targetSectionId)
+          if (!targetSection || !targetSection.areas?.length) return
+          const firstAreaId = targetSection.areas[0].id
+
+          const updatedSections = (baseSections || []).map((section: any) => {
+            if (section.id !== fromSectionId && section.id !== targetSectionId) return section
+            return {
+              ...section,
+              areas: section.areas?.map((area: any) => {
+                if (area.id === fromAreaId && section.id === fromSectionId) {
+                  return { ...area, widgets: (area.widgets || []).filter((w: Widget) => w.id !== draggedWidget.id) }
+                }
+                if (area.id === firstAreaId && section.id === targetSectionId) {
+                  const updatedWidget = { ...draggedWidget, sectionId: targetSectionId }
+                  return { ...area, widgets: [...(area.widgets || []), updatedWidget] }
+                }
+                return area
+              })
+            }
+          })
+          setPageDraft?.(currentWebsiteId, draftKey, updatedSections)
+          return
+        }
+
         const { replaceCanvasItems, canvasItems } = usePageStore.getState()
         
         // Find the target section and its first area
@@ -2329,6 +2923,35 @@ export function PageBuilder({
     setShowReplaceZoneModal(true)
   }
 
+  // Replace Section Layout: Same workflow as Replace Zone, but works for normal sections without zoneSlug.
+  const handleReplaceSectionLayout = (sectionId: string) => {
+    const section = canvasItems.find((item: CanvasItem) => isSection(item) && item.id === sectionId) as WidgetSection | undefined
+    if (!section) {
+      showToast?.('Section not found', 'error')
+      return
+    }
+    debugLog('log', '🔄 [PageBuilder] handleReplaceSectionLayout called:', { sectionId })
+    setReplaceCanvasSectionId(sectionId)
+    setShowReplaceZoneModal(true)
+  }
+
+  // Replace Header/Footer: Same workflow (confirmation modal → layout picker), but targets the page shell region.
+  const handleReplacePageShell = (region: 'header' | 'footer') => {
+    if (!currentWebsiteId) return
+    debugLog('log', '🔄 [PageBuilder] handleReplacePageShell called:', { region })
+    setReplacePageShellRegion(region)
+    // If there is existing content, show the confirmation modal (preserve options).
+    const existing = region === 'header' ? headerSections : footerSections
+    const hasExisting = Array.isArray(existing) && existing.length > 0
+    if (hasExisting) {
+      setShowReplaceZoneModal(true)
+    } else {
+      // No existing content: go straight to layout picker (defaults will apply).
+      setReplaceZonePreserveOptions({ preserveBackground: true, preservePadding: true, preserveContentMode: true })
+      setShowLayoutPicker(true)
+    }
+  }
+
   // Handler for when user confirms in ReplaceZoneModal
   const handleReplaceZoneConfirm = (preserveOptions: PreserveOptions) => {
     setReplaceZonePreserveOptions(preserveOptions)
@@ -2342,10 +2965,66 @@ export function PageBuilder({
     setShowReplaceZoneModal(false)
     setReplaceZoneSlug(null)
     setReplaceSectionId(null)
+    setReplacePageShellRegion(null)
+    setReplaceCanvasSectionId(null)
     setReplaceZonePreserveOptions(null)
   }
 
   const handleSelectLayout = (layout: ContentBlockLayout) => {
+    const buildReplacementSection = (
+      oldSection: WidgetSection | null,
+      nextLayout: ContentBlockLayout,
+      nextAreas: { id: string; name: string; widgets: Widget[] }[],
+      preserveOptions: PreserveOptions | null,
+      overrides?: Partial<WidgetSection>
+    ): WidgetSection => {
+      const preserve = preserveOptions || { preserveBackground: true, preservePadding: true, preserveContentMode: true }
+      const base: Partial<WidgetSection> = {}
+
+      if (oldSection) {
+        // Always carry core behavior/role metadata
+        base.type = oldSection.type
+        base.role = oldSection.role
+        base.behavior = oldSection.behavior
+        base.overlay = oldSection.overlay
+        base.locked = oldSection.locked
+        base.zoneSlug = oldSection.zoneSlug
+        base.name = oldSection.name
+
+        // Preserve visual config based on user choice
+        if (preserve.preserveBackground && oldSection.background) {
+          base.background = oldSection.background
+        }
+        if (preserve.preservePadding) {
+          base.padding = oldSection.padding
+          base.minHeight = oldSection.minHeight
+          base.styling = oldSection.styling
+        }
+        if (preserve.preserveContentMode) {
+          base.contentMode = oldSection.contentMode
+        }
+      }
+
+      return {
+        id: nanoid(),
+        name: base.name || 'Section',
+        type: base.type || 'section',
+        layout: nextLayout,
+        areas: nextAreas,
+        ...(base.background && { background: base.background }),
+        ...(base.styling && { styling: base.styling }),
+        ...(base.padding && { padding: base.padding }),
+        ...(base.minHeight && { minHeight: base.minHeight }),
+        ...(base.contentMode && { contentMode: base.contentMode }),
+        ...(base.behavior && { behavior: base.behavior }),
+        ...(base.role && { role: base.role }),
+        ...(base.overlay && { overlay: base.overlay }),
+        ...(base.locked !== undefined && { locked: base.locked }),
+        ...(base.zoneSlug && { zoneSlug: base.zoneSlug }),
+        ...(overrides || {})
+      }
+    }
+
     if (replaceZoneSlug && replaceSectionId) {
       // Replace Zone mode: Create new section with same zoneSlug
       const oldSection = canvasItems.find((item: CanvasItem) => item.id === replaceSectionId) as WidgetSection | undefined
@@ -2418,29 +3097,40 @@ export function PageBuilder({
       }
       
       // Create new section with same zoneSlug but new layout
-      // Use preserve options from the confirmation modal
-      const preserve = replaceZonePreserveOptions || { preserveBackground: true, preservePadding: true, preserveContentMode: true }
-      
-      const newSection: WidgetSection = {
-        id: nanoid(),
-        name: oldSection.name || `${replaceZoneSlug} Section`,
-        type: 'section',
+      const newSection: WidgetSection = buildReplacementSection(
+        oldSection,
         layout,
         areas,
-        zoneSlug: replaceZoneSlug,
-        // Conditionally preserve properties based on user choice
-        ...(preserve.preserveBackground && oldSection.background && { background: oldSection.background }),
-        ...(preserve.preservePadding && oldSection.padding && { padding: oldSection.padding }),
-        ...(preserve.preserveContentMode && oldSection.contentMode && { contentMode: oldSection.contentMode }),
-        ...(flexConfig && { flexConfig }),
-        ...(gridConfig && { gridConfig })
-      }
+        replaceZonePreserveOptions,
+        {
+          name: oldSection.name || `${replaceZoneSlug} Section`,
+          zoneSlug: replaceZoneSlug,
+          ...(flexConfig && { flexConfig }),
+          ...(gridConfig && { gridConfig })
+        }
+      )
       
       // Replace old section with new one
       const newCanvasItems = canvasItems.map((item: CanvasItem) => 
         item.id === replaceSectionId ? newSection : item
       )
+      
+      // Update canvas
       replaceCanvasItems(newCanvasItems)
+      
+      // CRITICAL: Select the NEW SECTION (not a widget) to show section properties
+      // This keeps the user focused on the section they just replaced
+      queueMicrotask(() => {
+        // Select the new section by its ID - this shows section properties panel
+        selectWidget(newSection.id)
+        debugLog('log', '🎯 [PageBuilder] Selected new section after replace:', newSection.id)
+        
+        // Highlight the section type indicator to show the layout changed
+        setHighlightSectionType(true)
+        setTimeout(() => {
+          setHighlightSectionType(false)
+        }, 2500) // Highlight for 2.5 seconds
+      })
       
       debugLog('log', '✅ [PageBuilder] Zone replaced:', { 
         zoneSlug: replaceZoneSlug, 
@@ -2456,6 +3146,169 @@ export function PageBuilder({
       // Reset replace zone state
       setReplaceZoneSlug(null)
       setReplaceSectionId(null)
+      setReplaceZonePreserveOptions(null)
+    } else if (replaceCanvasSectionId) {
+      const oldSection = canvasItems.find((item: CanvasItem) => item.id === replaceCanvasSectionId) as WidgetSection | undefined
+      if (!oldSection) {
+        setShowLayoutPicker(false)
+        setReplaceCanvasSectionId(null)
+        return
+      }
+
+      const allExistingWidgets: Widget[] = []
+      oldSection.areas?.forEach(area => {
+        if (area.widgets && area.widgets.length > 0) {
+          allExistingWidgets.push(...area.widgets)
+        }
+      })
+
+      let areas: { id: string; name: string; widgets: Widget[] }[] = []
+      let flexConfig: WidgetSection['flexConfig'] = undefined
+      let gridConfig: WidgetSection['gridConfig'] = undefined
+      switch (layout) {
+        case 'flexible':
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+          flexConfig = { direction: 'row', wrap: false, justifyContent: 'flex-start', gap: '1rem' }
+          break
+        case 'grid':
+          areas = [{ id: 'main', name: 'Grid Items', widgets: allExistingWidgets }]
+          gridConfig = { columns: 3, gap: '1rem' }
+          break
+        case 'two-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'three-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'center', name: 'Center', widgets: [] },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'one-third-left':
+          areas = [
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] },
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets }
+          ]
+          break
+        case 'one-third-right':
+          areas = [
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets },
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] }
+          ]
+          break
+        default:
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+      }
+
+      const newSection: WidgetSection = buildReplacementSection(
+        oldSection,
+        layout,
+        areas,
+        replaceZonePreserveOptions,
+        {
+          name: oldSection.name || 'Section',
+          ...(flexConfig && { flexConfig }),
+          ...(gridConfig && { gridConfig })
+        }
+      )
+
+      const newCanvasItems = canvasItems.map((item: CanvasItem) =>
+        item.id === replaceCanvasSectionId ? newSection : item
+      )
+
+      replaceCanvasItems(newCanvasItems)
+      queueMicrotask(() => {
+        selectWidget(newSection.id)
+        setHighlightSectionType(true)
+        setTimeout(() => setHighlightSectionType(false), 2500)
+      })
+
+      setReplaceCanvasSectionId(null)
+      setReplaceZonePreserveOptions(null)
+    } else if (replacePageShellRegion) {
+      // Replace Header/Footer (page shell): replace the region draft with a NEW single section layout.
+      const region = replacePageShellRegion
+      const existingSections = region === 'header' ? headerSections : footerSections
+      const oldPrimary = (existingSections && existingSections.length > 0 ? (existingSections[0] as WidgetSection) : null)
+
+      // Collect ALL widgets from ALL existing sections in this region.
+      const allExistingWidgets: Widget[] = []
+      ;(existingSections || []).forEach((s: any) => {
+        const sec = s as any
+        sec.areas?.forEach((area: any) => {
+          if (area.widgets && area.widgets.length > 0) {
+            allExistingWidgets.push(...area.widgets)
+          }
+        })
+      })
+
+      // Build areas for the chosen layout; put all existing widgets in the first area.
+      let areas: { id: string; name: string; widgets: Widget[] }[] = []
+      let flexConfig: WidgetSection['flexConfig'] = undefined
+      let gridConfig: WidgetSection['gridConfig'] = undefined
+      switch (layout) {
+        case 'flexible':
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+          flexConfig = { direction: 'row', wrap: false, justifyContent: 'flex-start', gap: '1rem' }
+          break
+        case 'grid':
+          areas = [{ id: 'main', name: 'Grid Items', widgets: allExistingWidgets }]
+          gridConfig = { columns: 3, gap: '1rem' }
+          break
+        case 'two-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'three-columns':
+          areas = [
+            { id: 'left', name: 'Left', widgets: allExistingWidgets },
+            { id: 'center', name: 'Center', widgets: [] },
+            { id: 'right', name: 'Right', widgets: [] }
+          ]
+          break
+        case 'one-third-left':
+          areas = [
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] },
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets }
+          ]
+          break
+        case 'one-third-right':
+          areas = [
+            { id: 'main', name: 'Main (2/3)', widgets: allExistingWidgets },
+            { id: 'sidebar', name: 'Sidebar (1/3)', widgets: [] }
+          ]
+          break
+        default:
+          areas = [{ id: 'main', name: 'Main', widgets: allExistingWidgets }]
+      }
+
+      const newSection: WidgetSection = buildReplacementSection(
+        oldPrimary,
+        layout,
+        areas,
+        replaceZonePreserveOptions,
+        {
+          name: region === 'header' ? 'Header' : 'Footer',
+          role: region === 'header' ? 'header' : 'footer',
+          ...(flexConfig && { flexConfig }),
+          ...(gridConfig && { gridConfig })
+        }
+      )
+
+      // Save as a GLOBAL shell draft; scope will be decided at Publish.
+      setPageDraft?.(currentWebsiteId, getSiteLayoutDraftKey(region), [newSection])
+
+      // Keep region selected (Header/Footer properties remain visible)
+      queueMicrotask(() => {
+        selectWidget?.(getGlobalRegionSelectionId(region))
+      })
+
+      setReplacePageShellRegion(null)
       setReplaceZonePreserveOptions(null)
     } else {
       // Normal Add Section mode
@@ -2641,8 +3494,8 @@ export function PageBuilder({
                   </button>
                 )}
                 
-                {/* Save & Publish Button - Show for all modes except template edit */}
-                {!isTemplateEdit && (
+                {/* Save & Publish Button - Show for all modes except template edit and user template mode */}
+                {!isTemplateEdit && !isUserTemplateMode && (
                   <button
                     onClick={(e) => {
                       e.preventDefault()
@@ -2679,6 +3532,59 @@ export function PageBuilder({
                         badgeCount = modifiedSections.size
                         badgeTitle = `${badgeCount} modified section${badgeCount === 1 ? '' : 's'}`
                       }
+
+                      // Header/Footer page overrides use the same draft lifecycle as the page body.
+                      // If there are pending drafts for header-${pageId} / footer-${pageId}, include them
+                      // in the badge so users know Save & Publish is required to commit.
+                      if (!archetypeMode && currentWebsiteId && currentPageId) {
+                        const state = usePageStore.getState() as any
+                        const getPageDraft = state.getPageDraft
+                        const headerDraft =
+                          getPageDraft && headerOverrideMode === 'page-edit'
+                            ? getPageDraft(currentWebsiteId, `header-${currentPageId}`)
+                            : null
+                        const footerDraft =
+                          getPageDraft && footerOverrideMode === 'page-edit'
+                            ? getPageDraft(currentWebsiteId, `footer-${currentPageId}`)
+                            : null
+                        const headerGlobalDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('header')) : null
+                        const footerGlobalDraft = getPageDraft ? getPageDraft(currentWebsiteId, getSiteLayoutDraftKey('footer')) : null
+
+                        const headerPending =
+                          (Array.isArray(headerDraft) && headerDraft.length > 0) ||
+                          (Array.isArray(headerGlobalDraft) && headerGlobalDraft.length > 0)
+                        const footerPending =
+                          (Array.isArray(footerDraft) && footerDraft.length > 0) ||
+                          (Array.isArray(footerGlobalDraft) && footerGlobalDraft.length > 0)
+                        
+                        // Also count draft-only visibility (hide/show) and enabled/disabled changes,
+                        // which live outside the section-array drafts.
+                        const overridesKey = `${currentWebsiteId}:${currentPageId}`
+                        const publishedOverrides = (state.pageLayoutOverrides || {})[overridesKey] || {}
+                        const draftOverrides = (state.pageLayoutOverridesDraft || {})[overridesKey] || {}
+                        const headerVisibilityPending = (draftOverrides.headerOverride !== undefined) && (draftOverrides.headerOverride !== (publishedOverrides.headerOverride || 'global'))
+                        const footerVisibilityPending = (draftOverrides.footerOverride !== undefined) && (draftOverrides.footerOverride !== (publishedOverrides.footerOverride || 'global'))
+                        
+                        const website = (state.websites || []).find((w: any) => w.id === currentWebsiteId)
+                        const siteLayout = website?.siteLayout || {}
+                        const draftSiteLayoutSettings = state.getSiteLayoutDraftSettings ? state.getSiteLayoutDraftSettings(currentWebsiteId) : null
+                        const headerEnabledPublished = siteLayout?.headerEnabled !== false
+                        const footerEnabledPublished = siteLayout?.footerEnabled !== false
+                        const headerEnabledPending = (draftSiteLayoutSettings?.headerEnabled !== undefined) && ((draftSiteLayoutSettings.headerEnabled !== false) !== headerEnabledPublished)
+                        const footerEnabledPending = (draftSiteLayoutSettings?.footerEnabled !== undefined) && ((draftSiteLayoutSettings.footerEnabled !== false) !== footerEnabledPublished)
+
+                        const chromePendingCount =
+                          (headerPending || headerVisibilityPending || headerEnabledPending ? 1 : 0) +
+                          (footerPending || footerVisibilityPending || footerEnabledPending ? 1 : 0)
+
+                        if (chromePendingCount > 0) {
+                          badgeCount += chromePendingCount
+                          const parts: string[] = []
+                          if (headerPending || headerVisibilityPending || headerEnabledPending) parts.push('header')
+                          if (footerPending || footerVisibilityPending || footerEnabledPending) parts.push('footer')
+                          badgeTitle = `${badgeCount} pending change${badgeCount === 1 ? '' : 's'} (includes ${parts.join(' & ')} draft${parts.length === 1 ? '' : 's'})`
+                        }
+                      }
                       
                       if (badgeCount > 0) {
                         return (
@@ -2695,64 +3601,76 @@ export function PageBuilder({
                   </button>
                 )}
                 
-                <button
-                    onClick={(e) => {
-                    e.stopPropagation()
-                    // If in archetype mode, navigate to archetype preview
-                    if (archetypeMode && archetypeId) {
-                        // CRITICAL: Save current canvas as draft before preview
-                        // Use website-specific key if editing website master
-                        const draftKey = archetypeWebsiteId 
-                          ? `${archetypeWebsiteId}:${archetypeId}` 
-                          : archetypeId
-                        console.log('📝 [PageBuilder] Saving draft before preview:', draftKey)
-                        console.log('   - canvasItems count:', canvasItems.length)
-                        console.log('   - First section widgets:', canvasItems[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
-                        setPageCanvas('archetype', draftKey, canvasItems)
+                {/* Preview Changes and Design Console - Hide in user template mode (handled by TemplateEditor header) */}
+                {!isUserTemplateMode && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // If in archetype mode, navigate to archetype preview
+                        if (archetypeMode && archetypeId) {
+                          // CRITICAL: Save current canvas as draft before preview
+                          // Use website-specific key if editing website master
+                          const draftKey = archetypeWebsiteId 
+                            ? `${archetypeWebsiteId}:${archetypeId}` 
+                            : archetypeId
+                          console.log('📝 [PageBuilder] Saving draft before preview:', draftKey)
+                          console.log('   - canvasItems count:', canvasItems.length)
+                          console.log('   - First section widgets:', canvasItems[0]?.areas?.[0]?.widgets?.map((w: any) => w.type))
+                          setPageCanvas('archetype', draftKey, canvasItems)
+                          
+                          // Build preview URL with designId and optional websiteId
+                          const params = new URLSearchParams()
+                          if (designId) params.set('designId', designId)
+                          if (archetypeWebsiteId) params.set('websiteId', archetypeWebsiteId)
+                          const queryString = params.toString()
+                          const previewPath = queryString 
+                            ? `/preview/archetype/${archetypeId}?${queryString}`
+                            : `/preview/archetype/${archetypeId}`
+                          navigate(previewPath)
+                          return
+                        }
+                        // Otherwise, use normal preview logic for page instance mode
+                        // Always navigate to the proper live URL based on what we're editing
+                        // Use store state for the website ID and current route
+                        const websiteId = currentWebsiteId || 'catalyst-demo'
+                        // Get the route from mockLiveSiteRoute (e.g., '/journal/jas', '/home', '/')
+                        const route = mockLiveSiteRoute?.replace(/^\//, '') || ''
+                        const pageKey = route || 'home'
                         
-                        // Build preview URL with designId and optional websiteId
-                        const params = new URLSearchParams()
-                        if (designId) params.set('designId', designId)
-                        if (archetypeWebsiteId) params.set('websiteId', archetypeWebsiteId)
-                        const queryString = params.toString()
-                        const previewPath = queryString 
-                          ? `/preview/archetype/${archetypeId}?${queryString}`
-                          : `/preview/archetype/${archetypeId}`
-                        navigate(previewPath)
-                        return
-                      }
-                      // Otherwise, use normal preview logic
-                      // Always navigate to the proper live URL based on what we're editing
-                      // Use store state for the website ID and current route
-                      const websiteId = currentWebsiteId || 'catalyst-demo'
-                      // Get the route from mockLiveSiteRoute (e.g., '/journal/jas', '/home', '/')
-                      const route = mockLiveSiteRoute?.replace(/^\//, '') || ''
-                      // Homepage is at /live/:websiteId (not /live/:websiteId/home)
-                      const livePath = route === 'home' || route === '' 
-                        ? `/live/${websiteId}` 
-                        : `/live/${websiteId}/${route}`
-                      navigate(livePath)
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Preview Changes
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      // Always set the view state first, then navigate if needed
-                      setCurrentView('design-console')
-                      // Check if we're in a routed context (URL-based editing) or V1 internal
-                      if (window.location.pathname.startsWith('/edit/')) {
-                        navigate('/v1')
-                      }
-                    }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                    Design Console
-                </button>
+                        // CRITICAL: Save current canvas as draft before preview
+                        // This ensures changes persist when returning from preview to edit
+                        console.log('📝 [PageBuilder] Saving draft before preview (page mode):', { websiteId, pageKey })
+                        setPageDraft(websiteId, pageKey, canvasItems)
+                        
+                        // Homepage is at /live/:websiteId (not /live/:websiteId/home)
+                        const livePath = route === 'home' || route === '' 
+                          ? `/live/${websiteId}` 
+                          : `/live/${websiteId}/${route}`
+                        navigate(livePath)
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Preview Changes
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Always set the view state first, then navigate if needed
+                        setCurrentView('design-console')
+                        // Check if we're in a routed context (URL-based editing) or V1 internal
+                        if (window.location.pathname.startsWith('/edit/')) {
+                          navigate('/v1')
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Design Console
+                    </button>
+                  </>
+                )}
                 
                 {/* Notification Bell */}
                 <NotificationBell />
@@ -3045,6 +3963,7 @@ export function PageBuilder({
                 setActiveWidgetToolbar={setActiveWidgetToolbar}
                 overrideMode={headerOverrideMode}
                 onOverrideModeChange={setHeaderOverrideMode}
+                onReplacePageShell={handleReplacePageShell}
               />
               
               {canvasItems.length === 0 ? (
@@ -3093,6 +4012,7 @@ export function PageBuilder({
                           // Replace Zone feature
                           canReplaceZone={true}
                           onReplaceZone={handleReplaceZone}
+                          onReplaceSectionLayout={handleReplaceSectionLayout}
                         />
                   </div>
                 </SortableContext>
@@ -3111,6 +4031,7 @@ export function PageBuilder({
                 setActiveWidgetToolbar={setActiveWidgetToolbar}
                 overrideMode={footerOverrideMode}
                 onOverrideModeChange={setFooterOverrideMode}
+                onReplacePageShell={handleReplacePageShell}
               />
               
             </div>
@@ -3168,18 +4089,55 @@ export function PageBuilder({
               designId={designId}
               onResetToArchetype={handleResetToArchetype}
               onRevertZoneToArchetype={handleRevertZoneToArchetype}
+              highlightSectionType={highlightSectionType}
+              onReplacePageShell={handleReplacePageShell}
             />
           </div>
         </div>
 
-      {/* Replace Zone Confirmation Modal */}
-      {showReplaceZoneModal && replaceZoneSlug && replaceSectionId && (
-        <ReplaceZoneModal
-          zoneSlug={replaceZoneSlug}
-          section={canvasItems.find((item: CanvasItem) => item.id === replaceSectionId) as WidgetSection}
-          onConfirm={handleReplaceZoneConfirm}
-          onCancel={handleReplaceZoneCancel}
-        />
+      {/* Replace Zone / Header / Footer Confirmation Modal */}
+      {showReplaceZoneModal && (
+        (() => {
+          // Zone replace
+          if (replaceZoneSlug && replaceSectionId) {
+            return (
+              <ReplaceZoneModal
+                zoneSlug={replaceZoneSlug}
+                section={canvasItems.find((item: CanvasItem) => item.id === replaceSectionId) as WidgetSection}
+                onConfirm={handleReplaceZoneConfirm}
+                onCancel={handleReplaceZoneCancel}
+              />
+            )
+          }
+          // Section layout replace
+          if (replaceCanvasSectionId) {
+            const sectionForModal = canvasItems.find((item: CanvasItem) => item.id === replaceCanvasSectionId) as WidgetSection | undefined
+            if (!sectionForModal) return null
+            return (
+              <ReplaceZoneModal
+                zoneSlug={sectionForModal.name || 'Section'}
+                section={sectionForModal}
+                onConfirm={handleReplaceZoneConfirm}
+                onCancel={handleReplaceZoneCancel}
+              />
+            )
+          }
+          // Page shell replace (header/footer)
+          if (replacePageShellRegion) {
+            const existing = (replacePageShellRegion === 'header' ? headerSections : footerSections) as any[]
+            const sectionForModal = (existing && existing.length > 0 ? (existing[0] as WidgetSection) : null)
+            if (!sectionForModal) return null
+            return (
+              <ReplaceZoneModal
+                zoneSlug={replacePageShellRegion === 'header' ? 'Header' : 'Footer'}
+                section={sectionForModal}
+                onConfirm={handleReplaceZoneConfirm}
+                onCancel={handleReplaceZoneCancel}
+              />
+            )
+          }
+          return null
+        })()
       )}
 
       {/* Layout Picker Modal */}
@@ -3191,10 +4149,20 @@ export function PageBuilder({
             // Reset replace zone state when closing without selection
             setReplaceZoneSlug(null)
             setReplaceSectionId(null)
+            setReplaceCanvasSectionId(null)
+            setReplacePageShellRegion(null)
             setReplaceZonePreserveOptions(null)
           }}
-          title={replaceZoneSlug ? 'Choose New Layout' : undefined}
-          subtitle={replaceZoneSlug ? `Replacing layout for "${replaceZoneSlug}" zone` : undefined}
+          title={(replaceZoneSlug || replaceCanvasSectionId || replacePageShellRegion) ? 'Choose New Layout' : undefined}
+          subtitle={
+            replaceZoneSlug
+              ? `Replacing layout for "${replaceZoneSlug}" zone`
+              : replacePageShellRegion
+                ? `Replacing layout for ${replacePageShellRegion === 'header' ? 'Header' : 'Footer'}`
+                : replaceCanvasSectionId
+                  ? 'Replacing section layout'
+                  : undefined
+          }
         />
       )}
       
@@ -3253,6 +4221,9 @@ export function PageBuilder({
           journalName={journalNameProp}
           mode="archetype"
           onDiscard={handleDiscard}
+          pageShellChanges={pageShellChanges}
+          onPublishPageShell={applyPageShellPublishChoices}
+          onPublishPageShellVisibility={applyPageShellVisibilityChoices}
         />
       )}
       
@@ -3272,6 +4243,9 @@ export function PageBuilder({
           onSimplePublish={handleSimplePublish}
           pageName={pageName === 'home' ? 'Homepage' : pageName}
           onDiscard={handleDiscard}
+          pageShellChanges={pageShellChanges}
+          onPublishPageShell={applyPageShellPublishChoices}
+          onPublishPageShellVisibility={applyPageShellVisibilityChoices}
         />
       )}
     </DndContext>

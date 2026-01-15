@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { GripVertical, Copy, Edit, Trash2, BookOpen, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react'
+import { GripVertical, Copy, Edit, Trash2, BookOpen, ArrowUp, ArrowDown, RefreshCw, Eye, EyeOff } from 'lucide-react'
 import { 
   type Widget,
   type WidgetSection, 
@@ -179,6 +179,9 @@ interface SectionRendererProps {
   onDeleteSection?: () => void
   onDuplicateSection?: () => void
   onReplaceZone?: (zoneSlug: string) => void // Replace zone with new layout (keeps zoneSlug)
+  onReplaceSectionLayout?: (sectionId: string) => void // Replace section layout (works even without zoneSlug)
+  onToggleSectionVisibility?: () => void // Toggle hide/show for the section (global header/footer)
+  isSectionHidden?: boolean
   
   // Permission flags (parent decides WHAT'S allowed)
   canDeleteSection?: boolean
@@ -501,6 +504,9 @@ export function SectionRenderer({
   onDeleteSection,
   onDuplicateSection,
   onReplaceZone,
+  onReplaceSectionLayout,
+  onToggleSectionVisibility,
+  isSectionHidden = false,
   // Permission flags (default to true for backward compatibility)
   canDeleteSection = true,
   canReorderSection = true,
@@ -1106,7 +1112,7 @@ export function SectionRenderer({
                   disabled={(() => {
                     const { canvasItems } = usePageStore.getState()
                     const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                    return currentIndex === 0
+                    return currentIndex === 0 || currentIndex === -1
                   })()}
                 >
                   <ArrowUp className="w-3 h-3" />
@@ -1120,7 +1126,7 @@ export function SectionRenderer({
                     e.stopPropagation()
                     const { replaceCanvasItems, canvasItems } = usePageStore.getState()
                     const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                    if (currentIndex < canvasItems.length - 1) {
+                    if (currentIndex >= 0 && currentIndex < canvasItems.length - 1) {
                       const newCanvasItems = [...canvasItems]
                       const temp = newCanvasItems[currentIndex]
                       newCanvasItems[currentIndex] = newCanvasItems[currentIndex + 1]
@@ -1134,7 +1140,7 @@ export function SectionRenderer({
                   disabled={(() => {
                     const { canvasItems } = usePageStore.getState()
                     const currentIndex = canvasItems.findIndex((item: any) => item.id === section.id)
-                    return currentIndex === canvasItems.length - 1
+                    return currentIndex === canvasItems.length - 1 || currentIndex === -1
                   })()}
                 >
                   <ArrowDown className="w-3 h-3" />
@@ -1174,19 +1180,41 @@ export function SectionRenderer({
                   <BookOpen className="w-3 h-3" />
                 </button>
               )}
-              {/* Replace Zone - only for sections with zoneSlug when allowed */}
-              {canReplaceZone && section.zoneSlug && onReplaceZone && (
+              {/* Replace - Zone if zoneSlug exists, otherwise fall back to replacing section layout */}
+              {canReplaceZone && (
                 <button
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    onReplaceZone(section.zoneSlug!)
+                    if (section.zoneSlug && onReplaceZone) {
+                      onReplaceZone(section.zoneSlug!)
+                      return
+                    }
+                    if (onReplaceSectionLayout) {
+                      onReplaceSectionLayout(section.id)
+                    }
                   }}
                   className="p-1 text-gray-500 hover:text-orange-600 rounded hover:bg-orange-50 transition-colors"
-                  title={`Replace zone "${section.zoneSlug}" with new layout`}
+                  title={section.zoneSlug ? `Replace zone "${section.zoneSlug}" with new layout` : 'Replace section layout'}
                   type="button"
+                  disabled={!!section.zoneSlug && !onReplaceZone}
                 >
                   <RefreshCw className="w-3 h-3" />
+                </button>
+              )}
+              {/* Hide on this page - only when handler is provided (header/footer) */}
+              {onToggleSectionVisibility && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onToggleSectionVisibility()
+                  }}
+                  className="p-1 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors"
+                  title={isSectionHidden ? 'Show on this page' : 'Hide on this page'}
+                  type="button"
+                >
+                  {isSectionHidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 </button>
               )}
               {/* Section properties - ALWAYS available */}

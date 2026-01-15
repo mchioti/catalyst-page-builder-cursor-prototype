@@ -9,6 +9,8 @@ import { LegacyMockLiveSite } from './components/LegacyMockLiveSite'
 import { PageBuilderEditor } from './components/PageBuilderEditor'
 import { ArchetypeEditor } from './components/ArchetypeEditor'
 import { ArchetypePreview } from './components/ArchetypePreview'
+import { TemplateEditor } from './components/TemplateEditor'
+import { TemplatePreview } from './components/TemplatePreview'
 import { addMilestoneNotifications } from './utils/milestoneNotifications'
 
 // Add milestone notifications on app start (for demo/review purposes)
@@ -23,7 +25,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/v1/mock" element={<LegacyMockLiveSite />} />
         <Route path="/v2/*" element={<AppV2 />} />
         <Route path="/preview/archetype/:archetypeId" element={<ArchetypePreview />} />
+        <Route path="/preview/template/:templateId" element={<TemplatePreview />} />
         <Route path="/edit/archetype/:archetypeId" element={<ArchetypeEditor />} />
+        <Route path="/edit/template/:templateId" element={<TemplateEditor />} />
         <Route path="/edit/:websiteId/*" element={<PageBuilderEditor />} />
         <Route path="/live/:websiteId/*" element={<LiveSite />} />
         <Route path="/live" element={<Navigate to="/live/catalyst-demo" replace />} />

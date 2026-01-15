@@ -21,6 +21,7 @@ import { PublicationCards } from '../SiteManager/PublicationCards'
 import { ThemeEditor } from '../SiteManager/ThemeEditor'
 import { WebsiteTemplates } from '../SiteManager/WebsiteTemplates'
 import { WebsiteInheritedStubs } from '../SiteManager/WebsiteInheritedStubs'
+import { WebsiteMyTemplates } from '../SiteManager/WebsiteMyTemplates'
 import { WebsiteBrandingConfiguration } from '../SiteManager/WebsiteBrandingConfiguration'
 import { WebsiteCreationWizard } from '../Wizards/WebsiteCreation'
 import { ALL_TEMPLATES } from '../SiteManager/SiteManagerTemplates'
@@ -202,6 +203,18 @@ export function DesignConsole() {
                       >
                         <FilePlus2 className="w-4 h-4" />
                         Other Pages
+                      </button>
+
+                      <button
+                        onClick={() => setSiteManagerView(`${website.id}-my-templates` as DesignConsoleView)}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-left text-sm rounded-md transition-colors ${
+                          siteManagerView === `${website.id}-my-templates`
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                        My Page Templates
                       </button>
                     </div>
                   )}
@@ -694,6 +707,21 @@ export function DesignConsole() {
               const website = websites.find(w => w.id === websiteId)
               return website ? (
                 <WebsiteInheritedStubs
+                  websiteId={website.id}
+                  websiteName={website.name}
+                  usePageStore={usePageStore}
+                />
+              ) : null
+            })()
+          )}
+          
+          {/* Dynamic handler for My Page Templates */}
+          {siteManagerView.endsWith('-my-templates') && (
+            (() => {
+              const websiteId = siteManagerView.replace('-my-templates', '')
+              const website = websites.find(w => w.id === websiteId)
+              return website ? (
+                <WebsiteMyTemplates
                   websiteId={website.id}
                   websiteName={website.name}
                   usePageStore={usePageStore}

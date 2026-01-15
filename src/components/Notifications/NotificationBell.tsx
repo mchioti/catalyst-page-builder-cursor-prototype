@@ -4,13 +4,22 @@ import { Bell, X, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, Chev
 // Session milestone notifications - 2026-01-13 (Part 3)
 const MOCK_NOTIFICATIONS = [
   {
+    id: 'milestone-7',
+    type: 'success' as const,
+    category: 'release',
+    title: '📝 Header/Footer Draft UX',
+    description: 'Unified draft-first publish flow for header/footer, history restore, replace flow, and hide-on-page preview handling.',
+    createdAt: '2026-01-15T18:30:00Z',
+    read: false,
+  },
+  {
     id: 'milestone-0',
     type: 'success' as const,
     category: 'release',
     title: '🎯 Copy from Data-driven Pages',
     description: 'Create custom pages by copying Journal Home, Issue TOC, Article templates. URL context detection auto-applies journal branding.',
     createdAt: '2026-01-13T20:00:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-0b',
@@ -19,7 +28,7 @@ const MOCK_NOTIFICATIONS = [
     title: '✅ Journal-Scoped Custom Pages',
     description: 'Fixed routing, editor loading, and context for pages like /journal/jas/promo. Correct colors, metadata, and "Edit This Page" button.',
     createdAt: '2026-01-13T19:30:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-1',

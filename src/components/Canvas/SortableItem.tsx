@@ -43,6 +43,7 @@ interface SortableItemProps {
   // Replace Zone feature
   canReplaceZone?: boolean
   onReplaceZone?: (zoneSlug: string) => void
+  onReplaceSectionLayout?: (sectionId: string) => void
 }
 
 export function SortableItem({ 
@@ -66,7 +67,8 @@ export function SortableItem({
   pageInstance,
   onPageInstanceChange,
   canReplaceZone = false,
-  onReplaceZone
+  onReplaceZone,
+  onReplaceSectionLayout
 }: SortableItemProps) {
   const {
     attributes,
@@ -139,6 +141,7 @@ export function SortableItem({
             onPageInstanceChange={onPageInstanceChange}
             canReplaceZone={canReplaceZone}
             onReplaceZone={onReplaceZone}
+            onReplaceSectionLayout={onReplaceSectionLayout}
           />
         </div>
       ) : (

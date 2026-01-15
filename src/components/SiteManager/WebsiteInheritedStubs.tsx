@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { 
   Search, Eye, Edit3, RotateCcw, Check, AlertTriangle, 
   FileText, Home, HelpCircle, SearchIcon, Plus, Trash2, User,
-  BookOpen, Layers, FileEdit, Info
+  BookOpen, Layers, FileEdit, Info, Layout
 } from 'lucide-react'
 import { mockWebsites } from '../../v2/data/mockWebsites'
 import { NewBadge } from '../shared/NewBadge'
@@ -21,7 +21,8 @@ import {
   createIssueTocTemplate,
   createArticleTemplate
 } from '../PageBuilder/pageStubs'
-import type { WebsitePage } from '../../types/widgets'
+import { UseTemplateModal, type TemplateInfo } from '../PageBuilder/UseTemplateModal'
+import type { WebsitePage, CustomStarterPage } from '../../types/widgets'
 
 // Data-driven page templates that can be copied
 type DataDrivenTemplate = {
@@ -64,6 +65,12 @@ export function WebsiteInheritedStubs({
   const [newPageName, setNewPageName] = useState('')
   const [startFrom, setStartFrom] = useState<'blank' | 'template' | 'copy'>('blank')
   const [copyFromPageId, setCopyFromPageId] = useState<string>('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+  
+  // UseTemplateModal state
+  const [showUseTemplateModal, setShowUseTemplateModal] = useState(false)
+  const [pendingTemplateInfo, setPendingTemplateInfo] = useState<TemplateInfo | null>(null)
+  const [pendingInheritanceChoice, setPendingInheritanceChoice] = useState<'copy' | 'sync' | null>(null)
   
   // Get store functions
   const getPageCanvas = usePageStore((state: any) => state.getPageCanvas)
@@ -72,6 +79,25 @@ export function WebsiteInheritedStubs({
   const removeWebsitePage = usePageStore((state: any) => state.removeWebsitePage)
   const websitePages: WebsitePage[] = usePageStore((state: any) => state.websitePages) || []
   const addNotification = usePageStore((state: any) => state.addNotification)
+  
+  // Get current website's design ID for template filtering
+  const v2Website = mockWebsites.find(w => w.id === websiteId)
+  const currentDesignId = (v2Website as any)?.themeId || (v2Website as any)?.designId || ''
+  
+  // Get user-saved templates (CustomStarterPages with source='user')
+  // Templates are shared across all websites of the SAME DESIGN
+  const customStarterPages: CustomStarterPage[] = usePageStore((state: any) => state.customStarterPages) || []
+  const removeCustomStarterPage = usePageStore((state: any) => state.removeCustomStarterPage)
+  
+  const userSavedTemplates = useMemo(() => {
+    return customStarterPages.filter(page => {
+      if (page.source !== 'user') return false
+      // Match by design - templates shared across websites of same design
+      const templateWebsite = mockWebsites.find(w => w.id === page.websiteId)
+      const templateDesignId = (templateWebsite as any)?.themeId || (templateWebsite as any)?.designId || ''
+      return templateDesignId === currentDesignId || !templateDesignId
+    })
+  }, [customStarterPages, currentDesignId])
   
   // Get user-created pages for this website
   const userCreatedPages = useMemo(() => {
@@ -142,10 +168,7 @@ export function WebsiteInheritedStubs({
     return dataDrivenTemplates.find(t => t.id === templateId)
   }, [copyFromPageId, dataDrivenTemplates])
   
-  // Get the base design stubs for comparison
-  const v2Website = mockWebsites.find(w => w.id === websiteId)
-  
-  // Define available design stubs
+  // Define available design stubs (v2Website already defined above for template filtering)
   const designStubs: DesignStub[] = useMemo(() => [
     {
       id: 'homepage',
@@ -298,7 +321,9 @@ export function WebsiteInheritedStubs({
       modificationCount: 0,
       savedCanvas: page.canvasItems,
       isUserCreated: true, // Flag to identify user pages
+      templateId: page.templateId,
       templateName: page.templateName,
+      syncedWithMaster: page.syncedWithMaster, // Flag for inheritance
       createdAt: page.createdAt
     }))
   }, [userCreatedPages])
@@ -471,6 +496,33 @@ export function WebsiteInheritedStubs({
       return
     }
     
+    // Validate template selection
+    if (startFrom === 'template' && !selectedTemplateId) {
+      addNotification?.({
+        type: 'error',
+        title: 'No Template Selected',
+        message: 'Please select a template'
+      })
+      return
+    }
+    
+    // Handle "From Template" - show UseTemplateModal for Copy/Sync choice
+    if (startFrom === 'template' && selectedTemplateId) {
+      const template = userSavedTemplates.find(t => t.id === selectedTemplateId)
+      if (template) {
+        // Set up the modal info
+        setPendingTemplateInfo({
+          id: template.id,
+          name: template.name,
+          description: template.description,
+          canvasItems: template.canvasItems
+        })
+        // Show the modal - actual page creation will happen in the modal callbacks
+        setShowUseTemplateModal(true)
+        return
+      }
+    }
+    
     let initialCanvasItems: any[] = []
     let templateName: string | undefined
     let description = 'Custom page created by user'
@@ -603,9 +655,114 @@ export function WebsiteInheritedStubs({
     setNewPageName('')
     setStartFrom('blank')
     setCopyFromPageId('')
+    setSelectedTemplateId('')
     setShowNewPageDialog(false)
     
     // Navigate to edit the new page
+    navigate(`/edit/${websiteId}/${newPageSlug.trim()}`)
+  }
+  
+  // Handle template choice - Copy (independent)
+  const handleUseCopy = (template: TemplateInfo) => {
+    // Create page with template content as a one-time copy (no inheritance)
+    const canvasItems = JSON.parse(JSON.stringify(template.canvasItems))
+    
+    // Generate new IDs for all sections and widgets
+    const newCanvasItems = canvasItems.map((section: any) => ({
+      ...section,
+      id: `section-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      areas: section.areas?.map((area: any) => ({
+        ...area,
+        id: `area-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        widgets: area.widgets?.map((widget: any) => ({
+          ...widget,
+          id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+        }))
+      }))
+    }))
+    
+    // Create the page
+    const newPage: WebsitePage = {
+      id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      websiteId,
+      slug: newPageSlug.trim(),
+      name: newPageName.trim(),
+      description: `Copy of "${template.name}" (independent)`,
+      source: 'user',
+      templateId: undefined, // No inheritance - independent copy
+      templateName: template.name,
+      canvasItems: newCanvasItems,
+      isPublished: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    addWebsitePage(newPage)
+    setPageCanvas(websiteId, newPageSlug.trim(), newCanvasItems)
+    
+    addNotification?.({
+      type: 'success',
+      title: 'Page Created',
+      message: `"${newPageName.trim()}" created as independent copy of "${template.name}"`
+    })
+    
+    // Reset and close
+    setNewPageSlug('')
+    setNewPageName('')
+    setStartFrom('blank')
+    setSelectedTemplateId('')
+    setShowNewPageDialog(false)
+    setShowUseTemplateModal(false)
+    setPendingTemplateInfo(null)
+    
+    // Navigate to edit
+    navigate(`/edit/${websiteId}/${newPageSlug.trim()}`)
+  }
+  
+  // Handle template choice - Sync with Master (inheritance)
+  const handleUseSync = (template: TemplateInfo) => {
+    // Create page that syncs with the template (has inheritance)
+    const canvasItems = JSON.parse(JSON.stringify(template.canvasItems))
+    
+    // Keep original IDs to maintain sync with master
+    // Zone slugs will be used for inheritance tracking
+    
+    // Create the page with template reference
+    const newPage: WebsitePage = {
+      id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      websiteId,
+      slug: newPageSlug.trim(),
+      name: newPageName.trim(),
+      description: `Synced with "${template.name}"`,
+      source: 'user',
+      templateId: template.id, // Link to master for inheritance
+      templateName: template.name,
+      syncedWithMaster: true, // Enable inheritance from template
+      canvasItems: canvasItems, // Keep original structure for sync
+      isPublished: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    addWebsitePage(newPage)
+    setPageCanvas(websiteId, newPageSlug.trim(), canvasItems)
+    
+    addNotification?.({
+      type: 'success',
+      title: 'Page Created',
+      message: `"${newPageName.trim()}" synced with "${template.name}" - changes to master will be reflected`
+    })
+    
+    // Reset and close
+    setNewPageSlug('')
+    setNewPageName('')
+    setStartFrom('blank')
+    setSelectedTemplateId('')
+    setShowNewPageDialog(false)
+    setShowUseTemplateModal(false)
+    setPendingTemplateInfo(null)
+    
+    // Navigate to edit
     navigate(`/edit/${websiteId}/${newPageSlug.trim()}`)
   }
 
@@ -740,10 +897,25 @@ export function WebsiteInheritedStubs({
                 {/* Status */}
                 <td className="py-4 px-4">
                   {stub.isUserCreated ? (
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-purple-500" />
-                      <span className="text-purple-700">Custom Page</span>
-                    </div>
+                    stub.syncedWithMaster ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-indigo-600" />
+                          <span className="text-indigo-700 font-medium">🔗 Synced</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          with "{stub.templateName}"
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-purple-500" />
+                        <span className="text-purple-700">Custom Page</span>
+                        {stub.templateName && (
+                          <span className="text-xs text-gray-400">(copy)</span>
+                        )}
+                      </div>
+                    )
                   ) : stub.isModified ? (
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
@@ -838,11 +1010,11 @@ export function WebsiteInheritedStubs({
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
         <h4 className="font-medium text-blue-900 mb-1">About Other Pages</h4>
         <p className="text-sm text-blue-700">
           <strong>Design</strong> pages come from the theme and are URL-bound system pages. 
-          <strong>My Pages</strong> are custom pages you create for campaigns, events, or other needs. 
+          <strong>My Pages</strong> are custom pages you create for campaigns, events, or other needs.
           When modified, changes are saved specifically for this website while 
           the design master remains unchanged.
         </p>
@@ -914,21 +1086,50 @@ export function WebsiteInheritedStubs({
                       <p className="text-xs text-gray-500">Start with an empty canvas</p>
                     </div>
                   </label>
-                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 opacity-50 ${startFrom === 'template' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${userSavedTemplates.length === 0 ? 'opacity-50' : ''} ${startFrom === 'template' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                     <input 
                       type="radio" 
                       name="start-from" 
                       value="template" 
                       checked={startFrom === 'template'}
                       onChange={() => setStartFrom('template')}
-                      disabled
+                      disabled={userSavedTemplates.length === 0}
                       className="w-4 h-4 text-blue-600" 
                     />
-                    <div>
+                    <div className="flex-1">
                       <span className="font-medium text-gray-900">From Template</span>
-                      <p className="text-xs text-gray-500">Choose from saved page templates</p>
+                      <p className="text-xs text-gray-500">
+                        {userSavedTemplates.length === 0 
+                          ? 'No saved templates yet. Save a page as template first.'
+                          : `Choose from ${userSavedTemplates.length} saved template${userSavedTemplates.length !== 1 ? 's' : ''}`
+                        }
+                      </p>
                     </div>
                   </label>
+                  
+                  {/* Template selector when "From Template" is selected */}
+                  {startFrom === 'template' && userSavedTemplates.length > 0 && (
+                    <div className="ml-7 mt-2">
+                      <select
+                        value={selectedTemplateId}
+                        onChange={(e) => setSelectedTemplateId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      >
+                        <option value="">Select a template...</option>
+                        {userSavedTemplates.map(template => (
+                          <option key={template.id} value={template.id}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedTemplateId && (
+                        <p className="mt-2 text-xs text-indigo-600 flex items-center gap-1">
+                          <Info className="w-3 h-3" />
+                          You'll choose Copy or Sync with Master when creating
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${startFrom === 'copy' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                     <input 
                       type="radio" 
@@ -1027,6 +1228,7 @@ export function WebsiteInheritedStubs({
                   setNewPageName('')
                   setStartFrom('blank')
                   setCopyFromPageId('')
+                  setSelectedTemplateId('')
                 }}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -1034,15 +1236,35 @@ export function WebsiteInheritedStubs({
               </button>
               <button
                 onClick={handleCreatePage}
-                disabled={!newPageSlug.trim() || !newPageName.trim() || (startFrom === 'copy' && !copyFromPageId)}
+                disabled={
+                  !newPageSlug.trim() || 
+                  !newPageName.trim() || 
+                  (startFrom === 'copy' && !copyFromPageId) ||
+                  (startFrom === 'template' && !selectedTemplateId)
+                }
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {startFrom === 'copy' ? 'Copy & Create Page' : 'Create Page'}
+                {startFrom === 'copy' ? 'Copy & Create Page' : 
+                 startFrom === 'template' ? 'Choose Template Options' : 
+                 'Create Page'}
               </button>
             </div>
           </div>
         </div>
       )}
+      
+      {/* UseTemplateModal - for choosing Copy vs Sync with Master */}
+      <UseTemplateModal
+        isOpen={showUseTemplateModal}
+        onClose={() => {
+          setShowUseTemplateModal(false)
+          setPendingTemplateInfo(null)
+        }}
+        template={pendingTemplateInfo}
+        onUseCopy={handleUseCopy}
+        onUseSync={handleUseSync}
+        currentPageName={newPageName}
+      />
     </div>
   )
 }

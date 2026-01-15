@@ -548,41 +548,27 @@ export function PageBuilderEditor() {
     }
     
     // PRIORITY 1: Check for draft first (highest priority - user's unsaved work)
-    // On fresh mount: Load draft if it exists AND it looks valid for this page
+    // On fresh mount: Load draft if it exists
     // On page switch: Skip draft (might contain stale content from previous page)
     const draft = getPageDraft(websiteId!, pageName)
+    console.log('🔍 [PageBuilderEditor] Draft check:', { 
+      websiteId, 
+      pageName, 
+      hasDraft: !!draft, 
+      draftLength: draft?.length,
+      isFreshMount,
+      isPageSwitch 
+    })
+    
     if (draft && draft.length > 0) {
-      // For journal pages, validate that draft content looks correct
-      // A draft might be polluted with content from another page (e.g., website home)
-      let draftIsValid = true
-      if (isJournalPage && pageType === 'journal-home') {
-        // Check if draft sections look like journal content (not website home)
-        // Journal home should have sections like "Journal Banner", not "Hero Section"
-        const firstSection = draft[0] as any
-        const firstSectionName = firstSection?.name || ''
-        const looksLikeWebsiteHome = ['Hero Section', 'Hero', 'Featured Journals'].includes(firstSectionName)
-        if (looksLikeWebsiteHome) {
-          debugLog('warn', '⚠️ [PageBuilderEditor] Draft appears to contain website home content, not journal content:', {
-            pageName,
-            firstSectionName,
-            draftItemCount: draft.length
-          })
-          draftIsValid = false
-        }
-      }
-      
-      if (isPageSwitch || !draftIsValid) {
-        // Clear the stale/invalid draft and load fresh from source
-        debugLog('log', '🗑️ [PageBuilderEditor] Clearing invalid draft:', { 
-          websiteId, pageName, 
-          reason: isPageSwitch ? 'page switch' : 'invalid content',
-          draftItemCount: draft.length 
-        })
+      if (isPageSwitch) {
+        // Clear the stale draft from page switch
+        console.log('🗑️ [PageBuilderEditor] Clearing draft (page switch):', { websiteId, pageName })
         setPageDraft(websiteId!, pageName, [])
         // Don't return - continue to load fresh content from source
       } else {
-        // Fresh mount with valid draft - load it
-        debugLog('log', '📝 [PageBuilderEditor] Loading from draft (fresh mount):', { websiteId, pageName, itemCount: draft.length })
+        // Fresh mount with draft - load it (trust the draft for this page key)
+        console.log('📝 [PageBuilderEditor] Loading from DRAFT:', { websiteId, pageName, itemCount: draft.length })
         const migratedDraft = migrateCanvasItems(draft)
         replaceCanvasItems(migratedDraft)
         setIsEditingLoadedWebsite(true)
@@ -833,23 +819,53 @@ export function PageBuilderEditor() {
       (p: any) => p.websiteId === websiteId && p.slug === pageName
     )
     
-    if (websitePage?.canvasItems && websitePage.canvasItems.length > 0) {
-      debugLog('log', '📂 [PageBuilderEditor] Loading from persisted websitePage:', {
-        websiteId,
-        pageName,
-        itemCount: websitePage.canvasItems.length
-      })
-      const migratedWebsitePageCanvas = migrateCanvasItems(websitePage.canvasItems)
-      replaceCanvasItems(migratedWebsitePageCanvas)
-      // Hydrate pageCanvasData for future access
-      setPageCanvas(websiteId!, pageName, migratedWebsitePageCanvas)
-      setIsEditingLoadedWebsite(true)
-      loadedPageRef.current = pageKey
-      previousCanvasItemsRef.current = migratedWebsitePageCanvas
-      canvasOwnerPageRef.current = `${websiteId}:${pageName}`
-      setCanvasOwnerId(`${websiteId}:${pageName}`)
-      isTransitioningRef.current = false
-      return
+    if (websitePage) {
+      // Check if page is synced with a template - use template's canvas
+      if (websitePage.syncedWithMaster && websitePage.templateId) {
+        const customStarterPages = usePageStore.getState().customStarterPages || []
+        const syncedTemplate = customStarterPages.find((t: any) => t.id === websitePage.templateId)
+        
+        if (syncedTemplate?.canvasItems && syncedTemplate.canvasItems.length > 0) {
+          debugLog('log', '🔗 [PageBuilderEditor] Loading from SYNCED template:', {
+            websiteId,
+            pageName,
+            templateId: websitePage.templateId,
+            templateName: syncedTemplate.name,
+            itemCount: syncedTemplate.canvasItems.length
+          })
+          const migratedTemplateCanvas = migrateCanvasItems(syncedTemplate.canvasItems)
+          replaceCanvasItems(migratedTemplateCanvas)
+          // Hydrate pageCanvasData with template content
+          setPageCanvas(websiteId!, pageName, migratedTemplateCanvas)
+          setIsEditingLoadedWebsite(true)
+          loadedPageRef.current = pageKey
+          previousCanvasItemsRef.current = migratedTemplateCanvas
+          canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+          setCanvasOwnerId(`${websiteId}:${pageName}`)
+          isTransitioningRef.current = false
+          return
+        }
+      }
+      
+      // Not synced or no template found - use page's own canvas
+      if (websitePage.canvasItems && websitePage.canvasItems.length > 0) {
+        debugLog('log', '📂 [PageBuilderEditor] Loading from persisted websitePage:', {
+          websiteId,
+          pageName,
+          itemCount: websitePage.canvasItems.length
+        })
+        const migratedWebsitePageCanvas = migrateCanvasItems(websitePage.canvasItems)
+        replaceCanvasItems(migratedWebsitePageCanvas)
+        // Hydrate pageCanvasData for future access
+        setPageCanvas(websiteId!, pageName, migratedWebsitePageCanvas)
+        setIsEditingLoadedWebsite(true)
+        loadedPageRef.current = pageKey
+        previousCanvasItemsRef.current = migratedWebsitePageCanvas
+        canvasOwnerPageRef.current = `${websiteId}:${pageName}`
+        setCanvasOwnerId(`${websiteId}:${pageName}`)
+        isTransitioningRef.current = false
+        return
+      }
     }
     
     // No saved data - load default content based on page type and website

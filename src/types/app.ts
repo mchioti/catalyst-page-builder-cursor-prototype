@@ -112,6 +112,21 @@ export type TemplateModification = {
 export type Persona = 'publisher' | 'pb-admin' | 'developer'
 export type ConsoleMode = 'multi' | 'single'
 
+export type PageShellHistoryEntry = {
+  id: string
+  websiteId: string
+  region: 'header' | 'footer'
+  scope: 'global' | 'page'
+  pageId?: string
+  committedAt: Date
+  sections: CanvasItem[]
+}
+
+export type SiteLayoutDraftSettings = {
+  headerEnabled?: boolean
+  footerEnabled?: boolean
+}
+
 export type PageState = {
   // Routing
   currentView: AppView
@@ -164,6 +179,14 @@ export type PageState = {
   journalTemplateCanvas: Record<string, CanvasItem[]> // Journal-specific template storage (journalCode -> template)
   pageCanvasData: Record<string, CanvasItem[]> // Per-website, per-page canvas storage (key: "websiteId:pageId") - PUBLISHED
   pageDraftData: Record<string, CanvasItem[]> // Per-website, per-page draft storage (key: "websiteId:pageId") - DRAFT (previewable, not published)
+  pageShellHistory: PageShellHistoryEntry[] // Append-only history of published header/footer snapshots
+  addPageShellHistoryEntry: (entry: Omit<PageShellHistoryEntry, 'id' | 'committedAt'> & { committedAt?: Date }) => void
+  getPageShellHistory: (websiteId: string, region: 'header' | 'footer', opts?: { scope?: 'global' | 'page'; pageId?: string; limit?: number }) => PageShellHistoryEntry[]
+  // Draft-only settings for site-wide header/footer enablement; committed on Publish.
+  siteLayoutDraftSettings: Record<string, SiteLayoutDraftSettings>
+  getSiteLayoutDraftSettings: (websiteId: string) => SiteLayoutDraftSettings | null
+  setSiteLayoutDraftSettings: (websiteId: string, updates: SiteLayoutDraftSettings) => void
+  clearSiteLayoutDraftSettings: (websiteId: string) => void
   customSections: CustomSection[]
   customStarterPages: CustomStarterPage[]
   websitePages: WebsitePage[]
@@ -209,9 +232,15 @@ export type PageState = {
   pageLayoutOverrides: Record<string, { 
     headerOverride?: 'global' | 'hide' | 'page-edit'
     footerOverride?: 'global' | 'hide' | 'page-edit' 
-  }>
+  }> // PUBLISHED
+  pageLayoutOverridesDraft: Record<string, { 
+    headerOverride?: 'global' | 'hide' | 'page-edit'
+    footerOverride?: 'global' | 'hide' | 'page-edit' 
+  }> // DRAFT (previewable, committed on Publish)
   getPageLayoutOverrides: (websiteId: string, pageId: string) => { headerOverride?: 'global' | 'hide' | 'page-edit'; footerOverride?: 'global' | 'hide' | 'page-edit' }
-  setPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => void
+  setPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => void // sets DRAFT
+  commitPageLayoutOverride: (websiteId: string, pageId: string, type: 'header' | 'footer', mode: 'global' | 'hide' | 'page-edit') => void
+  discardPageLayoutOverrideDraft: (websiteId: string, pageId: string, type: 'header' | 'footer') => void
   updateSiteLayoutWidget: (websiteId: string, sectionType: 'header' | 'footer', widgetId: string, updates: any) => void
   
   // Global template management
