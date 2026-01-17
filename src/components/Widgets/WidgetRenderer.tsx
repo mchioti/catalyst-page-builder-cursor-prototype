@@ -975,6 +975,7 @@ const HeadingWidgetRenderer: React.FC<{ widget: HeadingWidget }> = ({ widget }) 
   
   return (
     <HeadingTag 
+      id={`heading-${widget.id}`}
       className={headingClasses}
       style={getInlineStyles()}
     >

@@ -1,8 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Bell, X, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, ChevronRight } from 'lucide-react'
 
-// Session milestone notifications - 2026-01-13 (Part 3)
+// Session milestone notifications - 2026-01-17 (Part 4)
 const MOCK_NOTIFICATIONS = [
+  {
+    id: 'milestone-9',
+    type: 'success' as const,
+    category: 'release',
+    title: '📱 Mobile Responsive + Semantic HTML',
+    description: 'Auto-responsive layouts (stack on mobile), semantic <section>/<div> based on heading detection, aria-label support, accordion-organized properties panel.',
+    createdAt: '2026-01-17T14:00:00Z',
+    read: false,
+  },
+  {
+    id: 'milestone-8',
+    type: 'feature' as const,
+    category: 'release',
+    title: '♿ Accessibility Improvements',
+    description: 'Sections auto-detect headings for aria-labelledby. Optional aria-label field. Renders <section> or <div> based on a11y context. Header/Footer use semantic tags.',
+    createdAt: '2026-01-17T13:00:00Z',
+    read: false,
+  },
   {
     id: 'milestone-7',
     type: 'success' as const,
@@ -10,7 +28,7 @@ const MOCK_NOTIFICATIONS = [
     title: '📝 Header/Footer Draft UX',
     description: 'Unified draft-first publish flow for header/footer, history restore, replace flow, and hide-on-page preview handling.',
     createdAt: '2026-01-15T18:30:00Z',
-    read: false,
+    read: true,
   },
   {
     id: 'milestone-0',

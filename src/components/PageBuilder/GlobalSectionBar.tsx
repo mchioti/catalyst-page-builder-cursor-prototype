@@ -26,6 +26,8 @@ interface GlobalSectionBarProps {
   usePageStore: any
   onWidgetClick?: (widgetId: string, e: React.MouseEvent) => void
   selectedWidget?: string | null
+  activeSectionToolbar?: string | null
+  setActiveSectionToolbar?: (id: string | null) => void
   activeWidgetToolbar?: string | null
   setActiveWidgetToolbar?: (id: string | null) => void
   overrideMode?: OverrideMode
@@ -41,6 +43,8 @@ export function GlobalSectionBar({
   usePageStore,
   onWidgetClick,
   selectedWidget,
+  activeSectionToolbar,
+  setActiveSectionToolbar,
   activeWidgetToolbar,
   setActiveWidgetToolbar,
   overrideMode = 'global',
@@ -48,7 +52,6 @@ export function GlobalSectionBar({
   onReplacePageShell
 }: GlobalSectionBarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [activeSectionToolbar, setActiveSectionToolbar] = useState<string | null>(null)
   const selectWidget = usePageStore((state: any) => state.selectWidget)
   
   // Get store actions for global section updates
@@ -116,6 +119,7 @@ export function GlobalSectionBar({
           e.stopPropagation()
           // Selecting the "Header" / "Footer" (as a region) enables a dedicated properties panel.
           // This is separate from selecting widgets inside the header/footer.
+          setActiveSectionToolbar?.(null)
           selectWidget?.(getGlobalRegionSelectionId(type))
           setIsExpanded(!isExpanded)
         }}

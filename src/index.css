@@ -130,3 +130,54 @@ body { @apply bg-[rgb(var(--bg))] text-gray-900 antialiased; }
 .theme-link:hover {
   color: var(--theme-color-accent);
 }
+
+/* ============================================
+   RESPONSIVE SECTION UTILITIES
+   ============================================ */
+
+/* Reduce section padding on mobile */
+@media (max-width: 640px) {
+  [data-section-id] {
+    /* Reduce horizontal padding on mobile */
+    padding-left: max(1rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
+  }
+  
+  /* Reduce vertical padding slightly on mobile */
+  [data-section-id][style*="padding:"] {
+    /* Only reduce if using large padding values */
+  }
+}
+
+/* Responsive typography for headings */
+@media (max-width: 640px) {
+  .typo-heading-h1 {
+    font-size: clamp(2rem, 8vw, var(--heading-h1-size, 3rem)) !important;
+  }
+  .typo-heading-h2 {
+    font-size: clamp(1.5rem, 6vw, var(--heading-h2-size, 2rem)) !important;
+  }
+}
+
+/* Ensure images don't overflow on mobile */
+@media (max-width: 640px) {
+  [data-widget-type="image"] img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Stack publication cards vertically on mobile */
+@media (max-width: 640px) {
+  [data-widget-type="publication-list"] > div {
+    flex-direction: column !important;
+  }
+}
+
+/* Reset grid spans on mobile - all widgets become 1x1 */
+@media (max-width: 640px) {
+  [data-widget-type] {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
+}

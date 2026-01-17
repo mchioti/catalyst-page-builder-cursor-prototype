@@ -3959,6 +3959,8 @@ export function PageBuilder({
                 usePageStore={usePageStore}
                 onWidgetClick={handleWidgetClick}
                 selectedWidget={selectedWidget}
+                activeSectionToolbar={activeSectionToolbar}
+                setActiveSectionToolbar={setActiveSectionToolbar}
                 activeWidgetToolbar={activeWidgetToolbar}
                 setActiveWidgetToolbar={setActiveWidgetToolbar}
                 overrideMode={headerOverrideMode}
@@ -4027,6 +4029,8 @@ export function PageBuilder({
                 usePageStore={usePageStore}
                 onWidgetClick={handleWidgetClick}
                 selectedWidget={selectedWidget}
+                activeSectionToolbar={activeSectionToolbar}
+                setActiveSectionToolbar={setActiveSectionToolbar}
                 activeWidgetToolbar={activeWidgetToolbar}
                 setActiveWidgetToolbar={setActiveWidgetToolbar}
                 overrideMode={footerOverrideMode}
@@ -4091,6 +4095,8 @@ export function PageBuilder({
               onRevertZoneToArchetype={handleRevertZoneToArchetype}
               highlightSectionType={highlightSectionType}
               onReplacePageShell={handleReplacePageShell}
+              onReplaceZone={handleReplaceZone}
+              onReplaceSectionLayout={handleReplaceSectionLayout}
             />
           </div>
         </div>

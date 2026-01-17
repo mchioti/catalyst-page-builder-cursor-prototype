@@ -68,6 +68,7 @@ export const createGlobalHeaderPrefab = (): CanvasItem => {
   
   // Set up styling to match Mock Live Site
   const typedSection = headerSection as WidgetSection
+  typedSection.role = 'header' // Mark as header role
   
   // University header with proper padding
   typedSection.styling = {
@@ -1563,6 +1564,7 @@ export const createStandardHeaderPrefab = (): CanvasItem => {
   const typedSection = headerSection as WidgetSection
   
   typedSection.type = 'hero' // Use hero type to get white text on dark background
+  typedSection.role = 'header' // Mark as header role
   
   typedSection.background = {
     type: 'color',
@@ -1631,6 +1633,7 @@ export const createStandardFooterPrefab = (): CanvasItem => {
   const typedSection = footerSection as WidgetSection
   
   typedSection.type = 'hero' // Use hero type for white text
+  typedSection.role = 'footer' // Mark as footer role
   
   typedSection.background = {
     type: 'color',

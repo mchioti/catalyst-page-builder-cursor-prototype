@@ -515,6 +515,11 @@ export type WidgetSection = {
   // 'content' = renders in normal document flow (default)
   role?: 'header' | 'footer' | 'content'
   
+  // Accessibility: Label for screen readers when section has no visible heading
+  // If section contains a Heading widget, aria-labelledby is used automatically instead
+  // If neither heading nor ariaLabel exists, section renders as <div> instead of <section>
+  ariaLabel?: string
+  
   // Overlay configuration (for banners, modals, notifications)
   overlay?: {
     enabled: boolean

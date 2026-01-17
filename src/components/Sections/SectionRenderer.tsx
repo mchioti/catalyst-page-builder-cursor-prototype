@@ -581,6 +581,8 @@ export function SectionRenderer({
   }, [isLiveMode, isInSidebarGroup, section.behavior, getWebsiteBranding, websiteId])
   
   const getLayoutClasses = (layout: ContentBlockLayout) => {
+    // RESPONSIVE: All multi-column layouts stack to 1-col on mobile
+    // Breakpoints: sm (640px), md (768px), lg (1024px)
     switch (layout) {
       case 'grid':
         // Grid layout uses inline styles from gridConfig, just return base grid class
@@ -588,17 +590,22 @@ export function SectionRenderer({
       case 'one-column':
         return 'grid-cols-1'
       case 'two-columns':
-        return 'grid-cols-2'
+        // 2-col: Stack on mobile, 2-col on tablet+
+        return 'grid-cols-1 md:grid-cols-2'
       case 'three-columns':
-        return 'grid-cols-3'
+        // 3-col: Stack on mobile, 2-col tablet, 3-col desktop
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
       case 'one-third-left':
-        return 'grid-cols-3 [&>:first-child]:col-span-1 [&>:last-child]:col-span-2'
+        // 1/3 + 2/3: Stack on mobile, split on tablet+
+        return 'grid-cols-1 md:grid-cols-3 [&>:first-child]:md:col-span-1 [&>:last-child]:md:col-span-2'
       case 'one-third-right':
-        return 'grid-cols-3 [&>:first-child]:col-span-2 [&>:last-child]:col-span-1'
+        // 2/3 + 1/3: Stack on mobile, split on tablet+
+        return 'grid-cols-1 md:grid-cols-3 [&>:first-child]:md:col-span-2 [&>:last-child]:md:col-span-1'
       case 'hero-with-buttons':
         return 'grid-cols-1 gap-4'
       case 'header-plus-grid':
-        return 'grid-cols-3 gap-4 [&>:first-child]:col-span-3'
+        // Header spans full, then 3-col grid: Stack grid on mobile
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 [&>:first-child]:col-span-full'
       default:
         return 'grid-cols-1'
     }
@@ -977,14 +984,57 @@ export function SectionRenderer({
     )
   }
 
+  // Determine semantic HTML tag based on section role and accessibility
+  // header → <header>, footer → <footer>
+  // content sections: <section> if has heading/aria-label, else <div>
+  // Future: left-sidebar, right-sidebar → <aside>
+  
+  // Find the first heading widget in this section for aria-labelledby
+  const findFirstHeadingWidget = (): { id: string; type: string } | null => {
+    for (const area of section.areas || []) {
+      for (const widget of area.widgets || []) {
+        if (widget.type === 'heading') {
+          return { id: widget.id, type: widget.type }
+        }
+      }
+    }
+    return null
+  }
+  
+  const firstHeading = findFirstHeadingWidget()
+  const hasHeading = !!firstHeading
+  const hasAriaLabel = !!section.ariaLabel?.trim()
+  
+  // Determine the tag and ARIA attributes
+  let SemanticTag: 'header' | 'footer' | 'section' | 'div' = 'div'
+  let ariaProps: { 'aria-labelledby'?: string; 'aria-label'?: string } = {}
+  
+  if (section.role === 'header') {
+    SemanticTag = 'header'
+  } else if (section.role === 'footer') {
+    SemanticTag = 'footer'
+  } else if (hasHeading) {
+    // Has a heading widget - use <section> with aria-labelledby
+    SemanticTag = 'section'
+    ariaProps['aria-labelledby'] = `heading-${firstHeading.id}`
+  } else if (hasAriaLabel) {
+    // Has explicit aria-label - use <section> with aria-label
+    SemanticTag = 'section'
+    ariaProps['aria-label'] = section.ariaLabel
+  }
+  // else: no heading, no aria-label → stays as <div>
+
   return (
     <>
       {/* Modal backdrop */}
       {renderBackdrop()}
       
-      <div 
+      <SemanticTag 
         ref={setSectionDropRef}
         data-section-id={section.id}
+        data-section-role={section.role || 'content'}
+        data-semantic-tag={SemanticTag}
+        {...ariaProps}
         data-overlay={section.overlay?.enabled ? 'true' : undefined}
         data-overlay-position={section.overlay?.position}
         data-overlay-behavior={section.overlay?.behavior}
@@ -1274,21 +1324,41 @@ export function SectionRenderer({
                 }
               })
               
+              // RESPONSIVE: Get responsive grid classes for fixed column counts
+              const getResponsiveGridClasses = () => {
+                const cols = section.gridConfig?.columns
+                if (typeof cols !== 'number') return ''
+                
+                // Map fixed columns to responsive Tailwind classes
+                // Mobile: 1 col, Tablet: 2 col (if cols > 2), Desktop: full cols
+                switch (cols) {
+                  case 1: return 'grid-cols-1'
+                  case 2: return 'grid-cols-1 sm:grid-cols-2'
+                  case 3: return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  case 4: return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                  case 5: return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'
+                  case 6: return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+                  case 12: return 'grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12'
+                  default: return `grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(cols, 6)}`
+                }
+              }
+              
+              // Use Tailwind classes for fixed columns, inline styles for auto-fit/auto-fill
+              const useInlineGridColumns = section.gridConfig?.columns === 'auto-fit' || 
+                                           section.gridConfig?.columns === 'auto-fill'
+              
               return (
                 <div
                   key={area.id}
                   ref={setDropRef}
-                  className="relative col-span-full"
+                  className={`relative col-span-full grid ${!useInlineGridColumns ? getResponsiveGridClasses() : ''}`}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: 
-                      typeof section.gridConfig?.columns === 'number'
-                        ? `repeat(${section.gridConfig.columns}, 1fr)`
-                        : section.gridConfig?.columns === 'auto-fit'
+                    // Only use inline gridTemplateColumns for auto-fit/auto-fill (these are inherently responsive!)
+                    ...(useInlineGridColumns && {
+                      gridTemplateColumns: section.gridConfig?.columns === 'auto-fit'
                         ? `repeat(auto-fit, minmax(${section.gridConfig.minColumnWidth || '200px'}, 1fr))`
-                        : section.gridConfig?.columns === 'auto-fill'
-                        ? `repeat(auto-fill, minmax(${section.gridConfig.minColumnWidth || '200px'}, 1fr))`
-                        : `repeat(3, 1fr)`,
+                        : `repeat(auto-fill, minmax(${section.gridConfig.minColumnWidth || '200px'}, 1fr))`
+                    }),
                     gap: section.gridConfig?.gap || '1rem',
                     ...(section.gridConfig?.rowGap && { rowGap: section.gridConfig.rowGap }),
                     ...(section.gridConfig?.columnGap && { columnGap: section.gridConfig.columnGap }),
@@ -1574,13 +1644,23 @@ export function SectionRenderer({
                 }
               })
               
+              // RESPONSIVE: Row layouts stack to column on mobile
+              const getResponsiveFlexClasses = () => {
+                const direction = section.flexConfig?.direction || 'row'
+                if (direction === 'column') {
+                  return 'flex-col' // Column stays column on all screens
+                }
+                // Row: Stack on mobile, row on tablet+
+                return 'flex-col sm:flex-row'
+              }
+              
               return (
                 <div
                   key={area.id}
                   ref={setDropRef}
-                  className="relative flex"
+                  className={`relative flex ${getResponsiveFlexClasses()}`}
                   style={{
-                    flexDirection: section.flexConfig?.direction || 'row',
+                    // Don't use inline flexDirection - let Tailwind responsive classes handle it
                     flexWrap: section.flexConfig?.wrap ? 'wrap' : 'nowrap',
                     justifyContent: section.flexConfig?.justifyContent || 'flex-start',
                     alignItems: 'stretch', // ✨ Equal height cards in each row
@@ -1989,7 +2069,7 @@ export function SectionRenderer({
           </div>
         )}
       </div>
-      </div>
+      </SemanticTag>
       
       {/* Save Section Modal - only in editor mode */}
       {!isLiveMode && showSaveModal && (

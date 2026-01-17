@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Info, Plus, Trash2, GripVertical, X } from 'lucide-react'
+import { Info, Plus, Trash2, GripVertical, X, RefreshCw, Copy, BookOpen, ArrowUp, ArrowDown, RotateCcw, ChevronDown, ChevronRight, Palette, Layout, Settings2, Layers, Eye, Accessibility } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { createDebugLogger } from '../../utils/logger'
 import { getGlobalRegionTypeFromSelectionId, isGlobalRegionSelectionId } from '../../utils/globalRegionSelection'
@@ -12,6 +12,61 @@ import type { PageInstance, Archetype } from '../../types/archetypes'
 // 🐛 DEBUG FLAG - Set to true to enable detailed properties panel logs
 const DEBUG_PROPERTIES_PANEL = false
 const debugLog = createDebugLogger(DEBUG_PROPERTIES_PANEL)
+
+// ============================================================================
+// PROPERTY ACCORDION - Reusable collapsible section for property groups
+// ============================================================================
+interface PropertyAccordionProps {
+  title: string
+  icon?: React.ReactNode
+  isOpen: boolean
+  onToggle: () => void
+  children: React.ReactNode
+  badge?: React.ReactNode
+  variant?: 'default' | 'subtle'
+}
+
+function PropertyAccordion({ 
+  title, 
+  icon, 
+  isOpen, 
+  onToggle, 
+  children, 
+  badge,
+  variant = 'default'
+}: PropertyAccordionProps) {
+  return (
+    <div className={`rounded-lg overflow-hidden border ${
+      variant === 'subtle' 
+        ? 'border-gray-100 bg-gray-50/50' 
+        : 'border-gray-200 bg-white'
+    }`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
+          isOpen 
+            ? 'bg-gray-100 border-b border-gray-200' 
+            : 'hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          {icon && <span className="text-gray-500">{icon}</span>}
+          <span className="text-sm font-medium text-gray-700">{title}</span>
+          {badge}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+          isOpen ? 'rotate-180' : ''
+        }`} />
+      </button>
+      {isOpen && (
+        <div className="p-3 space-y-3">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function HeaderFooterHistory({
   websiteId,
@@ -163,6 +218,8 @@ interface PropertiesPanelProps {
   highlightSectionType?: boolean
   // Page shell actions (header/footer)
   onReplacePageShell?: (region: 'header' | 'footer') => void
+  // Replace section layout (for regular sections)
+  onReplaceSectionLayout?: (sectionId: string) => void
 }
 
 export function PropertiesPanel({ 
@@ -192,7 +249,8 @@ export function PropertiesPanel({
   onResetToArchetype,
   onRevertZoneToArchetype,
   highlightSectionType = false,
-  onReplacePageShell
+  onReplacePageShell,
+  onReplaceSectionLayout
 }: PropertiesPanelProps) {
   const { 
     canvasItems, 
@@ -222,6 +280,27 @@ export function PropertiesPanel({
   const [isEditingMenuItems, setIsEditingMenuItems] = useState(false)
   const prevExpandedRef = useRef(isExpanded)
   
+  // Tab state for Section and Widget panels
+  const [sectionPanelTab, setSectionPanelTab] = useState<'properties' | 'actions'>('properties')
+  const [widgetPanelTab, setWidgetPanelTab] = useState<'properties' | 'actions'>('properties')
+  
+  // Collapse state for section details
+  const [sectionDetailsExpanded, setSectionDetailsExpanded] = useState(false)
+  
+  // Accordion state for property groups (track which sections are open)
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    layout: true,      // Open by default - most commonly edited
+    appearance: true,  // Open by default
+    spacing: false,    // Collapsed by default
+    behavior: false,   // Collapsed by default
+    overlay: false,    // Collapsed by default
+    accessibility: false // Collapsed by default
+  })
+  
+  const toggleAccordion = (key: string) => {
+    setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+  
   // Notify parent when expansion state changes
   useEffect(() => {
     onExpandedChange?.(isEditingMenuItems)
@@ -230,6 +309,8 @@ export function PropertiesPanel({
   // Reset editing state when widget selection changes
   useEffect(() => {
     setIsEditingMenuItems(false)
+    setSectionPanelTab('properties')
+    setWidgetPanelTab('properties')
   }, [selectedWidget])
   
   // Reset editing state when panel is collapsed from outside (but not on initial mount)
@@ -789,81 +870,376 @@ export function PropertiesPanel({
     
     return (
       <div className="p-4 space-y-4">
-        <h3 className="font-semibold text-gray-900">Section Properties</h3>
-        
-        {/* Section Type Indicator */}
-        <div className={`rounded-lg p-3 transition-all duration-500 ${
-          highlightSectionType 
-            ? 'bg-blue-50 border-2 border-blue-400 ring-2 ring-blue-200 shadow-md' 
-            : 'bg-gray-50 border border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
-            <span className={`text-xs px-2 py-1 rounded-full font-medium transition-all duration-500 ${
-              highlightSectionType
-                ? 'bg-blue-500 text-white animate-pulse'
-                : 'bg-green-100 text-green-700'
-            }`}>
-              {getSectionTypeName(section.layout)}
-            </span>
-          </div>
-          <div className="mt-2 pt-2 border-t border-gray-200">
-            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section ID</span>
-            <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{section.id}</p>
-          </div>
-          {/* Zone Slug - for archetype/page instance inheritance */}
-          {section.zoneSlug && (
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Zone Slug</span>
-              <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200">{section.zoneSlug}</p>
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex gap-4">
+            <button
+              type="button"
+              onClick={() => setSectionPanelTab('properties')}
+              className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${
+                sectionPanelTab === 'properties'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              Properties
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionPanelTab('actions')}
+              className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${
+                sectionPanelTab === 'actions'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              Actions
+            </button>
+          </nav>
+        </div>
+
+        {/* Actions Tab */}
+        {sectionPanelTab === 'actions' && (
+          <div className="space-y-2">
+            {/* Primary Actions Group */}
+            <div className="bg-gray-50 rounded-lg p-2 space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Layout</p>
+              
+              {/* Replace Layout - Primary action */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onReplaceSectionLayout) {
+                    onReplaceSectionLayout(section.id)
+                  }
+                }}
+                disabled={!onReplaceSectionLayout}
+                className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                  <RefreshCw className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium">Replace Layout</span>
+                  <p className="text-[10px] text-gray-400 group-hover:text-blue-500">Choose a different section template</p>
+                </div>
+              </button>
+
+              {/* Duplicate */}
+              <button
+                type="button"
+                onClick={() => {
+                  const sectionIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                  if (sectionIndex !== -1) {
+                    const duplicatedSection = JSON.parse(JSON.stringify(section))
+                    duplicatedSection.id = nanoid()
+                    duplicatedSection.areas = duplicatedSection.areas.map((area: any) => ({
+                      ...area,
+                      id: nanoid(),
+                      widgets: area.widgets.map((widget: any) => ({
+                        ...widget,
+                        id: nanoid(),
+                        sectionId: duplicatedSection.id
+                      }))
+                    }))
+                    const newCanvasItems = [...canvasItems]
+                    newCanvasItems.splice(sectionIndex + 1, 0, duplicatedSection)
+                    replaceCanvasItems(newCanvasItems)
+                  }
+                }}
+                className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-all shadow-sm"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <Copy className="w-4 h-4 text-gray-600" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium">Duplicate</span>
+                  <p className="text-[10px] text-gray-400">Create a copy below this section</p>
+                </div>
+              </button>
+
+              {/* Save as Custom */}
+              <button
+                type="button"
+                onClick={() => {
+                  const name = prompt('Save section as:', section.name || 'Custom Section')
+                  if (!name || !name.trim()) return
+                  const { addCustomSection, currentWebsiteId: storeWebsiteId, websites: storeWebsites } = usePageStore.getState()
+                  const currentWebsite = storeWebsites?.find((w: any) => w.id === storeWebsiteId)
+                  const newSectionId = nanoid()
+                  const sectionWithNewId = {
+                    ...section,
+                    id: newSectionId,
+                    areas: section.areas.map(area => ({
+                      ...area,
+                      id: nanoid(),
+                      widgets: area.widgets.map(widget => ({
+                        ...widget,
+                        id: nanoid(),
+                        sectionId: newSectionId
+                      }))
+                    }))
+                  }
+                  addCustomSection?.({
+                    id: nanoid(),
+                    name: name.trim(),
+                    description: 'Custom saved section',
+                    source: 'user',
+                    websiteId: storeWebsiteId,
+                    websiteName: currentWebsite?.name || 'Unknown',
+                    widgets: section.areas.flatMap(area => area.widgets),
+                    createdAt: new Date(),
+                    section: sectionWithNewId,
+                    canvasItems: [sectionWithNewId]
+                  })
+                }}
+                className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-green-300 hover:bg-green-50 hover:text-green-700 transition-all shadow-sm"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors">
+                  <BookOpen className="w-4 h-4 text-green-600" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium">Save as Custom</span>
+                  <p className="text-[10px] text-gray-400">Add to your section library</p>
+                </div>
+              </button>
             </div>
-          )}
-          {/* Inheritance Status - only show when editing a page instance */}
-          {pageInstance && section.zoneSlug && (
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</span>
-                {pageInstance.overrides[section.zoneSlug] ? (
-                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">
-                    ✏️ Modified
-                  </span>
-                ) : (
-                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-600">
-                    🔗 Synced
-                  </span>
-                )}
+
+            {/* Move Actions */}
+            <div className="bg-gray-50 rounded-lg p-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Reorder</p>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sectionIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    if (sectionIndex > 0) {
+                      const newCanvasItems = [...canvasItems]
+                      const temp = newCanvasItems[sectionIndex]
+                      newCanvasItems[sectionIndex] = newCanvasItems[sectionIndex - 1]
+                      newCanvasItems[sectionIndex - 1] = temp
+                      replaceCanvasItems(newCanvasItems)
+                    }
+                  }}
+                  disabled={canvasItems.findIndex((item: any) => item.id === section.id) === 0}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                  <span>Up</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sectionIndex = canvasItems.findIndex((item: any) => item.id === section.id)
+                    if (sectionIndex !== -1 && sectionIndex < canvasItems.length - 1) {
+                      const newCanvasItems = [...canvasItems]
+                      const temp = newCanvasItems[sectionIndex]
+                      newCanvasItems[sectionIndex] = newCanvasItems[sectionIndex + 1]
+                      newCanvasItems[sectionIndex + 1] = temp
+                      replaceCanvasItems(newCanvasItems)
+                    }
+                  }}
+                  disabled={(() => {
+                    const idx = canvasItems.findIndex((item: any) => item.id === section.id)
+                    return idx === -1 || idx >= canvasItems.length - 1
+                  })()}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <ArrowDown className="w-4 h-4" />
+                  <span>Down</span>
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Reset to Archetype - only show when editing a page instance with a zone */}
+            {pageInstance && section.zoneSlug && onRevertZoneToArchetype && (
+              <div className="bg-blue-50 rounded-lg p-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 px-1 mb-2">Archetype</p>
+                <button
+                  type="button"
+                  onClick={() => onRevertZoneToArchetype(section.zoneSlug!)}
+                  className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-100 transition-all shadow-sm"
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-md bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                    <RotateCcw className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium">Reset to Archetype</span>
+                    <p className="text-[10px] text-blue-400">Restore original template content</p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Danger Zone */}
+            <div className="bg-red-50 rounded-lg p-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-400 px-1 mb-2">Danger Zone</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Delete this section? This cannot be undone.')) {
+                    const newCanvasItems = canvasItems.filter((item: any) => item.id !== section.id)
+                    replaceCanvasItems(newCanvasItems)
+                  }
+                }}
+                className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-red-200 text-red-700 hover:border-red-400 hover:bg-red-100 transition-all shadow-sm"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-red-100 group-hover:bg-red-200 flex items-center justify-center transition-colors">
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium">Delete Section</span>
+                  <p className="text-[10px] text-red-400">Remove this section permanently</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Properties Tab */}
+        {sectionPanelTab === 'properties' && (
+        <>
+        {/* ====== SECTION TYPE & INFO (Always Visible) ====== */}
+        <div className={`rounded-lg overflow-hidden transition-all duration-700 ${
+          highlightSectionType 
+            ? 'bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-400 ring-4 ring-blue-200/50 shadow-lg scale-[1.02]' 
+            : 'bg-gray-50 border border-gray-200'
+        }`}>
+          {/* Section Type Header - Always Visible */}
+          <div className={`p-3 transition-all duration-700 ${
+            highlightSectionType ? 'bg-blue-500/10' : ''
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section Type</span>
+              <span className={`text-sm px-3 py-1 rounded-full font-semibold transition-all duration-700 ${
+                highlightSectionType
+                  ? 'bg-blue-600 text-white shadow-md scale-110'
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                {highlightSectionType && <span className="mr-1">✨</span>}
+                {getSectionTypeName(section.layout)}
+              </span>
+            </div>
+            {highlightSectionType && (
+              <p className="mt-2 text-xs text-blue-700 font-medium animate-pulse">
+                Layout changed! Review the new structure.
+              </p>
+            )}
+          </div>
+          
+          {/* Collapsible Details */}
+          <div className="border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setSectionDetailsExpanded(!sectionDetailsExpanded)}
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+            >
+              <span>Section Details</span>
+              {sectionDetailsExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+            
+            {sectionDetailsExpanded && (
+              <div className="px-3 pb-3 space-y-2">
+                <div>
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Section ID</span>
+                  <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200 break-all">{section.id}</p>
+                </div>
+                {/* Zone Slug - for archetype/page instance inheritance */}
+                {section.zoneSlug && (
+                  <div>
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Zone Slug</span>
+                    <p className="mt-1 text-xs text-gray-700 font-mono bg-white px-2 py-1 rounded border border-gray-200">{section.zoneSlug}</p>
+                  </div>
+                )}
+                {/* Inheritance Status - only show when editing a page instance */}
+                {pageInstance && section.zoneSlug && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</span>
+                    {pageInstance.overrides[section.zoneSlug] ? (
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">
+                        ✏️ Modified
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-600">
+                        🔗 Synced
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
-        {/* Section Role - for marking sections as page header/footer */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Section Role
-            <span className="ml-2 text-xs font-normal text-gray-500">(for page-level header/footer)</span>
-          </label>
-          <select
-            value={section.role || 'content'}
-            onChange={(e) => updateSection({ role: e.target.value as 'header' | 'footer' | 'content' })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        {/* ====== ZONE INFO ====== */}
+        {(() => {
+          // Auto-determine role based on where the section lives
+          const isInHeaderZone = headerSections.some(s => s.id === section.id)
+          const isInFooterZone = footerSections.some(s => s.id === section.id)
+          const autoRole = isInHeaderZone ? 'header' : isInFooterZone ? 'footer' : 'content'
+          
+          // Update section role if it doesn't match the zone (sync role with location)
+          if (section.role !== autoRole) {
+            // Use setTimeout to avoid updating during render
+            setTimeout(() => updateSection({ role: autoRole }), 0)
+          }
+          
+          return (
+            <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+              <div className="px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Zone</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    autoRole === 'header' ? 'bg-purple-100 text-purple-700' :
+                    autoRole === 'footer' ? 'bg-indigo-100 text-indigo-700' :
+                    'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    {autoRole === 'header' ? '↑ Site Header' : autoRole === 'footer' ? '↓ Site Footer' : '📄 Page Content'}
+                  </span>
+                </div>
+                {/* Show zone is auto-determined */}
+                <span className="text-[10px] text-gray-400 italic">auto</span>
+              </div>
+              
+              {/* Explanation based on zone */}
+              <div className={`px-3 py-2 border-t text-[11px] ${
+                autoRole === 'header' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                autoRole === 'footer' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' :
+                'bg-emerald-50 border-emerald-100 text-emerald-700'
+              }`}>
+                {autoRole === 'header' 
+                  ? '🌐 Renders as <header> on all pages' 
+                  : autoRole === 'footer' 
+                  ? '🌐 Renders as <footer> on all pages'
+                  : '📄 Renders as <section> on this page only'}
+              </div>
+            </div>
+          )
+        })()}
+        
+        {/* ====== ACCORDION PROPERTY GROUPS ====== */}
+        <div className="space-y-2">
+        
+          {/* ====== LAYOUT SETTINGS ACCORDION ====== */}
+          {(section.layout === 'flexible' || section.layout === 'grid') && (
+          <PropertyAccordion
+            title={section.layout === 'flexible' ? 'Flex Layout' : 'Grid Layout'}
+            icon={<Layout className="w-4 h-4" />}
+            isOpen={openAccordions.layout}
+            onToggle={() => toggleAccordion('layout')}
+            badge={
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">
+                {section.layout === 'flexible' ? 'Flex' : 'Grid'}
+              </span>
+            }
           >
-            <option value="content">Content (normal flow)</option>
-            <option value="header">Page Header (renders at top)</option>
-            <option value="footer">Page Footer (renders at bottom)</option>
-          </select>
-          {section.role && section.role !== 'content' && (
-            <p className="mt-1 text-xs text-amber-600">
-              ⚠️ This section will render as the page {section.role}, outside normal content flow.
-            </p>
-          )}
-        </div>
-        
-        <div className="space-y-4">
           {/* Flex Settings (only show when layout === 'flexible') */}
           {section.layout === 'flexible' && (
-            <div className="space-y-3 border-t pt-3">
-              <h4 className="text-sm font-medium text-gray-900">Flex Settings</h4>
+            <div className="space-y-3">
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
@@ -1155,9 +1531,18 @@ export function PropertiesPanel({
               </div>
             </div>
           )}
+          </PropertyAccordion>
+          )}
           
+          {/* ====== APPEARANCE ACCORDION ====== */}
+          <PropertyAccordion
+            title="Appearance"
+            icon={<Palette className="w-4 h-4" />}
+            isOpen={openAccordions.appearance}
+            onToggle={() => toggleAccordion('appearance')}
+          >
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Background</h4>
+            <label className="block text-sm font-medium text-gray-700">Background Type</label>
             
           <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
@@ -2003,8 +2388,15 @@ export function PropertiesPanel({
               </div>
             )}
           </div>
+          </PropertyAccordion>
           
-          {/* Spacing & Layout Configuration */}
+          {/* ====== SPACING ACCORDION ====== */}
+          <PropertyAccordion
+            title="Spacing & Layout"
+            icon={<Settings2 className="w-4 h-4" />}
+            isOpen={openAccordions.spacing}
+            onToggle={() => toggleAccordion('spacing')}
+          >
           {(() => {
             const { currentWebsiteId, websites, themes } = usePageStore.getState()
             const currentWebsite = websites.find((w: any) => w.id === currentWebsiteId)
@@ -2044,7 +2436,6 @@ export function PropertiesPanel({
             
             return (
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Spacing & Layout</h4>
                 
                 {/* Section Padding */}
                 {(() => {
@@ -2154,11 +2545,15 @@ export function PropertiesPanel({
               </div>
             )
           })()}
+          </PropertyAccordion>
           
-          {/* Section Behavior Configuration */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-900 border-b pb-2">Content Behavior</h4>
-            
+          {/* ====== BEHAVIOR ACCORDION ====== */}
+          <PropertyAccordion
+            title="Content Behavior"
+            icon={<Layers className="w-4 h-4" />}
+            isOpen={openAccordions.behavior}
+            onToggle={() => toggleAccordion('behavior')}
+          >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Content Width Behavior</label>
               <select
@@ -2193,17 +2588,20 @@ export function PropertiesPanel({
                 Controls text color for Publication widgets and Menu widgets. Use "Dark" for dark backgrounds. Branding can add accent colors on top.
               </p>
             </div>
-          </div>
+          </PropertyAccordion>
           
-          {/* Overlay Settings */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-900 border-b pb-2 flex items-center gap-2">
-              Overlay Settings
-              {section.overlay?.enabled && (
-                <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Active</span>
-              )}
-            </h4>
-            
+          {/* ====== OVERLAY ACCORDION ====== */}
+          <PropertyAccordion
+            title="Overlay Settings"
+            icon={<Eye className="w-4 h-4" />}
+            isOpen={openAccordions.overlay}
+            onToggle={() => toggleAccordion('overlay')}
+            badge={section.overlay?.enabled ? (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 font-medium">
+                Active
+              </span>
+            ) : undefined}
+          >
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">Enable Overlay</label>
               <button
@@ -2319,8 +2717,111 @@ export function PropertiesPanel({
                 )}
               </div>
             )}
-          </div>
+          </PropertyAccordion>
+          
+          {/* ====== ACCESSIBILITY ACCORDION ====== */}
+          <PropertyAccordion
+            title="Accessibility"
+            icon={<Accessibility className="w-4 h-4" />}
+            isOpen={openAccordions.accessibility}
+            onToggle={() => toggleAccordion('accessibility')}
+            badge={
+              (() => {
+                // Check if section has a heading widget
+                const hasHeading = section.areas?.some((area: any) => 
+                  area.widgets?.some((w: any) => w.type === 'heading')
+                )
+                if (hasHeading) {
+                  return (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-600 font-medium">
+                      Auto
+                    </span>
+                  )
+                }
+                if (section.ariaLabel?.trim()) {
+                  return (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">
+                      Labeled
+                    </span>
+                  )
+                }
+                return (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">
+                    None
+                  </span>
+                )
+              })()
+            }
+          >
+            {/* Auto-detection status */}
+            {(() => {
+              const hasHeading = section.areas?.some((area: any) => 
+                area.widgets?.some((w: any) => w.type === 'heading')
+              )
+              
+              if (hasHeading) {
+                return (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-600 text-lg">✓</span>
+                      <div>
+                        <p className="text-sm font-medium text-green-800">Heading Detected</p>
+                        <p className="text-xs text-green-600 mt-1">
+                          Section renders as <code className="bg-green-100 px-1 rounded">&lt;section aria-labelledby&gt;</code> using the first heading widget.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              
+              return null
+            })()}
+            
+            {/* Section Label field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Section Label
+                <span className="text-xs text-gray-400 font-normal ml-2">(for screen readers)</span>
+              </label>
+              <input
+                type="text"
+                value={section.ariaLabel || ''}
+                onChange={(e) => updateSection({ ariaLabel: e.target.value || undefined })}
+                placeholder="e.g., Featured Research, Latest Articles"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                {section.areas?.some((area: any) => area.widgets?.some((w: any) => w.type === 'heading'))
+                  ? 'Not needed - section already has a heading widget.'
+                  : section.ariaLabel?.trim()
+                    ? `Renders as: <section aria-label="${section.ariaLabel}">`
+                    : 'Without a label or heading, section renders as a <div>.'}
+              </p>
+            </div>
+            
+            {/* HTML output preview */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">HTML Output</p>
+              <code className="text-xs font-mono text-gray-700 block">
+                {(() => {
+                  const hasHeading = section.areas?.some((area: any) => 
+                    area.widgets?.some((w: any) => w.type === 'heading')
+                  )
+                  
+                  if (section.role === 'header') return '<header>...</header>'
+                  if (section.role === 'footer') return '<footer>...</footer>'
+                  if (hasHeading) return '<section aria-labelledby="heading-...">...</section>'
+                  if (section.ariaLabel?.trim()) return `<section aria-label="${section.ariaLabel}">...</section>`
+                  return '<div>...</div>'
+                })()}
+              </code>
+            </div>
+          </PropertyAccordion>
         </div>
+        {/* End of accordion groups */}
+        </>
+        )}
       </div>
     )
   }
@@ -2605,8 +3106,114 @@ export function PropertiesPanel({
       ) : (
         // Normal Properties View
         <div className="p-4 space-y-4">
-          <h3 className="font-semibold text-gray-900">Widget Properties</h3>
-      
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex gap-4">
+              <button
+                type="button"
+                onClick={() => setWidgetPanelTab('properties')}
+                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${
+                  widgetPanelTab === 'properties'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Properties
+              </button>
+              <button
+                type="button"
+                onClick={() => setWidgetPanelTab('actions')}
+                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${
+                  widgetPanelTab === 'actions'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Actions
+              </button>
+            </nav>
+          </div>
+
+          {/* Actions Tab */}
+          {widgetPanelTab === 'actions' && (
+            <div className="space-y-2">
+              {/* Widget Actions */}
+              <div className="bg-gray-50 rounded-lg p-2 space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Widget</p>
+                
+                {/* Duplicate */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Find widget location and duplicate
+                    for (const item of canvasItems) {
+                      if (isSection(item)) {
+                        for (const area of item.areas) {
+                          const widgetIndex = area.widgets.findIndex(w => w.id === widget.id)
+                          if (widgetIndex !== -1) {
+                            const duplicated = { ...area.widgets[widgetIndex], id: nanoid() }
+                            const newWidgets = [...area.widgets]
+                            newWidgets.splice(widgetIndex + 1, 0, duplicated)
+                            const updatedCanvasItems = canvasItems.map((ci: any) => {
+                              if (ci.id !== item.id) return ci
+                              return {
+                                ...ci,
+                                areas: ci.areas.map((a: any) => 
+                                  a.id === area.id ? { ...a, widgets: newWidgets } : a
+                                )
+                              }
+                            })
+                            replaceCanvasItems(updatedCanvasItems)
+                            return
+                          }
+                        }
+                      }
+                    }
+                  }}
+                  className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-all shadow-sm"
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-md bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center transition-colors">
+                    <Copy className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium">Duplicate</span>
+                    <p className="text-[10px] text-gray-400">Create a copy in the same area</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="bg-red-50 rounded-lg p-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-red-400 px-1 mb-2">Danger Zone</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Delete this widget?')) {
+                      const { deleteWidget } = usePageStore.getState()
+                      deleteWidget?.(widget.id)
+                    }
+                  }}
+                  className="w-full group flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg bg-white border border-red-200 text-red-700 hover:border-red-400 hover:bg-red-100 transition-all shadow-sm"
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-md bg-red-100 group-hover:bg-red-200 flex items-center justify-center transition-colors">
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium">Delete Widget</span>
+                    <p className="text-[10px] text-red-400">Remove this widget permanently</p>
+                  </div>
+                </button>
+              </div>
+
+              <p className="text-[10px] text-gray-400 text-center pt-1">
+                💡 These actions match the icons in the widget toolbar
+              </p>
+            </div>
+          )}
+
+          {/* Properties Tab */}
+          {widgetPanelTab === 'properties' && (
+          <>
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Widget Type</span>
@@ -3679,6 +4286,8 @@ export function PropertiesPanel({
             </button>
           </div>
         </div>
+      )}
+      </>
       )}
         </div>
       )}
